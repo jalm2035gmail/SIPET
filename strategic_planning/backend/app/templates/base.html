@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            width: 220px;
+            background: #2c3e50;
+            color: #fff;
+            position: fixed;
+            height: 100vh;
+            top: 0;
+            left: 0;
+            transition: width 0.3s;
+            overflow-x: hidden;
+        }
+        .sidebar .hamburger {
+            display: block;
+            padding: 16px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .sidebar nav {
+            margin-top: 32px;
+        }
+        .sidebar nav a {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 16px;
+            transition: background 0.2s;
+        }
+        .sidebar nav a:hover {
+            background: #34495e;
+        }
+        .navbar {
+            margin-left: 220px;
+            height: 56px;
+            background: #ecf0f1;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .main-content {
+            margin-left: 220px;
+            padding: 32px;
+        }
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 60px;
+            }
+            .navbar, .main-content {
+                margin-left: 60px;
+            }
+            .sidebar nav a {
+                font-size: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <span class="hamburger">&#9776;</span>
+        <nav>
+            <a href="#">Inicio</a>
+            <a href="#">Planes</a>
+            <a href="#">Diagnóstico</a>
+            <a href="#">POA</a>
+            <a href="#">KPIs</a>
+            <a href="#">Reportes</a>
+        </nav>
+    </div>
+    <div class="navbar">
+        <span>{{ title }}</span>
+        <!-- Aquí puedes agregar botones o enlaces de navegación adicionales -->
+    </div>
+    <div class="main-content">
+        {{ content|safe }}
+    </div>
+</body>
+</html>

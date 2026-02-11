@@ -1,0 +1,464 @@
+NOTA: En la estructura, los elementos marcados con ❌ aún no existen en el workspace. Los que ya existen están marcados con ✅. Conforme se vayan creando, se cambiarán a ✅.
+Módulo de Planificación Estratégica y POA - Documentación Conceptual
+🎯 OBJETIVO PRINCIPAL
+Desarrollar un sistema integral de gestión de planificación estratégica y operativa que facilite la transformación de la visión organizacional en planes de acción concretos, medibles y ejecutables, mediante un proceso estructurado que garantice la alineación entre objetivos estratégicos y actividades operativas.
+
+🧠 FILOSOFÍA DEL SISTEMA
+Principios Fundamentales
+Cascada Estratégica: Transformación progresiva de visión → objetivos estratégicos → objetivos departamentales → actividades → tareas
+
+Trazabilidad Total: Cada actividad operativa debe estar vinculada a un objetivo estratégico
+
+Medición Continua: Todo objetivo debe tener KPIs asociados con medición periódica
+
+Colaboración Estructurada: Roles definidos con permisos específicos por nivel organizacional
+
+🏗️ ARQUITECTURA CONCEPTUAL
+Capas del Sistema
+text
+VISIÓN → PLAN ESTRATÉGICO → POA → ACTIVIDADES → RESULTADOS
+    ↓           ↓            ↓         ↓           ↓
+ DIAGNÓSTICO   EJES       DEPART.   RECURSOS    KPIs
+📋 FUNCIONALIDADES PRINCIPALES
+1. PLANIFICACIÓN ESTRATÉGICA
+1.1 Diagnóstico Integral
+FODA: Análisis interno (Fortalezas/Debilidades) y externo (Oportunidades/Amenazas)
+
+PESTEL: Análisis macroambiental (Político, Económico, Social, Tecnológico, Ecológico, Legal)
+
+PORTER: Análisis de las 5 fuerzas competitivas
+
+Percepción del Cliente: Encuestas, NPS, satisfacción, retroalimentación
+
+1.2 Definición Estratégica
+Formulación de Ejes Estratégicos (máx. 5-7)
+
+Definición de Objetivos Estratégicos SMART por eje
+
+Matriz de Alineación: Vinculación objetivos ↔ capacidades organizacionales
+
+2. PLAN OPERATIVO ANUAL (POA)
+2.1 Generación Automática
+Transformación automática de objetivos estratégicos en actividades operativas
+
+Desglose por departamentos con asignación de responsables
+
+Distribución presupuestaria basada en prioridades estratégicas
+
+2.2 Gestión Operativa
+Diagrama de Gantt interactivo con dependencias
+
+Asignación de recursos (humanos, financieros, materiales)
+
+Seguimiento de progreso con actualización en tiempo real
+
+Gestión de riesgos y contingencias
+
+3. SISTEMA DE KPIs
+3.1 Definición de Métricas
+KPIs Estratégicos: Vinculados a objetivos de alto nivel
+
+KPIs Operativos: Medición de eficiencia y eficacia
+
+KPIs de Proceso: Indicadores de calidad y productividad
+
+3.2 Monitoreo y Alertas
+Dashboards personalizados por rol y departamento
+
+Sistema de alertas tempranas por desviaciones
+
+Análisis de tendencias y proyecciones
+
+Benchmarking interno y externo
+
+4. GESTIÓN DE USUARIOS Y PERMISOS
+4.1 Estructura Organizacional
+Jerarquía departamental configurable
+
+Roles predefinidos: Director, Gerente, Jefe, Colaborador
+
+Matriz de responsabilidades RACI (Responsible, Accountable, Consulted, Informed)
+
+4.2 Control de Acceso
+Permisos granulares por módulo y función
+
+Auditoría completa de acciones del sistema
+
+Aprobaciones workflow configurable
+
+5. SISTEMA DE REPORTES
+5.1 Reportes Estándar
+Balanced Scorecard (Cuadro de Mando Integral)
+
+Reportes de Progreso (semanal, mensual, trimestral)
+
+Reportes Financieros (presupuesto vs real)
+
+Reportes de Recursos (carga de trabajo, disponibilidad)
+
+5.2 Personalización
+Constructor visual de reportes
+
+Programación automática de envíos
+
+Formatos múltiples (PDF, Excel, HTML, JSON)
+
+API para integración con otros sistemas
+
+✨ CARACTERÍSTICA DIFERENCIADORA: SISTEMA DE TEMPLATES
+🧩 FILOSOFÍA DE TEMPLATES
+"Todo componente, desde un botón hasta un plan estratégico completo, debe generarse a partir de templates reutilizables y configurables"
+
+VENTAJAS DEL ENFOQUE TEMPLATE-BASED
+Consistencia: Mismo look & feel en toda la aplicación
+
+Mantenibilidad: Cambios centralizados se propagan automáticamente
+
+Velocidad de desarrollo: Componentes listos para usar
+
+Calidad: Templates probados y validados
+
+Personalización: Configuración sin modificar código base
+
+🎨 SISTEMA DE TEMPLATES DETALLADO
+1. TEMPLATES DE INTERFAZ (Frontend)
+Componentes Atómicos
+text
+ButtonTemplate → CardTemplate → FormTemplate → TableTemplate → ChartTemplate
+Patrones de Composición
+javascript
+// Ejemplo: Crear un dashboard usando templates
+const dashboard = DashboardTemplate.compose({
+  header: HeaderTemplate.withTitle("Dashboard Estratégico"),
+  sections: [
+    MetricSectionTemplate.withCards([
+      MetricCardTemplate.kpi("Ventas", 1250000, "+12%"),
+      MetricCardTemplate.progress("Proyectos", 75),
+      MetricCardTemplate.status("ROI", "excelente")
+    ]),
+    ChartSectionTemplate.withCharts([
+      BarChartTemplate.trend("Ventas Mensuales", salesData),
+      LineChartTemplate.forecast("Crecimiento", growthData)
+    ])
+  ],
+  actions: ActionBarTemplate.withButtons([
+    ButtonTemplate.primary("Nuevo Reporte"),
+    ButtonTemplate.secondary("Exportar")
+  ])
+});
+2. TEMPLATES DE NEGOCIO (Backend)
+Templates de Procesos
+crud/
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── base.py ❌          # CRUD base
+│   │   │   ├── user.py ❌
+│   │   │   ├── department.py ❌
+│   │   │   ├── strategic/ ❌       # CRUD estratégicos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   └── plan.py ❌
+│   │   │   └── operational/ ❌     # CRUD operativos
+│   │   │       ├── __init__.py ❌
+│   │   │       └── poa.py ❌
+│   │   ├── utils/
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── validators.py ❌
+│   │   │   ├── helpers.py ❌
+│   │   │   ├── date_utils.py ❌
+│   │   │   ├── file_utils.py ❌
+│   │   │   ├── kpi_calculator.py ❌
+│   │   │   ├── export_utils.py ❌   # Exportar Excel/PDF
+│   │   │   └── import_utils.py ❌   # Importar datos
+)
+Templates de Datos
+python
+# Template para respuesta API estandarizada
+response = ApiResponseTemplate.success(
+    data=strategic_plan,
+    message="Plan creado exitosamente",
+    actions=[
+        ActionButtonTemplate.next("Agregar diagnóstico", "/diagnostic"),
+        ActionButtonTemplate.edit("Editar ejes", "/axes")
+    ],
+    metadata={"version": "1.0", "generated_by": "system"}
+)
+3. TEMPLATES DE FLUJOS DE TRABAJO
+Workflows Predefinidos
+text
+Planificación Workflow:
+  1. CrearPlanTemplate → 2. DiagnosticarTemplate → 3. DefinirEjesTemplate 
+  → 4. EstablecerObjetivosTemplate → 5. GenerarPOATemplate
+
+Seguimiento Workflow:
+  1. RevisarKPIsTemplate → 2. ActualizarProgresoTemplate 
+  → 3. ReportarDesviacionesTemplate → 4. AjustarPlanTemplate
+Templates de Aprobaciones
+python
+approval_flow = ApprovalTemplate.multi_level(
+    levels=[
+        ApprovalLevelTemplate.department_manager(),
+        ApprovalLevelTemplate.finance_director(),
+        ApprovalLevelTemplate.general_manager()
+    ],
+    conditions={
+        "auto_approve": {"budget": "< 10000"},
+        "require_justification": {"deviation": "> 10%"}
+    }
+)
+🔧 IMPLEMENTACIÓN DE TEMPLATES EN TODO EL CÓDIGO
+REGLAS DE IMPLEMENTACIÓN
+NUNCA crear componentes desde cero
+
+javascript
+// ❌ INCORRECTO
+<button class="btn btn-primary">Guardar</button>
+
+// ✅ CORRECTO
+<PrimaryButton text="Guardar" icon="save" />
+Siempre importar desde templates
+
+python
+# ❌ INCORRECTO
+return {"success": True, "data": result}
+
+# ✅ CORRECTO
+from app.templates.api import SuccessResponseTemplate
+return SuccessResponseTemplate.create(data=result)
+Configurar, no modificar
+
+javascript
+// ❌ INCORRECTO: Modificar template directamente
+const card = CardTemplate;
+card.styles.color = "red";
+
+// ✅ CORRECTO: Configurar mediante parámetros
+const card = CardTemplate.create({
+    color: "red",
+    size: "large"
+});
+Herencia de templates
+
+python
+# Template base para todos los botones
+class BaseButtonTemplate:
+    # Propiedades comunes a todos los botones
+    
+# Template específico para botones de acción
+class ActionButtonTemplate(BaseButtonTemplate):
+    # Extiende con funcionalidades específicas
+ESTRUCTURA DE TEMPLATES POR CAPA
+Backend (FastAPI)
+text
+app/templates/
+├── api/              # Templates para respuestas HTTP
+├── models/           # Templates para modelos SQLAlchemy
+├── schemas/          # Templates para schemas Pydantic
+├── services/         # Templates para lógica de negocio
+├── endpoints/        # Templates para endpoints FastAPI
+├── components/       # Templates de componentes UI (para API responses)
+│   ├── buttons.py
+│   ├── cards.py
+│   ├── forms.py
+│   └── tables.py
+├── strategic/        # Templates específicos estratégicos
+├── operational/      # Templates específicos operativos
+└── kpis/            # Templates específicos KPIs
+Frontend (Vue/React)
+text
+src/templates/
+├── components/       # Templates de componentes Vue/React
+│   ├── BaseTemplates.js
+│   ├── FormTemplates.js
+│   ├── TableTemplates.js
+│   └── ChartTemplates.js
+├── pages/           # Templates de páginas completas
+├── layouts/         # Templates de layouts
+└── composables/     # Templates de lógica reutilizable
+🔄 PROCESOS AUTOMATIZADOS CON TEMPLATES
+1. Generación de POA desde Plan Estratégico
+python
+# Template que automatiza la transformación
+poa_generator = POAGenerationTemplate(
+    strategic_plan=plan,
+    year=2024,
+    rules={
+        "budget_allocation": "proportional",  # o "priority_based"
+        "activity_breakdown": "auto",         # o "manual"
+        "resource_optimization": True
+    }
+)
+
+# Genera POA completo con actividades, recursos, presupuesto
+poa = poa_generator.generate()
+2. Sistema de Alertas Inteligentes
+python
+# Template para configuración de alertas
+alert_template = AlertTemplate.kpi_threshold(
+    kpi_id="sales_growth",
+    conditions=[
+        {"operator": "<", "value": 5, "severity": "warning"},
+        {"operator": "<", "value": 0, "severity": "critical"}
+    ],
+    notifications=[
+        NotificationTemplate.email(recipients=["manager@company.com"]),
+        NotificationTemplate.slack(channel="#alerts"),
+        NotificationTemplate.dashboard(banner=True)
+    ],
+    escalation=EscalationTemplate.time_based(
+        levels=[("2h", "director"), ("24h", "ceo")]
+    )
+)
+3. Reportes Automatizados
+python
+# Template para reporte mensual
+monthly_report = ReportTemplate.monthly_dashboard(
+    metrics=[
+        MetricTemplate.kpi("sales"),
+        MetricTemplate.kpi("customer_satisfaction"),
+        MetricTemplate.progress("strategic_initiatives")
+    ],
+    charts=[
+        ChartTemplate.trend("monthly_sales"),
+        ChartTemplate.comparison("department_performance")
+    ],
+    distribution=[
+        DistributionTemplate.email(recipients="managers"),
+        DistributionTemplate.pdf(save_to="reports/"),
+        DistributionTemplate.api(webhook="https://bi.system.com")
+    ]
+)
+📊 BENEFICIOS DEL ENFOQUE TEMPLATE-BASED
+Para Desarrolladores
+Reducción del 70% en tiempo de desarrollo
+
+Consistencia garantizada en toda la aplicación
+
+Mantenimiento simplificado (cambios en un solo lugar)
+
+Onboarding más rápido para nuevos desarrolladores
+
+Para Usuarios Finales
+Experiencia consistente en todos los módulos
+
+Personalización fácil sin necesidad de desarrollo
+
+Actualizaciones sin interrupciones
+
+Documentación automática basada en templates
+
+Para la Organización
+Reducción de costos de desarrollo y mantenimiento
+
+Escalabilidad garantizada (nuevos módulos con templates existentes)
+
+Calidad asegurada (templates probados y validados)
+
+Adaptabilidad a cambios organizacionales
+
+🚀 IMPLEMENTACIÓN PRÁCTICA
+Ejemplo Real: Crear un Nuevo Módulo
+python
+# 1. Usar templates existentes para crear modelo
+from app.templates.models import CRUDModelTemplate
+StrategicPlanModel = CRUDModelTemplate.create(
+    name="StrategicPlan",
+    crud/
+    │   │   │   ├── __init__.py ❌
+    │   │   │   ├── base.py ❌          # CRUD base
+    │   │   │   ├── user.py ❌
+    │   │   │   ├── department.py ❌
+    │   │   │   ├── strategic/ ❌       # CRUD estratégicos
+    │   │   │   │   ├── __init__.py ❌
+    │   │   │   │   └── plan.py ❌
+    │   │   │   └── operational/ ❌     # CRUD operativos
+    │   │   │       ├── __init__.py ❌
+    │   │   │       └── poa.py ❌
+    │   │   ├── utils/
+    │   │   │   ├── __init__.py ❌
+    │   │   │   ├── validators.py ❌
+    │   │   │   ├── helpers.py ❌
+    │   │   │   ├── date_utils.py ❌
+    │   │   │   ├── file_utils.py ❌
+    │   │   │   ├── kpi_calculator.py ❌
+    │   │   │   ├── export_utils.py ❌   # Exportar Excel/PDF
+    │   │   │   └── import_utils.py ❌   # Importar datos
+    │   │   ├── templates/            # 🌟 TEMPLATES PARA GENERAR CÓDIGO
+    │   │   │   ├── __init__.py ✅
+    │   │   │   ├── base_templates.py ❌ # Templates base
+    │   │   │   ├── model_templates.py ❌ # Templates para modelos
+    │   │   │   ├── schema_templates.py ❌ # Templates para schemas
+    │   │   │   ├── service_templates.py ❌ # Templates para servicios
+    │   │   │   ├── repository_templates.py ❌ # Templates para repositorios
+    │   │   │   ├── endpoint_templates.py ❌ # Templates para endpoints
+    │   │   │   ├── components/ ❌       # Templates de componentes UI
+    │   │   │   │   ├── __init__.py ❌
+    │   │   │   │   ├── button_templates.py ❌ # Botones
+    │   │   │   │   ├── card_templates.py ❌   # Tarjetas
+    │   │   │   │   ├── form_templates.py ❌   # Formularios
+    │   │   │   │   ├── table_templates.py ❌  # Tablas
+    │   │   │   │   ├── chart_templates.py ❌  # Gráficos
+    │   │   │   │   ├── modal_templates.py ❌  # Modales
+    │   │   │   │   ├── filter_templates.py ❌ # Filtros
+    │   │   │   │   └── navigation_templates.py ❌ # Navegación
+    │   │   │   ├── strategic/ ❌       # Templates específicos estratégicos
+    │   │   │   │   ├── __init__.py ❌
+    │   │   │   │   ├── swot_template.py ❌    # Template FODA
+    │   │   │   │   ├── pestel_template.py ❌  # Template PESTEL
+    │   │   │   │   ├── porter_template.py ❌  # Template Porter
+    │   │   │   │   ├── plan_template.py ❌    # Template plan
+    │   │   │   │   └── axis_template.py ❌    # Template eje
+    │   │   │   ├── operational/ ❌     # Templates específicos operativos
+    │   │   │   │   ├── __init__.py ❌
+    │   │   │   │   ├── poa_template.py ❌     # Template POA
+    │   │   │   │   ├── activity_template.py ❌ # Template actividad
+    │   │   │   │   ├── gantt_template.py ❌   # Template Gantt
+    │   │   │   │   └── budget_template.py ❌  # Template presupuesto
+    │   │   │   ├── kpis/ ❌           # Templates específicos KPIs
+    │   │   │   │   ├── __init__.py ❌
+    │   │   │   │   ├── kpi_template.py ❌     # Template KPI
+    │   │   │   │   ├── scorecard_template.py ❌ # Template scorecard
+    │   │   │   │   └── gauge_template.py ❌   # Template medidor
+    │   │   │   └── exports/ ❌        # Templates para exportación
+    │   │   │       ├── __init__.py ❌
+    │   │   │       ├── excel_templates.py ❌  # Templates Excel
+    │   │   │       ├── pdf_templates.py ❌    # Templates PDF
+    │   │   │       ├── json_templates.py ❌   # Templates JSON
+    │   │   │       └── report_templates.py ❌ # Templates reportes
+# 4. Usar template para endpoint
+from app.templates.endpoints import CRUDEndpointTemplate
+strategic_endpoint = CRUDEndpointTemplate.create(
+    resource="strategic-plans",
+    service=strategic_service
+)
+
+# 5. Usar templates de UI para frontend
+import { PageTemplate, TableTemplate, FormTemplate } from '@/templates'
+
+const StrategicPlansPage = PageTemplate.crudPage({
+  title: "Planes Estratégicos",
+  table: TableTemplate.withColumns([
+    { key: "name", label: "Nombre" },
+    { key: "vision", label: "Visión" }
+  ]),
+  form: FormTemplate.withFields([
+    { name: "name", type: "text", label: "Nombre" },
+    { name: "vision", type: "textarea", label: "Visión" }
+  ])
+})
+🎯 CONCLUSIÓN
+El módulo de Planificación Estratégica y POA representa una plataforma unificada que transforma la estrategia organizacional en ejecución operativa, con trazabilidad completa y medición constante.
+
+El sistema de templates no es solo una característica técnica, sino el corazón del sistema, que garantiza:
+
+Estandarización en todos los niveles
+
+Reutilización máxima de componentes
+
+Configurabilidad sin desarrollo adicional
+
+Escalabilidad sostenible para futuras expansiones
+
+Regla de oro del desarrollo:
+
+"Si no existe un template para lo que necesitas, créalo pensando en cómo podría reutilizarse. Si ya existe un template, úsalo y configúralo."
+
+Este enfoque asegura que el sistema crezca de manera ordenada, mantenible y consistente, proporcionando una experiencia de usuario unificada y una base de código sólida para los próximos años.

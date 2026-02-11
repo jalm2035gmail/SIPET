@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+        }
+        .header {
+            background: #3498db;
+            color: #fff;
+            padding: 24px 32px;
+            font-size: 2em;
+            text-align: center;
+        }
+        .nav {
+            background: #2980b9;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            padding: 12px 0;
+        }
+        .nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 16px;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .nav a:hover {
+            color: #f1c40f;
+        }
+        .content {
+            max-width: 900px;
+            margin: 32px auto;
+            background: #fff;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {{ title }}
+    </div>
+    <div class="nav">
+        <a href="#">Inicio</a>
+        <a href="#">Servicios</a>
+        <a href="#">Contacto</a>
+        <a href="#">Personalización</a>
+    </div>
+    <div class="content">
+        {{ content|safe }}
+    </div>
+</body>
+</html>

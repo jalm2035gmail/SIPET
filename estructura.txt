@@ -1,0 +1,255 @@
+Avance: 02%
+
+
+
+Estructura
+
+strategic_planning/
+├── backend/ ❌                      # API FastAPI
+│   ├── app/ ❌
+│   │   ├── __init__.py ❌
+│   │   ├── main.py ✅               # Punto de entrada FastAPI
+│   │   ├── config.py ✅             # Configuración
+│   │   ├── database.py ❌           # Configuración DB
+│   │   ├── dependencies.py ❌       # Dependencias FastAPI
+│   │   ├── middleware.py ❌         # Middlewares
+│   │   ├── core/ ❌
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── config.py ❌         # Configuración core
+│   │   │   ├── security.py ❌       # Seguridad
+│   │   │   ├── exceptions.py ❌     # Excepciones
+│   │   │   └── constants.py ❌      # Constantes
+│   │   ├── api/ ❌
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── router.py ❌         # Router principal
+│   │   │   ├── deps.py ❌           # Dependencias API
+│   │   │   └── v1/ ❌
+│   │   │       ├── __init__.py ❌
+│   │   │       ├── router.py ❌     # Router v1
+│   │   │       └── endpoints/ ❌
+│   │   │           ├── __init__.py ❌
+│   │   │           ├── auth.py ❌
+│   │   │           ├── users.py ❌
+│   │   │           ├── departments.py ❌
+│   │   │           ├── strategic.py ❌
+│   │   │           ├── poa.py ❌
+│   │   │           ├── kpis.py ❌
+│   │   │           ├── reports.py ❌
+│   │   │           ├── dashboard.py ❌
+│   │   │           └── files.py ❌
+│   │   ├── models/ ❌
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── base.py ❌           # Modelo base SQLAlchemy
+│   │   │   ├── user.py ❌           # Usuarios
+│   │   │   ├── department.py ❌     # Departamentos
+│   │   │   ├── strategic/ ❌        # Modelos estratégicos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── plan.py ❌
+│   │   │   │   ├── diagnostic.py ❌ # FODA, PESTEL, Porter
+│   │   │   │   ├── axis.py ❌
+│   │   │   │   └── objective.py ❌
+│   │   │   ├── operational/ ❌      # Modelos operativos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── poa.py ❌
+│   │   │   │   ├── activity.py ❌
+│   │   │   │   ├── task.py ❌
+│   │   │   │   └── resource.py ❌
+│   │   │   ├── kpis/ ❌            # Modelos KPIs
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── kpi.py ❌
+│   │   │   │   ├── measurement.py ❌
+│   │   │   │   └── alert.py ❌
+│   │   │   └── system/ ❌          # Modelos sistema
+│   │   │       ├── __init__.py ❌
+│   │   │       ├── notification.py ❌
+│   │   │       ├── audit.py ❌
+│   │   │       └── setting.py ❌
+│   │   ├── schemas/ ❌
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── base.py ❌          # Esquemas base Pydantic
+│   │   │   ├── response.py ❌      # Respuestas API
+│   │   │   ├── user.py ❌
+│   │   │   ├── department.py ❌
+│   │   │   ├── strategic/ ❌       # Esquemas estratégicos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── plan.py ❌
+│   │   │   │   ├── diagnostic.py ❌
+│   │   │   │   ├── axis.py ❌
+│   │   │   │   └── objective.py ❌
+│   │   │   ├── operational/ ❌     # Esquemas operativos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── poa.py ❌
+│   │   │   │   ├── activity.py ❌
+│   │   │   │   ├── task.py ❌
+│   │   │   │   └── resource.py ❌
+│   │   │   ├── kpis/ ❌           # Esquemas KPIs
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── kpi.py ❌
+│   │   │   │   ├── measurement.py ❌
+│   │   │   │   └── alert.py ❌
+│   │   │   └── system/ ❌         # Esquemas sistema
+│   │   │       ├── __init__.py ❌
+│   │   │       ├── notification.py ❌
+│   │   │       └── setting.py ❌
+│   │   ├── services/ ❌
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── auth_service.py ❌
+│   │   │   ├── user_service.py ❌
+│   │   │   ├── department_service.py ❌
+│   │   │   ├── strategic/ ❌       # Servicios estratégicos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── plan_service.py ❌
+│   │   │   │   ├── diagnostic_service.py ❌
+│   │   │   │   └── axis_service.py ❌
+│   │   │   ├── operational/ ❌     # Servicios operativos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── poa_service.py ❌
+│   │   │   │   ├── activity_service.py ❌
+│   │   │   │   └── resource_service.py ❌
+│   │   │   ├── kpis/ ❌           # Servicios KPIs
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── kpi_service.py ❌
+│   │   │   │   └── alert_service.py ❌
+│   │   │   ├── report_service.py ❌
+│   │   │   ├── dashboard_service.py ❌
+│   │   │   ├── file_service.py ❌
+│   │   │   └── notification_service.py ❌
+│   │   ├── repositories/ ❌
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── base.py ❌          # Repositorio base
+│   │   │   ├── user_repository.py ❌
+│   │   │   ├── department_repository.py ❌
+│   │   │   ├── strategic/ ❌       # Repositorios estratégicos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── plan_repository.py ❌
+│   │   │   │   └── axis_repository.py ❌
+│   │   │   ├── operational/ ❌     # Repositorios operativos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   └── poa_repository.py ❌
+│   │   │   └── kpi_repository.py ❌
+│   │   ├── crud/
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py          # CRUD base
+│   │   │   ├── user.py ❌
+│   │   │   ├── department.py ❌
+│   │   │   ├── strategic/ ❌       # CRUD estratégicos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   └── plan.py ❌
+│   │   │   └── operational/ ❌     # CRUD operativos
+│   │   │       ├── __init__.py ❌
+│   │   │       └── poa.py ❌
+│   │   ├── utils/
+│   │   │   ├── __init__.py
+│   │   │   ├── validators.py
+│   │   │   ├── helpers.py ❌
+│   │   │   ├── date_utils.py ❌
+│   │   │   ├── file_utils.py ❌
+│   │   │   ├── kpi_calculator.py ❌
+│   │   │   ├── export_utils.py ❌   # Exportar Excel/PDF
+│   │   │   └── import_utils.py ❌   # Importar datos
+│   │   ├── templates/            # 🌟 TEMPLATES PARA GENERAR CÓDIGO
+│   │   │   ├── __init__.py ✅
+│   │   │   ├── base_templates.py ❌ # Templates base
+│   │   │   ├── model_templates.py ❌ # Templates para modelos
+│   │   │   ├── schema_templates.py ❌ # Templates para schemas
+│   │   │   ├── service_templates.py ❌ # Templates para servicios
+│   │   │   ├── repository_templates.py ❌ # Templates para repositorios
+│   │   │   ├── endpoint_templates.py ❌ # Templates para endpoints
+│   │   │   ├── components/ ❌       # Templates de componentes UI
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── button_templates.py ❌ # Botones
+│   │   │   │   ├── card_templates.py ❌   # Tarjetas
+│   │   │   │   ├── form_templates.py ❌   # Formularios
+│   │   │   │   ├── table_templates.py ❌  # Tablas
+│   │   │   │   ├── chart_templates.py ❌  # Gráficos
+│   │   │   │   ├── modal_templates.py ❌  # Modales
+│   │   │   │   ├── filter_templates.py ❌ # Filtros
+│   │   │   │   └── navigation_templates.py ❌ # Navegación
+│   │   │   ├── strategic/ ❌       # Templates específicos estratégicos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── swot_template.py ❌    # Template FODA
+│   │   │   │   ├── pestel_template.py ❌  # Template PESTEL
+│   │   │   │   ├── porter_template.py ❌  # Template Porter
+│   │   │   │   ├── plan_template.py ❌    # Template plan
+│   │   │   │   └── axis_template.py ❌    # Template eje
+│   │   │   ├── operational/ ❌     # Templates específicos operativos
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── poa_template.py ❌     # Template POA
+│   │   │   │   ├── activity_template.py ❌ # Template actividad
+│   │   │   │   ├── gantt_template.py ❌   # Template Gantt
+│   │   │   │   └── budget_template.py ❌  # Template presupuesto
+│   │   │   ├── kpis/ ❌           # Templates específicos KPIs
+│   │   │   │   ├── __init__.py ❌
+│   │   │   │   ├── kpi_template.py ❌     # Template KPI
+│   │   │   │   ├── scorecard_template.py ❌ # Template scorecard
+│   │   │   │   └── gauge_template.py ❌   # Template medidor
+│   │   │   └── exports/ ❌        # Templates para exportación
+│   │   │       ├── __init__.py ❌
+│   │   │       ├── excel_templates.py ❌  # Templates Excel
+│   │   │       ├── pdf_templates.py ❌    # Templates PDF
+│   │   │       ├── json_templates.py ❌   # Templates JSON
+│   │   │       └── report_templates.py ❌ # Templates reportes
+│   │   ├── worker/              # Tareas asíncronas (Celery)
+│   │   │   ├── __init__.py ❌
+│   │   │   ├── celery_app.py ❌
+│   │   │   ├── tasks.py ❌
+│   │   │   └── periodic_tasks.py ❌
+│   │   └── static/              # Archivos estáticos backend
+│   │       ├── exports/ ❌         # Plantillas exportación
+│   │       ├── imports/ ❌         # Plantillas importación
+│   │       └── reports/ ❌         # Plantillas reportes
+│   ├── alembic/                 # Migraciones
+│   ├── tests/                   # Pruebas backend
+│   ├── scripts/                 # Scripts backend
+│   ├── requirements/
+│   ├── docker/
+│   └── README.md ❌
+alembic/ ❌                 # Migraciones
+│   ├── tests/ ❌                   # Pruebas backend
+│   ├── scripts/ ❌                 # Scripts backend
+│   ├── requirements/ ❌
+│   ├── docker/ ❌
+│
+├── frontend/                    # Aplicación frontend (Vue/React)
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── common/ ❌         # Componentes comunes
+│   │   │   │   ├── buttons/ ❌
+│   │   │   │   ├── forms/ ❌
+│   │   │   │   ├── cards/ ❌
+│   │   │   │   ├── tables/ ❌
+│   │   │   │   ├── modals/ ❌
+│   │   │   │   ├── navigation/ ❌
+│   │   │   │   └── feedback/ ❌
+│   │   │   ├── strategic/ ❌      # Componentes estratégicos
+│   │   │   ├── operational/ ❌    # Componentes operativos
+│   │   │   ├── kpis/ ❌          # Componentes KPIs
+│   │   │   └── reports/ ❌       # Componentes reportes
+│   │   ├── views/ ❌             # Vistas/páginas
+│   │   │   ├── auth/ ❌          # Autenticación
+│   │   │   ├── dashboard/ ❌     # Dashboards
+│   │   │   ├── strategic/ ❌     # Planificación estratégica
+│   │   │   ├── operational/ ❌   # POA y operaciones
+│   │   │   ├── kpis/ ❌         # KPIs y métricas
+│   │   │   ├── reports/ ❌      # Reportes
+│   │   │   ├── users/ ❌        # Usuarios
+│   │   │   ├── settings/ ❌     # Configuración
+│   │   │   └── admin/ ❌        # Administración
+│   │   ├── templates/ ❌        # 🌟 TEMPLATES PARA COMPONENTES FRONTEND
+│   │   │   ├── __init__.js ❌
+│   │   │   ├── component_templates.js ❌ # Templates Vue/React
+│   │   │   ├── page_templates.js ❌      # Templates páginas
+│   │   │   ├── form_templates.js ❌      # Templates formularios
+│   │   │   ├── table_templates.js ❌     # Templates tablas
+│   │   │   ├── chart_templates.js ❌     # Templates gráficos
+│   │   │   ├── strategic/ ❌            # Templates estratégicos
+│   │   │   │   ├── swot_template.vue ❌
+│   │   │   │   ├── pestel_template.vue ❌
+│   │   │   │   └── plan_template.vue ❌
+│   │   │   ├── operational/ ❌          # Templates operativos
+│   │   │   │   ├── poa_template.vue ❌
+│   │   │   │   └── gantt_template.vue ❌
+│   │   │   └── kpis/ ❌                # Templates KPIs
+│   │   │       ├── kpi_template.vue ❌
+│   │   │       └── scorecard_template.vue ❌
+│   │   └── ... [resto de frontend]
