@@ -1859,6 +1859,450 @@ PLAN_ESTRATEGICO_HTML = dedent("""
     </section>
 """)
 
+INICIO_BSC_HTML = dedent("""
+    <section class="inicio-bsc">
+        <style>
+            .inicio-bsc {
+                display: grid;
+                gap: 18px;
+            }
+            .inicio-hero {
+                background: linear-gradient(120deg, #0f2a47 0%, #123a63 50%, #156fa4 100%);
+                border-radius: 18px;
+                padding: 24px;
+                color: #f4f8ff;
+                box-shadow: 0 14px 36px rgba(15, 42, 71, 0.28);
+            }
+            .inicio-hero h2 {
+                margin: 0 0 8px;
+                font-size: 1.45rem;
+            }
+            .inicio-hero p {
+                margin: 0;
+                opacity: 0.95;
+                line-height: 1.55;
+            }
+            .inicio-kpi-grid,
+            .inicio-bsc-grid,
+            .inicio-bottom-grid {
+                display: grid;
+                gap: 14px;
+            }
+            .inicio-kpi-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+            .inicio-kpi-card {
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 16px;
+                border: 1px solid #dbe6f3;
+                box-shadow: 0 8px 22px rgba(12, 34, 58, 0.08);
+            }
+            .inicio-kpi-card small {
+                display: block;
+                color: #47627f;
+                margin-bottom: 6px;
+            }
+            .inicio-kpi-card strong {
+                font-size: 1.4rem;
+                color: #132f4a;
+            }
+            .inicio-bsc-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .bsc-card {
+                background: #ffffff;
+                border: 1px solid #d8e5f4;
+                border-radius: 16px;
+                padding: 16px;
+                box-shadow: 0 8px 20px rgba(15, 42, 71, 0.07);
+            }
+            .bsc-card header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .bsc-card h3 {
+                margin: 0;
+                font-size: 1.02rem;
+                color: #0f2b45;
+            }
+            .bsc-badge {
+                font-size: 0.78rem;
+                border-radius: 999px;
+                padding: 4px 10px;
+                color: #0f2b45;
+                background: #eaf3ff;
+                font-weight: 700;
+            }
+            .bsc-card ul {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                display: grid;
+                gap: 8px;
+            }
+            .bsc-card li {
+                background: #f8fbff;
+                border: 1px solid #e2ebf6;
+                border-radius: 10px;
+                padding: 10px 12px;
+                color: #23415f;
+                line-height: 1.45;
+            }
+            .inicio-bottom-grid {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+            .mapa-card,
+            .iniciativas-card {
+                background: #ffffff;
+                border: 1px solid #d8e5f4;
+                border-radius: 16px;
+                padding: 16px;
+                box-shadow: 0 8px 20px rgba(15, 42, 71, 0.07);
+            }
+            .mapa-card h3,
+            .iniciativas-card h3 {
+                margin: 0 0 10px;
+                color: #0f2b45;
+            }
+            .mapa-flow {
+                display: grid;
+                gap: 8px;
+            }
+            .mapa-step {
+                border-radius: 10px;
+                padding: 10px 12px;
+                color: #113253;
+                font-weight: 600;
+                border: 1px solid #cde0f5;
+                background: #eef6ff;
+            }
+            .iniciativas-card table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.92rem;
+            }
+            .iniciativas-card th,
+            .iniciativas-card td {
+                text-align: left;
+                padding: 8px 6px;
+                border-bottom: 1px solid #e4edf8;
+            }
+            .estado {
+                font-weight: 700;
+            }
+            .estado.ok { color: #0f7a3e; }
+            .estado.risk { color: #b54708; }
+            .estado.alert { color: #b42318; }
+            @media (max-width: 1100px) {
+                .inicio-kpi-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                .inicio-bottom-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            @media (max-width: 700px) {
+                .inicio-bsc-grid,
+                .inicio-kpi-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+
+        <article class="inicio-hero">
+            <h2>Tablero de Control Estratégico y Táctico</h2>
+            <p>
+                Vista ejecutiva tipo Balanced Scorecard para monitorear objetivos, indicadores,
+                iniciativas y semáforos de desempeño del POA.
+            </p>
+        </article>
+
+        <section class="inicio-kpi-grid" aria-label="Resumen de indicadores">
+            <article class="inicio-kpi-card"><small>Cumplimiento global POA</small><strong>78%</strong></article>
+            <article class="inicio-kpi-card"><small>Objetivos estratégicos en meta</small><strong>9 / 12</strong></article>
+            <article class="inicio-kpi-card"><small>Iniciativas activas</small><strong>24</strong></article>
+            <article class="inicio-kpi-card"><small>Desviaciones críticas</small><strong>3</strong></article>
+        </section>
+
+        <section class="inicio-bsc-grid" aria-label="Perspectivas Balanced Scorecard">
+            <article class="bsc-card">
+                <header><h3>Perspectiva Financiera</h3><span class="bsc-badge">Meta 85%</span></header>
+                <ul>
+                    <li>Ejecución presupuestaria: 81%</li>
+                    <li>Reducción de costos operativos: 6.2%</li>
+                    <li>Proyectos dentro de presupuesto: 14/18</li>
+                </ul>
+            </article>
+            <article class="bsc-card">
+                <header><h3>Clientes / Usuarios</h3><span class="bsc-badge">Meta 90%</span></header>
+                <ul>
+                    <li>Satisfacción general: 88%</li>
+                    <li>Tiempo de respuesta a solicitudes: 42h</li>
+                    <li>Servicios con nivel alto: 11/13</li>
+                </ul>
+            </article>
+            <article class="bsc-card">
+                <header><h3>Procesos Internos</h3><span class="bsc-badge">Meta 80%</span></header>
+                <ul>
+                    <li>Procesos críticos estandarizados: 73%</li>
+                    <li>Hitos del POA cumplidos en fecha: 31/40</li>
+                    <li>Incidencias operativas abiertas: 7</li>
+                </ul>
+            </article>
+            <article class="bsc-card">
+                <header><h3>Aprendizaje y Crecimiento</h3><span class="bsc-badge">Meta 75%</span></header>
+                <ul>
+                    <li>Capacitaciones ejecutadas: 18/22</li>
+                    <li>Competencias críticas certificadas: 69%</li>
+                    <li>Mejoras implementadas por innovación: 12</li>
+                </ul>
+            </article>
+        </section>
+
+        <section class="inicio-bottom-grid">
+            <article class="mapa-card">
+                <h3>Mapa Estratégico (cascarón)</h3>
+                <div class="mapa-flow">
+                    <div class="mapa-step">Aprendizaje y crecimiento impulsa capacidades institucionales</div>
+                    <div class="mapa-step">Procesos internos mejoran productividad y control operativo</div>
+                    <div class="mapa-step">Mayor valor para usuarios y mejor percepción del servicio</div>
+                    <div class="mapa-step">Resultados financieros sostenibles y cumplimiento de objetivos</div>
+                </div>
+            </article>
+            <article class="iniciativas-card">
+                <h3>Iniciativas Prioritarias</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Iniciativa</th>
+                            <th>Avance</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Digitalización de procesos POA</td><td>82%</td><td class="estado ok">En meta</td></tr>
+                        <tr><td>Programa de eficiencia operativa</td><td>61%</td><td class="estado risk">En riesgo</td></tr>
+                        <tr><td>Modelo de seguimiento KPI</td><td>47%</td><td class="estado alert">Crítico</td></tr>
+                    </tbody>
+                </table>
+            </article>
+        </section>
+    </section>
+""")
+
+PROYECTANDO_HTML = dedent("""
+    <section class="proyectando-page">
+        <style>
+            .proyectando-page {
+                display: grid;
+                gap: 16px;
+            }
+            .proyectando-hero {
+                border-radius: 16px;
+                padding: 22px;
+                background: linear-gradient(125deg, #0f3152 0%, #12507a 55%, #1f7aa8 100%);
+                color: #f5fbff;
+                box-shadow: 0 12px 30px rgba(11, 39, 63, 0.26);
+            }
+            .proyectando-hero h2 {
+                margin: 0 0 8px;
+            }
+            .proyectando-hero p {
+                margin: 0;
+                line-height: 1.6;
+                opacity: 0.96;
+            }
+            .proyectando-kpis {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 12px;
+            }
+            .proyectando-kpi {
+                background: #fff;
+                border: 1px solid #dbe7f3;
+                border-radius: 12px;
+                padding: 12px;
+                box-shadow: 0 6px 18px rgba(15, 38, 61, 0.08);
+            }
+            .proyectando-kpi small {
+                display: block;
+                color: #4a657f;
+                margin-bottom: 6px;
+            }
+            .proyectando-kpi strong {
+                font-size: 1.22rem;
+                color: #13324f;
+            }
+            .proyectando-grid {
+                display: grid;
+                grid-template-columns: 1.2fr 0.8fr;
+                gap: 14px;
+            }
+            .proyectando-card {
+                background: #fff;
+                border: 1px solid #d8e4f1;
+                border-radius: 14px;
+                padding: 14px;
+                box-shadow: 0 6px 18px rgba(15, 38, 61, 0.08);
+            }
+            .proyectando-card h3 {
+                margin: 0 0 10px;
+                color: #10314f;
+                font-size: 1.03rem;
+            }
+            .proyectando-form {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+            .proyectando-field label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 5px;
+                color: #284966;
+                font-size: 0.9rem;
+            }
+            .proyectando-field input,
+            .proyectando-field select {
+                width: 100%;
+                border: 1px solid #cfdcea;
+                border-radius: 10px;
+                padding: 10px;
+                font-size: 0.92rem;
+                background: #f9fcff;
+            }
+            .proyectando-actions {
+                margin-top: 10px;
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .proyectando-actions button {
+                border: 0;
+                border-radius: 10px;
+                padding: 10px 12px;
+                font-weight: 700;
+                cursor: pointer;
+            }
+            .btn-primary {
+                background: #0f6dad;
+                color: #fff;
+            }
+            .btn-secondary {
+                background: #e8f2fc;
+                color: #123c61;
+            }
+            .proyectando-card table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9rem;
+            }
+            .proyectando-card th,
+            .proyectando-card td {
+                text-align: left;
+                padding: 8px 6px;
+                border-bottom: 1px solid #e5edf6;
+            }
+            .pill {
+                display: inline-block;
+                font-size: 0.8rem;
+                border-radius: 999px;
+                padding: 4px 8px;
+                font-weight: 700;
+                background: #eaf4ff;
+                color: #13446a;
+            }
+            @media (max-width: 1000px) {
+                .proyectando-kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                .proyectando-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            @media (max-width: 680px) {
+                .proyectando-kpis,
+                .proyectando-form {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+
+        <article class="proyectando-hero">
+            <h2>Proyectando: Herramienta de Proyección Financiera</h2>
+            <p>
+                Cascarón inicial para simular escenarios financieros, proyectar ingresos y costos,
+                y monitorear flujo de caja en horizontes mensual, trimestral y anual.
+            </p>
+        </article>
+
+        <section class="proyectando-kpis">
+            <article class="proyectando-kpi"><small>Ingresos proyectados (12m)</small><strong>$1,240,000</strong></article>
+            <article class="proyectando-kpi"><small>Costos proyectados (12m)</small><strong>$918,000</strong></article>
+            <article class="proyectando-kpi"><small>Flujo neto estimado</small><strong>$322,000</strong></article>
+            <article class="proyectando-kpi"><small>Margen estimado</small><strong>26%</strong></article>
+        </section>
+
+        <section class="proyectando-grid">
+            <article class="proyectando-card">
+                <h3>Parámetros de proyección</h3>
+                <div class="proyectando-form">
+                    <div class="proyectando-field">
+                        <label>Horizonte</label>
+                        <select>
+                            <option>12 meses</option>
+                            <option>24 meses</option>
+                            <option>36 meses</option>
+                        </select>
+                    </div>
+                    <div class="proyectando-field">
+                        <label>Crecimiento mensual (%)</label>
+                        <input type="number" value="2.5" step="0.1">
+                    </div>
+                    <div class="proyectando-field">
+                        <label>Inflación estimada (%)</label>
+                        <input type="number" value="4.0" step="0.1">
+                    </div>
+                    <div class="proyectando-field">
+                        <label>Tasa de descuento (%)</label>
+                        <input type="number" value="10.0" step="0.1">
+                    </div>
+                    <div class="proyectando-field">
+                        <label>Ingresos base mensuales</label>
+                        <input type="number" value="85000">
+                    </div>
+                    <div class="proyectando-field">
+                        <label>Costos base mensuales</label>
+                        <input type="number" value="62000">
+                    </div>
+                </div>
+                <div class="proyectando-actions">
+                    <button class="btn-primary" type="button">Calcular proyección</button>
+                    <button class="btn-secondary" type="button">Guardar escenario</button>
+                    <button class="btn-secondary" type="button">Exportar</button>
+                </div>
+            </article>
+
+            <article class="proyectando-card">
+                <h3>Escenarios</h3>
+                <table>
+                    <thead>
+                        <tr><th>Escenario</th><th>Flujo neto</th><th>Riesgo</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Conservador</td><td>$210,000</td><td><span class="pill">Bajo</span></td></tr>
+                        <tr><td>Base</td><td>$322,000</td><td><span class="pill">Medio</span></td></tr>
+                        <tr><td>Agresivo</td><td>$455,000</td><td><span class="pill">Alto</span></td></tr>
+                    </tbody>
+                </table>
+            </article>
+        </section>
+    </section>
+""")
+
 POA_HTML = dedent("""
     <section class="foda-page">
         <article class="foda-input-card">
@@ -2875,8 +3319,20 @@ def inicio_page(request: Request):
     return render_backend_page(
         request,
         title="Inicio",
-        description="",
-        content="",
+        description="Tablero de control estratégico y táctico",
+        content=INICIO_BSC_HTML,
+        hide_floating_actions=True,
+        show_page_header=False,
+    )
+
+
+@app.get("/proyectando", response_class=HTMLResponse)
+def proyectando_page(request: Request):
+    return render_backend_page(
+        request,
+        title="Proyectando",
+        description="Herramienta de proyección financiera",
+        content=PROYECTANDO_HTML,
         hide_floating_actions=True,
         show_page_header=False,
     )
