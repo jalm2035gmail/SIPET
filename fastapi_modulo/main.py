@@ -598,6 +598,7 @@ async def enforce_backend_login(request: Request, call_next):
         "/web",
         "/web/404",
         "/web/login",
+        "/health",
         "/docs",
         "/redoc",
         "/openapi.json",
