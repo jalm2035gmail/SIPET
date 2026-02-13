@@ -285,6 +285,10 @@ app = FastAPI(title="Módulo de Planificación Estratégica y POA", docs_url="/d
 templates = Jinja2Templates(directory="fastapi_modulo/templates")
 app.mount("/templates", StaticFiles(directory="fastapi_modulo/templates"), name="templates")
 
+@app.get("/health")
+def healthcheck():
+    return {"status": "ok"}
+
 
 def _not_found_context(request: Request, title: str = "Pagina no encontrada") -> Dict[str, str]:
     login_identity = _get_login_identity_context()
