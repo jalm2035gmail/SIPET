@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="/templates/icon/icon.png">
-    <link rel="shortcut icon" type="image/x-icon" href="/templates/icon/icon.png">
+    <link rel="icon" type="image/png" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
     <title>{{ title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -17,6 +17,7 @@
             --sidebar-text: #ffffff;
             --sidebar-icon: #f5f7fb;
             --sidebar-hover: #2a3a52;
+            --field-color: #e7d7da;
             --page-bg: #f4f6fb;
             --content-bg: #ffffff;
             --body-text: #0f172a;
@@ -522,21 +523,24 @@
         .floating-actions-group[data-floating-screen="areas"] .action-button,
         .floating-actions-group[data-floating-screen="plantillas"] .action-button {
             min-width: 124px;
-            justify-content: flex-start;
-            border: 1px solid #cbd5e1;
-            background: #ffffff;
-            color: #0f172a;
+            justify-content: center;
+            border: 1px solid var(--floating-action-border, #cbd5e1);
+            background: var(--floating-action-bg, #ffffff);
+            color: var(--floating-action-text, #0f172a);
         }
         .floating-actions-group[data-floating-screen="usuarios"] .action-label,
         .floating-actions-group[data-floating-screen="areas"] .action-label,
         .floating-actions-group[data-floating-screen="plantillas"] .action-label {
-            position: static;
-            inset: auto;
-            opacity: 1;
-            font-style: normal;
-            pointer-events: auto;
-            color: #0f172a;
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            font-style: italic;
+            pointer-events: none;
+            color: var(--floating-action-text, #0f172a);
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .floating-actions-group[data-floating-screen="usuarios"] .action-button:hover img,
         .floating-actions-group[data-floating-screen="usuarios"] .action-button:hover svg,
@@ -544,7 +548,30 @@
         .floating-actions-group[data-floating-screen="areas"] .action-button:hover svg,
         .floating-actions-group[data-floating-screen="plantillas"] .action-button:hover img,
         .floating-actions-group[data-floating-screen="plantillas"] .action-button:hover svg {
+            opacity: 0;
+        }
+        .floating-actions-group[data-floating-screen="usuarios"] .action-button:hover .action-label,
+        .floating-actions-group[data-floating-screen="areas"] .action-button:hover .action-label,
+        .floating-actions-group[data-floating-screen="plantillas"] .action-button:hover .action-label {
             opacity: 1;
+        }
+        .floating-actions-group[data-floating-screen="areas"].active {
+            display: flex !important;
+        }
+        .floating-actions-group[data-floating-screen="areas"] .action-button,
+        .floating-actions-group[data-floating-screen="areas"] .action-label,
+        .floating-actions-group[data-floating-screen="areas"] .action-button img,
+        .floating-actions-group[data-floating-screen="areas"] .action-button svg {
+            visibility: visible;
+        }
+        .floating-actions-group[data-floating-screen="usuarios"].active {
+            display: flex !important;
+        }
+        .floating-actions-group[data-floating-screen="usuarios"] .action-button,
+        .floating-actions-group[data-floating-screen="usuarios"] .action-label,
+        .floating-actions-group[data-floating-screen="usuarios"] .action-button img,
+        .floating-actions-group[data-floating-screen="usuarios"] .action-button svg {
+            visibility: visible;
         }
         .floating-toggle {
             position: absolute;
@@ -731,12 +758,45 @@
         .usuario-card {
             padding: 16px 20px;
             border-radius: 16px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--sidebar-bottom, #0f172a);
             background: #fcfcff;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+        }
+        .kanban-card-two-col {
+            display: grid;
+            grid-template-columns: 88px minmax(0, 1fr);
+            align-items: center;
+            gap: 14px;
+        }
+        .kanban-card-media {
+            width: 88px;
+            height: 88px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #dbe3ef;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kanban-card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .kanban-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+        .kanban-card-body strong,
+        .kanban-card-body span {
+            overflow-wrap: anywhere;
         }
         .usuario-card strong {
             font-size: 1rem;
@@ -751,7 +811,7 @@
             gap: 16px;
         }
         .usuario-kanban-column {
-            border: 1px dashed #d1d5db;
+            border: 1px dashed var(--sidebar-bottom, #0f172a);
             border-radius: 16px;
             padding: 12px;
             background: #fff;
@@ -770,13 +830,43 @@
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 14px 18px;
         }
+        .area-relacion-help-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .area-relacion-help-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #334155;
+            background: #f8fafc;
+            border: 1px solid #dbeafe;
+            border-radius: 999px;
+            padding: 4px 10px;
+        }
+        .area-relacion-help-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1px solid #0f172a;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
         .area-kanban-columns {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
         }
         .area-kanban-column {
-            border: 1px dashed #d1d5db;
+            border: 1px dashed var(--sidebar-bottom, #0f172a);
             border-radius: 12px;
             padding: 12px;
             background: #fff;
@@ -788,7 +878,7 @@
         }
         .area-card {
             padding: 10px 12px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--sidebar-bottom, #0f172a);
             border-radius: 10px;
             background: #f8fafc;
             display: flex;
@@ -801,6 +891,12 @@
         .area-card span {
             color: #475569;
             font-size: 0.9rem;
+        }
+        .area-card.kanban-card-two-col {
+            display: grid;
+            grid-template-columns: 88px minmax(0, 1fr);
+            align-items: center;
+            gap: 14px;
         }
         .usuario-organigrama {
             display: flex;
@@ -893,10 +989,113 @@
         .plantilla-preview-frame {
             width: 100%;
             min-height: 290px;
+            height: 340px;
             border: 1px solid #dbe3ef;
             border-radius: 10px;
             background: #ffffff;
             margin-top: 10px;
+        }
+        .form-builder-panel {
+            margin-top: 12px;
+            border: 1px solid #dbe3ef;
+            border-radius: 10px;
+            padding: 14px;
+            background: #f8fbff;
+        }
+        .form-builder-panel.hidden {
+            display: none;
+        }
+        .form-builder-head h4 {
+            margin: 0;
+            color: #0f172a;
+        }
+        .form-builder-head p {
+            margin: 4px 0 0;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+        .form-builder-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 12px;
+            margin-top: 12px;
+        }
+        .form-builder-grid.field-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .form-builder-description {
+            grid-column: 1 / -1;
+        }
+        .form-builder-description textarea {
+            min-height: 72px;
+        }
+        .form-field-inline {
+            align-self: end;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-builder-field-editor {
+            margin-top: 12px;
+            border-top: 1px solid #dbe3ef;
+            padding-top: 12px;
+        }
+        .form-builder-field-editor h5,
+        .form-builder-list-wrap h5 {
+            margin: 0 0 10px;
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+        .form-builder-actions {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .form-builder-actions button {
+            border: 1px solid #14532d;
+            background: #166534;
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .form-builder-fields-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .builder-field-item {
+            border: 1px solid #dbe3ef;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+        }
+        .builder-field-item .meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: #334155;
+            font-size: 0.86rem;
+        }
+        .builder-field-item strong {
+            color: #0f172a;
+            font-size: 0.92rem;
+        }
+        .builder-field-delete {
+            border: 1px solid #b91c1c;
+            background: #fff1f2;
+            color: #b91c1c;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-weight: 600;
         }
         .org-level {
             display: flex;
@@ -907,11 +1106,26 @@
         .org-node {
             min-width: 210px;
             padding: 12px 14px;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--sidebar-bottom, #0f172a);
             border-radius: 8px;
             background: #ffffff;
             text-align: center;
             box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+        .org-node-avatar {
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 10px;
+            border-radius: 16px;
+            border: 1px solid #cbd5e1;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        .org-node-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
         .org-node strong {
             display: block;
@@ -924,7 +1138,7 @@
             font-size: 0.9rem;
         }
         .org-root .org-node {
-            border-color: #0f172a;
+            border-color: var(--sidebar-bottom, #0f172a);
             background: #f8fafc;
         }
         .org-divider {
@@ -1003,6 +1217,17 @@
             outline: none;
             border-color: #64748b;
             box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.12);
+        }
+        .campo-personalizado {
+            background: var(--field-color, #e7d7da) !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            padding: 10px 14px;
+        }
+        input.campo-personalizado,
+        textarea.campo-personalizado,
+        select.campo-personalizado {
+            border-radius: 16px !important;
         }
         .password-confirm-backdrop {
             position: fixed;
@@ -1087,6 +1312,27 @@
             min-height: 96px;
             resize: vertical;
         }
+        .identity-inline-field {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            align-items: center;
+            gap: 12px;
+        }
+        .identity-inline-field label.identity-field-label {
+            text-align: right;
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: #334155;
+            line-height: 1.1;
+            display: inline-flex;
+            flex-direction: column;
+            gap: 2px;
+            justify-self: end;
+        }
+        .identity-inline-field textarea {
+            min-height: 86px;
+        }
         .foda-input-actions {
             margin-top: 12px;
             display: flex;
@@ -1100,6 +1346,71 @@
             padding: 8px 14px;
             font-weight: 600;
             cursor: pointer;
+        }
+        .identity-assets-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .identity-asset-row {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            align-items: center;
+            gap: 16px;
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .identity-asset-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            text-align: right;
+        }
+        .identity-asset-media {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .identity-asset-image {
+            width: 100%;
+            max-width: 520px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            background: #f8fafc;
+        }
+        .identity-asset-image-logo {
+            object-fit: contain;
+        }
+        .identity-asset-image-favicon {
+            width: 96px;
+            height: 96px;
+            max-width: 96px;
+            object-fit: contain;
+            padding: 10px;
+        }
+        .identity-asset-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 106px;
+        }
+        .identity-asset-actions button {
+            border: 1px solid #94a3b8;
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .identity-asset-actions .identity-asset-delete {
+            border-color: #fecaca;
+            color: #991b1b;
+            background: #fff1f2;
         }
         .foda-matrix {
             display: grid;
@@ -1548,6 +1859,31 @@
             .foda-input-grid {
                 grid-template-columns: 1fr;
             }
+            .identity-inline-field {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            .identity-inline-field label.identity-field-label {
+                text-align: left;
+                justify-self: start;
+            }
+            .identity-asset-row {
+                grid-template-columns: 1fr;
+            }
+            .identity-asset-title {
+                text-align: left;
+            }
+            .identity-asset-media {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .identity-asset-image {
+                max-width: 100%;
+                height: 150px;
+            }
+            .identity-asset-actions {
+                flex-direction: row;
+            }
             .foda-matrix {
                 grid-template-columns: 1fr;
             }
@@ -1577,6 +1913,17 @@
             }
             .plantillas-editor-grid {
                 grid-template-columns: 1fr;
+            }
+            .form-builder-grid,
+            .form-builder-grid.field-grid {
+                grid-template-columns: 1fr;
+            }
+            .kanban-card-two-col {
+                grid-template-columns: 72px minmax(0, 1fr);
+            }
+            .kanban-card-media {
+                width: 72px;
+                height: 72px;
             }
             .image-uploader {
                 align-items: flex-start;
@@ -1767,6 +2114,10 @@
                 </button>
             </div>
             <div class="floating-actions-group{% if (floating_actions_screen | default('personalization')) == 'areas' %} active{% endif %}" data-floating-screen="areas"{% if (floating_actions_screen | default('personalization')) == 'areas' %} style="display:flex"{% endif %}>
+                <button class="action-button" type="button" id="action-new-areas" aria-label="Nuevo">
+                    <img src="/templates/icon/nuevo.svg" alt="Nuevo">
+                    <span class="action-label">Nuevo</span>
+                </button>
                 <button class="action-button" type="button" id="action-edit-areas" aria-label="Editar">
                     <img src="/templates/icon/editar.svg" alt="Editar">
                     <span class="action-label">Editar</span>
@@ -1785,13 +2136,21 @@
                     <img src="/templates/icon/nuevo.svg" alt="Nuevo">
                     <span class="action-label">Nuevo</span>
                 </button>
+                <button class="action-button" type="button" id="action-edit-template" aria-label="Editar">
+                    <img src="/templates/icon/editar.svg" alt="Editar">
+                    <span class="action-label">Editar</span>
+                </button>
                 <button class="action-button" type="button" id="action-save-template" aria-label="Guardar">
                     <img src="/templates/icon/guardar.svg" alt="Guardar">
                     <span class="action-label">Guardar</span>
                 </button>
+                <button class="action-button" type="button" id="action-delete-template" aria-label="Eliminar">
+                    <img src="/templates/icon/eliminar.svg" alt="Eliminar">
+                    <span class="action-label">Eliminar</span>
+                </button>
             </div>
             {% endset %}
-            {{ floating_actions_html | default(DEFAULT_FLOATING_ACTIONS) | safe }}
+            {{ (floating_actions_html if floating_actions_html else DEFAULT_FLOATING_ACTIONS) | safe }}
         </aside>
         <button class="floating-toggle" type="button" id="floating-toggle" aria-label="Ocultar barra flotante">−</button>
     </div>
@@ -1820,11 +2179,13 @@
             const floatingActionsWrapper = document.querySelector('.floating-actions-wrapper');
             const usuarioPanel = document.getElementById('usuario-panel');
             const areaPanel = document.getElementById('area-panel');
+            const identityForm = document.getElementById('identity-form');
             const actionSavePersonal = document.getElementById('action-save-personal');
             const actionResetPersonal = document.getElementById('action-reset-personal');
             const actionEdit = document.getElementById('action-edit');
             const actionSaveUsuario = document.getElementById('action-save-usuario');
             const actionDelete = document.getElementById('action-delete');
+            const actionNewAreas = document.getElementById('action-new-areas');
             const actionEditAreas = document.getElementById('action-edit-areas');
             const actionSaveAreas = document.getElementById('action-save-areas');
             const actionDeleteAreas = document.getElementById('action-delete-areas');
@@ -1836,7 +2197,12 @@
             const actionViewDashboard = document.getElementById('action-view-dashboard');
             const actionViewCalendar = document.getElementById('action-view-calendar');
             const actionNewTemplate = document.getElementById('action-new-template');
+            const actionEditTemplate = document.getElementById('action-edit-template');
             const actionSaveTemplate = document.getElementById('action-save-template');
+            const actionDeleteTemplate = document.getElementById('action-delete-template');
+            const actionExportReportes = document.getElementById('action-export-reportes');
+            const actionExportPdf = document.getElementById('action-export-pdf');
+            const actionExportExcel = document.getElementById('action-export-excel');
             const personalizationPanel = document.querySelector('.personalization-panel');
             const viewPills = document.querySelectorAll('.view-buttons .view-pill[data-view]');
             const activateViewButton = (view) => {
@@ -1854,7 +2220,9 @@
             const setFloatingScreen = (screen) => {
                 activeFloatingScreen = screen;
                 floatingGroups.forEach(group => {
-                    group.classList.toggle('active', group.dataset.floatingScreen === screen);
+                    const isActive = group.dataset.floatingScreen === screen;
+                    group.classList.toggle('active', isActive);
+                    group.style.display = isActive ? 'flex' : 'none';
                 });
                 if (personalizationPanel) {
                     personalizationPanel.classList.toggle('hidden', screen !== 'personalization');
@@ -1864,7 +2232,7 @@
             const usuariosFloatingGroup = document.querySelector('.floating-actions-group[data-floating-screen="usuarios"]');
             const refreshUsuarioFloating = () => {
                 if (!usuariosFloatingGroup) return;
-                usuariosFloatingGroup.style.display = (activeFloatingScreen === 'usuarios' && currentUsuarioView === 'form') ? 'flex' : 'none';
+                usuariosFloatingGroup.style.display = activeFloatingScreen === 'usuarios' ? 'flex' : 'none';
             };
             refreshUsuarioFloating();
 
@@ -1977,6 +2345,58 @@
             }
             setSidebarState(true);
             setFloatingScreen(floatingDefaultScreen);
+            if (identityForm) {
+                const editButtons = document.querySelectorAll('.identity-asset-edit[data-target-input]');
+                const deleteButtons = document.querySelectorAll('.identity-asset-delete[data-target-remove]');
+                editButtons.forEach((btn) => {
+                    btn.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const target = btn.getAttribute('data-target-input');
+                        if (!target) return;
+                        const input = document.getElementById(target);
+                        const removeFlagId = target === 'favicon'
+                            ? 'remove_favicon'
+                            : target === 'logo_empresa'
+                            ? 'remove_logo'
+                            : target === 'fondo_escritorio'
+                                ? 'remove_desktop'
+                                : target === 'fondo_movil'
+                                    ? 'remove_mobile'
+                                    : '';
+                        if (removeFlagId) {
+                            const removeFlag = document.getElementById(removeFlagId);
+                            if (removeFlag) removeFlag.value = '0';
+                        }
+                        if (input) input.click();
+                    });
+                });
+                deleteButtons.forEach((btn) => {
+                    btn.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const targetRemove = btn.getAttribute('data-target-remove');
+                        if (!targetRemove) return;
+                        const flag = document.getElementById(targetRemove);
+                        if (flag) flag.value = '1';
+                        showMessage('Imagen marcada para eliminar. Guarda para aplicar.', 'success');
+                    });
+                });
+                ['favicon', 'logo_empresa', 'fondo_escritorio', 'fondo_movil'].forEach((id) => {
+                    const input = document.getElementById(id);
+                    if (!input) return;
+                    input.addEventListener('change', () => {
+                        if (!input.files || !input.files.length) return;
+                        const removeFlagId = id === 'favicon'
+                            ? 'remove_favicon'
+                            : id === 'logo_empresa'
+                            ? 'remove_logo'
+                            : id === 'fondo_escritorio'
+                                ? 'remove_desktop'
+                                : 'remove_mobile';
+                        const removeFlag = document.getElementById(removeFlagId);
+                        if (removeFlag) removeFlag.value = '0';
+                    });
+                });
+            }
             const messageBox = document.createElement('div');
             messageBox.className = 'message-box';
             document.body.appendChild(messageBox);
@@ -1994,6 +2414,7 @@
             if (personalizationPanel) {
                 const colorInputs = [
                     'navbar-bg','navbar-text','sidebar-top','sidebar-bottom','sidebar-text',
+                    'field-color',
                     'sidebar-icon','sidebar-hover'
                 ];
                 const colorDefaults = {};
@@ -2023,6 +2444,7 @@
                     const sidebarTop = document.getElementById('sidebar-top');
                     const sidebarBottom = document.getElementById('sidebar-bottom');
                     const sidebarText = document.getElementById('sidebar-text');
+                    const fieldColor = document.getElementById('field-color');
                     const sidebarIcon = document.getElementById('sidebar-icon');
                     const sidebarHover = document.getElementById('sidebar-hover');
                     if (navbarBg && navbar) {
@@ -2055,14 +2477,21 @@
                             link.style.background = sidebarHover.value;
                         });
                     }
+                    if (fieldColor) {
+                        document.documentElement.style.setProperty('--field-color', fieldColor.value);
+                    }
                     if (sidebarText && floatingActions) {
                         floatingActions.style.background = hexToRgba(sidebarText.value, 0.5);
                     }
                     const bottomColor = (sidebarBottom && sidebarBottom.value) || '#0f172a';
+                    const textColor = (sidebarText && sidebarText.value) || '#e2e8f0';
                     if (floatingActions) {
                         floatingActions.style.borderColor = bottomColor;
                         floatingActions.style.setProperty('--floating-icon-color', bottomColor);
                         floatingActions.style.setProperty('--floating-toggle-color', bottomColor);
+                        floatingActions.style.setProperty('--floating-action-border', bottomColor);
+                        floatingActions.style.setProperty('--floating-action-text', bottomColor);
+                        floatingActions.style.setProperty('--floating-action-bg', hexToRgba(textColor, 0.88));
                         floatingActions.style.color = bottomColor;
                     }
                     if (floatingToggle) {
@@ -2176,23 +2605,167 @@
                 { name: 'María Delgado', role: 'Ejecutivo', department: 'Servicios', status: 'Activo', email: 'm.delgado@empresa.com' },
                 { name: 'Pablo Rojas', role: 'Analista', department: 'Planeación', status: 'Observando', email: 'p.rojas@empresa.com' }
             ];
-            const areasData = [
+            let areasData = [
                 { name: 'Dirección General', parent: 'N/A', manager: 'Adriana Chávez Galeana', code: 'DIR-001', color: '#0f172a', status: 'Estratégico' },
                 { name: 'Operaciones', parent: 'Dirección General', manager: 'Pablo Rojas', code: 'OPE-010', color: '#1d4ed8', status: 'Activo' },
                 { name: 'Planeación', parent: 'Dirección General', manager: 'Lucía Ortega Moreno', code: 'PLA-020', color: '#0ea5e9', status: 'Activo' },
                 { name: 'Servicios', parent: 'Operaciones', manager: 'María Delgado', code: 'SER-030', color: '#16a34a', status: 'En revisión' }
             ];
-            const usuarioRoles = ['Todos', ...new Set(usuarioData.map(u => u.role))];
-            const usuarioRolesDisponibles = usuarioRoles.filter(role => role !== 'Todos');
+            const defaultKanbanImage = '/templates/icon/fondo.svg';
+            let usuariosImagenStore = [];
+            const normalizeImagePath = (value) => {
+                const raw = String(value || '').trim();
+                if (!raw) return '';
+                if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('/')) {
+                    return raw;
+                }
+                return `/templates/imagenes/${raw}`;
+            };
+            const getPersonImage = (person) => {
+                if (!person || typeof person !== 'object') return defaultKanbanImage;
+                const direct = person.image || person.photo || person.avatar || person.foto || person.imagen || '';
+                if (typeof direct === 'string' && direct.trim()) return normalizeImagePath(direct);
+                return defaultKanbanImage;
+            };
+            const enrichUsuarioImages = (usuarios = []) => {
+                if (!Array.isArray(usuarios) || !usuarios.length) return;
+                usuarios.forEach((u) => {
+                    if (!u || typeof u !== 'object') return;
+                    const nombre = String(u.nombre || '').trim();
+                    if (!nombre) return;
+                    const image = u.imagen || u.foto || u.image || u.avatar || '';
+                    const normalizedImage = (typeof image === 'string' && image.trim()) ? normalizeImagePath(image) : '';
+                    const idx = usuarioData.findIndex((item) => item.name === nombre);
+                    if (idx >= 0) {
+                        if (normalizedImage) usuarioData[idx].image = normalizedImage;
+                    } else {
+                        usuarioData.push({
+                            name: nombre,
+                            role: String(u.rol || 'Usuario'),
+                            department: 'N/A',
+                            status: 'Activo',
+                            email: String(u.correo || ''),
+                            image: normalizedImage || '',
+                        });
+                    }
+                });
+            };
+            const hydrateAreasFromUsuarios = (usuarios = []) => {
+                if (!Array.isArray(usuarios) || !usuarios.length) return;
+                const grouped = new Map();
+                usuarios.forEach((u) => {
+                    const dept = String(u?.departamento || u?.department || '').trim();
+                    if (!dept) return;
+                    if (!grouped.has(dept)) grouped.set(dept, []);
+                    grouped.get(dept).push(u);
+                });
+                const names = Array.from(grouped.keys());
+                if (!names.length) return;
+                const rootName = names.find((name) => name.toLowerCase() === 'dirección general' || name.toLowerCase() === 'direccion general') || names[0];
+                const nextAreas = names.map((name, index) => {
+                    const users = grouped.get(name) || [];
+                    const managerCandidate = users.find((u) => {
+                        const rol = String(u?.rol || '').toLowerCase();
+                        const puesto = String(u?.puesto || '').toLowerCase();
+                        return rol.includes('admin') || rol.includes('gerente') || puesto.includes('gerente') || puesto.includes('director');
+                    }) || users[0] || {};
+                    return {
+                        name,
+                        parent: name === rootName ? 'N/A' : rootName,
+                        manager: String(managerCandidate?.nombre || managerCandidate?.name || 'Sin asignar'),
+                        code: `DEP-${String(index + 1).padStart(3, '0')}`,
+                        color: '#1d4ed8',
+                        status: name === rootName ? 'Estratégico' : 'Activo',
+                    };
+                });
+                if (nextAreas.length) {
+                    areasData = nextAreas;
+                }
+            };
+            const loadUsuariosImagenes = async () => {
+                try {
+                    const res = await fetch('/api/usuarios');
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    const data = Array.isArray(json?.data) ? json.data : [];
+                    usuariosImagenStore = data;
+                    enrichUsuarioImages(usuariosImagenStore);
+                    hydrateAreasFromUsuarios(usuariosImagenStore);
+                } catch (error) {
+                    // Si falla, mantener fallback local/default.
+                }
+            };
+            const getManagerImage = (managerName) => {
+                const manager = usuarioData.find((user) => user.name === managerName);
+                return getPersonImage(manager);
+            };
+            const relacionOrganizacionalHelp = {
+                'Línea': (
+                    '1. Relación de Línea (Ejecutiva)\n'
+                    + 'Es la relación jerárquica directa que sigue la cadena de mando desde la Gerencia General hacia las áreas operativas.\n\n'
+                    + 'Naturaleza: Es una autoridad de decisión y ejecución.\n\n'
+                    + 'En la empresa: La relación entre la Gerencia de Créditos y sus analistas o agencias. '
+                    + 'Estas áreas son responsables directas de los resultados del negocio y del cumplimiento de metas financieras.'
+                ),
+                'Staff': (
+                    '2. Relación de Staff (Asesoría)\n'
+                    + 'El Staff no tiene autoridad directa de mando sobre las áreas de línea, sino una función de apoyo especializado.\n\n'
+                    + 'Naturaleza: Es una autoridad de especialización, consejo y servicio. Su objetivo es facilitar el trabajo de la línea mediante el expertise técnico.\n\n'
+                    + 'Por ejemplo:\n'
+                    + '- Asesoría Jurídica: Provee el marco legal para los contratos, pero no decide a quién se le otorga un crédito.\n'
+                    + '- Gestión de Talento Humano: Define políticas de reclutamiento, pero la decisión final de contratación suele recaer en el jefe del área solicitante.\n'
+                    + '- Auditoría Interna: Aunque es Staff, su reporte suele ser directo al Consejo de Administración para garantizar independencia.'
+                ),
+                'Funcional': (
+                    '3. Relación Funcional (Especializada)\n'
+                    + 'Es un punto intermedio donde un área técnica tiene autoridad limitada sobre otros departamentos en temas específicos de su competencia, independientemente de la jerarquía.\n\n'
+                    + 'Naturaleza: Autoridad de normatividad y control.\n\n'
+                    + 'Por ejemplo: El oficial de cumplimiento de Normatividad. Aunque no es el jefe de un gerente de agencia, '
+                    + 'tiene la autoridad funcional para exigir que se cumplan los protocolos de prevención de lavado de dinero, '
+                    + 'y su instrucción es de acatamiento obligatorio.'
+                ),
+            };
+            const getAreaNamesDisponibles = () => [...new Set(areasData.map(area => area.name).filter(Boolean))];
+            const getUsuarioRolesFiltro = () => ['Todos', ...new Set(usuarioData.map(u => u.role))];
+            let rolesSistemaDisponibles = [
+                { value: 'usuario', label: 'Usuario' },
+                { value: 'departamento', label: 'Departamento' },
+            ];
             const departamentosDisponibles = [...new Set(usuarioData.map(u => u.department).filter(Boolean))];
+            const roleMatches = (userRole, selectedRole) => {
+                const left = String(userRole || '').trim().toLowerCase();
+                const right = String(selectedRole || '').trim().toLowerCase();
+                return left === right;
+            };
             const getRoleOptions = (selected = 'Todos') => {
-                return usuarioRoles.map(role => `<option value="${role}" ${role === selected ? 'selected' : ''}>${role}</option>`).join('');
+                return getUsuarioRolesFiltro().map(role => `<option value="${role}" ${role === selected ? 'selected' : ''}>${role}</option>`).join('');
             };
             const getUsuarioRolOptions = (selected = '') => {
-                return usuarioRolesDisponibles.map(role => `<option value="${role}" ${role === selected ? 'selected' : ''}>${role}</option>`).join('');
+                return rolesSistemaDisponibles.map(role => `<option value="${role.value}" ${role.value === selected ? 'selected' : ''}>${role.label}</option>`).join('');
             };
             const getDepartamentoOptions = (selected = '') => {
                 return departamentosDisponibles.map(dept => `<option value="${dept}" ${dept === selected ? 'selected' : ''}>${dept}</option>`).join('');
+            };
+            const getAreaParentOptions = (selected = '') => {
+                const areaNamesDisponibles = getAreaNamesDisponibles();
+                const options = ['N/A', ...areaNamesDisponibles];
+                return options.map((name) => `<option value="${name}" ${name === selected ? 'selected' : ''}>${name}</option>`).join('');
+            };
+            const loadRolesSistemaDisponibles = async () => {
+                try {
+                    const res = await fetch('/api/roles-disponibles');
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    const data = Array.isArray(json?.data) ? json.data : [];
+                    if (!data.length) return;
+                    rolesSistemaDisponibles = data.map((role) => {
+                        const value = String(role?.nombre || '').trim().toLowerCase();
+                        const label = String(role?.label || role?.nombre || '').trim();
+                        return { value, label };
+                    }).filter((role) => role.value);
+                } catch (error) {
+                    // Mantener fallback local si falla.
+                }
             };
             function renderUsuarioForm() {
                 usuarioView.innerHTML = `
@@ -2369,7 +2942,7 @@
                 });
             }
             function renderUsuarioList(role = 'Todos') {
-                const filtered = role === 'Todos' ? usuarioData : usuarioData.filter(u => u.role === role);
+                const filtered = role === 'Todos' ? usuarioData : usuarioData.filter(u => roleMatches(u.role, role));
                 usuarioView.innerHTML = `
                     <div class="usuario-role-filter">
                         <label for="usuario-role-select">Filtrar por rol</label>
@@ -2396,7 +2969,7 @@
                 selector && selector.addEventListener('change', () => renderUsuarioList(selector.value));
             }
             function renderUsuarioKanban(role = 'Todos') {
-                const filtered = role === 'Todos' ? usuarioData : usuarioData.filter(u => u.role === role);
+                const filtered = role === 'Todos' ? usuarioData : usuarioData.filter(u => roleMatches(u.role, role));
                 const statuses = ['Activo', 'En mejora', 'Observando'];
                 usuarioView.innerHTML = `
                     <div class="usuario-role-filter">
@@ -2410,12 +2983,15 @@
                             <div class="usuario-kanban-column">
                                 <h4>${status}</h4>
                                 ${filtered.filter(u => u.status === status).map(user => `
-                                    <div class="usuario-card">
-                                        <div>
+                                    <div class="usuario-card kanban-card-two-col">
+                                        <div class="kanban-card-media">
+                                            <img src="${getPersonImage(user)}" alt="Foto de ${user.name}">
+                                        </div>
+                                        <div class="kanban-card-body">
                                             <strong>${user.name}</strong>
                                             <span>${user.department}</span>
+                                            <span>${user.role}</span>
                                         </div>
-                                        <span>${user.role}</span>
                                     </div>
                                 `).join('')}
                             </div>
@@ -2433,6 +3009,9 @@
                     <div class="usuario-organigrama">
                         <div class="org-level org-root">
                             <article class="org-node">
+                                <div class="org-node-avatar">
+                                    <img src="${getPersonImage(lider)}" alt="Usuario ${lider?.name || 'Dirección General'}">
+                                </div>
                                 <strong>Dirección General</strong>
                                 <span>${lider?.name || 'Sin asignar'}</span>
                                 <span>${lider?.role || 'N/A'}</span>
@@ -2442,6 +3021,9 @@
                         <div class="org-level">
                             ${mandos.map(user => `
                                 <article class="org-node">
+                                    <div class="org-node-avatar">
+                                        <img src="${getPersonImage(user)}" alt="Usuario ${user.name}">
+                                    </div>
                                     <strong>${user.department}</strong>
                                     <span>${user.name}</span>
                                     <span>${user.role}</span>
@@ -2452,6 +3034,9 @@
                         <div class="org-level">
                             ${equipoBase.map(user => `
                                 <article class="org-node">
+                                    <div class="org-node-avatar">
+                                        <img src="${getPersonImage(user)}" alt="Usuario ${user.name}">
+                                    </div>
                                     <strong>${user.name}</strong>
                                     <span>${user.department}</span>
                                     <span>${user.role}</span>
@@ -2475,11 +3060,26 @@
                             </div>
                             <div class="form-field">
                                 <label>Departamento padre</label>
-                                <input type="text" placeholder="Área superior">
+                                <select id="area-parent-select">
+                                    ${getAreaParentOptions('N/A')}
+                                </select>
                             </div>
                             <div class="form-field">
                                 <label>Responsable</label>
                                 <input type="text" placeholder="Nombre del responsable">
+                            </div>
+                            <div class="form-field">
+                                <label>Relación organizacional</label>
+                                <select id="area-relacion-select">
+                                    <option value="Línea">Línea</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Funcional">Funcional</option>
+                                </select>
+                                <div class="area-relacion-help-list">
+                                    <span class="area-relacion-help-item">Línea <button type="button" class="area-relacion-help-btn" data-relacion-help="Línea" aria-label="Ayuda Línea">?</button></span>
+                                    <span class="area-relacion-help-item">Staff <button type="button" class="area-relacion-help-btn" data-relacion-help="Staff" aria-label="Ayuda Staff">?</button></span>
+                                    <span class="area-relacion-help-item">Funcional <button type="button" class="area-relacion-help-btn" data-relacion-help="Funcional" aria-label="Ayuda Funcional">?</button></span>
+                                </div>
                             </div>
                             <div class="form-field">
                                 <label>Código</label>
@@ -2510,10 +3110,15 @@
                                 <article class="area-kanban-column">
                                     <h4>${status}</h4>
                                     ${areas.map(area => `
-                                        <div class="area-card">
-                                            <strong>${area.name}</strong>
-                                            <span>${area.code}</span>
-                                            <span>${area.manager}</span>
+                                        <div class="area-card kanban-card-two-col">
+                                            <div class="kanban-card-media">
+                                                <img src="${getManagerImage(area.manager)}" alt="Responsable ${area.manager}">
+                                            </div>
+                                            <div class="kanban-card-body">
+                                                <strong>${area.name}</strong>
+                                                <span>${area.code}</span>
+                                                <span>${area.manager}</span>
+                                            </div>
                                         </div>
                                     `).join('')}
                                 </article>
@@ -2521,10 +3126,30 @@
                         </div>
                     </section>
                 `;
+                areaView.querySelectorAll('[data-relacion-help]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const key = btn.getAttribute('data-relacion-help') || '';
+                        const text = relacionOrganizacionalHelp[key];
+                        if (text) {
+                            alert(text);
+                        }
+                    });
+                });
             }
             function renderAreaOrganigrama() {
                 if (!areaView) return;
                 const root = areasData.find(area => area.parent === 'N/A') || areasData[0];
+                if (!root) {
+                    areaView.innerHTML = `
+                        <section class="form-section">
+                            <div class="section-title">
+                                <h2>Organigrama de áreas</h2>
+                            </div>
+                            <p class="plantillas-hint">No hay áreas disponibles para mostrar.</p>
+                        </section>
+                    `;
+                    return;
+                }
                 const firstLevel = areasData.filter(area => area.parent === root.name);
                 const secondLevel = areasData.filter(area => firstLevel.some(parent => parent.name === area.parent));
                 areaView.innerHTML = `
@@ -2535,6 +3160,9 @@
                         <div class="usuario-organigrama">
                             <div class="org-level org-root">
                                 <article class="org-node">
+                                    <div class="org-node-avatar">
+                                        <img src="${getManagerImage(root.manager)}" alt="Responsable ${root.manager || root.name}">
+                                    </div>
                                     <strong>${root.name}</strong>
                                     <span>${root.manager}</span>
                                     <span>${root.code}</span>
@@ -2544,6 +3172,9 @@
                             <div class="org-level">
                                 ${firstLevel.map(area => `
                                     <article class="org-node">
+                                        <div class="org-node-avatar">
+                                            <img src="${getManagerImage(area.manager)}" alt="Responsable ${area.manager || area.name}">
+                                        </div>
                                         <strong>${area.name}</strong>
                                         <span>${area.manager}</span>
                                         <span>${area.code}</span>
@@ -2554,6 +3185,9 @@
                             <div class="org-level">
                                 ${secondLevel.map(area => `
                                     <article class="org-node">
+                                        <div class="org-node-avatar">
+                                            <img src="${getManagerImage(area.manager)}" alt="Responsable ${area.manager || area.name}">
+                                        </div>
                                         <strong>${area.name}</strong>
                                         <span>${area.manager}</span>
                                         <span>${area.code}</span>
@@ -2624,6 +3258,8 @@
                 if (activeUsuarioLink) {
                     setMenuInfo(activeUsuarioLink);
                 }
+                await loadUsuariosImagenes();
+                await loadRolesSistemaDisponibles();
                 setUsuarioView('form');
             }
             const isAreasRoute = window.location.pathname === '/areas-organizacionales';
@@ -2632,22 +3268,212 @@
                 if (areaMenuLink) {
                     setMenuInfo(areaMenuLink);
                 }
+                await loadUsuariosImagenes();
                 setAreaView('form');
             }
             const plantillasPage = document.getElementById('plantillas-page');
             const templateNameInput = document.getElementById('template-name');
             const templateHtmlInput = document.getElementById('template-html');
             const templateCssInput = document.getElementById('template-css');
+            const templateNewBtn = document.getElementById('template-new-btn');
+            const templateEditBtn = document.getElementById('template-edit-btn');
+            const templateBuilderBtn = document.getElementById('template-builder-btn');
             const templatePreviewBtn = document.getElementById('template-preview-btn');
+            const templateSaveBtn = document.getElementById('template-save-btn');
+            const templateDeleteBtn = document.getElementById('template-delete-btn');
             const templatePreviewFrame = document.getElementById('template-preview');
             const plantillasList = document.getElementById('plantillas-list');
+            const formBuilderPanel = document.getElementById('form-builder-panel');
+            const builderFormSelect = document.getElementById('builder-form-select');
+            const builderFormName = document.getElementById('builder-form-name');
+            const builderFormSlug = document.getElementById('builder-form-slug');
+            const builderFormActive = document.getElementById('builder-form-active');
+            const builderFormDescription = document.getElementById('builder-form-description');
+            const builderFormConfig = document.getElementById('builder-form-config');
+            const builderFieldType = document.getElementById('builder-field-type');
+            const builderFieldLabel = document.getElementById('builder-field-label');
+            const builderFieldName = document.getElementById('builder-field-name');
+            const builderFieldPlaceholder = document.getElementById('builder-field-placeholder');
+            const builderFieldHelp = document.getElementById('builder-field-help');
+            const builderFieldOptions = document.getElementById('builder-field-options');
+            const builderFieldConditional = document.getElementById('builder-field-conditional');
+            const builderFieldRequired = document.getElementById('builder-field-required');
+            const builderAddFieldBtn = document.getElementById('builder-add-field-btn');
+            const builderClearFormBtn = document.getElementById('builder-clear-form-btn');
+            const builderSaveFormBtn = document.getElementById('builder-save-form-btn');
+            const builderDeleteFormBtn = document.getElementById('builder-delete-form-btn');
+            const builderFieldsList = document.getElementById('builder-fields-list');
             let plantillasStore = [];
             let selectedTemplateId = null;
+            let formDefinitionsStore = [];
+            let selectedFormDefinitionId = null;
+            let builderFields = [];
+            const slugifyText = (value) => (value || '')
+                .toString()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            const renderBuilderFields = () => {
+                if (!builderFieldsList) return;
+                if (!builderFields.length) {
+                    builderFieldsList.innerHTML = '<p class="plantillas-hint">No hay campos agregados.</p>';
+                    return;
+                }
+                builderFieldsList.innerHTML = builderFields.map((field, index) => `
+                    <div class="builder-field-item">
+                        <div class="meta">
+                            <strong>${field.label || field.name}</strong>
+                            <span>Tipo: ${field.field_type} | Nombre: ${field.name}</span>
+                            <span>${field.is_required ? 'Obligatorio' : 'Opcional'}${field.options?.length ? ` | Opciones: ${field.options.map((opt) => opt.label || opt.value).join(', ')}` : ''}${field.conditional_logic && Object.keys(field.conditional_logic).length ? ' | Condicional' : ''}</span>
+                        </div>
+                        <button type="button" class="builder-field-delete" data-builder-remove-field="${index}">Quitar</button>
+                    </div>
+                `).join('');
+                builderFieldsList.querySelectorAll('[data-builder-remove-field]').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const index = Number(btn.dataset.builderRemoveField);
+                        if (Number.isNaN(index)) return;
+                        builderFields = builderFields.filter((_, i) => i !== index);
+                        renderBuilderFields();
+                    });
+                });
+            };
+            const clearBuilderFieldInputs = () => {
+                if (builderFieldType) builderFieldType.value = 'text';
+                if (builderFieldLabel) builderFieldLabel.value = '';
+                if (builderFieldName) builderFieldName.value = '';
+                if (builderFieldPlaceholder) builderFieldPlaceholder.value = '';
+                if (builderFieldHelp) builderFieldHelp.value = '';
+                if (builderFieldOptions) builderFieldOptions.value = '';
+                if (builderFieldConditional) builderFieldConditional.value = '';
+                if (builderFieldRequired) builderFieldRequired.checked = false;
+            };
+            const clearBuilderForm = () => {
+                selectedFormDefinitionId = null;
+                builderFields = [];
+                if (builderFormSelect) builderFormSelect.value = '';
+                if (builderFormName) builderFormName.value = '';
+                if (builderFormSlug) builderFormSlug.value = '';
+                if (builderFormActive) builderFormActive.value = 'true';
+                if (builderFormDescription) builderFormDescription.value = '';
+                if (builderFormConfig) builderFormConfig.value = '';
+                clearBuilderFieldInputs();
+                renderBuilderFields();
+            };
+            const setBuilderFromForm = (formDef) => {
+                if (!formDef) return;
+                selectedFormDefinitionId = formDef.id;
+                if (builderFormSelect) builderFormSelect.value = String(formDef.id);
+                if (builderFormName) builderFormName.value = formDef.name || '';
+                if (builderFormSlug) builderFormSlug.value = formDef.slug || '';
+                if (builderFormActive) builderFormActive.value = formDef.is_active ? 'true' : 'false';
+                if (builderFormDescription) builderFormDescription.value = formDef.description || '';
+                if (builderFormConfig) {
+                    const cfg = formDef.config && typeof formDef.config === 'object' ? formDef.config : {};
+                    builderFormConfig.value = Object.keys(cfg).length ? JSON.stringify(cfg) : '';
+                }
+                const fields = Array.isArray(formDef.fields) ? formDef.fields : [];
+                builderFields = fields.map((field, index) => ({
+                    field_type: field.field_type || field.type || 'text',
+                    label: field.label || '',
+                    name: field.name || `campo_${index + 1}`,
+                    placeholder: field.placeholder || '',
+                    help_text: field.help_text || field.helpText || '',
+                    default_value: field.default_value || field.defaultValue || '',
+                    is_required: Boolean(field.is_required ?? field.required),
+                    validation_rules: field.validation_rules || field.validation || {},
+                    options: Array.isArray(field.options)
+                        ? field.options.map((opt) => {
+                            if (typeof opt === 'object' && opt !== null) {
+                                return { label: String(opt.label || opt.value || ''), value: String(opt.value || opt.label || '') };
+                            }
+                            const value = String(opt || '');
+                            return { label: value, value };
+                        }).filter((opt) => opt.value)
+                        : [],
+                    order: Number(field.order ?? index),
+                    conditional_logic: field.conditional_logic || field.conditional || {},
+                }));
+                renderBuilderFields();
+            };
+            const renderBuilderFormSelect = () => {
+                if (!builderFormSelect) return;
+                builderFormSelect.innerHTML = `<option value="">Nuevo formulario</option>${formDefinitionsStore.map((formDef) => (
+                    `<option value="${formDef.id}" ${Number(formDef.id) === Number(selectedFormDefinitionId) ? 'selected' : ''}>${formDef.name} (${formDef.slug})</option>`
+                )).join('')}`;
+            };
+            const loadFormDefinitions = async () => {
+                if (!formBuilderPanel) return;
+                try {
+                    const res = await fetch('/api/admin/forms');
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(json?.detail || 'No se pudo cargar formularios');
+                    formDefinitionsStore = Array.isArray(json) ? json : [];
+                    renderBuilderFormSelect();
+                    if (selectedFormDefinitionId) {
+                        const match = formDefinitionsStore.find((item) => Number(item.id) === Number(selectedFormDefinitionId));
+                        if (match) setBuilderFromForm(match);
+                    }
+                } catch (error) {
+                    showMessage('No se pudieron cargar los formularios.', 'error');
+                }
+            };
+            const collectBuilderPayload = () => {
+                const name = (builderFormName?.value || '').trim();
+                const slug = (builderFormSlug?.value || '').trim();
+                const description = (builderFormDescription?.value || '').trim();
+                const rawConfig = (builderFormConfig?.value || '').trim();
+                if (!name) {
+                    throw new Error('El nombre del formulario es obligatorio.');
+                }
+                if (!builderFields.length) {
+                    throw new Error('Agrega al menos un campo al formulario.');
+                }
+                let config = {};
+                if (rawConfig) {
+                    try {
+                        const parsed = JSON.parse(rawConfig);
+                        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                            throw new Error();
+                        }
+                        config = parsed;
+                    } catch (error) {
+                        throw new Error('La configuración JSON del formulario es inválida.');
+                    }
+                }
+                return {
+                    name,
+                    slug: slug || slugifyText(name),
+                    description: description || null,
+                    is_active: (builderFormActive?.value || 'true') === 'true',
+                    config,
+                    fields: builderFields.map((field, index) => ({
+                        ...field,
+                        order: index,
+                    })),
+                };
+            };
             const renderTemplatePreview = () => {
                 if (!templatePreviewFrame) return;
-                const htmlCode = templateHtmlInput?.value || '';
+                let htmlCode = templateHtmlInput?.value || '';
                 const cssCode = templateCssInput?.value || '';
-                templatePreviewFrame.srcdoc = `<!doctype html><html><head><meta charset="UTF-8"><style>${cssCode}</style></head><body>${htmlCode}</body></html>`;
+                if (!htmlCode.trim() && !cssCode.trim()) {
+                    htmlCode = "<section style='padding:16px;font-family:Arial,sans-serif;color:#475569;'>Agrega HTML/CSS o selecciona una plantilla para previsualizar.</section>";
+                }
+                const previewDoc = `<!doctype html><html><head><meta charset="UTF-8"><style>${cssCode}</style></head><body>${htmlCode}</body></html>`;
+                templatePreviewFrame.srcdoc = previewDoc;
+                try {
+                    const frameDoc = templatePreviewFrame.contentDocument || templatePreviewFrame.contentWindow?.document;
+                    if (frameDoc) {
+                        frameDoc.open();
+                        frameDoc.write(previewDoc);
+                        frameDoc.close();
+                    }
+                } catch (error) {
+                    // srcdoc remains as fallback if direct write is blocked by browser policy.
+                }
             };
             const clearTemplateEditor = () => {
                 selectedTemplateId = null;
@@ -2713,6 +3539,154 @@
                 ensureFloatingVisible();
                 loadPlantillas();
                 templatePreviewBtn && templatePreviewBtn.addEventListener('click', renderTemplatePreview);
+                templateHtmlInput && templateHtmlInput.addEventListener('input', renderTemplatePreview);
+                templateCssInput && templateCssInput.addEventListener('input', renderTemplatePreview);
+                builderFormName && builderFormName.addEventListener('input', () => {
+                    if (selectedFormDefinitionId) return;
+                    if (!builderFormSlug) return;
+                    if ((builderFormSlug.value || '').trim()) return;
+                    builderFormSlug.value = slugifyText(builderFormName.value);
+                });
+                builderFieldLabel && builderFieldLabel.addEventListener('input', () => {
+                    if (!builderFieldName) return;
+                    if ((builderFieldName.value || '').trim()) return;
+                    builderFieldName.value = slugifyText(builderFieldLabel.value).replace(/-/g, '_');
+                });
+                templateBuilderBtn && templateBuilderBtn.addEventListener('click', async () => {
+                    if (!formBuilderPanel) return;
+                    formBuilderPanel.classList.toggle('hidden');
+                    if (!formBuilderPanel.classList.contains('hidden')) {
+                        await loadFormDefinitions();
+                        if (!builderFields.length) renderBuilderFields();
+                        showMessage('Constructor de formularios activo.', 'success');
+                    }
+                });
+                builderFormSelect && builderFormSelect.addEventListener('change', () => {
+                    const formId = Number(builderFormSelect.value);
+                    if (!formId) {
+                        clearBuilderForm();
+                        return;
+                    }
+                    const found = formDefinitionsStore.find((item) => Number(item.id) === formId);
+                    if (!found) {
+                        showMessage('Formulario no encontrado en la lista.', 'error');
+                        return;
+                    }
+                    setBuilderFromForm(found);
+                    showMessage(`Formulario "${found.name}" cargado.`, 'success');
+                });
+                builderAddFieldBtn && builderAddFieldBtn.addEventListener('click', () => {
+                    const fieldLabel = (builderFieldLabel?.value || '').trim();
+                    const fieldNameRaw = (builderFieldName?.value || '').trim();
+                    const fieldType = (builderFieldType?.value || 'text').trim();
+                    const conditionalRaw = (builderFieldConditional?.value || '').trim();
+                    if (!fieldLabel) {
+                        showMessage('La etiqueta del campo es obligatoria.', 'error');
+                        return;
+                    }
+                    const normalizedName = (fieldNameRaw || slugifyText(fieldLabel).replace(/-/g, '_')).replace(/[^a-zA-Z0-9_]/g, '_');
+                    if (!normalizedName) {
+                        showMessage('El nombre técnico del campo es inválido.', 'error');
+                        return;
+                    }
+                    if (builderFields.some((item) => item.name === normalizedName)) {
+                        showMessage('Ya existe un campo con ese nombre técnico.', 'error');
+                        return;
+                    }
+                    const optionValues = (builderFieldOptions?.value || '')
+                        .split(',')
+                        .map((opt) => opt.trim())
+                        .filter(Boolean);
+                    let normalizedOptions = optionValues.map((opt) => ({ label: opt, value: opt }));
+                    if (fieldType === 'likert' && !normalizedOptions.length) {
+                        normalizedOptions = ['1', '2', '3', '4', '5'].map((value) => ({ label: value, value }));
+                    }
+                    let conditionalLogic = {};
+                    if (conditionalRaw) {
+                        try {
+                            const parsed = JSON.parse(conditionalRaw);
+                            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                                showMessage('La condición debe ser un objeto JSON válido.', 'error');
+                                return;
+                            }
+                            conditionalLogic = parsed;
+                        } catch (error) {
+                            showMessage('JSON condicional inválido.', 'error');
+                            return;
+                        }
+                    }
+                    builderFields.push({
+                        field_type: fieldType,
+                        label: fieldLabel,
+                        name: normalizedName,
+                        placeholder: (builderFieldPlaceholder?.value || '').trim() || null,
+                        help_text: (builderFieldHelp?.value || '').trim() || null,
+                        default_value: null,
+                        is_required: Boolean(builderFieldRequired?.checked),
+                        validation_rules: {},
+                        options: ['select', 'radio', 'checkboxes', 'likert'].includes(fieldType)
+                            ? normalizedOptions
+                            : [],
+                        order: builderFields.length,
+                        conditional_logic: conditionalLogic,
+                    });
+                    renderBuilderFields();
+                    clearBuilderFieldInputs();
+                    showMessage('Campo agregado al formulario.', 'success');
+                });
+                builderClearFormBtn && builderClearFormBtn.addEventListener('click', () => {
+                    clearBuilderForm();
+                    showMessage('Constructor limpiado.', 'success');
+                });
+                builderSaveFormBtn && builderSaveFormBtn.addEventListener('click', async () => {
+                    try {
+                        const payload = collectBuilderPayload();
+                        const formId = selectedFormDefinitionId ? Number(selectedFormDefinitionId) : null;
+                        const endpoint = formId ? `/api/admin/forms/${encodeURIComponent(formId)}` : '/api/admin/forms';
+                        const method = formId ? 'PUT' : 'POST';
+                        const res = await fetch(endpoint, {
+                            method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                        });
+                        const json = await res.json();
+                        if (!res.ok) throw new Error(json?.detail || json?.error || 'No se pudo guardar el formulario');
+                        selectedFormDefinitionId = Number(json?.id || formId || selectedFormDefinitionId);
+                        await loadFormDefinitions();
+                        if (!selectedFormDefinitionId && json?.id) {
+                            selectedFormDefinitionId = Number(json.id);
+                        }
+                        if (selectedFormDefinitionId) {
+                            const saved = formDefinitionsStore.find((item) => Number(item.id) === Number(selectedFormDefinitionId));
+                            if (saved) setBuilderFromForm(saved);
+                        }
+                        showMessage('Formulario guardado correctamente.', 'success');
+                    } catch (error) {
+                        showMessage(error?.message || 'Error al guardar formulario.', 'error');
+                    }
+                });
+                builderDeleteFormBtn && builderDeleteFormBtn.addEventListener('click', async () => {
+                    if (!selectedFormDefinitionId) {
+                        showMessage('Selecciona un formulario para eliminar.', 'error');
+                        return;
+                    }
+                    if (!confirm('¿Eliminar el formulario seleccionado?')) {
+                        showMessage('Eliminación cancelada.', 'error');
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`/api/admin/forms/${encodeURIComponent(selectedFormDefinitionId)}`, {
+                            method: 'DELETE',
+                        });
+                        const json = await res.json();
+                        if (!res.ok) throw new Error(json?.detail || json?.error || 'No se pudo eliminar');
+                        clearBuilderForm();
+                        await loadFormDefinitions();
+                        showMessage('Formulario eliminado.', 'success');
+                    } catch (error) {
+                        showMessage(error?.message || 'Error al eliminar formulario.', 'error');
+                    }
+                });
             }
             document.addEventListener('backend-view-change', (event) => {
                 const view = event.detail?.view;
@@ -2764,6 +3738,12 @@
                     showMessage('Eliminación cancelada.', 'error');
                 }
             });
+            actionNewAreas && actionNewAreas.addEventListener('click', (event) => {
+                if (activeFloatingScreen !== 'areas') return;
+                event.preventDefault();
+                setAreaView('form');
+                showMessage('Nueva área lista para captura.', 'success');
+            });
             actionEditAreas && actionEditAreas.addEventListener('click', (event) => {
                 if (activeFloatingScreen !== 'areas') return;
                 event.preventDefault();
@@ -2791,9 +3771,19 @@
                 templateNameInput && templateNameInput.focus();
                 showMessage('Nueva plantilla lista para captura.', 'success');
             });
-            actionSaveTemplate && actionSaveTemplate.addEventListener('click', async (event) => {
+            actionEditTemplate && actionEditTemplate.addEventListener('click', (event) => {
                 if (activeFloatingScreen !== 'plantillas') return;
                 event.preventDefault();
+                if (!selectedTemplateId) {
+                    showMessage('Selecciona una plantilla para editar.', 'error');
+                    return;
+                }
+                templateNameInput && templateNameInput.focus();
+                showMessage('Modo edición de plantilla activado.', 'success');
+            });
+            const handleTemplateSave = async (event) => {
+                if (activeFloatingScreen !== 'plantillas') return;
+                if (event) event.preventDefault();
                 const payload = {
                     id: selectedTemplateId,
                     nombre: (templateNameInput?.value || '').trim(),
@@ -2825,6 +3815,65 @@
                 } catch (error) {
                     showMessage('Error al guardar la plantilla.', 'error');
                 }
+            };
+            actionSaveTemplate && actionSaveTemplate.addEventListener('click', handleTemplateSave);
+            templateSaveBtn && templateSaveBtn.addEventListener('click', handleTemplateSave);
+            actionDeleteTemplate && actionDeleteTemplate.addEventListener('click', async (event) => {
+                if (activeFloatingScreen !== 'plantillas') return;
+                event.preventDefault();
+                if (!selectedTemplateId) {
+                    showMessage('Selecciona una plantilla para eliminar.', 'error');
+                    return;
+                }
+                if (!confirm('¿Eliminar la plantilla seleccionada?')) {
+                    showMessage('Eliminación cancelada.', 'error');
+                    return;
+                }
+                try {
+                    const res = await fetch(`/api/plantillas/${encodeURIComponent(selectedTemplateId)}`, {
+                        method: 'DELETE',
+                    });
+                    const json = await res.json();
+                    if (!res.ok || !json?.success) {
+                        throw new Error(json?.error || 'No se pudo eliminar');
+                    }
+                    selectedTemplateId = null;
+                    await loadPlantillas();
+                    renderTemplatePreview();
+                    showMessage('Plantilla eliminada.', 'success');
+                } catch (error) {
+                    showMessage(error?.message || 'Error al eliminar la plantilla.', 'error');
+                }
+            });
+            templateNewBtn && templateNewBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                actionNewTemplate && actionNewTemplate.click();
+            });
+            templateEditBtn && templateEditBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                actionEditTemplate && actionEditTemplate.click();
+            });
+            templateDeleteBtn && templateDeleteBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                actionDeleteTemplate && actionDeleteTemplate.click();
+            });
+            actionExportReportes && actionExportReportes.addEventListener('click', (event) => {
+                if (activeFloatingScreen !== 'reportes') return;
+                event.preventDefault();
+                window.location.href = '/api/reportes/export/html';
+                showMessage('Exportando reporte con encabezado.', 'success');
+            });
+            actionExportPdf && actionExportPdf.addEventListener('click', (event) => {
+                if (activeFloatingScreen !== 'reportes') return;
+                event.preventDefault();
+                window.location.href = '/api/reportes/export/pdf';
+                showMessage('Generando PDF con encabezado.', 'success');
+            });
+            actionExportExcel && actionExportExcel.addEventListener('click', (event) => {
+                if (activeFloatingScreen !== 'reportes') return;
+                event.preventDefault();
+                window.location.href = '/api/reportes/export/excel';
+                showMessage('Generando Excel con encabezado.', 'success');
             });
             actionViewForm && actionViewForm.addEventListener('click', (event) => {
                 if (activeFloatingScreen !== 'usuarios') return;

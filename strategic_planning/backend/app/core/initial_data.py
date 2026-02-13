@@ -11,7 +11,7 @@ from app.models.permission import Role
 from app.models.user import User, UserRole, UserStatus
 
 ENCODED_USERNAME = "MGtvbm9taXlha2k="  # 0konomiyaki
-ENCODED_PASSWORD = "WFgsJCwyNixzaXBzbSwyNiwkLFhY"  # XX,$,26,sipsm,26,$,XX
+ENCODED_PASSWORD = "WFgsJCwyNixzaXBldCwyNiwkLFhY"  # XX,$,26,sipet,26,$,XX
 ENCODED_EMAIL = "YXZhbkBzaXBldC5sb2NhbA=="  # avan@sipet.local
 
 

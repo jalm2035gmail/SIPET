@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title or 'Formulario' }}</title>
+  {% if app_favicon_url %}
+  <link rel="icon" type="image/png" href="{{ app_favicon_url }}" />
+  {% endif %}
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: #cbd5e1;
+      --primary: #0f172a;
+      --primary-soft: #e2e8f0;
+      --ok: #166534;
+      --bad: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+    .description {
+      margin: 0 0 24px;
+      color: var(--muted);
+    }
+    .wizard-steps {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .wizard-step {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      background: #fff;
+      color: var(--muted);
+    }
+    .wizard-step.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--text);
+      font-weight: 700;
+    }
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .field label {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .required {
+      color: var(--bad);
+      margin-left: 4px;
+    }
+    .field.field-header {
+      margin-top: 12px;
+      margin-bottom: 8px;
+    }
+    .field-header h3 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--text);
+    }
+    .field.field-divider hr {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 4px 0;
+    }
+    .field.field-paragraph p,
+    .field.field-html .html-content {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 15px;
+      color: var(--text);
+      background: #fff;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .help {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: -2px;
+    }
+    .check-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .check-wrap input { width: auto; }
+    .signature-wrap {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px;
+      display: grid;
+      gap: 8px;
+    }
+    .signature-canvas {
+      width: 100%;
+      height: 180px;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+      touch-action: none;
+      background: #fff;
+      cursor: crosshair;
+    }
+    .signature-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .signature-clear {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    button {
+      border: 1px solid var(--primary);
+      border-radius: 10px;
+      padding: 10px 16px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: .65;
+      cursor: wait;
+    }
+    .message {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    .message.ok {
+      display: block;
+      background: #dcfce7;
+      color: var(--ok);
+      border: 1px solid #86efac;
+    }
+    .message.error {
+      display: block;
+      background: #fee2e2;
+      color: var(--bad);
+      border: 1px solid #fca5a5;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1 id="form-title">Formulario</h1>
+      <p id="form-description" class="description"></p>
+
+      <div id="wizard-steps" class="wizard-steps" hidden></div>
+      <form id="dynamic-form" novalidate></form>
+
+      <div class="actions">
+        <button id="prev-btn" type="button">Anterior</button>
+        <button id="next-btn" type="button">Siguiente</button>
+        <button id="submit-btn" type="submit" form="dynamic-form">Enviar</button>
+      </div>
+      <div id="message" class="message"></div>
+    </section>
+  </main>
+
+  <script>
+    const FORM_CONFIG = {{ form_json | safe }};
+
+    const titleEl = document.getElementById('form-title');
+    const descEl = document.getElementById('form-description');
+    const formEl = document.getElementById('dynamic-form');
+    const wizardStepsEl = document.getElementById('wizard-steps');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const messageEl = document.getElementById('message');
+
+    const safeText = (v) => (v ?? '').toString();
+    const fieldState = new Map();
+    let wizardSteps = [];
+    let currentStepIndex = 0;
+
+    const normalizeValue = (value) => {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'boolean') return value;
+      const text = String(value).trim();
+      const low = text.toLowerCase();
+      if (['true', '1', 'yes', 'si', 'on'].includes(low)) return true;
+      if (['false', '0', 'no', 'off'].includes(low)) return false;
+      return text;
+    };
+
+    const evaluateSingleCondition = (rule, answers) => {
+      if (!rule || typeof rule !== 'object') return true;
+      const sourceField = String(rule.field || rule.source || rule.depends_on || rule.name || '').trim();
+      if (!sourceField) return true;
+
+      const left = normalizeValue(answers[sourceField]);
+      const right = normalizeValue(rule.value);
+      const operator = String(rule.operator || rule.op || 'equals').trim().toLowerCase();
+
+      if (['equals', 'eq', '=='].includes(operator)) return left === right;
+      if (['not_equals', 'neq', '!=', '<>'].includes(operator)) return left !== right;
+      if (operator === 'contains') return left !== null && String(left).includes(String(right ?? ''));
+      if (operator === 'in') {
+        const values = Array.isArray(rule.values) ? rule.values : [rule.value];
+        return values.map(normalizeValue).includes(left);
+      }
+      if (operator === 'not_in') {
+        const values = Array.isArray(rule.values) ? rule.values : [rule.value];
+        return !values.map(normalizeValue).includes(left);
+      }
+      if (['truthy', 'is_true'].includes(operator)) return Boolean(left);
+      if (['falsy', 'is_false'].includes(operator)) return !Boolean(left);
+      if (['greater_than', 'gt', '>'].includes(operator)) return Number(left) > Number(right);
+      if (['greater_or_equal', 'gte', '>='].includes(operator)) return Number(left) >= Number(right);
+      if (['less_than', 'lt', '<'].includes(operator)) return Number(left) < Number(right);
+      if (['less_or_equal', 'lte', '<='].includes(operator)) return Number(left) <= Number(right);
+      return true;
+    };
+
+    const evaluateVisibility = (condition, answers) => {
+      if (!condition || typeof condition !== 'object' || !Object.keys(condition).length) return true;
+      if (condition.show_if && typeof condition.show_if === 'object') {
+        return evaluateVisibility(condition.show_if, answers);
+      }
+      if (condition.hide_if && typeof condition.hide_if === 'object') {
+        return !evaluateVisibility(condition.hide_if, answers);
+      }
+      if (Array.isArray(condition.all)) {
+        return condition.all.every((item) => evaluateVisibility(item, answers));
+      }
+      if (Array.isArray(condition.any)) {
+        return condition.any.some((item) => evaluateVisibility(item, answers));
+      }
+      return evaluateSingleCondition(condition, answers);
+    };
+
+    const collectCurrentAnswers = () => {
+      const answers = {};
+      fieldState.forEach((state, name) => {
+        const inputs = Array.from(state.wrapper.querySelectorAll(`[name="${CSS.escape(name)}"]`));
+        if (!inputs.length) return;
+        const first = inputs[0];
+        if (first.type === 'radio') {
+          const checked = inputs.find((item) => item.checked);
+          answers[name] = checked ? checked.value : null;
+          return;
+        }
+        if (first.type === 'checkbox') {
+          if (inputs.length > 1 || first.dataset.multiCheckbox === '1') {
+            answers[name] = inputs.filter((item) => item.checked).map((item) => item.value);
+          } else {
+            answers[name] = first.checked;
+          }
+          return;
+        }
+        if (first.dataset.rangeField === '1') {
+          answers[name] = inputs.map((item) => item.value).filter((value) => safeText(value).trim());
+          return;
+        }
+        answers[name] = first.value;
+      });
+      return answers;
+    };
+
+    const applyRequiredState = (state, visible) => {
+      const inputs = Array.from(state.wrapper.querySelectorAll('[name]'));
+      inputs.forEach((input) => {
+        // Campos ocultos por condición se deshabilitan y no se envían.
+        // Campos ocultos por paso permanecen habilitados para conservar su valor.
+        input.disabled = !state.conditionalVisible;
+        if (!visible) {
+          input.required = false;
+          return;
+        }
+        const baseRequired = input.dataset.baseRequired === '1';
+        if (input.type === 'radio' || input.dataset.multiCheckbox === '1') {
+          input.required = false;
+        } else {
+          input.required = baseRequired;
+        }
+      });
+      if (visible && state.required) {
+        const radios = inputs.filter((input) => input.type === 'radio');
+        if (radios.length) {
+          radios[0].required = true;
+        }
+        const multiCheckboxes = inputs.filter((input) => input.dataset.multiCheckbox === '1');
+        if (multiCheckboxes.length) {
+          const hasAny = multiCheckboxes.some((input) => input.checked);
+          multiCheckboxes[0].setCustomValidity(hasAny ? '' : 'Selecciona al menos una opción.');
+        }
+      }
+    };
+
+    const refreshWizardUi = () => {
+      const wizardEnabled = wizardSteps.length > 1;
+      wizardStepsEl.hidden = !wizardEnabled;
+      prevBtn.style.display = wizardEnabled ? '' : 'none';
+      nextBtn.style.display = wizardEnabled ? '' : 'none';
+      if (!wizardEnabled) {
+        submitBtn.style.display = '';
+        return;
+      }
+      prevBtn.disabled = currentStepIndex <= 0;
+      nextBtn.style.display = currentStepIndex < wizardSteps.length - 1 ? '' : 'none';
+      submitBtn.style.display = currentStepIndex === wizardSteps.length - 1 ? '' : 'none';
+      Array.from(wizardStepsEl.children).forEach((node, index) => {
+        node.classList.toggle('active', index === currentStepIndex);
+      });
+    };
+
+    const updateStepVisibility = () => {
+      const wizardEnabled = wizardSteps.length > 1;
+      fieldState.forEach((state) => {
+        state.stepVisible = !wizardEnabled || state.stepIndex === currentStepIndex;
+      });
+      updateConditionalVisibility();
+      refreshWizardUi();
+    };
+
+    const updateConditionalVisibility = () => {
+      const answers = collectCurrentAnswers();
+      fieldState.forEach((state) => {
+        state.conditionalVisible = evaluateVisibility(state.conditional, answers);
+        const visible = state.conditionalVisible && state.stepVisible;
+        state.wrapper.style.display = visible ? '' : 'none';
+        applyRequiredState(state, visible);
+      });
+    };
+
+    const validateCurrentStep = () => {
+      let valid = true;
+      fieldState.forEach((state) => {
+        if (!(state.conditionalVisible && state.stepVisible)) return;
+        const inputs = Array.from(state.wrapper.querySelectorAll('[name]'));
+        const signatureInputs = inputs.filter((input) => input.dataset.signatureField === '1');
+        if (signatureInputs.length) {
+          const signatureInput = signatureInputs[0];
+          const needsSignature = signatureInput.dataset.baseRequired === '1';
+          const hasSignature = Boolean((signatureInput.value || '').trim());
+          signatureInput.setCustomValidity(needsSignature && !hasSignature ? 'Firma requerida.' : '');
+        }
+        const multiCheckboxes = inputs.filter((input) => input.dataset.multiCheckbox === '1');
+        if (multiCheckboxes.length) {
+          const hasAny = multiCheckboxes.some((input) => input.checked);
+          multiCheckboxes[0].setCustomValidity(hasAny ? '' : 'Selecciona al menos una opción.');
+        }
+        for (const input of inputs) {
+          if (!input.checkValidity()) {
+            input.reportValidity();
+            valid = false;
+            return;
+          }
+        }
+      });
+      return valid;
+    };
+
+    const initializeSignaturePads = () => {
+      formEl.querySelectorAll('.signature-wrap').forEach((container) => {
+        if (container.dataset.signatureReady === '1') return;
+        container.dataset.signatureReady = '1';
+        const canvas = container.querySelector('canvas.signature-canvas');
+        const hidden = container.querySelector('input[data-signature-field="1"]');
+        const clearBtn = container.querySelector('.signature-clear');
+        if (!canvas || !hidden) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const resizeCanvas = () => {
+          const ratio = window.devicePixelRatio || 1;
+          const width = canvas.clientWidth || 300;
+          const height = canvas.clientHeight || 180;
+          canvas.width = Math.floor(width * ratio);
+          canvas.height = Math.floor(height * ratio);
+          ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = '#0f172a';
+        };
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        let drawing = false;
+        let hasStroke = false;
+        const getPoint = (event) => {
+          const rect = canvas.getBoundingClientRect();
+          const source = event.touches && event.touches[0] ? event.touches[0] : event;
+          return {
+            x: source.clientX - rect.left,
+            y: source.clientY - rect.top,
+          };
+        };
+        const start = (event) => {
+          event.preventDefault();
+          drawing = true;
+          const p = getPoint(event);
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+        };
+        const move = (event) => {
+          if (!drawing) return;
+          event.preventDefault();
+          const p = getPoint(event);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+          hasStroke = true;
+        };
+        const stop = () => {
+          if (!drawing) return;
+          drawing = false;
+          ctx.closePath();
+          if (hasStroke) {
+            hidden.value = canvas.toDataURL('image/png');
+          }
+        };
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', stop);
+        canvas.addEventListener('mouseleave', stop);
+        canvas.addEventListener('touchstart', start, { passive: false });
+        canvas.addEventListener('touchmove', move, { passive: false });
+        canvas.addEventListener('touchend', stop);
+
+        clearBtn && clearBtn.addEventListener('click', () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          hidden.value = '';
+          hasStroke = false;
+        });
+      });
+    };
+
+    const buildWizardSteps = (cfg, fields) => {
+      const allNames = fields.map((f) => safeText(f.name)).filter(Boolean);
+      const wizardCfg = cfg?.config?.wizard;
+      const declared = Array.isArray(wizardCfg?.steps) ? wizardCfg.steps : [];
+      const hasPageBreak = fields.some((f) => safeText(f.type).toLowerCase() === 'pagebreak');
+      if (!declared.length) {
+        if (!hasPageBreak) return [{ title: 'Formulario', fields: allNames }];
+        const stepsAuto = [];
+        let currentFields = [];
+        let stepCounter = 1;
+        fields.forEach((field) => {
+          const fieldType = safeText(field.type).toLowerCase();
+          if (fieldType === 'pagebreak') {
+            if (currentFields.length) {
+              stepsAuto.push({ title: `Paso ${stepCounter}`, fields: currentFields });
+              currentFields = [];
+              stepCounter += 1;
+            }
+            return;
+          }
+          const name = safeText(field.name);
+          if (name) currentFields.push(name);
+        });
+        if (currentFields.length) {
+          stepsAuto.push({ title: `Paso ${stepCounter}`, fields: currentFields });
+        }
+        return stepsAuto.length ? stepsAuto : [{ title: 'Formulario', fields: allNames }];
+      }
+      const steps = [];
+      const assigned = new Set();
+      declared.forEach((step, index) => {
+        const stepFields = Array.isArray(step?.fields)
+          ? step.fields.map((name) => safeText(name)).filter((name) => allNames.includes(name))
+          : [];
+        if (!stepFields.length) return;
+        stepFields.forEach((name) => assigned.add(name));
+        steps.push({
+          title: safeText(step?.title || `Paso ${index + 1}`),
+          fields: stepFields,
+        });
+      });
+      const remaining = allNames.filter((name) => !assigned.has(name));
+      if (remaining.length) {
+        steps.push({ title: 'Paso final', fields: remaining });
+      }
+      return steps.length ? steps : [{ title: 'Formulario', fields: allNames }];
+    };
+
+    const createInput = (field) => {
+      const type = safeText(field.type).toLowerCase();
+      const name = safeText(field.name);
+      const required = Boolean(field.required);
+      const placeholder = safeText(field.placeholder);
+      const defaultValue = field.defaultValue ?? '';
+
+      if (type === 'textarea') {
+        const el = document.createElement('textarea');
+        el.name = name;
+        el.placeholder = placeholder;
+        el.required = required;
+        el.value = safeText(defaultValue);
+        return el;
+      }
+
+      if (type === 'select') {
+        const el = document.createElement('select');
+        el.name = name;
+        el.required = required;
+
+        const firstOption = document.createElement('option');
+        firstOption.value = '';
+        firstOption.textContent = placeholder || 'Seleccione una opción';
+        firstOption.disabled = required;
+        firstOption.selected = !defaultValue;
+        el.appendChild(firstOption);
+
+        const options = Array.isArray(field.options) ? field.options : [];
+        options.forEach((opt) => {
+          const optionEl = document.createElement('option');
+          if (typeof opt === 'object' && opt !== null) {
+            optionEl.value = safeText(opt.value ?? opt.label ?? '');
+            optionEl.textContent = safeText(opt.label ?? opt.value ?? 'Opción');
+          } else {
+            optionEl.value = safeText(opt);
+            optionEl.textContent = safeText(opt);
+          }
+          if (safeText(defaultValue) === optionEl.value) {
+            optionEl.selected = true;
+          }
+          el.appendChild(optionEl);
+        });
+        return el;
+      }
+
+      if (type === 'radio') {
+        const group = document.createElement('div');
+        const options = Array.isArray(field.options) ? field.options : [];
+        options.forEach((opt, idx) => {
+          const value = typeof opt === 'object' && opt !== null
+            ? safeText(opt.value ?? opt.label ?? '')
+            : safeText(opt);
+          const label = typeof opt === 'object' && opt !== null
+            ? safeText(opt.label ?? opt.value ?? 'Opción')
+            : safeText(opt);
+
+          const labelEl = document.createElement('label');
+          labelEl.className = 'check-wrap';
+
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = name;
+          input.value = value;
+          input.required = required && idx === 0;
+          input.dataset.baseRequired = required ? '1' : '0';
+          input.checked = safeText(defaultValue) === value;
+
+          const text = document.createElement('span');
+          text.textContent = label;
+
+          labelEl.appendChild(input);
+          labelEl.appendChild(text);
+          group.appendChild(labelEl);
+        });
+        return group;
+      }
+
+      if (type === 'checkboxes') {
+        const group = document.createElement('div');
+        const options = Array.isArray(field.options) ? field.options : [];
+        const selectedValues = Array.isArray(defaultValue)
+          ? defaultValue.map((item) => safeText(item))
+          : safeText(defaultValue).split(',').map((item) => item.trim()).filter(Boolean);
+        options.forEach((opt) => {
+          const value = typeof opt === 'object' && opt !== null
+            ? safeText(opt.value ?? opt.label ?? '')
+            : safeText(opt);
+          const label = typeof opt === 'object' && opt !== null
+            ? safeText(opt.label ?? opt.value ?? 'Opción')
+            : safeText(opt);
+          const labelEl = document.createElement('label');
+          labelEl.className = 'check-wrap';
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.name = name;
+          input.value = value;
+          input.dataset.baseRequired = required ? '1' : '0';
+          input.dataset.multiCheckbox = '1';
+          input.checked = selectedValues.includes(value);
+          const text = document.createElement('span');
+          text.textContent = label;
+          labelEl.appendChild(input);
+          labelEl.appendChild(text);
+          group.appendChild(labelEl);
+        });
+        return group;
+      }
+
+      if (type === 'likert') {
+        const group = document.createElement('div');
+        const options = Array.isArray(field.options) && field.options.length ? field.options : [1, 2, 3, 4, 5];
+        options.forEach((opt, idx) => {
+          const value = typeof opt === 'object' && opt !== null
+            ? safeText(opt.value ?? opt.label ?? '')
+            : safeText(opt);
+          const label = typeof opt === 'object' && opt !== null
+            ? safeText(opt.label ?? opt.value ?? 'Opción')
+            : safeText(opt);
+          const labelEl = document.createElement('label');
+          labelEl.className = 'check-wrap';
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = name;
+          input.value = value;
+          input.required = required && idx === 0;
+          input.dataset.baseRequired = required ? '1' : '0';
+          input.checked = safeText(defaultValue) === value;
+          const text = document.createElement('span');
+          text.textContent = label;
+          labelEl.appendChild(input);
+          labelEl.appendChild(text);
+          group.appendChild(labelEl);
+        });
+        return group;
+      }
+
+      if (type === 'daterange') {
+        const group = document.createElement('div');
+        group.style.display = 'grid';
+        group.style.gridTemplateColumns = '1fr 1fr';
+        group.style.gap = '8px';
+        const defaults = Array.isArray(defaultValue)
+          ? defaultValue
+          : safeText(defaultValue).split(',').map((item) => item.trim());
+        const start = document.createElement('input');
+        start.type = 'date';
+        start.name = name;
+        start.dataset.baseRequired = required ? '1' : '0';
+        start.dataset.rangeField = '1';
+        start.value = safeText(defaults[0] || '');
+        const end = document.createElement('input');
+        end.type = 'date';
+        end.name = name;
+        end.dataset.baseRequired = required ? '1' : '0';
+        end.dataset.rangeField = '1';
+        end.value = safeText(defaults[1] || '');
+        group.appendChild(start);
+        group.appendChild(end);
+        return group;
+      }
+
+      if (type === 'signature') {
+        const wrap = document.createElement('div');
+        wrap.className = 'signature-wrap';
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'signature-canvas';
+        canvas.setAttribute('aria-label', `Firma para ${name}`);
+
+        const hidden = document.createElement('input');
+        hidden.type = 'text';
+        hidden.name = name;
+        hidden.dataset.signatureField = '1';
+        hidden.dataset.baseRequired = required ? '1' : '0';
+        hidden.value = safeText(defaultValue);
+        hidden.style.position = 'absolute';
+        hidden.style.opacity = '0';
+        hidden.style.pointerEvents = 'none';
+        hidden.style.height = '0';
+        hidden.style.width = '0';
+
+        const actions = document.createElement('div');
+        actions.className = 'signature-actions';
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'signature-clear';
+        clearBtn.textContent = 'Limpiar firma';
+        actions.appendChild(clearBtn);
+
+        wrap.appendChild(canvas);
+        wrap.appendChild(actions);
+        wrap.appendChild(hidden);
+        return wrap;
+      }
+
+      if (type === 'checkbox') {
+        const wrap = document.createElement('label');
+        wrap.className = 'check-wrap';
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.name = name;
+        input.value = 'true';
+        input.dataset.baseRequired = required ? '1' : '0';
+        input.checked = defaultValue === true || safeText(defaultValue).toLowerCase() === 'true';
+
+        const text = document.createElement('span');
+        text.textContent = safeText(field.label) || name;
+
+        wrap.appendChild(input);
+        wrap.appendChild(text);
+        return wrap;
+      }
+
+      const input = document.createElement('input');
+      input.name = name;
+      input.required = required;
+      input.dataset.baseRequired = required ? '1' : '0';
+      input.placeholder = placeholder;
+      input.value = safeText(defaultValue);
+
+      if (type === 'email') input.type = 'email';
+      else if (type === 'password') input.type = 'password';
+      else if (type === 'number' || type === 'integer' || type === 'decimal') input.type = 'number';
+      else if (type === 'date') input.type = 'date';
+      else if (type === 'time') input.type = 'time';
+      else if (type === 'url') input.type = 'url';
+      else input.type = 'text';
+
+      const validation = field.validation || {};
+      if (validation.min != null) input.min = String(validation.min);
+      if (validation.max != null) input.max = String(validation.max);
+      if (validation.min_length != null) input.minLength = Number(validation.min_length);
+      if (validation.max_length != null) input.maxLength = Number(validation.max_length);
+      if (validation.pattern) input.pattern = String(validation.pattern);
+
+      return input;
+    };
+
+    const renderForm = (cfg) => {
+      titleEl.textContent = safeText(cfg.name || 'Formulario');
+      descEl.textContent = safeText(cfg.description);
+      descEl.style.display = descEl.textContent ? 'block' : 'none';
+      formEl.innerHTML = '';
+      fieldState.clear();
+
+      const fields = Array.isArray(cfg.fields) ? cfg.fields : [];
+      wizardSteps = buildWizardSteps(cfg, fields);
+      currentStepIndex = 0;
+      const stepIndexByField = new Map();
+      wizardSteps.forEach((step, index) => {
+        step.fields.forEach((fieldName) => stepIndexByField.set(fieldName, index));
+      });
+      wizardStepsEl.innerHTML = wizardSteps.map((step) => `<span class="wizard-step">${safeText(step.title)}</span>`).join('');
+      fields.forEach((field) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'field';
+        wrapper.dataset.fieldName = safeText(field.name);
+
+        const fieldType = safeText(field.type).toLowerCase();
+        if (fieldType === 'pagebreak') {
+          return;
+        }
+        if (fieldType === 'header') {
+          wrapper.classList.add('field-header');
+          const h3 = document.createElement('h3');
+          h3.textContent = safeText(field.label || field.name || 'Sección');
+          wrapper.appendChild(h3);
+          formEl.appendChild(wrapper);
+          return;
+        }
+        if (fieldType === 'divider') {
+          wrapper.classList.add('field-divider');
+          const hr = document.createElement('hr');
+          wrapper.appendChild(hr);
+          formEl.appendChild(wrapper);
+          return;
+        }
+        if (fieldType === 'paragraph' || fieldType === 'html') {
+          wrapper.classList.add(fieldType === 'paragraph' ? 'field-paragraph' : 'field-html');
+          if (fieldType === 'paragraph') {
+            const p = document.createElement('p');
+            p.textContent = safeText(field.helpText || field.placeholder || field.label || '');
+            wrapper.appendChild(p);
+          } else {
+            const box = document.createElement('div');
+            box.className = 'html-content';
+            box.innerHTML = safeText(field.helpText || field.placeholder || field.label || '');
+            wrapper.appendChild(box);
+          }
+          formEl.appendChild(wrapper);
+          return;
+        }
+        if (fieldType !== 'checkbox') {
+          const label = document.createElement('label');
+          label.setAttribute('for', safeText(field.name));
+          label.textContent = safeText(field.label || field.name || 'Campo');
+          if (field.required) {
+            const req = document.createElement('span');
+            req.className = 'required';
+            req.textContent = '*';
+            label.appendChild(req);
+          }
+          wrapper.appendChild(label);
+        }
+
+        const control = createInput(field);
+        if (control.id !== undefined) control.id = safeText(field.name);
+        wrapper.appendChild(control);
+
+        if (field.helpText) {
+          const help = document.createElement('div');
+          help.className = 'help';
+          help.textContent = safeText(field.helpText);
+          wrapper.appendChild(help);
+        }
+
+        formEl.appendChild(wrapper);
+        fieldState.set(safeText(field.name), {
+          wrapper,
+          conditional: field.conditional || {},
+          stepIndex: stepIndexByField.get(safeText(field.name)) ?? 0,
+          conditionalVisible: true,
+          stepVisible: true,
+          required: Boolean(field.required),
+        });
+      });
+      initializeSignaturePads();
+      updateStepVisibility();
+    };
+
+    const setMessage = (kind, text) => {
+      messageEl.className = `message ${kind}`;
+      messageEl.textContent = text;
+    };
+
+    formEl.addEventListener('input', updateConditionalVisibility);
+    formEl.addEventListener('change', updateConditionalVisibility);
+    prevBtn.addEventListener('click', () => {
+      if (currentStepIndex <= 0) return;
+      currentStepIndex -= 1;
+      updateStepVisibility();
+    });
+    nextBtn.addEventListener('click', () => {
+      if (!validateCurrentStep()) return;
+      if (currentStepIndex >= wizardSteps.length - 1) return;
+      currentStepIndex += 1;
+      updateStepVisibility();
+    });
+
+    formEl.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!validateCurrentStep()) return;
+      submitBtn.disabled = true;
+      setMessage('', '');
+
+      try {
+        const data = new FormData(formEl);
+        const res = await fetch(`/forms/api/${encodeURIComponent(FORM_CONFIG.slug)}/submit`, {
+          method: 'POST',
+          body: data,
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          const detail = json?.error || json?.details || 'No se pudo enviar el formulario';
+          setMessage('error', String(detail));
+          submitBtn.disabled = false;
+          return;
+        }
+        setMessage('ok', json?.message || 'Formulario enviado correctamente');
+        formEl.reset();
+        currentStepIndex = 0;
+        updateStepVisibility();
+      } catch (error) {
+        setMessage('error', 'Error de conexión al enviar el formulario');
+      }
+
+      submitBtn.disabled = false;
+    });
+
+    renderForm(FORM_CONFIG || {});
+  </script>
+</body>
+</html>
