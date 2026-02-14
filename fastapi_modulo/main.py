@@ -15,6 +15,7 @@ import secrets
 from textwrap import dedent
 from email.message import EmailMessage
 from urllib.parse import urlparse
+from cryptography.fernet import Fernet, InvalidToken
 
 from typing import Any, Dict, List, Optional, Set
 from fastapi import FastAPI, Request, Body, HTTPException, UploadFile, File, Form, Depends
@@ -45,6 +46,7 @@ PLANTILLAS_STORE_PATH = "fastapi_modulo/plantillas_store.json"
 SYSTEM_REPORT_HEADER_TEMPLATE_ID = "system-report-header"
 AUTH_COOKIE_NAME = "auth_session"
 AUTH_COOKIE_SECRET = os.environ.get("AUTH_COOKIE_SECRET", "sipet-dev-auth-secret")
+SENSITIVE_DATA_SECRET = os.environ.get("SENSITIVE_DATA_SECRET", AUTH_COOKIE_SECRET)
 NON_DATA_FIELD_TYPES = {"header", "paragraph", "html", "divider", "pagebreak"}
 
 
@@ -116,6 +118,43 @@ def get_visible_role_names(request: Request) -> List[str]:
     if is_admin(request):
         return [name for name, _ in DEFAULT_SYSTEM_ROLES if name != "superadministrador"]
     return []
+
+
+def _sensitive_secret_bytes() -> bytes:
+    return hashlib.sha256(SENSITIVE_DATA_SECRET.encode("utf-8")).digest()
+
+
+def _sensitive_fernet() -> Fernet:
+    key = base64.urlsafe_b64encode(_sensitive_secret_bytes())
+    return Fernet(key)
+
+
+def _sensitive_lookup_hash(value: str) -> str:
+    normalized = (value or "").strip().lower()
+    return hmac.new(_sensitive_secret_bytes(), normalized.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def _encrypt_sensitive(value: Optional[str]) -> Optional[str]:
+    raw = (value or "").strip()
+    if not raw:
+        return value
+    if raw.startswith("enc$"):
+        return raw
+    token = _sensitive_fernet().encrypt(raw.encode("utf-8")).decode("utf-8")
+    return f"enc${token}"
+
+
+def _decrypt_sensitive(value: Optional[str]) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return ""
+    if not raw.startswith("enc$"):
+        return raw
+    token = raw[4:]
+    try:
+        return _sensitive_fernet().decrypt(token.encode("utf-8")).decode("utf-8")
+    except (InvalidToken, ValueError):
+        return ""
 
 
 def _ensure_login_identity_paths() -> None:
@@ -472,7 +511,9 @@ class Usuario(Base):
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column("full_name", String)
     usuario = Column("username", String, unique=True, index=True)
+    usuario_hash = Column(String, index=True)
     correo = Column("email", String, unique=True, index=True)
+    correo_hash = Column(String, index=True)
     celular = Column(String)
     contrasena = Column("password", String)
     departamento = Column(String)
@@ -585,18 +626,28 @@ def ensure_system_superadmin_user() -> None:
         if not superadmin_role:
             return
 
+        username_hash = _sensitive_lookup_hash(username)
+        email_hash = _sensitive_lookup_hash(email)
         existing = (
             db.query(Usuario)
-            .filter(
-                (func.lower(Usuario.usuario) == username.lower())
-                | (func.lower(Usuario.correo) == email.lower())
-            )
+            .filter((Usuario.usuario_hash == username_hash) | (Usuario.correo_hash == email_hash))
             .first()
         )
+        if not existing:
+            existing = (
+                db.query(Usuario)
+                .filter(
+                    (func.lower(Usuario.usuario) == username.lower())
+                    | (func.lower(Usuario.correo) == email.lower())
+                )
+                .first()
+            )
         if existing:
             existing.nombre = existing.nombre or "Super Administrador"
-            existing.usuario = existing.usuario or username
-            existing.correo = existing.correo or email
+            existing.usuario = _encrypt_sensitive(_decrypt_sensitive(existing.usuario) or username)
+            existing.correo = _encrypt_sensitive(_decrypt_sensitive(existing.correo) or email)
+            existing.usuario_hash = _sensitive_lookup_hash(_decrypt_sensitive(existing.usuario) or username)
+            existing.correo_hash = _sensitive_lookup_hash(_decrypt_sensitive(existing.correo) or email)
             existing.rol_id = superadmin_role.id
             existing.role = "superadministrador"
             existing.is_active = True
@@ -609,14 +660,46 @@ def ensure_system_superadmin_user() -> None:
         db.add(
             Usuario(
                 nombre="Super Administrador",
-                usuario=username,
-                correo=email,
+                usuario=_encrypt_sensitive(username),
+                usuario_hash=username_hash,
+                correo=_encrypt_sensitive(email),
+                correo_hash=email_hash,
                 contrasena=_hash_password_pbkdf2(password),
                 rol_id=superadmin_role.id,
                 role="superadministrador",
                 is_active=True,
             )
         )
+        db.commit()
+    finally:
+        db.close()
+
+
+def protect_sensitive_user_fields() -> None:
+    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
+        cols = {row[1] for row in conn.execute('PRAGMA table_info("users")').fetchall()}
+        if "usuario_hash" not in cols:
+            conn.execute('ALTER TABLE "users" ADD COLUMN "usuario_hash" VARCHAR')
+        if "correo_hash" not in cols:
+            conn.execute('ALTER TABLE "users" ADD COLUMN "correo_hash" VARCHAR')
+        conn.execute('CREATE INDEX IF NOT EXISTS "ix_users_usuario_hash" ON "users" ("usuario_hash")')
+        conn.execute('CREATE INDEX IF NOT EXISTS "ix_users_correo_hash" ON "users" ("correo_hash")')
+        conn.commit()
+
+    db = SessionLocal()
+    try:
+        users = db.query(Usuario).all()
+        for user in users:
+            username_plain = _decrypt_sensitive(user.usuario)
+            email_plain = _decrypt_sensitive(user.correo)
+
+            if username_plain:
+                user.usuario_hash = _sensitive_lookup_hash(username_plain)
+                user.usuario = _encrypt_sensitive(username_plain)
+            if email_plain:
+                user.correo_hash = _sensitive_lookup_hash(email_plain)
+                user.correo = _encrypt_sensitive(email_plain)
+            db.add(user)
         db.commit()
     finally:
         db.close()
@@ -810,6 +893,7 @@ def unify_users_table() -> None:
 Base.metadata.create_all(bind=engine)
 unify_users_table()
 ensure_default_roles()
+protect_sensitive_user_fields()
 ensure_system_superadmin_user()
 
 app = FastAPI(title="Módulo de Planificación Estratégica y POA", docs_url="/docs", redoc_url="/redoc")
@@ -1069,11 +1153,24 @@ def web_login_submit(
     db = SessionLocal()
     try:
         normalized_login = username.lower()
+        login_hash = _sensitive_lookup_hash(normalized_login)
         user = (
             db.query(Usuario)
-            .filter(func.lower(Usuario.usuario) == normalized_login)
+            .filter(Usuario.usuario_hash == login_hash)
             .first()
         )
+        if not user:
+            user = (
+                db.query(Usuario)
+                .filter(Usuario.correo_hash == login_hash)
+                .first()
+            )
+        if not user:
+            user = (
+                db.query(Usuario)
+                .filter(func.lower(Usuario.usuario) == normalized_login)
+                .first()
+            )
         if not user:
             user = (
                 db.query(Usuario)
@@ -1102,15 +1199,16 @@ def web_login_submit(
     finally:
         db.close()
 
+    session_username = _decrypt_sensitive(user.usuario) or username
     response = RedirectResponse(url="/inicio", status_code=303)
     response.set_cookie(
         AUTH_COOKIE_NAME,
-        _build_session_cookie(username, role_name),
+        _build_session_cookie(session_username, role_name),
         httponly=True,
         samesite="lax",
     )
     response.set_cookie("user_role", normalize_role_name(role_name), httponly=True, samesite="lax")
-    response.set_cookie("user_name", username, httponly=True, samesite="lax")
+    response.set_cookie("user_name", session_username, httponly=True, samesite="lax")
     return response
 
 
@@ -6286,10 +6384,16 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
 
     db = SessionLocal()
     try:
-        exists_login = db.query(Usuario).filter(Usuario.usuario == usuario_login).first()
+        login_hash = _sensitive_lookup_hash(usuario_login)
+        email_hash = _sensitive_lookup_hash(correo)
+        exists_login = db.query(Usuario).filter(Usuario.usuario_hash == login_hash).first()
+        if not exists_login:
+            exists_login = db.query(Usuario).filter(Usuario.usuario == usuario_login).first()
         if exists_login:
             return JSONResponse({"success": False, "error": "El usuario ya existe"}, status_code=409)
-        exists_email = db.query(Usuario).filter(Usuario.correo == correo).first()
+        exists_email = db.query(Usuario).filter(Usuario.correo_hash == email_hash).first()
+        if not exists_email:
+            exists_email = db.query(Usuario).filter(Usuario.correo == correo).first()
         if exists_email:
             return JSONResponse({"success": False, "error": "El correo ya existe"}, status_code=409)
 
@@ -6306,8 +6410,10 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
 
         nuevo = Usuario(
             nombre=nombre,
-            usuario=usuario_login,
-            correo=correo,
+            usuario=_encrypt_sensitive(usuario_login),
+            usuario_hash=login_hash,
+            correo=_encrypt_sensitive(correo),
+            correo_hash=email_hash,
             contrasena=hash_password(password),
             rol_id=rol_id,
             role=rol_nombre,
@@ -6322,7 +6428,7 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
                 "data": {
                     "id": nuevo.id,
                     "nombre": nuevo.nombre,
-                    "correo": nuevo.correo,
+                    "correo": correo,
                     "rol_id": nuevo.rol_id,
                 },
             }
@@ -6374,12 +6480,12 @@ def listar_usuarios_sanitizados(request: Request):
             {
                 "id": u.id,
                 "nombre": u.nombre,
-                "correo": u.correo,
+                "correo": _decrypt_sensitive(u.correo),
                 "rol": resolved_role(u),
                 "imagen": u.imagen,
             }
             for u in usuarios
-            if not is_hidden_user(request, u.usuario)
+            if not is_hidden_user(request, _decrypt_sensitive(u.usuario))
             and (is_superadmin(request) or resolved_role(u) != "superadministrador")
         ]
         return JSONResponse({"success": True, "data": data})
