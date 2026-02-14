@@ -4670,64 +4670,592 @@ POA_HTML = dedent("""
 """)
 
 KPI_HTML = dedent("""
-    <section class="pe-page">
+    <section class="kpi-page">
         <style>
-            .pe-page{--bg:#f6f8fc;--surface:rgba(255,255,255,.88);--text:#0f172a;--muted:#64748b;--border:rgba(148,163,184,.38);--shadow-soft:0 10px 22px rgba(15,23,42,.06);--radius:18px;--primary:#0f3d2e;--warn:#f59e0b;width:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(1200px 640px at 15% 0%, rgba(15,61,46,.10), transparent 58%),radial-gradient(1000px 540px at 90% 6%, rgba(37,99,235,.10), transparent 55%),var(--bg);border-radius:18px}
-            .pe-wrap{width:100%;padding:18px 0 34px}
-            .pe-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:16px 0 18px}
-            .pe-kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-soft);padding:16px;position:relative;overflow:hidden}
-            .pe-kpi:before{content:"";position:absolute;inset:-1px;background:linear-gradient(135deg, rgba(15,61,46,.12), transparent 35%, rgba(37,99,235,.10));opacity:.9;pointer-events:none}
-            .pe-kpi>*{position:relative}
-            .pe-kpi__label{color:var(--muted);font-size:14px;font-weight:600}
-            .pe-kpi__value{margin-top:10px;font-size:34px;font-weight:900;letter-spacing:-.03em}
-            .pe-kpi__meta{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
-            .pe-chip{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(15,23,42,.05);border:1px solid rgba(15,23,42,.08);color:rgba(15,23,42,.72)}
-            .pe-chip--warn{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.22);color:#92400e}
-            .pe-grid{display:grid;grid-template-columns:1.35fr .85fr;gap:14px;align-items:start}
-            .pe-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow-soft);padding:16px;overflow:hidden}
-            .pe-card__head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-            .pe-card__head h2{margin:0;font-size:20px;letter-spacing:-.02em}
-            .pe-card__head p{margin:6px 0 0;color:var(--muted);font-size:13px}
-            .pe-list{display:flex;flex-direction:column;gap:12px}
-            .pe-item{background:rgba(255,255,255,.80);border:1px solid rgba(148,163,184,.30);border-radius:18px;padding:14px 14px 12px;box-shadow:0 10px 20px rgba(15,23,42,.04)}
-            .pe-item__top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-            .pe-code{font-weight:900;color:#0b2a20;background:rgba(15,61,46,.10);border:1px solid rgba(15,61,46,.18);padding:6px 10px;border-radius:999px;font-size:12px}
-            .pe-status{font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.70)}
-            .pe-status--warn{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.22);color:#92400e}
-            .pe-sidebox{margin-top:14px;background:rgba(255,255,255,.80);border:1px solid rgba(148,163,184,.30);border-radius:18px;padding:14px}
-            .pe-sidebox__grid{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-            .pe-metric{background:rgba(15,23,42,.03);border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:12px}
-            .pe-metric__k{font-size:12px;color:var(--muted);font-weight:700}
-            .pe-metric__v{margin-top:6px;font-size:18px;font-weight:900}
-            @media (max-width:1100px){.pe-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pe-grid{grid-template-columns:1fr}}
-            @media (max-width:640px){.pe-kpis{grid-template-columns:1fr}}
+            .kpi-page{
+                --bg: #f6f8fc;
+                --surface: rgba(255,255,255,.88);
+                --card: #ffffff;
+                --text: #0f172a;
+                --muted: #64748b;
+                --border: rgba(148,163,184,.38);
+                --shadow: 0 18px 40px rgba(15,23,42,.08);
+                --shadow-soft: 0 10px 22px rgba(15,23,42,.06);
+                --radius: 18px;
+                --primary: #0f3d2e;
+                --primary-2: #1f6f52;
+                --ok: #16a34a;
+                --warn: #f59e0b;
+                --crit: #ef4444;
+                width: 100%;
+                font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+                color: var(--text);
+                background:
+                  radial-gradient(1200px 640px at 15% 0%, rgba(15,61,46,.10), transparent 58%),
+                  radial-gradient(1000px 540px at 90% 6%, rgba(37,99,235,.10), transparent 55%),
+                  var(--bg);
+                border-radius: 18px;
+            }
+            .kpi-wrap{
+                width: 100%;
+                margin: 0 auto;
+                padding: 18px 0 34px;
+            }
+            .kpi-btn{
+                border-radius: 14px;
+                padding: 10px 14px;
+                font-weight: 800;
+                border: 1px solid var(--border);
+                background: rgba(255,255,255,.75);
+                cursor: pointer;
+                box-shadow: var(--shadow-soft);
+                transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+            }
+            .kpi-btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow); background: rgba(255,255,255,.95); }
+            .kpi-btn--primary{
+                background: linear-gradient(135deg, var(--primary), var(--primary-2));
+                color: #fff;
+                border-color: rgba(15,61,46,.35);
+            }
+            .kpi-btn--primary2{
+                background: rgba(37,99,235,.12);
+                color: #1d4ed8;
+                border-color: rgba(37,99,235,.24);
+            }
+            .kpi-btn--ghost{ background: rgba(255,255,255,.78); }
+            .kpi-btn--soft{
+                background: rgba(15,61,46,.10);
+                border-color: rgba(15,61,46,.18);
+                color: #0b2a20;
+            }
+            .kpi-controls{
+                display: grid;
+                grid-template-columns: 180px 200px 220px 1fr auto;
+                gap: 12px;
+                margin-bottom: 14px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 18px;
+                box-shadow: var(--shadow-soft);
+                padding: 14px;
+            }
+            .kpi-control,
+            .kpi-search{
+                display: flex;
+                flex-direction: column;
+                gap: 7px;
+            }
+            .kpi-control label,
+            .kpi-search label{
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--muted);
+            }
+            .kpi-control select{
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 10px 12px;
+                background: #fff;
+            }
+            .kpi-search__box{
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: #fff;
+                padding: 0 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .kpi-search__icon{ color: #64748b; font-size: 15px; }
+            .kpi-search__box input{
+                border: 0;
+                outline: 0;
+                width: 100%;
+                padding: 10px 0;
+                background: transparent;
+            }
+            .kpi-actions{
+                display: flex;
+                gap: 8px;
+                align-items: end;
+                justify-content: flex-end;
+            }
+            .kpi-kpis{
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                gap: 12px;
+                margin-bottom: 14px;
+            }
+            .kpi-stat{
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-soft);
+                padding: 14px;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                position: relative;
+                overflow: hidden;
+            }
+            .kpi-stat::before{
+                content: "";
+                position: absolute;
+                inset: -1px;
+                background: linear-gradient(135deg, rgba(15,61,46,.12), transparent 35%, rgba(37,99,235,.10));
+                opacity: .85;
+                pointer-events: none;
+            }
+            .kpi-stat > *{ position: relative; }
+            .kpi-stat__label{ color: var(--muted); font-size: 13px; font-weight: 700; }
+            .kpi-stat__value{ margin-top: 8px; font-size: 30px; font-weight: 900; letter-spacing: -0.03em; }
+            .kpi-stat__meta{ margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+            .kpi-chip{
+                font-size: 12px;
+                padding: 6px 10px;
+                border-radius: 999px;
+                background: rgba(15,23,42,.05);
+                border: 1px solid rgba(15,23,42,.08);
+                color: rgba(15,23,42,.72);
+            }
+            .kpi-chip--ok{ background: rgba(22,163,74,.10); border-color: rgba(22,163,74,.20); color: #166534; }
+            .kpi-chip--warn{ background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.22); color: #92400e; }
+            .kpi-chip--crit{ background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.22); color: #991b1b; }
+            .kpi-bar{
+                height: 10px;
+                flex: 1 1 auto;
+                min-width: 120px;
+                border-radius: 999px;
+                background: rgba(148,163,184,.25);
+                border: 1px solid rgba(148,163,184,.25);
+                overflow: hidden;
+            }
+            .kpi-bar__fill{ height: 100%; width: 50%; border-radius: 999px; background: linear-gradient(90deg, rgba(37,99,235,1), rgba(96,165,250,1)); }
+            .kpi-bar__fill--ok{ background: linear-gradient(90deg, rgba(15,61,46,1), rgba(31,111,82,1)); }
+            .kpi-grid{ display: grid; grid-template-columns: 1.35fr .85fr; gap: 14px; align-items: start; }
+            .kpi-card{
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 22px;
+                box-shadow: var(--shadow-soft);
+                padding: 16px;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                overflow: hidden;
+            }
+            .kpi-card__head{
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 14px;
+            }
+            .kpi-card__head h2{ margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+            .kpi-card__head p{ margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+            .kpi-card__tools{ display: flex; align-items: center; gap: 10px; }
+            .kpi-pill{
+                font-size: 12px;
+                padding: 6px 10px;
+                border-radius: 999px;
+                background: rgba(255,255,255,.70);
+                border: 1px solid var(--border);
+                color: rgba(15,23,42,.72);
+                white-space: nowrap;
+            }
+            .kpi-pill--soft{
+                background: rgba(15,61,46,.10);
+                border-color: rgba(15,61,46,.18);
+                color: #0b2a20;
+            }
+            .kpi-iconbtn{
+                width: 38px;
+                height: 38px;
+                border-radius: 14px;
+                border: 1px solid var(--border);
+                background: rgba(255,255,255,.75);
+                box-shadow: var(--shadow-soft);
+                cursor: pointer;
+                transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+            }
+            .kpi-iconbtn:hover{
+                transform: translateY(-1px);
+                box-shadow: var(--shadow);
+                background: rgba(255,255,255,.95);
+            }
+            .kpi-table{
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                overflow: hidden;
+                background: rgba(255,255,255,.65);
+            }
+            .kpi-table__head{
+                display: grid;
+                grid-template-columns: 1.7fr 1fr .7fr .7fr .45fr .75fr;
+                gap: 10px;
+                align-items: center;
+                padding: 12px;
+                font-size: 12px;
+                color: var(--muted);
+                font-weight: 900;
+                background: rgba(15,23,42,.03);
+                border-bottom: 1px solid var(--border);
+            }
+            .kpi-row{
+                display: grid;
+                grid-template-columns: 1.7fr 1fr .7fr .7fr .45fr .75fr;
+                gap: 10px;
+                align-items: center;
+                padding: 12px;
+                border-bottom: 1px solid rgba(148,163,184,.25);
+                font-size: 14px;
+            }
+            .kpi-row:last-child{ border-bottom: 0; }
+            .kpi-row:hover{ background: rgba(37,99,235,.05); }
+            .kpi-row--active{ background: rgba(15,61,46,.06); outline: 1px solid rgba(15,61,46,.18); }
+            .kpi-row__main{ display: flex; flex-direction: column; gap: 2px; }
+            .kpi-row__main strong{ font-size: 13px; }
+            .kpi-sub{ font-size: 12px; color: var(--muted); }
+            .kpi-right{ text-align: right; }
+            .kpi-status{
+                font-size: 12px;
+                font-weight: 800;
+                padding: 6px 10px;
+                border-radius: 999px;
+                border: 1px solid var(--border);
+                background: rgba(255,255,255,.70);
+                white-space: nowrap;
+            }
+            .kpi-status--warn{ background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.22); color: #92400e; }
+            .kpi-status--crit{ background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.22); color: #991b1b; }
+            .kpi-status--ok{ background: rgba(22,163,74,.10); border-color: rgba(22,163,74,.20); color: #166534; }
+            .kpi-trend{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 30px;
+                height: 30px;
+                border-radius: 12px;
+                border: 1px solid rgba(148,163,184,.25);
+                background: rgba(15,23,42,.03);
+                font-weight: 900;
+                color: #64748b;
+            }
+            .kpi-trend--up{
+                background: rgba(22,163,74,.10);
+                border-color: rgba(22,163,74,.20);
+                color: #166534;
+            }
+            .kpi-trend--down{
+                background: rgba(239,68,68,.10);
+                border-color: rgba(239,68,68,.20);
+                color: #991b1b;
+            }
+            .kpi-foot{
+                margin-top: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .kpi-foot__note{ display: flex; align-items: center; gap: 10px; color: #475569; font-size: 12px; }
+            .kpi-dot{ width: 9px; height: 9px; border-radius: 999px; display: inline-block; margin-right: 5px; }
+            .kpi-dot--ok{ background: var(--ok); }
+            .kpi-dot--warn{ background: var(--warn); }
+            .kpi-dot--crit{ background: var(--crit); }
+            .kpi-detail{ display: flex; flex-direction: column; gap: 12px; }
+            .kpi-detail__top{
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 10px;
+            }
+            .kpi-detail__name{ font-size: 17px; font-weight: 800; line-height: 1.25; }
+            .kpi-detail__meta{ margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+            .kpi-score{
+                min-width: 94px;
+                text-align: center;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                background: rgba(255,255,255,.75);
+                padding: 8px 10px;
+            }
+            .kpi-score__k{ font-size: 11px; color: var(--muted); }
+            .kpi-score__v{ margin-top: 4px; font-size: 22px; font-weight: 900; }
+            .kpi-detail__cards{
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+            }
+            .kpi-miniCard{
+                background: rgba(15,23,42,.03);
+                border: 1px solid rgba(15,23,42,.08);
+                border-radius: 14px;
+                padding: 10px;
+            }
+            .kpi-miniCard__k{ font-size: 12px; color: var(--muted); font-weight: 700; }
+            .kpi-miniCard__v{ margin-top: 6px; font-size: 20px; font-weight: 900; }
+            .kpi-miniCard__v--warn{ color: #92400e; }
+            .kpi-chart{
+                background: rgba(255,255,255,.8);
+                border: 1px solid rgba(148,163,184,.30);
+                border-radius: 16px;
+                padding: 12px;
+            }
+            .kpi-chart__head{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            .kpi-spark__bars{
+                height: 120px;
+                display: grid;
+                grid-template-columns: repeat(8, 1fr);
+                gap: 8px;
+                align-items: end;
+            }
+            .kpi-spark__bars span{
+                display: block;
+                border-radius: 8px 8px 4px 4px;
+                background: linear-gradient(180deg, rgba(37,99,235,.95), rgba(15,61,46,.95));
+            }
+            .kpi-spark__axis{
+                margin-top: 8px;
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                font-size: 11px;
+                color: var(--muted);
+            }
+            .kpi-notes{
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .kpi-notes label{ font-size: 12px; font-weight: 700; color: var(--muted); }
+            .kpi-notes textarea{
+                min-height: 90px;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                padding: 10px 12px;
+                background: #fff;
+                resize: vertical;
+            }
+            .kpi-detail__actions{ display: flex; gap: 8px; justify-content: flex-end; }
+            @media (max-width: 1200px){
+                .kpi-controls{ grid-template-columns: 1fr 1fr 1fr; }
+                .kpi-search{ grid-column: 1 / -1; }
+                .kpi-actions{ grid-column: 1 / -1; justify-content: flex-start; }
+                .kpi-kpis{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            }
+            @media (max-width: 1100px){
+                .kpi-grid{ grid-template-columns: 1fr; }
+                .kpi-table__head,
+                .kpi-row{ grid-template-columns: 1.6fr .9fr .7fr .7fr .5fr .8fr; }
+            }
+            @media (max-width: 640px){
+                .kpi-controls{ grid-template-columns: 1fr; }
+                .kpi-kpis{ grid-template-columns: 1fr; }
+                .kpi-detail__cards{ grid-template-columns: 1fr; }
+                .kpi-table__head{ display: none; }
+                .kpi-row{
+                    grid-template-columns: 1fr;
+                    gap: 8px;
+                    font-size: 12px;
+                }
+                .kpi-right{ text-align: left; }
+                .kpi-foot{ flex-direction: column; align-items: flex-start; }
+            }
         </style>
-        <div class="pe-wrap">
-            <section class="pe-kpis">
-                <article class="pe-kpi"><div class="pe-kpi__label">Indicadores activos</div><div class="pe-kpi__value">36</div><div class="pe-kpi__meta"><span class="pe-chip">12 objetivos</span></div></article>
-                <article class="pe-kpi"><div class="pe-kpi__label">Con línea base</div><div class="pe-kpi__value">30</div><div class="pe-kpi__meta"><span class="pe-chip">83%</span></div></article>
-                <article class="pe-kpi"><div class="pe-kpi__label">En meta</div><div class="pe-kpi__value">24</div><div class="pe-kpi__meta"><span class="pe-chip">67%</span></div></article>
-                <article class="pe-kpi"><div class="pe-kpi__label">Alertas</div><div class="pe-kpi__value">6</div><div class="pe-kpi__meta"><span class="pe-chip pe-chip--warn">Revisión</span></div></article>
+        <div class="kpi-wrap">
+            <section class="kpi-controls">
+                <div class="kpi-control">
+                    <label>Periodo</label>
+                    <select>
+                        <option>Mensual</option>
+                        <option>Trimestral</option>
+                        <option>Anual</option>
+                    </select>
+                </div>
+                <div class="kpi-control">
+                    <label>Area</label>
+                    <select>
+                        <option>Todas</option>
+                        <option>Operaciones</option>
+                        <option>Finanzas</option>
+                        <option>Comercial</option>
+                        <option>TI</option>
+                        <option>Calidad</option>
+                    </select>
+                </div>
+                <div class="kpi-control">
+                    <label>Perspectiva</label>
+                    <select>
+                        <option>Todas</option>
+                        <option>Financiera</option>
+                        <option>Clientes</option>
+                        <option>Procesos</option>
+                        <option>Aprendizaje</option>
+                    </select>
+                </div>
+                <div class="kpi-search">
+                    <label>Buscar</label>
+                    <div class="kpi-search__box">
+                        <span class="kpi-search__icon">⌕</span>
+                        <input type="search" placeholder="Buscar KPI, codigo o responsable...">
+                    </div>
+                </div>
+                <div class="kpi-actions">
+                    <button class="kpi-btn kpi-btn--soft" type="button">Limpiar</button>
+                    <button class="kpi-btn kpi-btn--primary2" type="button">Aplicar</button>
+                </div>
             </section>
-            <section class="pe-grid">
-                <article class="pe-card">
-                    <div class="pe-card__head"><div><h2>Indicadores críticos</h2><p>Seguimiento de KPIs con mayor variación.</p></div></div>
-                    <div class="pe-list">
-                        <article class="pe-item"><div class="pe-item__top"><div><span class="pe-code">KPI-01</span> Cumplimiento POA trimestral</div><span class="pe-status pe-status--warn">76%</span></div></article>
-                        <article class="pe-item"><div class="pe-item__top"><div><span class="pe-code">KPI-02</span> Satisfacción de usuarios</div><span class="pe-status">88%</span></div></article>
-                        <article class="pe-item"><div class="pe-item__top"><div><span class="pe-code">KPI-03</span> Ejecución presupuestaria</div><span class="pe-status">81%</span></div></article>
+            <section class="kpi-kpis">
+                <article class="kpi-stat">
+                    <div class="kpi-stat__label">KPIs monitoreados</div>
+                    <div class="kpi-stat__value">32</div>
+                    <div class="kpi-stat__meta"><span class="kpi-chip">Activos</span></div>
+                </article>
+                <article class="kpi-stat kpi-stat--progress">
+                    <div class="kpi-stat__label">Cumplimiento global</div>
+                    <div class="kpi-stat__value">78%</div>
+                    <div class="kpi-stat__meta">
+                        <div class="kpi-bar"><div class="kpi-bar__fill kpi-bar__fill--ok" style="width:78%"></div></div>
+                        <span class="kpi-chip kpi-chip--ok">Meta 85%</span>
                     </div>
                 </article>
-                <aside class="pe-card">
-                    <div class="pe-card__head"><div><h2>Panel rápido</h2><p>Resumen de salud de indicadores.</p></div></div>
-                    <div class="pe-sidebox">
-                        <div class="pe-sidebox__grid">
-                            <div class="pe-metric"><div class="pe-metric__k">Sin dato</div><div class="pe-metric__v">3</div></div>
-                            <div class="pe-metric"><div class="pe-metric__k">Fuera de rango</div><div class="pe-metric__v">6</div></div>
-                            <div class="pe-metric"><div class="pe-metric__k">En seguimiento</div><div class="pe-metric__v">7</div></div>
-                            <div class="pe-metric"><div class="pe-metric__k">A tiempo</div><div class="pe-metric__v">20</div></div>
+                <article class="kpi-stat">
+                    <div class="kpi-stat__label">En meta</div>
+                    <div class="kpi-stat__value">21</div>
+                    <div class="kpi-stat__meta"><span class="kpi-chip kpi-chip--ok">+2 vs periodo</span></div>
+                </article>
+                <article class="kpi-stat">
+                    <div class="kpi-stat__label">En riesgo</div>
+                    <div class="kpi-stat__value">7</div>
+                    <div class="kpi-stat__meta"><span class="kpi-chip kpi-chip--warn">Requiere accion</span></div>
+                </article>
+                <article class="kpi-stat">
+                    <div class="kpi-stat__label">Criticos</div>
+                    <div class="kpi-stat__value">4</div>
+                    <div class="kpi-stat__meta"><span class="kpi-chip kpi-chip--crit">Prioridad alta</span></div>
+                </article>
+            </section>
+            <section class="kpi-grid">
+                <section class="kpi-card">
+                    <header class="kpi-card__head">
+                        <div>
+                            <h2>Indicadores</h2>
+                            <p>Vista ejecutiva con estado, meta, valor actual y tendencia.</p>
+                        </div>
+                        <div class="kpi-card__tools">
+                            <span class="kpi-pill">32 KPIs</span>
+                            <button class="kpi-iconbtn" type="button" title="Ordenar">⇅</button>
+                            <button class="kpi-iconbtn" type="button" title="Columnas">☰</button>
+                        </div>
+                    </header>
+                    <div class="kpi-table">
+                        <div class="kpi-table__head">
+                            <span>KPI</span>
+                            <span>Responsable</span>
+                            <span>Meta</span>
+                            <span>Actual</span>
+                            <span>Tendencia</span>
+                            <span class="kpi-right">Estado</span>
+                        </div>
+                        <div class="kpi-row kpi-row--active">
+                            <div class="kpi-row__main"><strong>KPI-OPS-01</strong><span class="kpi-sub">Tiempo de respuesta a solicitudes</span></div>
+                            <div>Operaciones</div>
+                            <div>&le; 24h</div>
+                            <div>42h</div>
+                            <div><span class="kpi-trend kpi-trend--down">▼</span></div>
+                            <div class="kpi-right"><span class="kpi-status kpi-status--warn">En riesgo</span></div>
+                        </div>
+                        <div class="kpi-row">
+                            <div class="kpi-row__main"><strong>KPI-FIN-02</strong><span class="kpi-sub">Ejecucion presupuestaria</span></div>
+                            <div>Finanzas</div>
+                            <div>&ge; 85%</div>
+                            <div>81%</div>
+                            <div><span class="kpi-trend">-</span></div>
+                            <div class="kpi-right"><span class="kpi-status kpi-status--warn">En riesgo</span></div>
+                        </div>
+                        <div class="kpi-row">
+                            <div class="kpi-row__main"><strong>KPI-CLI-01</strong><span class="kpi-sub">Satisfaccion general</span></div>
+                            <div>Atencion</div>
+                            <div>&ge; 90%</div>
+                            <div>88%</div>
+                            <div><span class="kpi-trend kpi-trend--up">▲</span></div>
+                            <div class="kpi-right"><span class="kpi-status kpi-status--warn">En riesgo</span></div>
+                        </div>
+                        <div class="kpi-row">
+                            <div class="kpi-row__main"><strong>KPI-PRO-03</strong><span class="kpi-sub">Procesos criticos estandarizados</span></div>
+                            <div>Calidad</div>
+                            <div>&ge; 80%</div>
+                            <div>73%</div>
+                            <div><span class="kpi-trend kpi-trend--down">▼</span></div>
+                            <div class="kpi-right"><span class="kpi-status kpi-status--crit">Critico</span></div>
+                        </div>
+                        <div class="kpi-row">
+                            <div class="kpi-row__main"><strong>KPI-TAL-02</strong><span class="kpi-sub">Competencias criticas certificadas</span></div>
+                            <div>Talento</div>
+                            <div>&ge; 75%</div>
+                            <div>69%</div>
+                            <div><span class="kpi-trend kpi-trend--down">▼</span></div>
+                            <div class="kpi-right"><span class="kpi-status kpi-status--warn">En riesgo</span></div>
                         </div>
                     </div>
+                    <div class="kpi-foot">
+                        <div class="kpi-foot__note">
+                            <span><span class="kpi-dot kpi-dot--ok"></span> En meta</span>
+                            <span><span class="kpi-dot kpi-dot--warn"></span> En riesgo</span>
+                            <span><span class="kpi-dot kpi-dot--crit"></span> Critico</span>
+                        </div>
+                        <button class="kpi-btn kpi-btn--ghost" type="button">Ver acciones correctivas</button>
+                    </div>
+                </section>
+                <aside class="kpi-card">
+                    <header class="kpi-card__head">
+                        <div>
+                            <h2>Detalle del KPI</h2>
+                            <p>Selecciona un indicador para ver su ficha y evolucion.</p>
+                        </div>
+                        <div class="kpi-card__tools"><span class="kpi-pill kpi-pill--soft">KPI-OPS-01</span></div>
+                    </header>
+                    <section class="kpi-detail">
+                        <div class="kpi-detail__top">
+                            <div>
+                                <div class="kpi-detail__name">Tiempo de respuesta a solicitudes</div>
+                                <div class="kpi-detail__meta">
+                                    <span class="kpi-chip">Operaciones</span>
+                                    <span class="kpi-chip kpi-chip--warn">En riesgo</span>
+                                    <span class="kpi-chip">Frecuencia: semanal</span>
+                                </div>
+                            </div>
+                            <div class="kpi-score"><div class="kpi-score__k">Cumplimiento</div><div class="kpi-score__v">62%</div></div>
+                        </div>
+                        <div class="kpi-detail__cards">
+                            <div class="kpi-miniCard"><div class="kpi-miniCard__k">Meta</div><div class="kpi-miniCard__v">&le; 24h</div></div>
+                            <div class="kpi-miniCard"><div class="kpi-miniCard__k">Actual</div><div class="kpi-miniCard__v kpi-miniCard__v--warn">42h</div></div>
+                            <div class="kpi-miniCard"><div class="kpi-miniCard__k">Brecha</div><div class="kpi-miniCard__v kpi-miniCard__v--warn">+18h</div></div>
+                        </div>
+                        <div class="kpi-chart">
+                            <div class="kpi-chart__head"><strong>Evolucion (ultimas 8 mediciones)</strong><span class="kpi-pill">Mock</span></div>
+                            <div class="kpi-spark" aria-label="Grafico de tendencia">
+                                <div class="kpi-spark__bars">
+                                    <span style="height:38%"></span><span style="height:46%"></span><span style="height:52%"></span><span style="height:58%"></span>
+                                    <span style="height:63%"></span><span style="height:70%"></span><span style="height:78%"></span><span style="height:84%"></span>
+                                </div>
+                                <div class="kpi-spark__axis"><span>-8</span><span>-6</span><span>-4</span><span>-2</span><span>Hoy</span></div>
+                            </div>
+                        </div>
+                        <div class="kpi-notes">
+                            <label>Notas / acciones</label>
+                            <textarea placeholder="Registra hallazgos, causas y acciones correctivas..."></textarea>
+                            <div class="kpi-detail__actions">
+                                <button class="kpi-btn kpi-btn--soft" type="button">Guardar nota</button>
+                                <button class="kpi-btn kpi-btn--primary" type="button">Crear accion</button>
+                            </div>
+                        </div>
+                    </section>
                 </aside>
             </section>
         </div>
@@ -5978,84 +6506,396 @@ def _render_identidad_institucional_page(request: Request) -> HTMLResponse:
     logo_url = _build_login_asset_url(identity.get("logo_filename"), DEFAULT_LOGIN_IDENTITY["logo_filename"])
     desktop_bg_url = _build_login_asset_url(identity.get("desktop_bg_filename"), DEFAULT_LOGIN_IDENTITY["desktop_bg_filename"])
     mobile_bg_url = _build_login_asset_url(identity.get("mobile_bg_filename"), DEFAULT_LOGIN_IDENTITY["mobile_bg_filename"])
+    loaded_assets = sum(1 for value in [favicon_url, logo_url, desktop_bg_url, mobile_bg_url] if (value or "").strip())
+    consistency = max(60, min(100, int(round((loaded_assets / 4) * 100)))) if loaded_assets else 60
     saved_flag = request.query_params.get("saved")
-    saved_message = "<p style='color:#166534;font-weight:600;margin:0 0 12px;'>Identidad institucional actualizada.</p>" if saved_flag == "1" else ""
+    saved_message = "<p class='id-flash'>Identidad institucional actualizada.</p>" if saved_flag == "1" else ""
     content = f"""
-        <section class="foda-page">
-            <article class="foda-input-card">
-                {saved_message}
-                <form id="identity-form" method="post" action="/identidad-institucional" enctype="multipart/form-data" class="foda-input-grid">
+        <section class="id-page">
+            <style>
+                .id-page {{
+                    --bg: #f6f8fc;
+                    --surface: rgba(255,255,255,.88);
+                    --text: #0f172a;
+                    --muted: #64748b;
+                    --border: rgba(148,163,184,.38);
+                    --shadow: 0 18px 40px rgba(15,23,42,.08);
+                    --shadow-soft: 0 10px 22px rgba(15,23,42,.06);
+                    --radius: 18px;
+                    --primary: #0f3d2e;
+                    --primary-2: #1f6f52;
+                    --ok: #16a34a;
+                    --warn: #f59e0b;
+                    --crit: #ef4444;
+                    width: 100%;
+                    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+                    color: var(--text);
+                    background:
+                      radial-gradient(1200px 640px at 15% 0%, rgba(15,61,46,.10), transparent 58%),
+                      radial-gradient(1000px 540px at 90% 6%, rgba(37,99,235,.10), transparent 55%),
+                      var(--bg);
+                    border-radius: 18px;
+                }}
+                .id-wrap {{ width: 100%; margin: 0 auto; padding: 18px 0 34px; }}
+                .id-flash {{
+                    margin: 0 0 12px;
+                    padding: 10px 12px;
+                    border-radius: 12px;
+                    background: rgba(22,163,74,.10);
+                    border: 1px solid rgba(22,163,74,.20);
+                    color: #166534;
+                    font-weight: 700;
+                }}
+                .id-btn {{
+                    border-radius: 14px;
+                    padding: 10px 14px;
+                    font-weight: 800;
+                    border: 1px solid var(--border);
+                    background: rgba(255,255,255,.75);
+                    cursor: pointer;
+                    box-shadow: var(--shadow-soft);
+                    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+                }}
+                .id-btn:hover {{ transform: translateY(-1px); box-shadow: var(--shadow); background: rgba(255,255,255,.95); }}
+                .id-btn--primary {{
+                    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+                    color: #fff;
+                    border-color: rgba(15,61,46,.35);
+                }}
+                .id-btn--primary2 {{
+                    background: rgba(37,99,235,.12);
+                    color: #1d4ed8;
+                    border-color: rgba(37,99,235,.24);
+                }}
+                .id-btn--soft {{
+                    background: rgba(15,61,46,.10);
+                    border-color: rgba(15,61,46,.18);
+                    color: #0b2a20;
+                }}
+                .id-btn--ghost2 {{
+                    background: rgba(255,255,255,.85);
+                    color: var(--text);
+                    border-color: var(--border);
+                }}
+                .id-btn--ghost3 {{
+                    background: rgba(255,255,255,.90);
+                    color: var(--text);
+                    border-color: var(--border);
+                }}
+                .id-btn--danger {{
+                    border-color: rgba(239,68,68,.25);
+                    color: #991b1b;
+                    background: rgba(239,68,68,.08);
+                }}
+                .id-stats {{
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    gap: 12px;
+                    margin-bottom: 14px;
+                }}
+                .id-stat {{
+                    background: var(--surface);
+                    border: 1px solid var(--border);
+                    border-radius: var(--radius);
+                    box-shadow: var(--shadow-soft);
+                    padding: 14px;
+                }}
+                .id-stat__k {{ color: var(--muted); font-size: 12px; font-weight: 700; }}
+                .id-stat__v {{ margin-top: 8px; font-size: 28px; font-weight: 900; letter-spacing: -0.02em; }}
+                .id-stat__meta {{ margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }}
+                .id-chip {{
+                    font-size: 12px;
+                    padding: 6px 10px;
+                    border-radius: 999px;
+                    background: rgba(15,23,42,.05);
+                    border: 1px solid rgba(15,23,42,.08);
+                    color: rgba(15,23,42,.72);
+                }}
+                .id-chip--ok {{ background: rgba(22,163,74,.10); border-color: rgba(22,163,74,.20); color: #166534; }}
+                .id-bar {{
+                    height: 10px;
+                    flex: 1 1 auto;
+                    min-width: 110px;
+                    border-radius: 999px;
+                    background: rgba(148,163,184,.25);
+                    border: 1px solid rgba(148,163,184,.25);
+                    overflow: hidden;
+                }}
+                .id-bar__fill {{
+                    height: 100%;
+                    border-radius: 999px;
+                    background: linear-gradient(90deg, rgba(15,61,46,1), rgba(31,111,82,1));
+                }}
+                .id-grid {{ display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; align-items: start; margin-bottom: 14px; }}
+                .id-card {{
+                    background: var(--surface);
+                    border: 1px solid var(--border);
+                    border-radius: 22px;
+                    box-shadow: var(--shadow-soft);
+                    overflow: hidden;
+                }}
+                .id-card--pad {{ padding: 16px; }}
+                .id-card__head {{
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-bottom: 14px;
+                }}
+                .id-card__head h2 {{ margin: 0; font-size: 20px; letter-spacing: -0.02em; }}
+                .id-card__head p {{ margin: 6px 0 0; color: var(--muted); font-size: 13px; }}
+                .id-card__tools {{ display: flex; gap: 10px; align-items: center; }}
+                .id-pill {{
+                    font-size: 12px;
+                    padding: 6px 10px;
+                    border-radius: 999px;
+                    background: rgba(255,255,255,.70);
+                    border: 1px solid var(--border);
+                    color: rgba(15,23,42,.72);
+                }}
+                .id-pill--soft {{
+                    background: rgba(15,61,46,.10);
+                    border-color: rgba(15,61,46,.18);
+                    color: #0b2a20;
+                }}
+                .id-iconbtn {{
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 14px;
+                    border: 1px solid var(--border);
+                    background: rgba(255,255,255,.75);
+                    box-shadow: var(--shadow-soft);
+                    cursor: pointer;
+                }}
+                .id-form {{ display: flex; flex-direction: column; gap: 12px; }}
+                .id-field {{ display: flex; flex-direction: column; gap: 8px; }}
+                .id-field label {{ font-size: 13px; font-weight: 700; color: #334155; }}
+                .id-field input,
+                .id-field textarea {{
+                    border: 1px solid var(--border);
+                    border-radius: 14px;
+                    padding: 12px;
+                    background: rgba(255,255,255,.85);
+                    box-shadow: 0 10px 20px rgba(15,23,42,.04);
+                }}
+                .id-field textarea {{ min-height: 90px; resize: vertical; }}
+                .id-help {{ color: var(--muted); font-size: 12px; }}
+                .id-actions {{ display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }}
+                .id-tips {{ display: flex; flex-direction: column; gap: 10px; }}
+                .id-tip {{
+                    display: flex;
+                    gap: 10px;
+                    align-items: flex-start;
+                    background: rgba(255,255,255,.82);
+                    border: 1px solid rgba(148,163,184,.30);
+                    border-radius: 14px;
+                    padding: 10px;
+                }}
+                .id-tip__icon {{ font-size: 18px; }}
+                .id-tip__text strong {{ display: block; font-size: 13px; }}
+                .id-tip__text p {{ margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }}
+                .id-divider {{ height: 1px; background: rgba(148,163,184,.25); margin: 4px 0; }}
+                .id-cta {{ display: flex; justify-content: space-between; align-items: center; gap: 10px; }}
+                .id-cta p {{ margin: 4px 0 0; color: var(--muted); font-size: 12px; }}
+                .id-assets__grid {{ display: flex; flex-direction: column; gap: 10px; }}
+                .id-asset {{
+                    display: grid;
+                    grid-template-columns: 240px minmax(0, 1fr) auto;
+                    gap: 14px;
+                    align-items: center;
+                    background: rgba(255,255,255,.86);
+                    border: 1px solid rgba(148,163,184,.30);
+                    border-radius: 16px;
+                    padding: 12px;
+                }}
+                .id-asset__label {{ display: flex; gap: 8px; align-items: center; }}
+                .id-asset__meta {{ margin-top: 4px; font-size: 12px; color: var(--muted); }}
+                .id-dot {{ width: 10px; height: 10px; border-radius: 999px; display: inline-block; }}
+                .id-dot--ok {{ background: var(--ok); box-shadow: 0 0 0 6px rgba(22,163,74,.10); }}
+                .id-asset__preview {{
+                    border: 1px solid rgba(148,163,184,.30);
+                    background: rgba(248,250,252,.95);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }}
+                .id-asset__preview img {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
+                .id-asset__preview--square {{ width: 96px; height: 96px; }}
+                .id-asset__preview--square img {{ object-fit: contain; padding: 8px; }}
+                .id-asset__preview--logo {{ height: 120px; }}
+                .id-asset__preview--logo img {{ object-fit: contain; padding: 10px; }}
+                .id-asset__preview--wide {{ height: 140px; }}
+                .id-asset__actions {{ display: flex; flex-direction: column; gap: 8px; min-width: 116px; }}
+                @media (max-width: 1200px) {{
+                    .id-stats {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+                    .id-grid {{ grid-template-columns: 1fr; }}
+                    .id-asset {{ grid-template-columns: 1fr; }}
+                    .id-asset__actions {{ flex-direction: row; }}
+                }}
+                @media (max-width: 640px) {{
+                    .id-stats {{ grid-template-columns: 1fr; }}
+                    .id-actions {{ justify-content: flex-start; flex-wrap: wrap; }}
+                    .id-cta {{ flex-direction: column; align-items: flex-start; }}
+                }}
+            </style>
+            <div class="id-wrap">
+                <form id="identity-form" method="post" action="/identidad-institucional" enctype="multipart/form-data">
                     <input type="hidden" id="remove_favicon" name="remove_favicon" value="0">
                     <input type="hidden" id="remove_logo" name="remove_logo" value="0">
                     <input type="hidden" id="remove_desktop" name="remove_desktop" value="0">
                     <input type="hidden" id="remove_mobile" name="remove_mobile" value="0">
-                    <div class="identity-inline-field">
-                        <label class="identity-field-label" for="company_short_name">
-                            <span>Nombre corto</span>
-                            <span>de la empresa:</span>
-                        </label>
-                        <input class="campo-personalizado" type="text" id="company_short_name" name="company_short_name" value="{safe_company_short_name}" placeholder="Ej: AVAN">
-                    </div>
-                    <div class="identity-inline-field">
-                        <label class="identity-field-label" for="login_message">
-                            <span>Mensaje para</span>
-                            <span>pantalla de login:</span>
-                        </label>
-                        <textarea class="campo-personalizado" id="login_message" name="login_message" rows="3" placeholder="Mensaje institucional">{safe_login_message}</textarea>
-                    </div>
                     <div style="display:none;">
                         <input type="file" id="favicon" name="favicon" accept="image/*">
                         <input type="file" id="logo_empresa" name="logo_empresa" accept="image/*">
                         <input type="file" id="fondo_escritorio" name="fondo_escritorio" accept="image/*">
                         <input type="file" id="fondo_movil" name="fondo_movil" accept="image/*">
                     </div>
-                    <div class="foda-input-actions" style="grid-column: 1 / -1;">
-                        <button type="submit">Guardar identidad</button>
-                    </div>
+                    {saved_message}
+                    <section class="id-stats">
+                        <article class="id-stat">
+                            <div class="id-stat__k">Nombre corto</div>
+                            <div class="id-stat__v">{safe_company_short_name}</div>
+                            <div class="id-stat__meta"><span class="id-chip">Activo</span></div>
+                        </article>
+                        <article class="id-stat">
+                            <div class="id-stat__k">Recursos cargados</div>
+                            <div class="id-stat__v">{loaded_assets}</div>
+                            <div class="id-stat__meta"><span class="id-chip id-chip--ok">Completo</span></div>
+                        </article>
+                        <article class="id-stat">
+                            <div class="id-stat__k">Formato recomendado</div>
+                            <div class="id-stat__v">SVG/PNG</div>
+                            <div class="id-stat__meta"><span class="id-chip">Alta nitidez</span></div>
+                        </article>
+                        <article class="id-stat">
+                            <div class="id-stat__k">Consistencia visual</div>
+                            <div class="id-stat__v">{consistency}%</div>
+                            <div class="id-stat__meta">
+                                <div class="id-bar"><div class="id-bar__fill" style="width:{consistency}%"></div></div>
+                                <span class="id-chip id-chip--ok">Optimo</span>
+                            </div>
+                        </article>
+                    </section>
+                    <section class="id-grid">
+                        <section class="id-card id-card--pad">
+                            <header class="id-card__head">
+                                <div>
+                                    <h2>Datos institucionales</h2>
+                                    <p>Estos datos se muestran en login y en elementos de marca del sistema.</p>
+                                </div>
+                                <div class="id-card__tools">
+                                    <span class="id-pill id-pill--soft">Configuracion</span>
+                                    <button class="id-iconbtn" type="button" title="Ayuda">?</button>
+                                </div>
+                            </header>
+                            <div class="id-form">
+                                <div class="id-field">
+                                    <label for="company_short_name">Nombre corto de la empresa</label>
+                                    <input class="campo campo-personalizado" id="company_short_name" name="company_short_name" type="text" value="{safe_company_short_name}" placeholder="Ej. AVAN">
+                                    <div class="id-help">Se usa en titulos, encabezados y login. Recomendado: 3-18 caracteres.</div>
+                                </div>
+                                <div class="id-field">
+                                    <label for="login_message">Mensaje para pantalla de login</label>
+                                    <textarea class="campo campo-personalizado" id="login_message" name="login_message" placeholder="Ej. Incrementando el nivel de eficiencia">{safe_login_message}</textarea>
+                                    <div class="id-help">Sugerencia: frase corta y orientada a valor.</div>
+                                </div>
+                                <div class="id-actions">
+                                    <button class="id-btn id-btn--soft" type="reset">Restablecer</button>
+                                    <button class="id-btn id-btn--primary2" type="submit">Guardar identidad</button>
+                                </div>
+                            </div>
+                        </section>
+                        <aside class="id-card id-card--pad">
+                            <header class="id-card__head">
+                                <div>
+                                    <h2>Recomendaciones</h2>
+                                    <p>Buenas practicas para mantener calidad visual en web y movil.</p>
+                                </div>
+                                <div class="id-card__tools"><span class="id-pill">Guia rapida</span></div>
+                            </header>
+                            <div class="id-tips">
+                                <div class="id-tip"><div class="id-tip__icon">L</div><div class="id-tip__text"><strong>Logo</strong><p>Preferible SVG; si usas PNG que sea transparente y amplio.</p></div></div>
+                                <div class="id-tip"><div class="id-tip__icon">F</div><div class="id-tip__text"><strong>Favicon</strong><p>Usa 32x32 y 64x64 con buena legibilidad.</p></div></div>
+                                <div class="id-tip"><div class="id-tip__icon">M</div><div class="id-tip__text"><strong>Fondo movil</strong><p>Formato vertical con punto focal centrado.</p></div></div>
+                                <div class="id-tip"><div class="id-tip__icon">E</div><div class="id-tip__text"><strong>Fondo escritorio</strong><p>Recomendado 1920x1080 y buen contraste.</p></div></div>
+                                <div class="id-divider"></div>
+                                <div class="id-cta">
+                                    <div><strong>Vista previa</strong><p>Valida como se vera el login con los recursos actuales.</p></div>
+                                    <button class="id-btn id-btn--ghost2" type="button">Abrir preview</button>
+                                </div>
+                            </div>
+                        </aside>
+                    </section>
+                    <section class="id-card id-card--pad id-assets">
+                        <header class="id-card__head">
+                            <div>
+                                <h2>Recursos visuales</h2>
+                                <p>Administra favicon, logo y fondos para web y movil.</p>
+                            </div>
+                            <div class="id-card__tools">
+                                <span class="id-pill">4 recursos</span>
+                                <button class="id-btn id-btn--primary" type="submit">Guardar cambios</button>
+                            </div>
+                        </header>
+                        <div class="id-assets__grid">
+                            <article class="id-asset">
+                                <div class="id-asset__left">
+                                    <div class="id-asset__label"><span class="id-dot id-dot--ok"></span><strong>Favicon</strong></div>
+                                    <div class="id-asset__meta">Recomendado: 32x32 / 64x64 - PNG/ICO</div>
+                                </div>
+                                <div class="id-asset__preview id-asset__preview--square">
+                                    <img src="{favicon_url}" alt="Favicon">
+                                </div>
+                                <div class="id-asset__actions identity-asset-actions">
+                                    <button class="id-btn id-btn--ghost3 identity-asset-edit" data-target-input="favicon" type="button">Editar</button>
+                                    <button class="id-btn id-btn--danger identity-asset-delete" data-target-remove="remove_favicon" type="button">Eliminar</button>
+                                </div>
+                            </article>
+                            <article class="id-asset">
+                                <div class="id-asset__left">
+                                    <div class="id-asset__label"><span class="id-dot id-dot--ok"></span><strong>Logo de la empresa</strong></div>
+                                    <div class="id-asset__meta">Preferible SVG - alternativa PNG transparente</div>
+                                </div>
+                                <div class="id-asset__preview id-asset__preview--logo">
+                                    <img src="{logo_url}" alt="Logo">
+                                </div>
+                                <div class="id-asset__actions identity-asset-actions">
+                                    <button class="id-btn id-btn--ghost3 identity-asset-edit" data-target-input="logo_empresa" type="button">Editar</button>
+                                    <button class="id-btn id-btn--danger identity-asset-delete" data-target-remove="remove_logo" type="button">Eliminar</button>
+                                </div>
+                            </article>
+                            <article class="id-asset">
+                                <div class="id-asset__left">
+                                    <div class="id-asset__label"><span class="id-dot id-dot--ok"></span><strong>Fondo de escritorio</strong></div>
+                                    <div class="id-asset__meta">Recomendado: 1920x1080 - JPG/PNG</div>
+                                </div>
+                                <div class="id-asset__preview id-asset__preview--wide">
+                                    <img src="{desktop_bg_url}" alt="Fondo de escritorio">
+                                </div>
+                                <div class="id-asset__actions identity-asset-actions">
+                                    <button class="id-btn id-btn--ghost3 identity-asset-edit" data-target-input="fondo_escritorio" type="button">Editar</button>
+                                    <button class="id-btn id-btn--danger identity-asset-delete" data-target-remove="remove_desktop" type="button">Eliminar</button>
+                                </div>
+                            </article>
+                            <article class="id-asset">
+                                <div class="id-asset__left">
+                                    <div class="id-asset__label"><span class="id-dot id-dot--ok"></span><strong>Fondo movil</strong></div>
+                                    <div class="id-asset__meta">Recomendado: 1080x1920 - JPG/PNG</div>
+                                </div>
+                                <div class="id-asset__preview id-asset__preview--wide">
+                                    <img src="{mobile_bg_url}" alt="Fondo movil">
+                                </div>
+                                <div class="id-asset__actions identity-asset-actions">
+                                    <button class="id-btn id-btn--ghost3 identity-asset-edit" data-target-input="fondo_movil" type="button">Editar</button>
+                                    <button class="id-btn id-btn--danger identity-asset-delete" data-target-remove="remove_mobile" type="button">Eliminar</button>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
                 </form>
-            </article>
-            <section class="identity-assets-list">
-                <article class="identity-asset-row">
-                    <div class="identity-asset-title">Favicon</div>
-                    <div class="identity-asset-media">
-                        <img src="{favicon_url}" alt="Favicon" class="identity-asset-image identity-asset-image-favicon">
-                        <div class="identity-asset-actions">
-                            <button type="button" class="identity-asset-edit" data-target-input="favicon">Editar</button>
-                            <button type="button" class="identity-asset-delete" data-target-remove="remove_favicon">Eliminar</button>
-                        </div>
-                    </div>
-                </article>
-                <article class="identity-asset-row">
-                    <div class="identity-asset-title">Logo de la empresa</div>
-                    <div class="identity-asset-media">
-                        <img src="{logo_url}" alt="Logo" class="identity-asset-image identity-asset-image-logo">
-                        <div class="identity-asset-actions">
-                            <button type="button" class="identity-asset-edit" data-target-input="logo_empresa">Editar</button>
-                            <button type="button" class="identity-asset-delete" data-target-remove="remove_logo">Eliminar</button>
-                        </div>
-                    </div>
-                </article>
-                <article class="identity-asset-row">
-                    <div class="identity-asset-title">Fondo de escritorio</div>
-                    <div class="identity-asset-media">
-                        <img src="{desktop_bg_url}" alt="Fondo escritorio" class="identity-asset-image">
-                        <div class="identity-asset-actions">
-                            <button type="button" class="identity-asset-edit" data-target-input="fondo_escritorio">Editar</button>
-                            <button type="button" class="identity-asset-delete" data-target-remove="remove_desktop">Eliminar</button>
-                        </div>
-                    </div>
-                </article>
-                <article class="identity-asset-row">
-                    <div class="identity-asset-title">Fondo móvil</div>
-                    <div class="identity-asset-media">
-                        <img src="{mobile_bg_url}" alt="Fondo móvil" class="identity-asset-image">
-                        <div class="identity-asset-actions">
-                            <button type="button" class="identity-asset-edit" data-target-input="fondo_movil">Editar</button>
-                            <button type="button" class="identity-asset-delete" data-target-remove="remove_mobile">Eliminar</button>
-                        </div>
-                    </div>
-                </article>
-            </section>
+            </div>
         </section>
     """
     return render_backend_page(
