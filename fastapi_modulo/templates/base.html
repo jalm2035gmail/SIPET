@@ -895,6 +895,15 @@
         .usuario-card span {
             color: #475569;
         }
+        .usuario-selectable {
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        .usuario-selectable:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.09);
+            border-color: rgba(37, 99, 235, 0.5);
+        }
         .usuario-kanban-columns {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1406,6 +1415,9 @@
         .org-root .org-node {
             border-color: var(--sidebar-bottom, #0f172a);
             background: #f8fafc;
+        }
+        .org-node.usuario-selectable:hover {
+            background: #eff6ff;
         }
         .org-divider {
             width: 2px;
@@ -2672,12 +2684,19 @@
                 { value: 'usuario', label: 'Usuario' },
                 { value: 'departamento', label: 'Departamento' },
             ];
+            let selectedUsuarioName = null;
             const departamentosDisponibles = [...new Set(usuarioData.map(u => u.department).filter(Boolean))];
             const roleMatches = (userRole, selectedRole) => {
                 const left = String(userRole || '').trim().toLowerCase();
                 const right = String(selectedRole || '').trim().toLowerCase();
                 return left === right;
             };
+            const escapeHtmlAttr = (value) => String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
             const getRoleOptions = (selected = 'Todos') => {
                 return getUsuarioRolesFiltro().map(role => `<option value="${role}" ${role === selected ? 'selected' : ''}>${role}</option>`).join('');
             };
@@ -2691,6 +2710,20 @@
                 const areaNamesDisponibles = getAreaNamesDisponibles();
                 const options = ['N/A', ...areaNamesDisponibles];
                 return options.map((name) => `<option value="${name}" ${name === selected ? 'selected' : ''}>${name}</option>`).join('');
+            };
+            const openUsuarioInForm = (userName) => {
+                const normalized = String(userName || '').trim();
+                if (!normalized) return;
+                selectedUsuarioName = normalized;
+                setUsuarioView('form');
+            };
+            const bindUsuarioSelectableCards = () => {
+                if (!usuarioView) return;
+                usuarioView.querySelectorAll('[data-usuario-name]').forEach((item) => {
+                    item.addEventListener('click', () => {
+                        openUsuarioInForm(item.getAttribute('data-usuario-name'));
+                    });
+                });
             };
             const loadRolesSistemaDisponibles = async () => {
                 try {
@@ -2853,6 +2886,33 @@
                     departamentoSelect.addEventListener('change', () => refreshJefes(departamentoSelect.value));
                     refreshJefes(departamentoSelect.value);
                 }
+                if (selectedUsuarioName) {
+                    const selectedUser = usuarioData.find((u) => String(u.name || '').trim() === selectedUsuarioName);
+                    if (selectedUser) {
+                        const nombreInput = usuarioView.querySelector('#usuario-nombre');
+                        const usuarioLoginInput = usuarioView.querySelector('#usuario-usuario');
+                        const correoInput = usuarioView.querySelector('#usuario-correo');
+                        const rolInput = usuarioView.querySelector('#usuario-rol');
+                        if (nombreInput) nombreInput.value = selectedUser.name || '';
+                        if (correoInput) correoInput.value = selectedUser.email || '';
+                        if (usuarioLoginInput) {
+                            const emailPrefix = String(selectedUser.email || '').split('@')[0];
+                            usuarioLoginInput.value = emailPrefix || slugifyText(selectedUser.name || '').replace(/-/g, '_');
+                        }
+                        if (rolInput) {
+                            const normalizedRole = String(selectedUser.role || '').trim().toLowerCase();
+                            const roleOption = Array.from(rolInput.options).find((opt) => String(opt.value || '').trim().toLowerCase() === normalizedRole);
+                            if (roleOption) {
+                                rolInput.value = roleOption.value;
+                            }
+                        }
+                        if (departamentoSelect) {
+                            departamentoSelect.value = selectedUser.department || '';
+                            refreshJefes(departamentoSelect.value);
+                        }
+                    }
+                    selectedUsuarioName = null;
+                }
                 const passwordInput = usuarioView.querySelector('#usuario-password');
                 const passwordConfirmBackdrop = usuarioView.querySelector('#password-confirm-backdrop');
                 const passwordConfirmInput = usuarioView.querySelector('#usuario-confirm-password');
@@ -2923,7 +2983,7 @@
                         </div>
                         <div class="usuario-list">
                             ${filtered.length ? filtered.map(user => `
-                                <div class="usuario-card">
+                                <div class="usuario-card usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
                                     <div>
                                         <strong>${user.name}</strong>
                                         <span>${user.department}</span>
@@ -2939,6 +2999,7 @@
                 `;
                 const selector = document.getElementById('usuario-role-select');
                 selector && selector.addEventListener('change', () => renderUsuarioList(selector.value));
+                bindUsuarioSelectableCards();
             }
             function renderUsuarioKanban(role = 'Todos') {
                 const filtered = role === 'Todos' ? usuarioData : usuarioData.filter(u => roleMatches(u.role, role));
@@ -2972,7 +3033,7 @@
                                     <h4>${status}</h4>
                                     ${(filtered.filter(u => u.status === status)).length
                                         ? filtered.filter(u => u.status === status).map(user => `
-                                            <div class="usuario-card kanban-card-two-col">
+                                            <div class="usuario-card kanban-card-two-col usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
                                                 <div class="kanban-card-media">
                                                     <img src="${getPersonImage(user)}" alt="Foto de ${user.name}">
                                                 </div>
@@ -2992,6 +3053,7 @@
                 `;
                 const selector = document.getElementById('usuario-role-select-kanban');
                 selector && selector.addEventListener('change', () => renderUsuarioKanban(selector.value));
+                bindUsuarioSelectableCards();
             }
             function renderUsuarioOrganigrama() {
                 const lider = usuarioData[0];
@@ -3013,7 +3075,7 @@
                         </div>
                         <div class="usuario-organigrama">
                             <div class="org-level org-root">
-                                <article class="org-node">
+                                <article class="org-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(lider?.name || '')}">
                                     <div class="org-node-avatar">
                                         <img src="${getPersonImage(lider)}" alt="Usuario ${lider?.name || 'Dirección General'}">
                                     </div>
@@ -3025,7 +3087,7 @@
                             <div class="org-divider" aria-hidden="true"></div>
                             <div class="org-level">
                                 ${mandos.map(user => `
-                                    <article class="org-node">
+                                    <article class="org-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
                                         <div class="org-node-avatar">
                                             <img src="${getPersonImage(user)}" alt="Usuario ${user.name}">
                                         </div>
@@ -3038,7 +3100,7 @@
                             <div class="org-divider" aria-hidden="true"></div>
                             <div class="org-level">
                                 ${equipoBase.map(user => `
-                                    <article class="org-node">
+                                    <article class="org-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
                                         <div class="org-node-avatar">
                                             <img src="${getPersonImage(user)}" alt="Usuario ${user.name}">
                                         </div>
@@ -3051,6 +3113,7 @@
                         </div>
                     </section>
                 `;
+                bindUsuarioSelectableCards();
             }
             function renderAreaForm() {
                 if (!areaView) return;

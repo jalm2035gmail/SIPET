@@ -449,7 +449,6 @@ def backend_screen(
 
 # Configuración SQLite (BD principal unificada)
 PRIMARY_DB_PATH = "strategic_planning.db"
-LEGACY_DB_PATH = "fastapi_modulo/colores.db"
 DATABASE_URL = f"sqlite:///./{PRIMARY_DB_PATH}"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -559,65 +558,6 @@ def ensure_default_roles() -> None:
         db.close()
 
 
-def migrate_legacy_sqlite_data() -> None:
-    if not os.path.exists(LEGACY_DB_PATH):
-        return
-    if os.path.abspath(LEGACY_DB_PATH) == os.path.abspath(PRIMARY_DB_PATH):
-        return
-
-    table_order = [
-        "colores",
-        "roles",
-        "users",
-        "usuarios",
-        "form_definitions",
-        "form_fields",
-        "form_submissions",
-    ]
-
-    def quote_ident(identifier: str) -> str:
-        return '"' + identifier.replace('"', '""') + '"'
-
-    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
-        conn.execute("ATTACH DATABASE ? AS legacy", (LEGACY_DB_PATH,))
-        try:
-            for table_name in table_order:
-                legacy_exists = conn.execute(
-                    "SELECT 1 FROM legacy.sqlite_master WHERE type='table' AND name=?",
-                    (table_name,),
-                ).fetchone()
-                if not legacy_exists:
-                    continue
-
-                quoted_table = quote_ident(table_name)
-                target_columns = [
-                    row[1]
-                    for row in conn.execute(f"PRAGMA table_info({quoted_table})").fetchall()
-                ]
-                legacy_columns = [
-                    row[1]
-                    for row in conn.execute(f"PRAGMA legacy.table_info({quoted_table})").fetchall()
-                ]
-                shared_columns = [col for col in target_columns if col in legacy_columns]
-                if not shared_columns:
-                    continue
-
-                quoted_columns = ", ".join(quote_ident(col) for col in shared_columns)
-                conn.execute(
-                    f"INSERT OR IGNORE INTO {quoted_table} ({quoted_columns}) "
-                    f"SELECT {quoted_columns} FROM legacy.{quoted_table}"
-                )
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            try:
-                conn.execute("DETACH DATABASE legacy")
-            except sqlite3.OperationalError:
-                pass
-
-
 def unify_users_table() -> None:
     """
     Unifica usuarios legacy (`usuarios`) dentro de la tabla canónica `users`.
@@ -710,7 +650,11 @@ def unify_users_table() -> None:
                         username = COALESCE(NULLIF(?, ''), username),
                         email = COALESCE(NULLIF(?, ''), email),
                         celular = COALESCE(NULLIF(?, ''), celular),
-                        password = COALESCE(NULLIF(?, ''), password),
+                        password = CASE
+                            WHEN password IS NULL OR trim(password) = ''
+                            THEN COALESCE(NULLIF(?, ''), password)
+                            ELSE password
+                        END,
                         departamento = COALESCE(NULLIF(?, ''), departamento),
                         puesto = COALESCE(NULLIF(?, ''), puesto),
                         jefe = COALESCE(NULLIF(?, ''), jefe),
@@ -800,7 +744,6 @@ def unify_users_table() -> None:
 
 
 Base.metadata.create_all(bind=engine)
-migrate_legacy_sqlite_data()
 unify_users_table()
 ensure_default_roles()
 
