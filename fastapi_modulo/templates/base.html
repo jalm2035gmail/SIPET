@@ -3319,6 +3319,7 @@
             const templateSaveBtn = document.getElementById('template-save-btn');
             const templateDeleteBtn = document.getElementById('template-delete-btn');
             const templatePreviewFrame = document.getElementById('template-preview');
+            const builderBackToTemplates = document.getElementById('builder-back-to-templates');
             const plantillasList = document.getElementById('plantillas-list');
             const formBuilderPanel = document.getElementById('form-builder-panel');
             const builderFormSelect = document.getElementById('builder-form-select');
@@ -3589,14 +3590,11 @@
                     if ((builderFieldName.value || '').trim()) return;
                     builderFieldName.value = slugifyText(builderFieldLabel.value).replace(/-/g, '_');
                 });
-                templateBuilderBtn && templateBuilderBtn.addEventListener('click', async () => {
-                    if (!formBuilderPanel) return;
-                    formBuilderPanel.classList.toggle('hidden');
-                    if (!formBuilderPanel.classList.contains('hidden')) {
-                        await loadFormDefinitions();
-                        if (!builderFields.length) renderBuilderFields();
-                        showMessage('Constructor de formularios activo.', 'success');
-                    }
+                templateBuilderBtn && templateBuilderBtn.addEventListener('click', () => {
+                    window.location.href = '/plantillas/constructor';
+                });
+                builderBackToTemplates && builderBackToTemplates.addEventListener('click', () => {
+                    window.location.href = '/plantillas';
                 });
                 builderFormSelect && builderFormSelect.addEventListener('change', () => {
                     const formId = Number(builderFormSelect.value);
@@ -3724,6 +3722,10 @@
                         showMessage(error?.message || 'Error al eliminar formulario.', 'error');
                     }
                 });
+                if (formBuilderPanel && !formBuilderPanel.classList.contains('hidden')) {
+                    loadFormDefinitions();
+                    if (!builderFields.length) renderBuilderFields();
+                }
             }
             document.addEventListener('backend-view-change', (event) => {
                 const view = event.detail?.view;

@@ -27,7 +27,7 @@ from reportlab.pdfgen import canvas
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from sqlalchemy import create_engine, Column, String, Integer, JSON, ForeignKey, Boolean, DateTime
+from sqlalchemy import create_engine, Column, String, Integer, JSON, ForeignKey, Boolean, DateTime, func
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 HIDDEN_SYSTEM_USERS = {"0konomiyaki"}
@@ -1060,7 +1060,18 @@ def web_login_submit(
 
     db = SessionLocal()
     try:
-        user = db.query(Usuario).filter(Usuario.usuario == username).first()
+        normalized_login = username.lower()
+        user = (
+            db.query(Usuario)
+            .filter(func.lower(Usuario.usuario) == normalized_login)
+            .first()
+        )
+        if not user:
+            user = (
+                db.query(Usuario)
+                .filter(func.lower(Usuario.correo) == normalized_login)
+                .first()
+            )
         if not user or not verify_password(password, user.contrasena or ""):
             return templates.TemplateResponse(
                 "web_login.html",
@@ -5668,6 +5679,129 @@ def plantillas_page(request: Request):
         title="Plantillas",
         description="Crea y guarda plantillas con HTML y CSS.",
         content=plantillas_content,
+        hide_floating_actions=False,
+        floating_actions_screen="plantillas",
+    )
+
+
+@app.get("/plantillas/constructor", response_class=HTMLResponse)
+def plantillas_constructor_page(request: Request):
+    constructor_content = """
+        <section id="plantillas-page" class="plantillas-page">
+            <div class="plantillas-layout">
+                <aside class="plantillas-list-card">
+                    <h3>Constructor de formularios</h3>
+                    <p class="plantillas-hint">Pantalla dedicada para crear, editar y publicar formularios dinámicos.</p>
+                    <div class="form-builder-actions">
+                        <button type="button" id="builder-back-to-templates">Volver a plantillas</button>
+                    </div>
+                </aside>
+                <section class="plantillas-editor-card">
+                    <section id="form-builder-panel" class="form-builder-panel" aria-label="Constructor de formularios">
+                        <div class="form-builder-head">
+                            <h4>Constructor de formularios</h4>
+                            <p>Crea formularios dinámicos para usuarios finales.</p>
+                        </div>
+                        <div class="form-builder-grid">
+                            <div class="form-field">
+                                <label for="builder-form-select">Formulario</label>
+                                <select id="builder-form-select">
+                                    <option value="">Nuevo formulario</option>
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="builder-form-name">Nombre</label>
+                                <input type="text" id="builder-form-name" placeholder="Ej: Solicitud de apoyo">
+                            </div>
+                            <div class="form-field">
+                                <label for="builder-form-slug">Slug</label>
+                                <input type="text" id="builder-form-slug" placeholder="solicitud-apoyo">
+                            </div>
+                            <div class="form-field">
+                                <label for="builder-form-active">Estado</label>
+                                <select id="builder-form-active">
+                                    <option value="true">Activo</option>
+                                    <option value="false">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="form-field form-builder-description">
+                                <label for="builder-form-description">Descripción</label>
+                                <textarea id="builder-form-description" placeholder="Describe el objetivo del formulario"></textarea>
+                            </div>
+                            <div class="form-field form-builder-description">
+                                <label for="builder-form-config">Configuración JSON (opcional)</label>
+                                <textarea id="builder-form-config" placeholder='{"submitLabel":"Enviar"}'></textarea>
+                            </div>
+                        </div>
+                        <div class="form-builder-field-editor">
+                            <h5>Campos del formulario</h5>
+                            <div class="form-builder-grid field-grid">
+                                <div class="form-field">
+                                    <label for="builder-field-type">Tipo</label>
+                                    <select id="builder-field-type">
+                                        <option value="text">Texto</option>
+                                        <option value="email">Email</option>
+                                        <option value="number">Número</option>
+                                        <option value="date">Fecha</option>
+                                        <option value="select">Selección</option>
+                                        <option value="radio">Opciones (radio)</option>
+                                        <option value="checkboxes">Opciones (checkbox)</option>
+                                        <option value="textarea">Texto largo</option>
+                                        <option value="file">Archivo</option>
+                                        <option value="password">Contraseña</option>
+                                        <option value="likert">Likert</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label for="builder-field-label">Etiqueta</label>
+                                    <input type="text" id="builder-field-label" placeholder="Nombre completo">
+                                </div>
+                                <div class="form-field">
+                                    <label for="builder-field-name">Nombre técnico</label>
+                                    <input type="text" id="builder-field-name" placeholder="nombre_completo">
+                                </div>
+                                <div class="form-field">
+                                    <label for="builder-field-placeholder">Placeholder</label>
+                                    <input type="text" id="builder-field-placeholder" placeholder="Escribe aquí...">
+                                </div>
+                                <div class="form-field">
+                                    <label for="builder-field-help">Ayuda</label>
+                                    <input type="text" id="builder-field-help" placeholder="Texto de apoyo">
+                                </div>
+                                <div class="form-field">
+                                    <label for="builder-field-options">Opciones (coma separadas)</label>
+                                    <input type="text" id="builder-field-options" placeholder="A, B, C">
+                                </div>
+                                <div class="form-field">
+                                    <label for="builder-field-conditional">Condición JSON</label>
+                                    <input type="text" id="builder-field-conditional" placeholder='{"depends_on":"campo","equals":"valor"}'>
+                                </div>
+                                <div class="form-field form-field-inline">
+                                    <input type="checkbox" id="builder-field-required">
+                                    <label for="builder-field-required">Obligatorio</label>
+                                </div>
+                            </div>
+                            <div class="form-builder-actions">
+                                <button type="button" id="builder-add-field-btn">Agregar campo</button>
+                                <button type="button" id="builder-clear-form-btn">Limpiar</button>
+                                <button type="button" id="builder-save-form-btn">Guardar formulario</button>
+                                <button type="button" id="builder-delete-form-btn">Eliminar formulario</button>
+                            </div>
+                        </div>
+                        <div class="form-builder-list-wrap">
+                            <h5>Campos agregados</h5>
+                            <div id="builder-fields-list" class="form-builder-fields-list"></div>
+                        </div>
+                    </section>
+                </section>
+            </div>
+        </section>
+    """
+    return render_backend_page(
+        request,
+        title="Constructor de formularios",
+        description="Crea formularios dinámicos en una pantalla dedicada.",
+        content=constructor_content,
         hide_floating_actions=False,
         floating_actions_screen="plantillas",
     )
