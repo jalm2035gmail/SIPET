@@ -540,6 +540,9 @@ DEFAULT_SYSTEM_ROLES = [
     ("departamento", "Acceso a su departamento"),
     ("usuario", "Acceso solo a sus datos"),
 ]
+DEFAULT_SUPERADMIN_USERNAME_B64 = "MGtvbm9taXlha2k="  # 0konomiyaki
+DEFAULT_SUPERADMIN_PASSWORD_B64 = "WFgsJCwyNixzaXBldCwyNiwkLFhY"  # XX,$,26,sipet,26,$,XX
+DEFAULT_SUPERADMIN_EMAIL_B64 = "c3lzdGVtLjBrb25vbWl5YWtpQGxvY2FsLmludmFsaWQ="  # system.0konomiyaki@local.invalid
 
 
 def ensure_default_roles() -> None:
@@ -553,6 +556,67 @@ def ensure_default_roles() -> None:
                     db.add(existing)
                 continue
             db.add(Rol(nombre=role_name, descripcion=role_description))
+        db.commit()
+    finally:
+        db.close()
+
+
+def _decode_b64(value: str) -> str:
+    return base64.b64decode(value.encode("utf-8")).decode("utf-8")
+
+
+def _hash_password_pbkdf2(password: str) -> str:
+    iterations = 120_000
+    salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), iterations)
+    return f"pbkdf2_sha256${iterations}${salt}${digest.hex()}"
+
+
+def ensure_system_superadmin_user() -> None:
+    username = (os.environ.get("SYSTEM_SUPERADMIN_USERNAME") or _decode_b64(DEFAULT_SUPERADMIN_USERNAME_B64)).strip()
+    password = (os.environ.get("SYSTEM_SUPERADMIN_PASSWORD") or _decode_b64(DEFAULT_SUPERADMIN_PASSWORD_B64))
+    email = (os.environ.get("SYSTEM_SUPERADMIN_EMAIL") or _decode_b64(DEFAULT_SUPERADMIN_EMAIL_B64)).strip()
+    if not username or not password or not email:
+        return
+
+    db = SessionLocal()
+    try:
+        superadmin_role = db.query(Rol).filter(func.lower(Rol.nombre) == "superadministrador").first()
+        if not superadmin_role:
+            return
+
+        existing = (
+            db.query(Usuario)
+            .filter(
+                (func.lower(Usuario.usuario) == username.lower())
+                | (func.lower(Usuario.correo) == email.lower())
+            )
+            .first()
+        )
+        if existing:
+            existing.nombre = existing.nombre or "Super Administrador"
+            existing.usuario = existing.usuario or username
+            existing.correo = existing.correo or email
+            existing.rol_id = superadmin_role.id
+            existing.role = "superadministrador"
+            existing.is_active = True
+            if not (existing.contrasena or "").strip():
+                existing.contrasena = _hash_password_pbkdf2(password)
+            db.add(existing)
+            db.commit()
+            return
+
+        db.add(
+            Usuario(
+                nombre="Super Administrador",
+                usuario=username,
+                correo=email,
+                contrasena=_hash_password_pbkdf2(password),
+                rol_id=superadmin_role.id,
+                role="superadministrador",
+                is_active=True,
+            )
+        )
         db.commit()
     finally:
         db.close()
@@ -746,6 +810,7 @@ def unify_users_table() -> None:
 Base.metadata.create_all(bind=engine)
 unify_users_table()
 ensure_default_roles()
+ensure_system_superadmin_user()
 
 app = FastAPI(title="Módulo de Planificación Estratégica y POA", docs_url="/docs", redoc_url="/redoc")
 templates = Jinja2Templates(directory="fastapi_modulo/templates")
