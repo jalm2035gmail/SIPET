@@ -18,6 +18,13 @@
             --sidebar-icon: #f5f7fb;
             --sidebar-hover: #2a3a52;
             --field-color: #e7d7da;
+            --floating-panel-bg: var(--sidebar-text);
+            --floating-toggle-color: var(--sidebar-bottom);
+            --floating-toggle-text-color: var(--sidebar-text);
+            --floating-icon-color: var(--sidebar-bottom);
+            --floating-action-border: var(--sidebar-bottom);
+            --floating-action-text: var(--sidebar-bottom);
+            --floating-action-bg: var(--sidebar-text);
             --page-bg: #f4f6fb;
             --content-bg: #ffffff;
             --body-text: #0f172a;
@@ -458,7 +465,7 @@
             z-index: 4;
         }
         .floating-actions {
-            background: rgba(255, 255, 255, 0.5);
+            background: var(--floating-panel-bg, var(--sidebar-text, #ffffff));
             border-radius: 16px;
             padding: 8px;
             box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2);
@@ -529,6 +536,17 @@
             transition: opacity 0.2s;
             opacity: 1;
         }
+        .action-icon-mask {
+            width: 32px;
+            height: 32px;
+            display: inline-block;
+            background: var(--floating-icon-color, #1f2a3d);
+            -webkit-mask: var(--action-icon-url) center / contain no-repeat;
+            mask: var(--action-icon-url) center / contain no-repeat;
+            transition: opacity 0.2s;
+            opacity: 1;
+            flex: 0 0 32px;
+        }
         .action-button svg {
             fill: var(--floating-icon-color, #1f2a3d);
             stroke: var(--floating-icon-color, #1f2a3d);
@@ -552,13 +570,16 @@
             opacity: 1;
         }
         .action-button:hover svg,
-        .action-button:hover img {
+        .action-button:hover img,
+        .action-button:hover .action-icon-mask {
             opacity: 0;
         }
         .floating-actions-group[data-floating-screen="usuarios"] .action-button,
         .floating-actions-group[data-floating-screen="areas"] .action-button,
         .floating-actions-group[data-floating-screen="plantillas"] .action-button {
+            width: 124px;
             min-width: 124px;
+            max-width: 124px;
             justify-content: center;
             border: 1px solid var(--floating-action-border, #cbd5e1);
             background: var(--floating-action-bg, #ffffff);
@@ -620,7 +641,7 @@
             background: var(--floating-toggle-color, #1f2a3d);
             font-size: 18px;
             font-weight: 700;
-            color: #ffffff;
+            color: var(--floating-toggle-text-color, #ffffff);
             cursor: pointer;
             transition: background 0.2s, transform 0.2s;
         }
@@ -2250,6 +2271,19 @@
             const logoutLink = document.getElementById('logout-link');
             const personalizationPanel = document.querySelector('.personalization-panel');
             const viewPills = document.querySelectorAll('.view-buttons .view-pill[data-view]');
+            const convertFloatingIconsToMasks = () => {
+                document.querySelectorAll('.floating-actions .action-button img[src$=".svg"]').forEach((img) => {
+                    const src = img.getAttribute('src');
+                    if (!src || img.dataset.maskApplied === '1') return;
+                    const iconMask = document.createElement('span');
+                    iconMask.className = 'action-icon-mask';
+                    iconMask.setAttribute('aria-hidden', 'true');
+                    iconMask.style.setProperty('--action-icon-url', `url("${src}")`);
+                    img.dataset.maskApplied = '1';
+                    img.replaceWith(iconMask);
+                });
+            };
+            convertFloatingIconsToMasks();
             const activateViewButton = (view) => {
                 if (!viewPills.length || !view) return;
                 viewPills.forEach(pill => pill.classList.toggle('active', pill.dataset.view === view));
@@ -2525,23 +2559,24 @@
                     if (fieldColor) {
                         document.documentElement.style.setProperty('--field-color', fieldColor.value);
                     }
-                    if (sidebarText && floatingActions) {
-                        floatingActions.style.background = hexToRgba(sidebarText.value, 0.5);
-                    }
                     const bottomColor = (sidebarBottom && sidebarBottom.value) || '#0f172a';
-                    const textColor = (sidebarText && sidebarText.value) || '#e2e8f0';
+                    const textColor = (sidebarText && sidebarText.value) || '#ffffff';
                     if (floatingActions) {
+                        floatingActions.style.background = textColor;
                         floatingActions.style.borderColor = bottomColor;
+                        floatingActions.style.setProperty('--floating-panel-bg', textColor);
                         floatingActions.style.setProperty('--floating-icon-color', bottomColor);
                         floatingActions.style.setProperty('--floating-toggle-color', bottomColor);
+                        floatingActions.style.setProperty('--floating-toggle-text-color', textColor);
                         floatingActions.style.setProperty('--floating-action-border', bottomColor);
                         floatingActions.style.setProperty('--floating-action-text', bottomColor);
-                        floatingActions.style.setProperty('--floating-action-bg', hexToRgba(textColor, 0.88));
+                        floatingActions.style.setProperty('--floating-action-bg', textColor);
                         floatingActions.style.color = bottomColor;
                     }
                     if (floatingToggle) {
                         floatingToggle.style.borderColor = bottomColor;
                         floatingToggle.style.background = bottomColor;
+                        floatingToggle.style.color = textColor;
                     }
                 }
                 colorInputs.forEach((id) => {

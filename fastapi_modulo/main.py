@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import smtplib
 import csv
+import sqlite3
 from io import BytesIO, StringIO
 from datetime import datetime
 from html import escape
@@ -27,8 +28,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy import create_engine, Column, String, Integer, JSON, ForeignKey, Boolean, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 HIDDEN_SYSTEM_USERS = {"0konomiyaki"}
 IDENTIDAD_LOGIN_CONFIG_PATH = "fastapi_modulo/identidad_login.json"
@@ -48,11 +48,33 @@ AUTH_COOKIE_SECRET = os.environ.get("AUTH_COOKIE_SECRET", "sipet-dev-auth-secret
 NON_DATA_FIELD_TYPES = {"header", "paragraph", "html", "divider", "pagebreak"}
 
 
+ROLE_ALIASES = {
+    "super_admin": "superadministrador",
+    "superadministrador": "superadministrador",
+    "admin": "administrador",
+    "administrador": "administrador",
+    "strategic_manager": "departamento",
+    "department_manager": "departamento",
+    "departamento": "departamento",
+    "team_leader": "usuario",
+    "collaborator": "usuario",
+    "viewer": "usuario",
+    "usuario": "usuario",
+}
+
+
+def normalize_role_name(role_name: Optional[str]) -> str:
+    normalized = (role_name or "").strip().lower()
+    if not normalized:
+        return "usuario"
+    return ROLE_ALIASES.get(normalized, normalized)
+
+
 def get_current_role(request: Request) -> str:
     role = getattr(request.state, "user_role", None)
     if role is None:
         role = request.cookies.get("user_role") or os.environ.get("DEFAULT_USER_ROLE") or ""
-    return role.strip().lower()
+    return normalize_role_name(role)
 
 
 def is_superadmin(request: Request) -> bool:
@@ -422,8 +444,10 @@ def backend_screen(
     }
     return templates.TemplateResponse("base.html", context)
 
-# Configuración SQLite
-DATABASE_URL = "sqlite:///fastapi_modulo/colores.db"
+# Configuración SQLite (BD principal unificada)
+PRIMARY_DB_PATH = "strategic_planning.db"
+LEGACY_DB_PATH = "fastapi_modulo/colores.db"
+DATABASE_URL = f"sqlite:///./{PRIMARY_DB_PATH}"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -442,19 +466,21 @@ class Rol(Base):
     descripcion = Column(String)
 
 class Usuario(Base):
-    __tablename__ = "usuarios"
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String)
-    usuario = Column(String, unique=True, index=True)
-    correo = Column(String, unique=True, index=True)
+    nombre = Column("full_name", String)
+    usuario = Column("username", String, unique=True, index=True)
+    correo = Column("email", String, unique=True, index=True)
     celular = Column(String)
-    contrasena = Column(String)
+    contrasena = Column("password", String)
     departamento = Column(String)
     puesto = Column(String)
     jefe = Column(String)
     coach = Column(String)
     rol_id = Column(Integer)
     imagen = Column(String)
+    role = Column(String)
+    is_active = Column(Boolean, default=True)
 
 
 class FormDefinition(Base):
@@ -530,7 +556,249 @@ def ensure_default_roles() -> None:
         db.close()
 
 
+def migrate_legacy_sqlite_data() -> None:
+    if not os.path.exists(LEGACY_DB_PATH):
+        return
+    if os.path.abspath(LEGACY_DB_PATH) == os.path.abspath(PRIMARY_DB_PATH):
+        return
+
+    table_order = [
+        "colores",
+        "roles",
+        "users",
+        "usuarios",
+        "form_definitions",
+        "form_fields",
+        "form_submissions",
+    ]
+
+    def quote_ident(identifier: str) -> str:
+        return '"' + identifier.replace('"', '""') + '"'
+
+    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
+        conn.execute("ATTACH DATABASE ? AS legacy", (LEGACY_DB_PATH,))
+        try:
+            for table_name in table_order:
+                legacy_exists = conn.execute(
+                    "SELECT 1 FROM legacy.sqlite_master WHERE type='table' AND name=?",
+                    (table_name,),
+                ).fetchone()
+                if not legacy_exists:
+                    continue
+
+                quoted_table = quote_ident(table_name)
+                target_columns = [
+                    row[1]
+                    for row in conn.execute(f"PRAGMA table_info({quoted_table})").fetchall()
+                ]
+                legacy_columns = [
+                    row[1]
+                    for row in conn.execute(f"PRAGMA legacy.table_info({quoted_table})").fetchall()
+                ]
+                shared_columns = [col for col in target_columns if col in legacy_columns]
+                if not shared_columns:
+                    continue
+
+                quoted_columns = ", ".join(quote_ident(col) for col in shared_columns)
+                conn.execute(
+                    f"INSERT OR IGNORE INTO {quoted_table} ({quoted_columns}) "
+                    f"SELECT {quoted_columns} FROM legacy.{quoted_table}"
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            try:
+                conn.execute("DETACH DATABASE legacy")
+            except sqlite3.OperationalError:
+                pass
+
+
+def unify_users_table() -> None:
+    """
+    Unifica usuarios legacy (`usuarios`) dentro de la tabla canónica `users`.
+    Mantiene compatibilidad agregando columnas opcionales usadas por el frontend.
+    """
+    required_columns = {
+        "celular": "VARCHAR",
+        "departamento": "VARCHAR",
+        "puesto": "VARCHAR",
+        "jefe": "VARCHAR",
+        "coach": "VARCHAR",
+        "rol_id": "INTEGER",
+        "imagen": "VARCHAR",
+    }
+
+    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
+        users_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='users'"
+        ).fetchone()
+        if not users_exists:
+            return
+
+        existing_users_columns = {
+            row[1] for row in conn.execute('PRAGMA table_info("users")').fetchall()
+        }
+        for col_name, col_type in required_columns.items():
+            if col_name not in existing_users_columns:
+                conn.execute(f'ALTER TABLE "users" ADD COLUMN "{col_name}" {col_type}')
+
+        users_has_role = "role" in existing_users_columns
+        users_has_is_active = "is_active" in existing_users_columns
+
+        usuarios_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='usuarios'"
+        ).fetchone()
+        if not usuarios_exists:
+            conn.commit()
+            return
+
+        role_by_id = {
+            row[0]: (row[1] or "").strip().lower()
+            for row in conn.execute('SELECT id, nombre FROM "roles"').fetchall()
+        }
+
+        legacy_rows = conn.execute(
+            """
+            SELECT
+                id, nombre, usuario, correo, celular, contrasena,
+                departamento, puesto, jefe, coach, rol_id, imagen
+            FROM "usuarios"
+            """
+        ).fetchall()
+
+        for row in legacy_rows:
+            (
+                legacy_id,
+                nombre,
+                usuario_login,
+                correo,
+                celular,
+                contrasena,
+                departamento,
+                puesto,
+                jefe,
+                coach,
+                rol_id,
+                imagen,
+            ) = row
+
+            if not usuario_login and not correo:
+                continue
+
+            role_name = normalize_role_name(role_by_id.get(rol_id, "") if rol_id else "")
+            params = [usuario_login or "", correo or ""]
+            existing = conn.execute(
+                """
+                SELECT id FROM "users"
+                WHERE (username IS NOT NULL AND lower(username)=lower(?))
+                   OR (email IS NOT NULL AND lower(email)=lower(?))
+                LIMIT 1
+                """,
+                params,
+            ).fetchone()
+
+            if existing:
+                update_sql = """
+                    UPDATE "users"
+                    SET
+                        full_name = COALESCE(NULLIF(?, ''), full_name),
+                        username = COALESCE(NULLIF(?, ''), username),
+                        email = COALESCE(NULLIF(?, ''), email),
+                        celular = COALESCE(NULLIF(?, ''), celular),
+                        password = COALESCE(NULLIF(?, ''), password),
+                        departamento = COALESCE(NULLIF(?, ''), departamento),
+                        puesto = COALESCE(NULLIF(?, ''), puesto),
+                        jefe = COALESCE(NULLIF(?, ''), jefe),
+                        coach = COALESCE(NULLIF(?, ''), coach),
+                        rol_id = COALESCE(?, rol_id),
+                        imagen = COALESCE(NULLIF(?, ''), imagen)
+                """
+                update_params = [
+                    nombre or "",
+                    usuario_login or "",
+                    correo or "",
+                    celular or "",
+                    contrasena or "",
+                    departamento or "",
+                    puesto or "",
+                    jefe or "",
+                    coach or "",
+                    rol_id,
+                    imagen or "",
+                ]
+                if users_has_role:
+                    update_sql += ", role = COALESCE(NULLIF(?, ''), role)"
+                    update_params.append(role_name)
+                if users_has_is_active:
+                    update_sql += ", is_active = COALESCE(is_active, 1)"
+                update_sql += " WHERE id = ?"
+                update_params.append(existing[0])
+                conn.execute(update_sql, update_params)
+                continue
+
+            insert_columns = [
+                "id",
+                "full_name",
+                "username",
+                "email",
+                "password",
+                "celular",
+                "departamento",
+                "puesto",
+                "jefe",
+                "coach",
+                "rol_id",
+                "imagen",
+            ]
+            insert_values = [
+                legacy_id,
+                nombre,
+                usuario_login,
+                correo,
+                contrasena,
+                celular,
+                departamento,
+                puesto,
+                jefe,
+                coach,
+                rol_id,
+                imagen,
+            ]
+            if users_has_role:
+                insert_columns.append("role")
+                insert_values.append(role_name or "usuario")
+            if users_has_is_active:
+                insert_columns.append("is_active")
+                insert_values.append(1)
+
+            quoted_columns = ", ".join(f'"{col}"' for col in insert_columns)
+            placeholders = ", ".join(["?"] * len(insert_values))
+            conn.execute(
+                f'INSERT OR IGNORE INTO "users" ({quoted_columns}) VALUES ({placeholders})',
+                insert_values,
+            )
+
+        if users_has_role and "rol_id" in {row[1] for row in conn.execute('PRAGMA table_info("users")').fetchall()}:
+            for role_id, role_name in role_by_id.items():
+                normalized_role = normalize_role_name(role_name)
+                conn.execute(
+                    """
+                    UPDATE "users"
+                    SET rol_id = COALESCE(rol_id, ?),
+                        role = COALESCE(NULLIF(role, ''), ?)
+                    WHERE lower(COALESCE(role, '')) = lower(?)
+                    """,
+                    (role_id, normalized_role, normalized_role),
+                )
+
+        conn.commit()
+
+
 Base.metadata.create_all(bind=engine)
+migrate_legacy_sqlite_data()
+unify_users_table()
 ensure_default_roles()
 
 app = FastAPI(title="Módulo de Planificación Estratégica y POA", docs_url="/docs", redoc_url="/redoc")
@@ -806,7 +1074,9 @@ def web_login_submit(
         if user.rol_id:
             role = db.query(Rol).filter(Rol.id == user.rol_id).first()
             if role and role.nombre:
-                role_name = role.nombre.strip().lower()
+                role_name = normalize_role_name(role.nombre)
+        elif user.role:
+            role_name = normalize_role_name(user.role)
     finally:
         db.close()
 
@@ -817,7 +1087,7 @@ def web_login_submit(
         httponly=True,
         samesite="lax",
     )
-    response.set_cookie("user_role", role_name, httponly=True, samesite="lax")
+    response.set_cookie("user_role", normalize_role_name(role_name), httponly=True, samesite="lax")
     response.set_cookie("user_name", username, httponly=True, samesite="lax")
     return response
 
@@ -3989,7 +4259,7 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
     usuario_login = (data.get("usuario") or "").strip()
     correo = (data.get("correo") or "").strip()
     password = data.get("contrasena") or ""
-    rol_nombre = (data.get("rol") or "").strip().lower()
+    rol_nombre = normalize_role_name(data.get("rol"))
 
     if not nombre or not usuario_login or not correo or not password:
         return JSONResponse(
@@ -4028,6 +4298,8 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
             correo=correo,
             contrasena=hash_password(password),
             rol_id=rol_id,
+            role=rol_nombre,
+            is_active=True,
         )
         db.add(nuevo)
         db.commit()
@@ -4080,17 +4352,23 @@ def listar_usuarios_sanitizados(request: Request):
     try:
         roles = {r.id: r.nombre for r in db.query(Rol).all()}
         usuarios = db.query(Usuario).all()
+
+        def resolved_role(u: Usuario) -> str:
+            if u.rol_id and roles.get(u.rol_id):
+                return normalize_role_name(roles.get(u.rol_id))
+            return normalize_role_name(u.role)
+
         data = [
             {
                 "id": u.id,
                 "nombre": u.nombre,
                 "correo": u.correo,
-                "rol": roles.get(u.rol_id),
+                "rol": resolved_role(u),
                 "imagen": u.imagen,
             }
             for u in usuarios
             if not is_hidden_user(request, u.usuario)
-            and (is_superadmin(request) or (roles.get(u.rol_id) or "").strip().lower() != "superadministrador")
+            and (is_superadmin(request) or resolved_role(u) != "superadministrador")
         ]
         return JSONResponse({"success": True, "data": data})
     finally:
