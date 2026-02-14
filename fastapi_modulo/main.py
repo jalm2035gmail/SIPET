@@ -1860,446 +1860,892 @@ PLAN_ESTRATEGICO_HTML = dedent("""
 """)
 
 INICIO_BSC_HTML = dedent("""
-    <section class="inicio-bsc">
+    <section class="poa-dashboard">
         <style>
-            .inicio-bsc {
-                display: grid;
-                gap: 18px;
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+            :root{
+              --bg: #f6f8fc;
+              --surface: rgba(255,255,255,.86);
+              --card: #ffffff;
+              --text: #0f172a;
+              --muted: #64748b;
+              --border: rgba(148,163,184,.35);
+              --shadow: 0 18px 40px rgba(15,23,42,.08);
+              --shadow-soft: 0 10px 22px rgba(15,23,42,.06);
+              --radius: 18px;
+
+              --primary: #2563eb;
+              --primary-2: #60a5fa;
+              --ok: #16a34a;
+              --warn: #f59e0b;
+              --crit: #ef4444;
+
+              --chip: rgba(37,99,235,.10);
+              --chip-text: #1d4ed8;
             }
-            .inicio-hero {
-                background: linear-gradient(120deg, #0f2a47 0%, #123a63 50%, #156fa4 100%);
-                border-radius: 18px;
-                padding: 24px;
-                color: #f4f8ff;
-                box-shadow: 0 14px 36px rgba(15, 42, 71, 0.28);
+
+            .poa-dashboard * { box-sizing: border-box; }
+            .poa-dashboard{
+              font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+              color: var(--text);
+              background:
+                radial-gradient(1200px 600px at 20% 0%, rgba(37,99,235,.10), transparent 60%),
+                radial-gradient(1000px 500px at 90% 10%, rgba(96,165,250,.12), transparent 55%),
+                var(--bg);
+              border-radius: 18px;
+              padding: 14px;
             }
-            .inicio-hero h2 {
-                margin: 0 0 8px;
-                font-size: 1.45rem;
+
+            .wrap{
+              width: min(80%, 1280px);
+              max-width: 100%;
+              margin: 0 auto;
+              padding: 18px 18px 28px;
             }
-            .inicio-hero p {
-                margin: 0;
-                opacity: 0.95;
-                line-height: 1.55;
+
+            .topbar{
+              display:flex;
+              gap: 12px;
+              align-items:center;
+              flex-wrap: wrap;
+              justify-content:space-between;
+              margin-bottom: 14px;
             }
-            .inicio-kpi-grid,
-            .inicio-bsc-grid,
-            .inicio-bottom-grid {
-                display: grid;
-                gap: 14px;
+            .title{
+              display:flex;
+              flex-direction:column;
+              gap: 4px;
             }
-            .inicio-kpi-grid {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
+            .title h1{
+              font-size: 18px;
+              margin:0;
+              letter-spacing: -0.02em;
             }
-            .inicio-kpi-card {
-                background: #ffffff;
-                border-radius: 14px;
-                padding: 16px;
-                border: 1px solid #dbe6f3;
-                box-shadow: 0 8px 22px rgba(12, 34, 58, 0.08);
+            .title p{
+              margin:0;
+              color: var(--muted);
+              font-size: 13px;
             }
-            .inicio-kpi-card small {
-                display: block;
-                color: #47627f;
-                margin-bottom: 6px;
+
+            .actions{
+              display:flex;
+              gap:10px;
+              align-items:center;
+              flex-wrap: wrap;
             }
-            .inicio-kpi-card strong {
-                font-size: 1.4rem;
-                color: #132f4a;
+            .btn{
+              border: 1px solid var(--border);
+              background: rgba(255,255,255,.7);
+              padding: 10px 12px;
+              border-radius: 12px;
+              color: var(--text);
+              display:flex;
+              gap:10px;
+              align-items:center;
+              flex-wrap: wrap;
+              box-shadow: var(--shadow-soft);
+              cursor:pointer;
+              user-select:none;
+              transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
             }
-            .inicio-bsc-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+            .btn:hover{ transform: translateY(-1px); box-shadow: var(--shadow); background: rgba(255,255,255,.95); }
+            .btn .dot{
+              width: 10px; height:10px; border-radius:50%;
+              background: var(--primary);
+              box-shadow: 0 0 0 6px rgba(37,99,235,.12);
             }
-            .bsc-card {
-                background: #ffffff;
-                border: 1px solid #d8e5f4;
-                border-radius: 16px;
-                padding: 16px;
-                box-shadow: 0 8px 20px rgba(15, 42, 71, 0.07);
+
+            .kpis{
+              display:grid;
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              gap: 12px;
+              margin: 12px 0 16px;
             }
-            .bsc-card header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 10px;
+            .kpi{
+              background: var(--surface);
+              border: 1px solid var(--border);
+              border-radius: var(--radius);
+              box-shadow: var(--shadow-soft);
+              padding: 14px 14px 12px;
+              backdrop-filter: blur(10px);
+              -webkit-backdrop-filter: blur(10px);
+              position: relative;
+              overflow:hidden;
             }
-            .bsc-card h3 {
-                margin: 0;
-                font-size: 1.02rem;
-                color: #0f2b45;
+            .kpi:before{
+              content:"";
+              position:absolute;
+              inset:-1px;
+              background: linear-gradient(135deg, rgba(37,99,235,.10), transparent 35%, rgba(96,165,250,.12));
+              pointer-events:none;
+              opacity:.8;
             }
-            .bsc-badge {
-                font-size: 0.78rem;
-                border-radius: 999px;
-                padding: 4px 10px;
-                color: #0f2b45;
-                background: #eaf3ff;
-                font-weight: 700;
+            .kpi > *{ position: relative; }
+            .kpi .label{
+              font-size: 13px;
+              color: var(--muted);
+              margin-bottom: 10px;
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              flex-wrap: wrap;
+              gap:10px;
             }
-            .bsc-card ul {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-                display: grid;
-                gap: 8px;
+            .kpi .value{
+              font-size: 32px;
+              font-weight: 700;
+              letter-spacing: -0.03em;
+              line-height: 1.05;
             }
-            .bsc-card li {
-                background: #f8fbff;
-                border: 1px solid #e2ebf6;
-                border-radius: 10px;
-                padding: 10px 12px;
-                color: #23415f;
-                line-height: 1.45;
+            .kpi .sub{
+              margin-top: 8px;
+              font-size: 12px;
+              color: var(--muted);
+              display:flex;
+              justify-content:space-between;
+              flex-wrap: wrap;
+              gap:10px;
             }
-            .inicio-bottom-grid {
-                grid-template-columns: 1.2fr 0.8fr;
+
+            .pill{
+              font-size: 12px;
+              padding: 6px 10px;
+              border-radius: 999px;
+              background: var(--chip);
+              color: var(--chip-text);
+              border: 1px solid rgba(37,99,235,.18);
+              white-space: nowrap;
             }
-            .mapa-card,
-            .iniciativas-card {
-                background: #ffffff;
-                border: 1px solid #d8e5f4;
-                border-radius: 16px;
-                padding: 16px;
-                box-shadow: 0 8px 20px rgba(15, 42, 71, 0.07);
+
+            .state{
+              display:inline-flex;
+              gap:8px;
+              align-items:center;
+              font-size: 12px;
+              padding: 6px 10px;
+              border-radius: 999px;
+              border: 1px solid var(--border);
+              background: rgba(255,255,255,.65);
+              color: var(--muted);
             }
-            .mapa-card h3,
-            .iniciativas-card h3 {
-                margin: 0 0 10px;
-                color: #0f2b45;
+            .state i{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+            .ok i{ background: var(--ok); box-shadow: 0 0 0 6px rgba(22,163,74,.10); }
+            .warn i{ background: var(--warn); box-shadow: 0 0 0 6px rgba(245,158,11,.12); }
+            .crit i{ background: var(--crit); box-shadow: 0 0 0 6px rgba(239,68,68,.12); }
+
+            .grid{
+              display:grid;
+              grid-template-columns: 1.2fr 1fr;
+              gap: 12px;
+              align-items:start;
             }
-            .mapa-flow {
-                display: grid;
-                gap: 8px;
+
+            .panel{
+              background: var(--surface);
+              border: 1px solid var(--border);
+              border-radius: var(--radius);
+              box-shadow: var(--shadow-soft);
+              padding: 14px;
+              backdrop-filter: blur(10px);
+              -webkit-backdrop-filter: blur(10px);
+              overflow:hidden;
             }
-            .mapa-step {
-                border-radius: 10px;
-                padding: 10px 12px;
-                color: #113253;
-                font-weight: 600;
-                border: 1px solid #cde0f5;
-                background: #eef6ff;
+
+            .panel-header{
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              flex-wrap: wrap;
+              gap: 10px;
+              margin-bottom: 12px;
             }
-            .iniciativas-card table {
+            .panel-title{
+              display:flex;
+              flex-direction:column;
+              gap: 4px;
+            }
+            .panel-title h2{
+              margin:0;
+              font-size: 16px;
+              letter-spacing: -0.02em;
+            }
+            .panel-title small{
+              color: var(--muted);
+              font-size: 12px;
+            }
+
+            .meta-pill{
+              display:inline-flex;
+              align-items:center;
+              gap: 8px;
+              padding: 6px 10px;
+              border-radius: 999px;
+              background: rgba(2,132,199,.10);
+              border: 1px solid rgba(2,132,199,.18);
+              color: #0369a1;
+              font-size: 12px;
+              white-space:nowrap;
+            }
+
+            .rows{
+              display:flex;
+              flex-direction:column;
+              gap: 10px;
+            }
+            .row{
+              background: rgba(255,255,255,.75);
+              border: 1px solid var(--border);
+              border-radius: 14px;
+              padding: 10px 12px;
+              display:flex;
+              flex-direction:column;
+              gap: 10px;
+              box-shadow: 0 10px 20px rgba(15,23,42,.04);
+            }
+            .row-top{
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              flex-wrap: wrap;
+              gap: 12px;
+            }
+            .row-label{
+              font-weight: 600;
+              font-size: 13px;
+              color: #0b1220;
+            }
+            .row-value{
+              font-weight: 700;
+              font-size: 13px;
+              color: #0b1220;
+              white-space:nowrap;
+            }
+            .hint{
+              font-size: 12px;
+              color: var(--muted);
+            }
+
+            .progress{
+              width: 100%;
+              height: 10px;
+              border-radius: 999px;
+              background: rgba(148,163,184,.25);
+              overflow:hidden;
+              border: 1px solid rgba(148,163,184,.25);
+            }
+            .bar{
+              height: 100%;
+              width: 50%;
+              border-radius: 999px;
+              background: linear-gradient(90deg, var(--primary), var(--primary-2));
+            }
+            .bar.ok{ background: linear-gradient(90deg, #16a34a, #86efac); }
+            .bar.warn{ background: linear-gradient(90deg, #f59e0b, #fde68a); }
+            .bar.crit{ background: linear-gradient(90deg, #ef4444, #fecaca); }
+
+            .charts{
+              display:grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 12px;
+              margin-top: 12px;
+            }
+            .chart-card{
+              background: rgba(255,255,255,.75);
+              border: 1px solid var(--border);
+              border-radius: 16px;
+              padding: 12px;
+              box-shadow: 0 10px 20px rgba(15,23,42,.04);
+              min-height: 240px;
+              display:flex;
+              flex-direction:column;
+              gap: 10px;
+            }
+            .chart-card h3{
+              margin:0;
+              font-size: 13px;
+              color: #0b1220;
+              letter-spacing: -0.01em;
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap: 10px;
+            }
+            .chart-card h3 span{
+              font-weight: 500;
+              color: var(--muted);
+              font-size: 12px;
+            }
+            .poa-dashboard canvas{ width:100% !important; height: 180px !important; }
+
+            @media (max-width: 1100px){
+              .wrap{ width: 90%; }
+              .kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+              .grid{ grid-template-columns: 1fr; }
+            }
+            @media (max-width: 900px){
+              .wrap{
                 width: 100%;
-                border-collapse: collapse;
-                font-size: 0.92rem;
+                padding: 14px 10px 22px;
+              }
+              .poa-dashboard{
+                border-radius: 14px;
+                padding: 10px;
+              }
+              .title h1{
+                font-size: 16px;
+              }
+              .title p{
+                font-size: 12px;
+              }
+              .panel{
+                padding: 12px;
+              }
             }
-            .iniciativas-card th,
-            .iniciativas-card td {
-                text-align: left;
-                padding: 8px 6px;
-                border-bottom: 1px solid #e4edf8;
-            }
-            .estado {
-                font-weight: 700;
-            }
-            .estado.ok { color: #0f7a3e; }
-            .estado.risk { color: #b54708; }
-            .estado.alert { color: #b42318; }
-            @media (max-width: 1100px) {
-                .inicio-kpi-grid {
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
-                }
-                .inicio-bottom-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
-            @media (max-width: 700px) {
-                .inicio-bsc-grid,
-                .inicio-kpi-grid {
-                    grid-template-columns: 1fr;
-                }
+            @media (max-width: 560px){
+              .kpis{ grid-template-columns: 1fr; }
+              .charts{ grid-template-columns: 1fr; }
+              .kpi .value{ font-size: 28px; }
+              .btn{
+                width: 100%;
+                justify-content: flex-start;
+                padding: 10px;
+              }
+              .actions{
+                width: 100%;
+              }
+              .chart-card{
+                min-height: 210px;
+              }
+              .poa-dashboard canvas{
+                height: 165px !important;
+              }
             }
         </style>
 
-        <article class="inicio-hero">
-            <h2>Tablero de Control Estratégico y Táctico</h2>
-            <p>
-                Vista ejecutiva tipo Balanced Scorecard para monitorear objetivos, indicadores,
-                iniciativas y semáforos de desempeño del POA.
-            </p>
-        </article>
-
-        <section class="inicio-kpi-grid" aria-label="Resumen de indicadores">
-            <article class="inicio-kpi-card"><small>Cumplimiento global POA</small><strong>78%</strong></article>
-            <article class="inicio-kpi-card"><small>Objetivos estratégicos en meta</small><strong>9 / 12</strong></article>
-            <article class="inicio-kpi-card"><small>Iniciativas activas</small><strong>24</strong></article>
-            <article class="inicio-kpi-card"><small>Desviaciones críticas</small><strong>3</strong></article>
-        </section>
-
-        <section class="inicio-bsc-grid" aria-label="Perspectivas Balanced Scorecard">
-            <article class="bsc-card">
-                <header><h3>Perspectiva Financiera</h3><span class="bsc-badge">Meta 85%</span></header>
-                <ul>
-                    <li>Ejecución presupuestaria: 81%</li>
-                    <li>Reducción de costos operativos: 6.2%</li>
-                    <li>Proyectos dentro de presupuesto: 14/18</li>
-                </ul>
-            </article>
-            <article class="bsc-card">
-                <header><h3>Clientes / Usuarios</h3><span class="bsc-badge">Meta 90%</span></header>
-                <ul>
-                    <li>Satisfacción general: 88%</li>
-                    <li>Tiempo de respuesta a solicitudes: 42h</li>
-                    <li>Servicios con nivel alto: 11/13</li>
-                </ul>
-            </article>
-            <article class="bsc-card">
-                <header><h3>Procesos Internos</h3><span class="bsc-badge">Meta 80%</span></header>
-                <ul>
-                    <li>Procesos críticos estandarizados: 73%</li>
-                    <li>Hitos del POA cumplidos en fecha: 31/40</li>
-                    <li>Incidencias operativas abiertas: 7</li>
-                </ul>
-            </article>
-            <article class="bsc-card">
-                <header><h3>Aprendizaje y Crecimiento</h3><span class="bsc-badge">Meta 75%</span></header>
-                <ul>
-                    <li>Capacitaciones ejecutadas: 18/22</li>
-                    <li>Competencias críticas certificadas: 69%</li>
-                    <li>Mejoras implementadas por innovación: 12</li>
-                </ul>
-            </article>
-        </section>
-
-        <section class="inicio-bottom-grid">
-            <article class="mapa-card">
-                <h3>Mapa Estratégico (cascarón)</h3>
-                <div class="mapa-flow">
-                    <div class="mapa-step">Aprendizaje y crecimiento impulsa capacidades institucionales</div>
-                    <div class="mapa-step">Procesos internos mejoran productividad y control operativo</div>
-                    <div class="mapa-step">Mayor valor para usuarios y mejor percepción del servicio</div>
-                    <div class="mapa-step">Resultados financieros sostenibles y cumplimiento de objetivos</div>
+        <div class="wrap">
+            <div class="topbar">
+              <div class="title">
+                <h1>Tablero POA / BSC</h1>
+                <p>Seguimiento ejecutivo con metas, desviaciones y tendencias (estilo premium).</p>
+              </div>
+              <div class="actions">
+                <div class="btn" title="Filtrar">
+                  <span class="dot"></span>
+                  <strong style="font-size:13px;">Filtros</strong>
+                  <span style="color:var(--muted);font-size:12px;">(Mes / Área)</span>
                 </div>
-            </article>
-            <article class="iniciativas-card">
-                <h3>Iniciativas Prioritarias</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Iniciativa</th>
-                            <th>Avance</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Digitalización de procesos POA</td><td>82%</td><td class="estado ok">En meta</td></tr>
-                        <tr><td>Programa de eficiencia operativa</td><td>61%</td><td class="estado risk">En riesgo</td></tr>
-                        <tr><td>Modelo de seguimiento KPI</td><td>47%</td><td class="estado alert">Crítico</td></tr>
-                    </tbody>
-                </table>
-            </article>
-        </section>
+                <div class="btn" title="Exportar">
+                  <span class="dot" style="background:#16a34a; box-shadow:0 0 0 6px rgba(22,163,74,.12);"></span>
+                  <strong style="font-size:13px;">Exportar</strong>
+                  <span style="color:var(--muted);font-size:12px;">PDF/Excel</span>
+                </div>
+              </div>
+            </div>
+
+            <section class="kpis">
+              <article class="kpi">
+                <div class="label">
+                  <span>Cumplimiento global POA</span>
+                  <span class="state ok"><i></i>En rango</span>
+                </div>
+                <div class="value">78%</div>
+                <div class="sub">
+                  <span class="pill">Meta: 85%</span>
+                  <span class="hint">+2.1 pts vs mes anterior</span>
+                </div>
+              </article>
+
+              <article class="kpi">
+                <div class="label">
+                  <span>Objetivos estratégicos en meta</span>
+                  <span class="state ok"><i></i>Estable</span>
+                </div>
+                <div class="value">9 <span style="font-weight:600;color:var(--muted);font-size:18px;">/ 12</span></div>
+                <div class="sub">
+                  <span class="pill">Pendientes: 3</span>
+                  <span class="hint">2 en riesgo (alerta)</span>
+                </div>
+              </article>
+
+              <article class="kpi">
+                <div class="label">
+                  <span>Iniciativas activas</span>
+                  <span class="state warn"><i></i>Alta carga</span>
+                </div>
+                <div class="value">24</div>
+                <div class="sub">
+                  <span class="pill">Capacidad: 20</span>
+                  <span class="hint">Reasignar responsables</span>
+                </div>
+              </article>
+
+              <article class="kpi">
+                <div class="label">
+                  <span>Desviaciones críticas</span>
+                  <span class="state crit"><i></i>Prioridad</span>
+                </div>
+                <div class="value">3</div>
+                <div class="sub">
+                  <span class="pill">SLA: 7 días</span>
+                  <span class="hint">2 sin plan de acción</span>
+                </div>
+              </article>
+            </section>
+
+            <section class="grid">
+              <div class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">
+                    <h2>Perspectiva Financiera</h2>
+                    <small>Resultados financieros, ejecución y disciplina presupuestaria</small>
+                  </div>
+                  <div class="meta-pill">Meta 85%</div>
+                </div>
+
+                <div class="rows">
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Ejecución presupuestaria</div>
+                      <div class="row-value">81%</div>
+                    </div>
+                    <div class="progress"><div class="bar ok" style="width:81%"></div></div>
+                    <div class="hint">En rango; falta optimizar calendario de gasto.</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Reducción de costos operativos</div>
+                      <div class="row-value">6.2%</div>
+                    </div>
+                    <div class="progress"><div class="bar warn" style="width:62%"></div></div>
+                    <div class="hint">En avance; validar quick wins y renegociaciones.</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Proyectos dentro de presupuesto</div>
+                      <div class="row-value">14 / 18</div>
+                    </div>
+                    <div class="progress"><div class="bar" style="width:78%"></div></div>
+                    <div class="hint">4 con sobrecosto: revisar alcance y compras.</div>
+                  </div>
+                </div>
+
+                <div class="charts">
+                  <div class="chart-card">
+                    <h3>Trend: Cumplimiento POA <span>ultimos 6 meses</span></h3>
+                    <canvas id="chartCumplimiento"></canvas>
+                  </div>
+                  <div class="chart-card">
+                    <h3>Distribucion de desviaciones <span>por severidad</span></h3>
+                    <canvas id="chartDesviaciones"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">
+                    <h2>Clientes / Usuarios</h2>
+                    <small>Calidad de servicio, satisfaccion y tiempos de atencion</small>
+                  </div>
+                  <div class="meta-pill">Meta 90%</div>
+                </div>
+
+                <div class="rows">
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Satisfaccion general</div>
+                      <div class="row-value">88%</div>
+                    </div>
+                    <div class="progress"><div class="bar ok" style="width:88%"></div></div>
+                    <div class="hint">Muy cerca de meta; reforzar calidad y comunicacion.</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Tiempo de respuesta a solicitudes</div>
+                      <div class="row-value">42h</div>
+                    </div>
+                    <div class="progress"><div class="bar warn" style="width:70%"></div></div>
+                    <div class="hint">Meta sugerida: <= 36h. Ajustar colas y SLA por tipo.</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Servicios con nivel alto</div>
+                      <div class="row-value">11 / 13</div>
+                    </div>
+                    <div class="progress"><div class="bar" style="width:85%"></div></div>
+                    <div class="hint">2 servicios en medio: plan de mejora y auditoria.</div>
+                  </div>
+                </div>
+
+                <div class="charts">
+                  <div class="chart-card" style="grid-column: 1 / -1;">
+                    <h3>Atencion: Volumen vs SLA <span>por semana</span></h3>
+                    <canvas id="chartSLA"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">
+                    <h2>Procesos Internos</h2>
+                    <small>Estandarizacion, hitos, control operativo</small>
+                  </div>
+                  <div class="meta-pill">Meta 80%</div>
+                </div>
+
+                <div class="rows">
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Procesos criticos estandarizados</div>
+                      <div class="row-value">73%</div>
+                    </div>
+                    <div class="progress"><div class="bar warn" style="width:73%"></div></div>
+                    <div class="hint">Priorizar procesos de alto impacto y riesgos.</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Hitos del POA cumplidos en fecha</div>
+                      <div class="row-value">31 / 40</div>
+                    </div>
+                    <div class="progress"><div class="bar" style="width:78%"></div></div>
+                    <div class="hint">Reforzar seguimiento semanal y responsables.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="panel-header">
+                  <div class="panel-title">
+                    <h2>Aprendizaje y Crecimiento</h2>
+                    <small>Capacitacion, competencias y cultura</small>
+                  </div>
+                  <div class="meta-pill">Meta 75%</div>
+                </div>
+
+                <div class="rows">
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Capacitaciones ejecutadas</div>
+                      <div class="row-value">18 / 22</div>
+                    </div>
+                    <div class="progress"><div class="bar ok" style="width:82%"></div></div>
+                    <div class="hint">Buen avance; asegurar evidencia y evaluacion.</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="row-top">
+                      <div class="row-label">Competencias criticas certificadas</div>
+                      <div class="row-value">69%</div>
+                    </div>
+                    <div class="progress"><div class="bar warn" style="width:69%"></div></div>
+                    <div class="hint">Definir ruta de certificacion por rol y prioridad.</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+            (function () {
+                if (!window.Chart) return;
+                const baseOpts = {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                  },
+                  interaction: { mode: 'index', intersect: false },
+                  scales: {
+                    x: { grid: { display: false }, ticks: { maxRotation: 0 } },
+                    y: { grid: { color: 'rgba(148,163,184,.25)' }, ticks: { precision: 0 } }
+                  }
+                };
+
+                if (document.getElementById('chartCumplimiento')) {
+                    new Chart(document.getElementById('chartCumplimiento'), {
+                      type: 'line',
+                      data: {
+                        labels: ['Ago','Sep','Oct','Nov','Dic','Ene'],
+                        datasets: [{
+                          label: 'Cumplimiento',
+                          data: [70, 72, 74, 76, 77, 78],
+                          borderWidth: 2,
+                          tension: 0.35,
+                          pointRadius: 3,
+                          fill: true,
+                          backgroundColor: 'rgba(37,99,235,.12)'
+                        }]
+                      },
+                      options: {
+                        ...baseOpts,
+                        scales: {
+                          ...baseOpts.scales,
+                          y: { ...baseOpts.scales.y, min: 0, max: 100 }
+                        }
+                      }
+                    });
+                }
+
+                if (document.getElementById('chartDesviaciones')) {
+                    new Chart(document.getElementById('chartDesviaciones'), {
+                      type: 'doughnut',
+                      data: {
+                        labels: ['Criticas','Advertencias','Menores'],
+                        datasets: [{
+                          data: [3, 6, 11],
+                          borderWidth: 1
+                        }]
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true, position: 'bottom' } },
+                        cutout: '68%'
+                      }
+                    });
+                }
+
+                if (document.getElementById('chartSLA')) {
+                    new Chart(document.getElementById('chartSLA'), {
+                      type: 'bar',
+                      data: {
+                        labels: ['S1','S2','S3','S4','S5','S6'],
+                        datasets: [
+                          { label: 'Solicitudes', data: [120, 138, 110, 150, 162, 140], borderWidth: 1 },
+                          { label: 'Fuera de SLA', data: [14, 18, 12, 22, 26, 19], borderWidth: 1 }
+                        ]
+                      },
+                      options: {
+                        ...baseOpts,
+                        plugins: { legend: { display: true, position: 'bottom' } }
+                      }
+                    });
+                }
+            })();
+        </script>
     </section>
 """)
 
 PROYECTANDO_HTML = dedent("""
-    <section class="proyectando-page">
+    <section class="proyectando-finanzas">
         <style>
-            .proyectando-page {
-                display: grid;
-                gap: 16px;
+            .proyectando-finanzas{
+                background:#f4f7fb;
+                border-radius:14px;
+                padding:6px 0;
             }
-            .proyectando-hero {
-                border-radius: 16px;
-                padding: 22px;
-                background: linear-gradient(125deg, #0f3152 0%, #12507a 55%, #1f7aa8 100%);
-                color: #f5fbff;
-                box-shadow: 0 12px 30px rgba(11, 39, 63, 0.26);
+            .proyectando-finanzas *{
+                box-sizing:border-box;
+                font-family:Arial, sans-serif;
             }
-            .proyectando-hero h2 {
-                margin: 0 0 8px;
+            .container{
+                margin-left:10%;
+                margin-right:10%;
+                padding:30px 0;
             }
-            .proyectando-hero p {
-                margin: 0;
-                line-height: 1.6;
-                opacity: 0.96;
+            .title{
+                margin-bottom:25px;
+                color:#1e293b;
             }
-            .proyectando-kpis {
-                display: grid;
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-                gap: 12px;
+            .card{
+                background:white;
+                border-radius:14px;
+                padding:20px;
+                box-shadow:0 10px 25px rgba(0,0,0,.06);
             }
-            .proyectando-kpi {
-                background: #fff;
-                border: 1px solid #dbe7f3;
-                border-radius: 12px;
-                padding: 12px;
-                box-shadow: 0 6px 18px rgba(15, 38, 61, 0.08);
+            .kpis{
+                display:grid;
+                grid-template-columns:repeat(4,1fr);
+                gap:15px;
+                margin-bottom:20px;
             }
-            .proyectando-kpi small {
-                display: block;
-                color: #4a657f;
-                margin-bottom: 6px;
+            .kpi h3{
+                color:#64748b;
+                font-size:14px;
+                margin:0;
             }
-            .proyectando-kpi strong {
-                font-size: 1.22rem;
-                color: #13324f;
+            .kpi h2{
+                margin:10px 0 0;
+                font-size:28px;
             }
-            .proyectando-grid {
-                display: grid;
-                grid-template-columns: 1.2fr 0.8fr;
-                gap: 14px;
+            .grid{
+                display:grid;
+                grid-template-columns:2fr 1fr;
+                gap:20px;
+                margin-bottom:20px;
             }
-            .proyectando-card {
-                background: #fff;
-                border: 1px solid #d8e4f1;
-                border-radius: 14px;
-                padding: 14px;
-                box-shadow: 0 6px 18px rgba(15, 38, 61, 0.08);
+            .form{
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                gap:15px;
+                margin-top:15px;
             }
-            .proyectando-card h3 {
-                margin: 0 0 10px;
-                color: #10314f;
-                font-size: 1.03rem;
+            .proyectando-finanzas label{
+                font-size:13px;
+                color:#334155;
             }
-            .proyectando-form {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 10px;
+            .proyectando-finanzas input,
+            .proyectando-finanzas select{
+                width:100%;
+                padding:10px;
+                border-radius:10px;
+                border:1px solid #cbd5e1;
+                margin-top:5px;
             }
-            .proyectando-field label {
-                display: block;
-                font-weight: 600;
-                margin-bottom: 5px;
-                color: #284966;
-                font-size: 0.9rem;
+            .buttons{
+                margin-top:20px;
+                display:flex;
+                gap:10px;
             }
-            .proyectando-field input,
-            .proyectando-field select {
-                width: 100%;
-                border: 1px solid #cfdcea;
-                border-radius: 10px;
-                padding: 10px;
-                font-size: 0.92rem;
-                background: #f9fcff;
+            .proyectando-finanzas button{
+                padding:10px 16px;
+                border-radius:10px;
+                border:none;
+                background:#e2e8f0;
+                cursor:pointer;
             }
-            .proyectando-actions {
-                margin-top: 10px;
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
+            .primary{
+                background:#2563eb;
+                color:white;
             }
-            .proyectando-actions button {
-                border: 0;
-                border-radius: 10px;
-                padding: 10px 12px;
-                font-weight: 700;
-                cursor: pointer;
+            .proyectando-finanzas table{
+                width:100%;
+                border-collapse:collapse;
+                margin-top:15px;
             }
-            .btn-primary {
-                background: #0f6dad;
-                color: #fff;
+            .proyectando-finanzas th,
+            .proyectando-finanzas td{
+                padding:12px;
+                text-align:left;
+                border-bottom:1px solid #e2e8f0;
             }
-            .btn-secondary {
-                background: #e8f2fc;
-                color: #123c61;
+            .badge{
+                padding:6px 12px;
+                border-radius:20px;
+                font-size:12px;
+                display:inline-block;
             }
-            .proyectando-card table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 0.9rem;
+            .low{background:#dcfce7;color:#166534;}
+            .mid{background:#fef3c7;color:#92400e;}
+            .high{background:#fee2e2;color:#991b1b;}
+            .charts{
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                gap:20px;
             }
-            .proyectando-card th,
-            .proyectando-card td {
-                text-align: left;
-                padding: 8px 6px;
-                border-bottom: 1px solid #e5edf6;
+            .proyectando-finanzas canvas{
+                height:250px !important;
             }
-            .pill {
-                display: inline-block;
-                font-size: 0.8rem;
-                border-radius: 999px;
-                padding: 4px 8px;
-                font-weight: 700;
-                background: #eaf4ff;
-                color: #13446a;
-            }
-            @media (max-width: 1000px) {
-                .proyectando-kpis {
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
-                }
-                .proyectando-grid {
-                    grid-template-columns: 1fr;
+            @media(max-width:1100px){
+                .kpis{grid-template-columns:1fr 1fr;}
+                .grid{grid-template-columns:1fr;}
+                .charts{grid-template-columns:1fr;}
+                .container{
+                    margin-left:5%;
+                    margin-right:5%;
                 }
             }
-            @media (max-width: 680px) {
-                .proyectando-kpis,
-                .proyectando-form {
-                    grid-template-columns: 1fr;
-                }
+            @media(max-width:680px){
+                .form{grid-template-columns:1fr;}
+                .kpis{grid-template-columns:1fr;}
             }
         </style>
 
-        <article class="proyectando-hero">
-            <h2>Proyectando: Herramienta de Proyección Financiera</h2>
-            <p>
-                Cascarón inicial para simular escenarios financieros, proyectar ingresos y costos,
-                y monitorear flujo de caja en horizontes mensual, trimestral y anual.
-            </p>
-        </article>
+        <div class="container">
+            <div class="kpis">
+                <article class="card kpi">
+                    <h3>Ingresos proyectados (12m)</h3>
+                    <h2>$1,240,000</h2>
+                </article>
+                <article class="card kpi">
+                    <h3>Costos proyectados (12m)</h3>
+                    <h2>$918,000</h2>
+                </article>
+                <article class="card kpi">
+                    <h3>Flujo neto estimado</h3>
+                    <h2>$322,000</h2>
+                </article>
+                <article class="card kpi">
+                    <h3>Margen estimado</h3>
+                    <h2>26%</h2>
+                </article>
+            </div>
 
-        <section class="proyectando-kpis">
-            <article class="proyectando-kpi"><small>Ingresos proyectados (12m)</small><strong>$1,240,000</strong></article>
-            <article class="proyectando-kpi"><small>Costos proyectados (12m)</small><strong>$918,000</strong></article>
-            <article class="proyectando-kpi"><small>Flujo neto estimado</small><strong>$322,000</strong></article>
-            <article class="proyectando-kpi"><small>Margen estimado</small><strong>26%</strong></article>
-        </section>
+            <div class="grid">
+                <article class="card">
+                    <h3>Parámetros de proyección</h3>
+                    <div class="form">
+                        <div>
+                            <label>Horizonte</label>
+                            <select>
+                                <option>12 meses</option>
+                                <option>24 meses</option>
+                                <option>36 meses</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Crecimiento mensual (%)</label>
+                            <input type="number" value="2.5" step="0.1">
+                        </div>
+                        <div>
+                            <label>Inflación estimada (%)</label>
+                            <input type="number" value="4.0" step="0.1">
+                        </div>
+                        <div>
+                            <label>Tasa de descuento (%)</label>
+                            <input type="number" value="10.0" step="0.1">
+                        </div>
+                        <div>
+                            <label>Ingresos base mensuales</label>
+                            <input type="number" value="85000">
+                        </div>
+                        <div>
+                            <label>Costos base mensuales</label>
+                            <input type="number" value="62000">
+                        </div>
+                    </div>
+                    <div class="buttons">
+                        <button class="primary" type="button">Calcular proyección</button>
+                        <button type="button">Guardar escenario</button>
+                        <button type="button">Exportar</button>
+                    </div>
+                </article>
 
-        <section class="proyectando-grid">
-            <article class="proyectando-card">
-                <h3>Parámetros de proyección</h3>
-                <div class="proyectando-form">
-                    <div class="proyectando-field">
-                        <label>Horizonte</label>
-                        <select>
-                            <option>12 meses</option>
-                            <option>24 meses</option>
-                            <option>36 meses</option>
-                        </select>
-                    </div>
-                    <div class="proyectando-field">
-                        <label>Crecimiento mensual (%)</label>
-                        <input type="number" value="2.5" step="0.1">
-                    </div>
-                    <div class="proyectando-field">
-                        <label>Inflación estimada (%)</label>
-                        <input type="number" value="4.0" step="0.1">
-                    </div>
-                    <div class="proyectando-field">
-                        <label>Tasa de descuento (%)</label>
-                        <input type="number" value="10.0" step="0.1">
-                    </div>
-                    <div class="proyectando-field">
-                        <label>Ingresos base mensuales</label>
-                        <input type="number" value="85000">
-                    </div>
-                    <div class="proyectando-field">
-                        <label>Costos base mensuales</label>
-                        <input type="number" value="62000">
-                    </div>
-                </div>
-                <div class="proyectando-actions">
-                    <button class="btn-primary" type="button">Calcular proyección</button>
-                    <button class="btn-secondary" type="button">Guardar escenario</button>
-                    <button class="btn-secondary" type="button">Exportar</button>
-                </div>
-            </article>
+                <article class="card">
+                    <h3>Escenarios</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Escenario</th><th>Flujo neto</th><th>Riesgo</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Conservador</td><td>$210,000</td><td><span class="badge low">Bajo</span></td></tr>
+                            <tr><td>Base</td><td>$322,000</td><td><span class="badge mid">Medio</span></td></tr>
+                            <tr><td>Agresivo</td><td>$455,000</td><td><span class="badge high">Alto</span></td></tr>
+                        </tbody>
+                    </table>
+                </article>
+            </div>
 
-            <article class="proyectando-card">
-                <h3>Escenarios</h3>
-                <table>
-                    <thead>
-                        <tr><th>Escenario</th><th>Flujo neto</th><th>Riesgo</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Conservador</td><td>$210,000</td><td><span class="pill">Bajo</span></td></tr>
-                        <tr><td>Base</td><td>$322,000</td><td><span class="pill">Medio</span></td></tr>
-                        <tr><td>Agresivo</td><td>$455,000</td><td><span class="pill">Alto</span></td></tr>
-                    </tbody>
-                </table>
-            </article>
-        </section>
+            <div class="charts">
+                <article class="card">
+                    <h3>Proyección de ingresos vs costos</h3>
+                    <canvas id="proyectando-chart-1"></canvas>
+                </article>
+                <article class="card">
+                    <h3>Flujo neto por escenario</h3>
+                    <canvas id="proyectando-chart-2"></canvas>
+                </article>
+            </div>
+        </div>
     </section>
 """)
 
@@ -3322,7 +3768,13 @@ def inicio_page(request: Request):
         description="Tablero de control estratégico y táctico",
         content=INICIO_BSC_HTML,
         hide_floating_actions=True,
-        show_page_header=False,
+        show_page_header=True,
+        view_buttons=[
+            {"label": "Formulario", "icon": "/templates/icon/formulario.svg", "view": "form"},
+            {"label": "Lista", "icon": "/templates/icon/list.svg", "view": "list"},
+            {"label": "Kanban", "icon": "/templates/icon/kanban.svg", "view": "kanban"},
+            {"label": "Dashboard", "icon": "/templates/icon/tablero.svg", "view": "dashboard", "active": True},
+        ],
     )
 
 
@@ -3334,7 +3786,13 @@ def proyectando_page(request: Request):
         description="Herramienta de proyección financiera",
         content=PROYECTANDO_HTML,
         hide_floating_actions=True,
-        show_page_header=False,
+        show_page_header=True,
+        view_buttons=[
+            {"label": "Formulario", "icon": "/templates/icon/formulario.svg", "view": "form"},
+            {"label": "Lista", "icon": "/templates/icon/list.svg", "view": "list"},
+            {"label": "Kanban", "icon": "/templates/icon/kanban.svg", "view": "kanban"},
+            {"label": "Dashboard", "icon": "/templates/icon/tablero.svg", "view": "dashboard", "active": True},
+        ],
     )
 
 
