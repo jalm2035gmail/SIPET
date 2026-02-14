@@ -311,6 +311,11 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+            .main-content {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+            }
             .description {
                 position: static;
                 left: auto;
@@ -324,15 +329,17 @@
                 align-items: flex-start;
             }
             .left-side {
+                width: 100%;
                 justify-content: center;
-                min-height: 80vh;
+                min-height: auto;
             }
             .form-panel {
                 position: relative;
                 top: auto;
                 right: auto;
-                width: min(420px, calc(100% - 40px));
-                margin: 20px auto 0;
+                width: min(420px, 100%);
+                max-width: 100%;
+                margin: 12px 0 0;
                 transform: translateY(20px);
             }
             .form-panel.active {

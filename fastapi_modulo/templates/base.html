@@ -6,6 +6,7 @@
     <link rel="shortcut icon" type="image/x-icon" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
     <title>{{ title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/templates/areas.css">
     <style>
         :root {
             color-scheme: light;
@@ -1922,12 +1923,21 @@
                 </span>
                 <span class="menu-label">KPIs</span>
             </a>
-            <a href="/reportes" data-menu-name="Reportes" data-route="/reportes">
-                <span class="menu-icon" aria-hidden="true">
-                    <img src="/templates/icon/reporte.svg" alt="Reportes">
-                </span>
-                <span class="menu-label">Reportes</span>
-            </a>
+            <div class="accordion">
+                <button type="button" class="accordion-header" id="reportes-btn" data-menu-name="Reportes" data-route="/reportes">
+                    <span class="menu-indicator">
+                        <span class="menu-icon" aria-hidden="true">
+                            <img src="/templates/icon/reporte.svg" alt="Reportes">
+                        </span>
+                        <span>Reportes</span>
+                    </span>
+                    <span id="reportes-toggle">+</span>
+                </button>
+                <div class="accordion-content" id="reportes-submenu">
+                    <a href="/reportes" class="submenu" data-menu-name="Reportes" data-route="/reportes"><span>Resumen</span></a>
+                    <a href="/reportes/documentos" class="submenu" data-menu-name="Documentos" data-route="/reportes/documentos"><span>Documentos</span></a>
+                </div>
+            </div>
             <div class="sidebar-section">
                 <button type="button" class="sidebar-section-toggle" aria-expanded="false" id="empresa-section-toggle">
                     <span class="sidebar-section-title-with-icon" aria-hidden="true">
@@ -2097,6 +2107,9 @@
             const diagnosticoBtn = document.getElementById('diagnostico-btn');
             const diagnosticoToggle = document.getElementById('diagnostico-toggle');
             const diagnosticoSubmenu = document.getElementById('diagnostico-submenu');
+            const reportesBtn = document.getElementById('reportes-btn');
+            const reportesToggle = document.getElementById('reportes-toggle');
+            const reportesSubmenu = document.getElementById('reportes-submenu');
             const submenuLinks = document.querySelectorAll('.submenu[data-menu-name]');
             const menuLinks = document.querySelectorAll('nav > a[data-menu-name]');
             const navbarMenuName = document.querySelector('.navbar-menu-name');
@@ -2149,6 +2162,8 @@
                 });
             };
             convertFloatingIconsToMasks();
+            const currentUserRole = {{ request.state.user_role | default('usuario') | tojson }};
+            const currentTenantId = {{ request.state.tenant_id | default('default') | tojson }};
             const activateViewButton = (view) => {
                 if (!viewPills.length || !view) return;
                 viewPills.forEach(pill => pill.classList.toggle('active', pill.dataset.view === view));
@@ -2278,6 +2293,30 @@
                     const activePlanificacionLink = Array.from(planificacionLinks).find(link => link.getAttribute('href') === currentPath);
                     if (activePlanificacionLink) {
                         setMenuInfo(activePlanificacionLink);
+                    }
+                }
+            }
+            if (reportesBtn && reportesSubmenu && reportesToggle) {
+                reportesBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const accordion = reportesBtn.closest('.accordion');
+                    const isOpen = accordion.classList.toggle('open');
+                    reportesSubmenu.style.display = isOpen ? 'flex' : 'none';
+                    reportesToggle.textContent = isOpen ? '−' : '+';
+                    setMenuInfo(reportesBtn);
+                    setFloatingScreen('reportes');
+                });
+                const currentPath = window.location.pathname;
+                const reportesLinks = reportesSubmenu.querySelectorAll('a[href]');
+                const shouldOpenReportes = Array.from(reportesLinks).some(link => link.getAttribute('href') === currentPath);
+                if (shouldOpenReportes) {
+                    const accordion = reportesBtn.closest('.accordion');
+                    accordion && accordion.classList.add('open');
+                    reportesSubmenu.style.display = 'flex';
+                    reportesToggle.textContent = '−';
+                    const activeReportesLink = Array.from(reportesLinks).find(link => link.getAttribute('href') === currentPath);
+                    if (activeReportesLink) {
+                        setMenuInfo(activeReportesLink);
                     }
                 }
             }
@@ -2745,112 +2784,146 @@
                 const totalUsers = usuarioData.length;
                 const activeUsers = usuarioData.filter((user) => user.status === 'Activo').length;
                 const roleCount = new Set(usuarioData.map((user) => user.role).filter(Boolean)).size;
+                const selectedUser = usuarioData.find((user) => String(user.name || '').trim() === String(selectedUsuarioName || '').trim()) || usuarioData[0] || {};
+                const selectedName = escapeHtmlAttr(selectedUser.name || '');
+                const selectedEmail = escapeHtmlAttr(selectedUser.email || '');
+                const selectedRole = String(selectedUser.role || 'Usuario');
+                const selectedRoleValue = slugifyText(selectedRole).replace(/-/g, '_').toLowerCase();
+                const selectedDepartmentRaw = selectedUser.department || '';
+                const selectedDepartment = escapeHtmlAttr(selectedDepartmentRaw);
+                const selectedStatus = escapeHtmlAttr(selectedUser.status || 'Activo');
+                const selectedImage = getPersonImage(selectedUser);
+                const loginValue = escapeHtmlAttr((String(selectedUser.email || '').split('@')[0]) || slugifyText(selectedUser.name || '').replace(/-/g, '_'));
                 usuarioView.innerHTML = `
-                    <section class="usuario-shell">
-                        <header class="usuario-shell__head">
-                            <div>
-                                <h2>Gestión de usuarios</h2>
-                                <p>Registra perfiles, asigna roles y configura su estructura organizacional.</p>
-                            </div>
-                            <span class="usuario-shell__meta">${totalUsers} usuarios</span>
-                        </header>
-                        <div class="usuario-stats">
+                    <section class="ar-shell">
+                        <section class="area-stats">
                             <article class="usuario-stat"><strong>${totalUsers}</strong><span>Total de usuarios</span></article>
                             <article class="usuario-stat"><strong>${activeUsers}</strong><span>Usuarios activos</span></article>
                             <article class="usuario-stat"><strong>${roleCount}</strong><span>Roles en uso</span></article>
-                        </div>
-                        <div class="usuarios-form-layout">
-                            <section class="form-section">
-                                <div class="section-title">
-                                    <h2>Datos de usuario</h2>
-                                </div>
-                                <div class="section-grid two-columns">
-                                    <div class="column">
-                                        <div class="form-field">
+                        </section>
+                        <section class="ar-grid">
+                            <section class="ar-card ar-card--pad">
+                                <header class="ar-card__head">
+                                    <div>
+                                        <h2>Gestion de usuarios</h2>
+                                        <p>Registra perfiles, asigna roles y configura su estructura organizacional.</p>
+                                    </div>
+                                    <div class="ar-card__tools">
+                                        <span class="ar-pill ar-pill--soft">Usuario activo</span>
+                                        <span class="ar-pill">${totalUsers} usuarios</span>
+                                    </div>
+                                </header>
+                                <form class="ar-form">
+                                    <div class="ar-row ar-row--3">
+                                        <div class="ar-field">
                                             <label>Nombre</label>
-                                            <input type="text" id="usuario-nombre" placeholder="Nombre completo">
+                                            <input type="text" id="usuario-nombre" placeholder="Nombre completo" value="${selectedName}">
                                         </div>
-                                        <div class="form-field">
+                                        <div class="ar-field">
                                             <label>Usuario</label>
-                                            <input type="text" id="usuario-usuario" placeholder="Nombre de usuario">
+                                            <input type="text" id="usuario-usuario" placeholder="Nombre de usuario" value="${loginValue}">
                                         </div>
-                                        <div class="form-field">
-                                            <label>Correo electrónico</label>
-                                            <input type="email" id="usuario-correo" placeholder="usuario@empresa.com">
+                                        <div class="ar-field">
+                                            <label>Correo electronico</label>
+                                            <input type="email" id="usuario-correo" placeholder="usuario@empresa.com" value="${selectedEmail}">
                                         </div>
-                                        <div class="form-field">
-                                            <label>Contraseña</label>
-                                            <input type="password" id="usuario-password" placeholder="••••••••">
+                                    </div>
+                                    <div class="ar-row ar-row--3">
+                                        <div class="ar-field">
+                                            <label>Contrasena</label>
+                                            <input type="password" id="usuario-password" placeholder="********">
                                         </div>
-                                        <div class="form-field">
+                                        <div class="ar-field">
                                             <label>Rol</label>
                                             <select id="usuario-rol">
                                                 <option value="">Selecciona un rol</option>
-                                                ${getUsuarioRolOptions('usuario')}
+                                                ${getUsuarioRolOptions(selectedRoleValue || 'usuario')}
+                                            </select>
+                                        </div>
+                                        <div class="ar-field">
+                                            <label>Estado</label>
+                                            <select id="usuario-estado">
+                                                <option value="Activo" ${selectedStatus === 'Activo' ? 'selected' : ''}>Activo</option>
+                                                <option value="En mejora" ${selectedStatus === 'En mejora' ? 'selected' : ''}>En mejora</option>
+                                                <option value="Observando" ${selectedStatus === 'Observando' ? 'selected' : ''}>Observando</option>
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="column image-uploader">
-                                        <div class="form-field">
-                                            <label>Foto</label>
+                                    <div class="ar-row ar-row--2">
+                                        <div class="ar-field">
+                                            <label>Departamento</label>
+                                            <select id="usuario-departamento-select">
+                                                <option value="">Selecciona un departamento</option>
+                                                ${getDepartamentoOptions(selectedDepartmentRaw)}
+                                            </select>
                                         </div>
-                                        <div class="image-placeholder">
-                                            <span>Vista previa de foto</span>
-                                            <button type="button">Subir foto</button>
+                                        <div class="ar-field">
+                                            <label>Jefe inmediato</label>
+                                            <select id="usuario-jefe-select">
+                                                <option value="">Selecciona un jefe inmediato</option>
+                                            </select>
                                         </div>
                                     </div>
-                                </div>
-                            </section>
-
-                            <section class="form-section">
-                                <div class="section-title">
-                                    <h2>Datos generales</h2>
-                                </div>
-                                <div class="section-grid">
-                                    <div class="form-field">
-                                        <label>Dirección</label>
-                                        <input type="text" placeholder="Dirección">
+                                    <div class="ar-row ar-row--2">
+                                        <div class="ar-field">
+                                            <label>Direccion</label>
+                                            <input type="text" placeholder="Direccion">
+                                        </div>
+                                        <div class="ar-field">
+                                            <label>Telefono</label>
+                                            <input type="text" placeholder="+52 55 0000 0000">
+                                        </div>
                                     </div>
-                                    <div class="form-field">
-                                        <label>Teléfono</label>
-                                        <input type="text" placeholder="+52 55 0000 0000">
+                                    <div class="ar-actions">
+                                        <button type="button" class="ar-btn ar-btn--soft">Cancelar</button>
+                                        <button type="button" class="ar-btn ar-btn--primary2">Guardar</button>
                                     </div>
-                                </div>
+                                </form>
                             </section>
-
-                            <section class="form-section notebook-section">
-                                <div class="section-title">
-                                    <h2>Estructura organizacional</h2>
-                                </div>
-                                <div class="notebook-tabs">
-                                    <button type="button" class="tab active" data-tab="estructura-organizacional">Asignación</button>
-                                </div>
-                                <div class="notebook-content">
-                                    <div class="tab-panel" data-panel="estructura-organizacional">
-                                        <div class="section-grid">
-                                            <div class="form-field">
-                                                <label>Departamento</label>
-                                                <select id="usuario-departamento-select">
-                                                    <option value="">Selecciona un departamento</option>
-                                                    ${getDepartamentoOptions()}
-                                                </select>
+                            <aside class="ar-card ar-card--pad">
+                                <header class="ar-card__head">
+                                    <div>
+                                        <h2>Resumen</h2>
+                                        <p>Perfil y asignacion organizacional del usuario.</p>
+                                    </div>
+                                    <div class="ar-card__tools">
+                                        <span class="ar-pill">${escapeHtmlAttr(selectedRole || 'Usuario')}</span>
+                                    </div>
+                                </header>
+                                <div class="ar-summary">
+                                    <div class="ar-summary__top">
+                                        <div class="ar-avatar" aria-hidden="true">
+                                            <img src="${selectedImage}" alt="Foto de ${selectedName || 'Usuario'}" class="ar-user-photo">
+                                        </div>
+                                        <div>
+                                            <div class="ar-summary__name">${selectedName || 'Sin asignar'}</div>
+                                            <div class="ar-summary__meta">
+                                                <span class="ar-badge ${selectedStatus === 'Activo' ? 'ar-badge--ok' : ''}">${selectedStatus}</span>
+                                                <span class="ar-badge">${escapeHtmlAttr(selectedRole || 'Usuario')}</span>
+                                                <span class="ar-badge">${selectedDepartment || 'Sin departamento'}</span>
                                             </div>
-                                            <div class="form-field">
-                                                <label>Jefe inmediato</label>
-                                                <select id="usuario-jefe-select">
-                                                    <option value="">Selecciona un jefe inmediato</option>
-                                                </select>
-                                            </div>
                                         </div>
                                     </div>
+                                    <div class="ar-miniGrid">
+                                        <div class="ar-mini"><div class="ar-mini__k">Correo</div><div class="ar-mini__v">${selectedEmail || 'No registrado'}</div></div>
+                                        <div class="ar-mini"><div class="ar-mini__k">Departamento</div><div class="ar-mini__v">${selectedDepartment || 'N/A'}</div></div>
+                                        <div class="ar-mini"><div class="ar-mini__k">Usuarios activos</div><div class="ar-mini__v">${activeUsers}</div></div>
+                                        <div class="ar-mini"><div class="ar-mini__k">Roles en uso</div><div class="ar-mini__v">${roleCount}</div></div>
+                                    </div>
+                                    <div class="ar-divider"></div>
+                                    <div class="ar-links">
+                                        <button class="ar-link" type="button">Ver permisos del rol</button>
+                                        <button class="ar-link" type="button">Abrir en organigrama</button>
+                                        <button class="ar-link" type="button">Revisar historial</button>
+                                    </div>
                                 </div>
-                            </section>
-                        </div>
+                            </aside>
+                        </section>
                     </section>
                     <div class="password-confirm-backdrop hidden" id="password-confirm-backdrop">
-                        <div class="password-confirm-modal" role="dialog" aria-modal="true" aria-label="Confirmar contraseña">
-                            <h3>Confirmar contraseña</h3>
-                            <input type="password" id="usuario-confirm-password" placeholder="Repite la contraseña">
+                        <div class="password-confirm-modal" role="dialog" aria-modal="true" aria-label="Confirmar contrasena">
+                            <h3>Confirmar contrasena</h3>
+                            <input type="password" id="usuario-confirm-password" placeholder="Repite la contrasena">
                             <div class="password-confirm-actions">
                                 <button type="button" id="password-confirm-cancel">Cancelar</button>
                                 <button type="button" class="primary" id="password-confirm-ok">Confirmar</button>
@@ -2859,19 +2932,6 @@
                         </div>
                     </div>
                 `;
-                const notebookTabsLocal = usuarioView.querySelectorAll('.notebook-tabs .tab');
-                const notebookPanelsLocal = usuarioView.querySelectorAll('.notebook-content .tab-panel');
-                const activateNotebookTabLocal = (name) => {
-                    if (!name) return;
-                    notebookTabsLocal.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
-                    notebookPanelsLocal.forEach(panel => {
-                        panel.hidden = panel.dataset.panel !== name;
-                    });
-                };
-                notebookTabsLocal.forEach(tab => tab.addEventListener('click', () => activateNotebookTabLocal(tab.dataset.tab)));
-                if (notebookTabsLocal.length) {
-                    activateNotebookTabLocal(notebookTabsLocal[0].dataset.tab);
-                }
                 const departamentoSelect = usuarioView.querySelector('#usuario-departamento-select');
                 const jefeSelect = usuarioView.querySelector('#usuario-jefe-select');
                 const refreshJefes = (department) => {
@@ -2884,35 +2944,16 @@
                 };
                 if (departamentoSelect) {
                     departamentoSelect.addEventListener('change', () => refreshJefes(departamentoSelect.value));
+                    departamentoSelect.value = selectedDepartmentRaw;
                     refreshJefes(departamentoSelect.value);
                 }
-                if (selectedUsuarioName) {
-                    const selectedUser = usuarioData.find((u) => String(u.name || '').trim() === selectedUsuarioName);
-                    if (selectedUser) {
-                        const nombreInput = usuarioView.querySelector('#usuario-nombre');
-                        const usuarioLoginInput = usuarioView.querySelector('#usuario-usuario');
-                        const correoInput = usuarioView.querySelector('#usuario-correo');
-                        const rolInput = usuarioView.querySelector('#usuario-rol');
-                        if (nombreInput) nombreInput.value = selectedUser.name || '';
-                        if (correoInput) correoInput.value = selectedUser.email || '';
-                        if (usuarioLoginInput) {
-                            const emailPrefix = String(selectedUser.email || '').split('@')[0];
-                            usuarioLoginInput.value = emailPrefix || slugifyText(selectedUser.name || '').replace(/-/g, '_');
-                        }
-                        if (rolInput) {
-                            const normalizedRole = String(selectedUser.role || '').trim().toLowerCase();
-                            const roleOption = Array.from(rolInput.options).find((opt) => String(opt.value || '').trim().toLowerCase() === normalizedRole);
-                            if (roleOption) {
-                                rolInput.value = roleOption.value;
-                            }
-                        }
-                        if (departamentoSelect) {
-                            departamentoSelect.value = selectedUser.department || '';
-                            refreshJefes(departamentoSelect.value);
-                        }
-                    }
-                    selectedUsuarioName = null;
+                const rolInput = usuarioView.querySelector('#usuario-rol');
+                if (rolInput) {
+                    const normalizedRole = String(selectedRole || '').trim().toLowerCase();
+                    const roleOption = Array.from(rolInput.options).find((opt) => String(opt.value || '').trim().toLowerCase() === normalizedRole);
+                    if (roleOption) rolInput.value = roleOption.value;
                 }
+                selectedUsuarioName = null;
                 const passwordInput = usuarioView.querySelector('#usuario-password');
                 const passwordConfirmBackdrop = usuarioView.querySelector('#password-confirm-backdrop');
                 const passwordConfirmInput = usuarioView.querySelector('#usuario-confirm-password');
@@ -2948,12 +2989,12 @@
                 passwordConfirmOk && passwordConfirmOk.addEventListener('click', () => {
                     if (!passwordInput || !passwordConfirmInput) return;
                     if (passwordConfirmInput.value !== passwordInput.value) {
-                        if (passwordConfirmMsg) passwordConfirmMsg.textContent = 'Las contraseñas no coinciden.';
+                        if (passwordConfirmMsg) passwordConfirmMsg.textContent = 'Las contrasenas no coinciden.';
                         return;
                     }
                     passwordConfirmed = true;
                     closePasswordModal();
-                    showMessage('Contraseña confirmada.', 'success');
+                    showMessage('Contrasena confirmada.', 'success');
                 });
             }
             function renderUsuarioList(role = 'Todos') {
@@ -2961,40 +3002,53 @@
                 const totalUsers = usuarioData.length;
                 const activeUsers = usuarioData.filter((user) => user.status === 'Activo').length;
                 const inReview = usuarioData.filter((user) => user.status !== 'Activo').length;
+                const statusBadgeClass = (status) => {
+                    if (status === 'Activo') return 'ar-badge--ok';
+                    if (status === 'En mejora') return 'ar-badge--warn';
+                    return '';
+                };
                 usuarioView.innerHTML = `
-                    <section class="usuario-shell">
-                        <header class="usuario-shell__head">
-                            <div>
-                                <h2>Listado de usuarios</h2>
-                                <p>Consulta perfiles por rol y monitorea su estado operativo.</p>
-                            </div>
-                            <span class="usuario-shell__meta">${filtered.length} resultados</span>
-                        </header>
-                        <div class="usuario-stats">
+                    <section class="ar-shell">
+                        <section class="area-stats">
                             <article class="usuario-stat"><strong>${totalUsers}</strong><span>Total de usuarios</span></article>
                             <article class="usuario-stat"><strong>${activeUsers}</strong><span>Activos</span></article>
-                            <article class="usuario-stat"><strong>${inReview}</strong><span>En mejora u observación</span></article>
-                        </div>
-                        <div class="usuario-role-filter">
-                            <label for="usuario-role-select">Filtrar por rol</label>
-                            <select id="usuario-role-select">
-                                ${getRoleOptions(role)}
-                            </select>
-                        </div>
-                        <div class="usuario-list">
-                            ${filtered.length ? filtered.map(user => `
-                                <div class="usuario-card usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
-                                    <div>
-                                        <strong>${user.name}</strong>
-                                        <span>${user.department}</span>
-                                    </div>
-                                    <div>
-                                        <span>${user.role}</span>
-                                        <span>${user.status}</span>
+                            <article class="usuario-stat"><strong>${inReview}</strong><span>En mejora u observacion</span></article>
+                        </section>
+                        <section class="ar-card ar-card--pad">
+                            <header class="ar-card__head">
+                                <div>
+                                    <h2>Listado de usuarios</h2>
+                                    <p>Consulta perfiles por rol y monitorea su estado operativo.</p>
+                                </div>
+                                <div class="ar-card__tools">
+                                    <span class="ar-pill">${filtered.length} resultados</span>
+                                    <div class="ar-field">
+                                        <select id="usuario-role-select">
+                                            ${getRoleOptions(role)}
+                                        </select>
                                     </div>
                                 </div>
-                            `).join('') : '<p class="usuario-empty">No hay usuarios para este rol.</p>'}
-                        </div>
+                            </header>
+                            <div class="ar-user-list">
+                                ${filtered.length ? filtered.map(user => `
+                                    <button type="button" class="ar-user-item usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
+                                        <div class="ar-user-item__main">
+                                            <div class="ar-avatar">
+                                                <img src="${getPersonImage(user)}" alt="Foto de ${escapeHtmlAttr(user.name)}" class="ar-user-photo">
+                                            </div>
+                                            <div>
+                                                <strong>${escapeHtmlAttr(user.name)}</strong>
+                                                <div class="ar-user-item__sub">${escapeHtmlAttr(user.department)}</div>
+                                            </div>
+                                        </div>
+                                        <div class="ar-summary__meta">
+                                            <span class="ar-badge">${escapeHtmlAttr(user.role)}</span>
+                                            <span class="ar-badge ${statusBadgeClass(user.status)}">${escapeHtmlAttr(user.status)}</span>
+                                        </div>
+                                    </button>
+                                `).join('') : '<p class="ar-empty">No hay usuarios para este rol.</p>'}
+                            </div>
+                        </section>
                     </section>
                 `;
                 const selector = document.getElementById('usuario-role-select');
@@ -3007,48 +3061,70 @@
                 const totalUsers = usuarioData.length;
                 const activeUsers = usuarioData.filter((user) => user.status === 'Activo').length;
                 const observingUsers = usuarioData.filter((user) => user.status === 'Observando').length;
+                const accentByStatus = (status) => {
+                    if (status === 'Activo') return '#1f6f52';
+                    if (status === 'En mejora') return '#f59e0b';
+                    return '#2563eb';
+                };
                 usuarioView.innerHTML = `
-                    <section class="usuario-shell">
-                        <header class="usuario-shell__head">
-                            <div>
-                                <h2>Kanban de usuarios</h2>
-                                <p>Distribución visual del equipo por estado para seguimiento rápido.</p>
-                            </div>
-                            <span class="usuario-shell__meta">${filtered.length} visibles</span>
-                        </header>
-                        <div class="usuario-stats">
+                    <section class="ar-shell">
+                        <section class="area-stats">
                             <article class="usuario-stat"><strong>${totalUsers}</strong><span>Total de usuarios</span></article>
                             <article class="usuario-stat"><strong>${activeUsers}</strong><span>Activos</span></article>
                             <article class="usuario-stat"><strong>${observingUsers}</strong><span>Observando</span></article>
-                        </div>
-                        <div class="usuario-role-filter">
-                            <label for="usuario-role-select-kanban">Filtrar por rol</label>
-                            <select id="usuario-role-select-kanban">
-                                ${getRoleOptions(role)}
-                            </select>
-                        </div>
-                        <div class="usuario-kanban-columns">
-                            ${statuses.map(status => `
-                                <div class="usuario-kanban-column">
-                                    <h4>${status}</h4>
-                                    ${(filtered.filter(u => u.status === status)).length
-                                        ? filtered.filter(u => u.status === status).map(user => `
-                                            <div class="usuario-card kanban-card-two-col usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
-                                                <div class="kanban-card-media">
-                                                    <img src="${getPersonImage(user)}" alt="Foto de ${user.name}">
-                                                </div>
-                                                <div class="kanban-card-body">
-                                                    <strong>${user.name}</strong>
-                                                    <span>${user.department}</span>
-                                                    <span>${user.role}</span>
-                                                </div>
-                                            </div>
-                                        `).join('')
-                                        : '<p class="usuario-empty">Sin usuarios en esta columna.</p>'
-                                    }
+                        </section>
+                        <section class="ar-card ar-card--pad">
+                            <header class="ar-card__head">
+                                <div>
+                                    <h2>Kanban de usuarios</h2>
+                                    <p>Distribucion visual del equipo por estado para seguimiento rapido.</p>
                                 </div>
-                            `).join('')}
-                        </div>
+                                <div class="ar-card__tools">
+                                    <span class="ar-pill">${filtered.length} visibles</span>
+                                    <div class="ar-field">
+                                        <select id="usuario-role-select-kanban">
+                                            ${getRoleOptions(role)}
+                                        </select>
+                                    </div>
+                                </div>
+                            </header>
+                            <div class="ar-kanban">
+                                ${statuses.map(status => `
+                                    <div class="ar-col">
+                                        <div class="ar-col__head">
+                                            <div>
+                                                <strong>${status}</strong>
+                                                <span class="ar-col__count">${filtered.filter(u => u.status === status).length}</span>
+                                            </div>
+                                        </div>
+                                        <div class="ar-col__body">
+                                            ${(filtered.filter(u => u.status === status)).length
+                                                ? filtered.filter(u => u.status === status).map(user => `
+                                                    <article class="ar-kcard usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}" style="--accent:${accentByStatus(status)}">
+                                                        <div class="ar-kcard__accent"></div>
+                                                        <div class="ar-kcard__top">
+                                                            <div class="ar-klogo">
+                                                                <img src="${getPersonImage(user)}" alt="Foto de ${escapeHtmlAttr(user.name)}">
+                                                            </div>
+                                                            <div class="ar-kcard__main">
+                                                                <div class="ar-kcard__title">${escapeHtmlAttr(user.name)}</div>
+                                                                <div class="ar-kcard__sub">${escapeHtmlAttr(user.department)}</div>
+                                                                <div class="ar-kcard__person">${escapeHtmlAttr(user.role)}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="ar-kcard__foot">
+                                                            <span class="ar-badge">${escapeHtmlAttr(user.role)}</span>
+                                                            <span class="ar-badge">${status}</span>
+                                                        </div>
+                                                    </article>
+                                                `).join('')
+                                                : '<p class="ar-empty">Sin usuarios en esta columna.</p>'
+                                            }
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </section>
                     </section>
                 `;
                 const selector = document.getElementById('usuario-role-select-kanban');
@@ -3060,57 +3136,57 @@
                 const mandos = usuarioData.slice(1, 3);
                 const equipoBase = usuarioData.slice(3);
                 usuarioView.innerHTML = `
-                    <section class="usuario-shell">
-                        <header class="usuario-shell__head">
-                            <div>
-                                <h2>Organigrama de usuarios</h2>
-                                <p>Cadena de mando y distribución por niveles dentro de la organización.</p>
-                            </div>
-                            <span class="usuario-shell__meta">${usuarioData.length} usuarios</span>
-                        </header>
-                        <div class="usuario-stats">
+                    <section class="ar-shell">
+                        <section class="area-stats">
                             <article class="usuario-stat"><strong>1</strong><span>Nivel directivo</span></article>
                             <article class="usuario-stat"><strong>${mandos.length}</strong><span>Mandos medios</span></article>
                             <article class="usuario-stat"><strong>${equipoBase.length}</strong><span>Equipo base</span></article>
-                        </div>
-                        <div class="usuario-organigrama">
-                            <div class="org-level org-root">
-                                <article class="org-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(lider?.name || '')}">
-                                    <div class="org-node-avatar">
-                                        <img src="${getPersonImage(lider)}" alt="Usuario ${lider?.name || 'Dirección General'}">
-                                    </div>
-                                    <strong>Dirección General</strong>
-                                    <span>${lider?.name || 'Sin asignar'}</span>
-                                    <span>${lider?.role || 'N/A'}</span>
-                                </article>
-                            </div>
-                            <div class="org-divider" aria-hidden="true"></div>
-                            <div class="org-level">
-                                ${mandos.map(user => `
-                                    <article class="org-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
-                                        <div class="org-node-avatar">
-                                            <img src="${getPersonImage(user)}" alt="Usuario ${user.name}">
-                                        </div>
-                                        <strong>${user.department}</strong>
-                                        <span>${user.name}</span>
-                                        <span>${user.role}</span>
+                        </section>
+                        <section class="ar-card ar-card--pad">
+                            <header class="ar-card__head">
+                                <div>
+                                    <h2>Organigrama de usuarios</h2>
+                                    <p>Cadena de mando y distribucion por niveles dentro de la organizacion.</p>
+                                </div>
+                                <div class="ar-card__tools">
+                                    <span class="ar-pill">${usuarioData.length} usuarios</span>
+                                </div>
+                            </header>
+                            <div class="ar-org">
+                                <div class="ar-org__level">
+                                    <article class="ar-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(lider?.name || '')}" style="--accent:#0f3d2e">
+                                        <div class="ar-node__badge">Nivel 1</div>
+                                        <div class="ar-node__logo"><img src="${getPersonImage(lider)}" alt="Foto de ${escapeHtmlAttr(lider?.name || 'Direccion General')}" class="ar-user-photo"></div>
+                                        <div class="ar-node__title">Direccion General</div>
+                                        <div class="ar-node__sub">${escapeHtmlAttr(lider?.name || 'Sin asignar')}</div>
+                                        <div class="ar-node__code">${escapeHtmlAttr(lider?.role || 'N/A')}</div>
                                     </article>
-                                `).join('')}
+                                </div>
+                                <div class="ar-org__pipe" aria-hidden="true"></div>
+                                <div class="ar-org__level ar-org__level--children">
+                                    ${mandos.map(user => `
+                                        <article class="ar-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}" style="--accent:#1f6f52">
+                                            <div class="ar-node__badge">Nivel 2</div>
+                                            <div class="ar-node__logo"><img src="${getPersonImage(user)}" alt="Foto de ${escapeHtmlAttr(user.name)}" class="ar-user-photo"></div>
+                                            <div class="ar-node__title">${escapeHtmlAttr(user.department)}</div>
+                                            <div class="ar-node__sub">${escapeHtmlAttr(user.name)}</div>
+                                            <div class="ar-node__code">${escapeHtmlAttr(user.role)}</div>
+                                        </article>
+                                    `).join('')}
+                                </div>
+                                <div class="ar-org__level ar-org__level--children">
+                                    ${equipoBase.map(user => `
+                                        <article class="ar-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}" style="--accent:#2563eb">
+                                            <div class="ar-node__badge">Base</div>
+                                            <div class="ar-node__logo"><img src="${getPersonImage(user)}" alt="Foto de ${escapeHtmlAttr(user.name)}" class="ar-user-photo"></div>
+                                            <div class="ar-node__title">${escapeHtmlAttr(user.name)}</div>
+                                            <div class="ar-node__sub">${escapeHtmlAttr(user.department)}</div>
+                                            <div class="ar-node__code">${escapeHtmlAttr(user.role)}</div>
+                                        </article>
+                                    `).join('')}
+                                </div>
                             </div>
-                            <div class="org-divider" aria-hidden="true"></div>
-                            <div class="org-level">
-                                ${equipoBase.map(user => `
-                                    <article class="org-node usuario-selectable" data-usuario-name="${escapeHtmlAttr(user.name)}">
-                                        <div class="org-node-avatar">
-                                            <img src="${getPersonImage(user)}" alt="Usuario ${user.name}">
-                                        </div>
-                                        <strong>${user.name}</strong>
-                                        <span>${user.department}</span>
-                                        <span>${user.role}</span>
-                                    </article>
-                                `).join('')}
-                            </div>
-                        </div>
+                        </section>
                     </section>
                 `;
                 bindUsuarioSelectableCards();
@@ -3120,62 +3196,137 @@
                 const areaCount = areasData.length;
                 const parentCount = new Set(areasData.map(area => area.parent).filter(parent => parent && parent !== 'N/A')).size;
                 const strategicCount = areasData.filter(area => area.status === 'Estratégico').length;
+                const selectedArea = areasData.find(area => area.status === 'Activo') || areasData[0] || {};
+                const selectedNameRaw = selectedArea.name || '';
+                const selectedParentRaw = selectedArea.parent || 'N/A';
+                const selectedManagerRaw = selectedArea.manager || '';
+                const selectedCodeRaw = selectedArea.code || '';
+                const selectedName = escapeHtmlAttr(selectedNameRaw);
+                const selectedParent = escapeHtmlAttr(selectedParentRaw);
+                const selectedManager = escapeHtmlAttr(selectedManagerRaw);
+                const selectedCode = escapeHtmlAttr(selectedCodeRaw);
+                const selectedColor = String(selectedArea.color || '#0f3d2e');
+                const selectedStatus = escapeHtmlAttr(selectedArea.status || 'Activo');
+                const relation = selectedStatus === 'Estratégico' ? 'Línea' : (selectedStatus === 'En revisión' ? 'Funcional' : 'Línea');
+                const safeRelation = escapeHtmlAttr(relation);
+                const hexLabel = /^#[0-9a-fA-F]{6}$/.test(selectedColor) ? selectedColor.toUpperCase() : '#0F3D2E';
                 areaView.innerHTML = `
-                    <section class="area-shell">
-                        <header class="area-shell__head">
-                            <div>
-                                <h2>Datos del área</h2>
-                                <p>Registra nuevas áreas y define su relación dentro de la estructura institucional.</p>
-                            </div>
-                            <span class="area-shell__meta">${areaCount} áreas</span>
-                        </header>
-                        <div class="area-stats">
+                    <section class="ar-shell">
+                        <section class="ar-grid">
+                            <section class="ar-card ar-card--pad">
+                                <header class="ar-card__head">
+                                    <div>
+                                        <h2>Datos del área</h2>
+                                        <p>Completa la información base y define su relación organizacional.</p>
+                                    </div>
+                                    <div class="ar-card__tools">
+                                        <span class="ar-pill ar-pill--soft">Registro activo</span>
+                                        <span class="ar-pill">${areaCount} áreas</span>
+                                    </div>
+                                </header>
+                                <form class="ar-form">
+                                    <div class="ar-row ar-row--3">
+                                        <div class="ar-field">
+                                            <label>Nombre</label>
+                                            <input type="text" placeholder="Nombre del área" value="${selectedName}">
+                                        </div>
+                                        <div class="ar-field">
+                                            <label>Departamento padre</label>
+                                            <select id="area-parent-select">
+                                                ${getAreaParentOptions(selectedParentRaw)}
+                                            </select>
+                                        </div>
+                                        <div class="ar-field">
+                                            <label>Responsable</label>
+                                            <input type="text" placeholder="Nombre del responsable" value="${selectedManager}">
+                                        </div>
+                                    </div>
+                                    <div class="ar-row ar-row--3">
+                                        <div class="ar-field">
+                                            <label>Relación organizacional</label>
+                                            <select id="area-relacion-select">
+                                                <option value="Línea" ${safeRelation === 'Línea' ? 'selected' : ''}>Línea</option>
+                                                <option value="Staff" ${safeRelation === 'Staff' ? 'selected' : ''}>Staff</option>
+                                                <option value="Funcional" ${safeRelation === 'Funcional' ? 'selected' : ''}>Funcional</option>
+                                            </select>
+                                            <div class="ar-chips">
+                                                <button class="ar-chip ${safeRelation === 'Línea' ? 'is-active' : ''}" type="button" data-relacion-help="Línea">Línea <span class="ar-q">?</span></button>
+                                                <button class="ar-chip ${safeRelation === 'Staff' ? 'is-active' : ''}" type="button" data-relacion-help="Staff">Staff <span class="ar-q">?</span></button>
+                                                <button class="ar-chip ${safeRelation === 'Funcional' ? 'is-active' : ''}" type="button" data-relacion-help="Funcional">Funcional <span class="ar-q">?</span></button>
+                                            </div>
+                                        </div>
+                                        <div class="ar-field">
+                                            <label>Código</label>
+                                            <input type="text" placeholder="Ej: OPE-010" value="${selectedCode}">
+                                            <div class="ar-help">Recomendado: prefijo + consecutivo (ej. OPE-010).</div>
+                                        </div>
+                                        <div class="ar-field">
+                                            <label>Color</label>
+                                            <div class="ar-color">
+                                                <input type="color" value="${selectedColor}">
+                                                <span class="ar-color__swatch" style="--c:${selectedColor}"></span>
+                                                <span class="ar-color__txt">${hexLabel}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="ar-divider"></div>
+                                    <div class="ar-row ar-row--2">
+                                        <div class="ar-field">
+                                            <label>Descripción</label>
+                                            <textarea placeholder="Describe el propósito del área…">Responsable de la operación diaria y ejecución de procesos críticos.</textarea>
+                                        </div>
+                                        <div class="ar-field">
+                                            <label>Notas internas</label>
+                                            <textarea placeholder="Observaciones, acuerdos, excepciones…"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="ar-actions">
+                                        <button type="button" class="ar-btn ar-btn--soft">Cancelar</button>
+                                        <button type="button" class="ar-btn ar-btn--primary2">Guardar</button>
+                                    </div>
+                                </form>
+                            </section>
+                            <aside class="ar-card ar-card--pad">
+                                <header class="ar-card__head">
+                                    <div>
+                                        <h2>Resumen</h2>
+                                        <p>Información rápida del área y su posición en la estructura.</p>
+                                    </div>
+                                    <div class="ar-card__tools">
+                                        <span class="ar-pill">${selectedCode || 'N/A'}</span>
+                                    </div>
+                                </header>
+                                <div class="ar-summary">
+                                    <div class="ar-summary__top">
+                                        <div class="ar-avatar" aria-hidden="true">${escapeHtmlAttr((selectedNameRaw || 'A').charAt(0))}</div>
+                                        <div>
+                                            <div class="ar-summary__name">${selectedName || 'Sin área'}</div>
+                                            <div class="ar-summary__meta">
+                                                <span class="ar-badge ${selectedStatus === 'Activo' ? 'ar-badge--ok' : ''}">${selectedStatus}</span>
+                                                <span class="ar-badge">${safeRelation}</span>
+                                                <span class="ar-badge">Padre: ${selectedParent}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="ar-miniGrid">
+                                        <div class="ar-mini"><div class="ar-mini__k">Responsable</div><div class="ar-mini__v">${selectedManager || 'Sin asignar'}</div></div>
+                                        <div class="ar-mini"><div class="ar-mini__k">Dependencias</div><div class="ar-mini__v">${parentCount}</div></div>
+                                        <div class="ar-mini"><div class="ar-mini__k">Áreas activas</div><div class="ar-mini__v">${areasData.filter(area => area.status === 'Activo').length}</div></div>
+                                        <div class="ar-mini"><div class="ar-mini__k">Estado</div><div class="ar-mini__v ar-mini__v--ok">En regla</div></div>
+                                    </div>
+                                    <div class="ar-divider"></div>
+                                    <div class="ar-links">
+                                        <button class="ar-link" type="button">Ver puestos relacionados</button>
+                                        <button class="ar-link" type="button">Abrir en organigrama</button>
+                                        <button class="ar-link" type="button">Ver indicadores del área</button>
+                                    </div>
+                                </div>
+                            </aside>
+                        </section>
+                        <section class="area-stats">
                             <article class="area-stat"><strong>${areaCount}</strong><span>Total de áreas</span></article>
                             <article class="area-stat"><strong>${parentCount}</strong><span>Dependencias padre</span></article>
                             <article class="area-stat"><strong>${strategicCount}</strong><span>Áreas estratégicas</span></article>
-                        </div>
-                        <section class="form-section">
-                            <div class="area-form-grid">
-                                <div class="form-field">
-                                    <label>Nombre</label>
-                                    <input type="text" placeholder="Nombre del área">
-                                </div>
-                                <div class="form-field">
-                                    <label>Departamento padre</label>
-                                    <select id="area-parent-select">
-                                        ${getAreaParentOptions('N/A')}
-                                    </select>
-                                </div>
-                                <div class="form-field">
-                                    <label>Responsable</label>
-                                    <input type="text" placeholder="Nombre del responsable">
-                                </div>
-                                <div class="form-field">
-                                    <label>Relación organizacional</label>
-                                    <select id="area-relacion-select">
-                                        <option value="Línea">Línea</option>
-                                        <option value="Staff">Staff</option>
-                                        <option value="Funcional">Funcional</option>
-                                    </select>
-                                    <div class="area-relacion-help-list">
-                                        <span class="area-relacion-help-item">Línea <button type="button" class="area-relacion-help-btn" data-relacion-help="Línea" aria-label="Ayuda Línea">?</button></span>
-                                        <span class="area-relacion-help-item">Staff <button type="button" class="area-relacion-help-btn" data-relacion-help="Staff" aria-label="Ayuda Staff">?</button></span>
-                                        <span class="area-relacion-help-item">Funcional <button type="button" class="area-relacion-help-btn" data-relacion-help="Funcional" aria-label="Ayuda Funcional">?</button></span>
-                                    </div>
-                                </div>
-                                <div class="form-field">
-                                    <label>Código</label>
-                                    <input type="text" placeholder="Ej: OPE-010">
-                                </div>
-                                <div class="form-field">
-                                    <label>Color</label>
-                                    <input type="color" value="#1d4ed8">
-                                </div>
-                            </div>
-                            <div class="area-actions">
-                                <button type="button" class="secondary">Cancelar</button>
-                                <button type="button">Guardar área</button>
-                            </div>
                         </section>
                     </section>
                 `;
@@ -3195,32 +3346,48 @@
                     'En revisión': areasData.filter(area => area.status === 'En revisión')
                 };
                 areaView.innerHTML = `
-                    <section class="area-shell">
-                        <header class="area-shell__head">
-                            <div>
-                                <h2>Kanban de áreas</h2>
-                                <p>Visualiza la estructura por estado para priorizar seguimiento y coordinación.</p>
-                            </div>
-                            <span class="area-shell__meta">${areasData.length} áreas</span>
-                        </header>
-                        <section class="form-section">
-                            <div class="area-kanban-columns">
+                    <section class="ar-shell">
+                        <section class="ar-card ar-card--pad">
+                            <header class="ar-card__head">
+                                <div>
+                                    <h2>Kanban de áreas</h2>
+                                    <p>Arrastra y suelta para cambiar estado. Cada tarjeta muestra responsable y código.</p>
+                                </div>
+                                <div class="ar-card__tools">
+                                    <span class="ar-pill">3 columnas</span>
+                                    <button class="ar-btn ar-btn--soft" type="button">Nuevo estado</button>
+                                </div>
+                            </header>
+                            <div class="ar-kanban">
                                 ${Object.entries(byStatus).map(([status, areas]) => `
-                                    <article class="area-kanban-column">
-                                        <h4>${status}</h4>
-                                        ${areas.length ? areas.map(area => `
-                                            <div class="area-card kanban-card-two-col">
-                                                <div class="kanban-card-media">
-                                                    <img src="${getManagerImage(area.manager)}" alt="Responsable ${area.manager}">
-                                                </div>
-                                                <div class="kanban-card-body">
-                                                    <strong>${area.name}</strong>
-                                                    <span>${area.code}</span>
-                                                    <span>${area.manager}</span>
-                                                </div>
+                                    <div class="ar-col">
+                                        <div class="ar-col__head">
+                                            <div>
+                                                <strong>${status}</strong>
+                                                <span class="ar-col__count">${areas.length}</span>
                                             </div>
-                                        `).join('') : '<p class="area-empty">Sin áreas en esta columna.</p>'}
-                                    </article>
+                                            <button class="ar-btn ar-btn--soft" type="button">⋯</button>
+                                        </div>
+                                        <div class="ar-col__body">
+                                            ${areas.length ? areas.map(area => `
+                                                <article class="ar-kcard" style="--accent:${escapeHtmlAttr(area.color || '#1f6f52')}">
+                                                    <div class="ar-kcard__accent"></div>
+                                                    <div class="ar-kcard__top">
+                                                        <div class="ar-klogo" aria-hidden="true">${escapeHtmlAttr((area.name || 'A').charAt(0))}</div>
+                                                        <div class="ar-kcard__main">
+                                                            <div class="ar-kcard__title">${escapeHtmlAttr(area.name)}</div>
+                                                            <div class="ar-kcard__sub">${escapeHtmlAttr(area.code)}</div>
+                                                            <div class="ar-kcard__person">${escapeHtmlAttr(area.manager)}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ar-kcard__foot">
+                                                        <span class="ar-badge">${status === 'Activo' ? 'Línea' : (status === 'Estratégico' ? 'Nivel 1' : 'Pendiente')}</span>
+                                                        <span class="ar-badge ${status === 'Activo' ? 'ar-badge--ok' : (status === 'En revisión' ? 'ar-badge--warn' : '')}">${status}</span>
+                                                    </div>
+                                                </article>
+                                            `).join('') : '<p class="ar-empty">Sin áreas en esta columna.</p>'}
+                                        </div>
+                                    </div>
                                 `).join('')}
                             </div>
                         </section>
@@ -3232,14 +3399,19 @@
                 const root = areasData.find(area => area.parent === 'N/A') || areasData[0];
                 if (!root) {
                     areaView.innerHTML = `
-                        <section class="area-shell">
-                            <header class="area-shell__head">
-                                <div>
-                                    <h2>Organigrama de áreas</h2>
-                                    <p>No hay áreas disponibles para construir el organigrama.</p>
-                                </div>
-                                <span class="area-shell__meta">0 áreas</span>
-                            </header>
+                        <section class="ar-shell">
+                            <section class="ar-card ar-card--pad">
+                                <header class="ar-card__head">
+                                    <div>
+                                        <h2>Organigrama de áreas</h2>
+                                        <p>No hay áreas disponibles para construir el organigrama.</p>
+                                    </div>
+                                    <div class="ar-card__tools"><span class="ar-pill">0 áreas</span></div>
+                                </header>
+                                <p class="ar-empty">
+                                    Crea una primera área para habilitar la vista jerárquica.
+                                </p>
+                            </section>
                         </section>
                     `;
                     return;
@@ -3247,51 +3419,57 @@
                 const firstLevel = areasData.filter(area => area.parent === root.name);
                 const secondLevel = areasData.filter(area => firstLevel.some(parent => parent.name === area.parent));
                 areaView.innerHTML = `
-                    <section class="area-shell">
-                        <header class="area-shell__head">
-                            <div>
-                                <h2>Organigrama de áreas</h2>
-                                <p>Estructura jerárquica desde la dirección general hacia los equipos dependientes.</p>
-                            </div>
-                            <span class="area-shell__meta">${areasData.length} áreas</span>
-                        </header>
-                        <section class="form-section">
-                            <div class="usuario-organigrama">
-                                <div class="org-level org-root">
-                                    <article class="org-node">
-                                        <div class="org-node-avatar">
-                                            <img src="${getManagerImage(root.manager)}" alt="Responsable ${root.manager || root.name}">
-                                        </div>
-                                        <strong>${root.name}</strong>
-                                        <span>${root.manager}</span>
-                                        <span>${root.code}</span>
-                                    </article>
+                    <section class="ar-shell">
+                        <section class="ar-card ar-card--pad">
+                            <header class="ar-card__head">
+                                <div>
+                                    <h2>Organigrama de áreas</h2>
+                                    <p>Vista jerárquica con líneas y niveles. Selecciona un nodo para ver detalle.</p>
                                 </div>
-                                <div class="org-divider" aria-hidden="true"></div>
-                                <div class="org-level">
+                                <div class="ar-card__tools">
+                                    <button class="ar-btn ar-btn--soft" type="button">Centrar</button>
+                                    <button class="ar-btn ar-btn--soft" type="button">Expandir</button>
+                                    <button class="ar-btn ar-btn--soft" type="button">Exportar</button>
+                                </div>
+                            </header>
+                            <div class="ar-org">
+                                <div class="ar-org__level">
+                                    <div class="ar-node ar-node--root" style="--accent:${escapeHtmlAttr(root.color || '#0f3d2e')}">
+                                        <div class="ar-node__badge">Nivel 1</div>
+                                        <div class="ar-node__logo">${escapeHtmlAttr((root.name || 'A').charAt(0))}</div>
+                                        <div class="ar-node__title">${escapeHtmlAttr(root.name)}</div>
+                                        <div class="ar-node__sub">${escapeHtmlAttr(root.manager || 'Sin asignar')}</div>
+                                        <div class="ar-node__code">${escapeHtmlAttr(root.code || 'N/A')}</div>
+                                    </div>
+                                </div>
+                                <div class="ar-org__pipe" aria-hidden="true"></div>
+                                <div class="ar-org__level ar-org__level--children">
                                     ${firstLevel.map(area => `
-                                        <article class="org-node">
-                                            <div class="org-node-avatar">
-                                                <img src="${getManagerImage(area.manager)}" alt="Responsable ${area.manager || area.name}">
-                                            </div>
-                                            <strong>${area.name}</strong>
-                                            <span>${area.manager}</span>
-                                            <span>${area.code}</span>
-                                        </article>
+                                        <div class="ar-node" style="--accent:${escapeHtmlAttr(area.color || '#1f6f52')}">
+                                            <div class="ar-node__badge">Nivel 2</div>
+                                            <div class="ar-node__logo">${escapeHtmlAttr((area.name || 'A').charAt(0))}</div>
+                                            <div class="ar-node__title">${escapeHtmlAttr(area.name)}</div>
+                                            <div class="ar-node__sub">${escapeHtmlAttr(area.manager || 'Sin asignar')}</div>
+                                            <div class="ar-node__code">${escapeHtmlAttr(area.code || 'N/A')}</div>
+                                        </div>
+                                    `).join('') || '<p class="ar-empty">Sin áreas de primer nivel.</p>'}
+                                </div>
+                                <div class="ar-org__level ar-org__level--children">
+                                    ${secondLevel.map(area => `
+                                        <div class="ar-node" style="--accent:${escapeHtmlAttr(area.color || '#2563eb')}">
+                                            <div class="ar-node__badge">Nivel 3</div>
+                                            <div class="ar-node__logo">${escapeHtmlAttr((area.name || 'A').charAt(0))}</div>
+                                            <div class="ar-node__title">${escapeHtmlAttr(area.name)}</div>
+                                            <div class="ar-node__sub">${escapeHtmlAttr(area.manager || 'Sin asignar')}</div>
+                                            <div class="ar-node__code">${escapeHtmlAttr(area.code || 'N/A')}</div>
+                                        </div>
                                     `).join('')}
                                 </div>
-                                <div class="org-divider" aria-hidden="true"></div>
-                                <div class="org-level">
-                                    ${secondLevel.map(area => `
-                                        <article class="org-node">
-                                            <div class="org-node-avatar">
-                                                <img src="${getManagerImage(area.manager)}" alt="Responsable ${area.manager || area.name}">
-                                            </div>
-                                            <strong>${area.name}</strong>
-                                            <span>${area.manager}</span>
-                                            <span>${area.code}</span>
-                                        </article>
-                                    `).join('')}
+                                <div class="ar-org__legend">
+                                    <span class="ar-legendItem"><span class="ar-dot" style="--c:#0f3d2e"></span> Estratégico</span>
+                                    <span class="ar-legendItem"><span class="ar-dot" style="--c:#1f6f52"></span> Operativo</span>
+                                    <span class="ar-legendItem"><span class="ar-dot" style="--c:#2563eb"></span> Staff</span>
+                                    <span class="ar-legendItem"><span class="ar-dot" style="--c:#f59e0b"></span> Revisión</span>
                                 </div>
                             </div>
                         </section>
@@ -3389,6 +3567,8 @@
             const builderFormName = document.getElementById('builder-form-name');
             const builderFormSlug = document.getElementById('builder-form-slug');
             const builderFormActive = document.getElementById('builder-form-active');
+            const builderFormTenant = document.getElementById('builder-form-tenant');
+            const builderFormRoles = document.getElementById('builder-form-roles');
             const builderFormDescription = document.getElementById('builder-form-description');
             const builderFormConfig = document.getElementById('builder-form-config');
             const builderFieldType = document.getElementById('builder-field-type');
@@ -3409,6 +3589,7 @@
             let formDefinitionsStore = [];
             let selectedFormDefinitionId = null;
             let builderFields = [];
+            let builderRoleOptions = [];
             const slugifyText = (value) => (value || '')
                 .toString()
                 .normalize('NFD')
@@ -3416,6 +3597,20 @@
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-+|-+$/g, '');
+            const normalizeRoleValue = (value) => (value || '').toString().trim().toLowerCase();
+            const getBuilderSelectedRoles = () => {
+                if (!builderFormRoles) return [];
+                return Array.from(builderFormRoles.selectedOptions || [])
+                    .map((opt) => normalizeRoleValue(opt.value))
+                    .filter(Boolean);
+            };
+            const renderBuilderRoleOptions = (selected = []) => {
+                if (!builderFormRoles) return;
+                const selectedSet = new Set((Array.isArray(selected) ? selected : []).map((item) => normalizeRoleValue(item)));
+                builderFormRoles.innerHTML = builderRoleOptions.map((role) => (
+                    `<option value="${role.value}" ${selectedSet.has(role.value) ? 'selected' : ''}>${role.label}</option>`
+                )).join('');
+            };
             const renderBuilderFields = () => {
                 if (!builderFieldsList) return;
                 if (!builderFields.length) {
@@ -3458,6 +3653,8 @@
                 if (builderFormName) builderFormName.value = '';
                 if (builderFormSlug) builderFormSlug.value = '';
                 if (builderFormActive) builderFormActive.value = 'true';
+                if (builderFormTenant) builderFormTenant.value = currentTenantId || 'default';
+                renderBuilderRoleOptions([]);
                 if (builderFormDescription) builderFormDescription.value = '';
                 if (builderFormConfig) builderFormConfig.value = '';
                 clearBuilderFieldInputs();
@@ -3470,6 +3667,8 @@
                 if (builderFormName) builderFormName.value = formDef.name || '';
                 if (builderFormSlug) builderFormSlug.value = formDef.slug || '';
                 if (builderFormActive) builderFormActive.value = formDef.is_active ? 'true' : 'false';
+                if (builderFormTenant) builderFormTenant.value = (formDef.tenant_id || currentTenantId || 'default');
+                renderBuilderRoleOptions(Array.isArray(formDef.allowed_roles) ? formDef.allowed_roles : []);
                 if (builderFormDescription) builderFormDescription.value = formDef.description || '';
                 if (builderFormConfig) {
                     const cfg = formDef.config && typeof formDef.config === 'object' ? formDef.config : {};
@@ -3521,10 +3720,32 @@
                     showMessage('No se pudieron cargar los formularios.', 'error');
                 }
             };
+            const loadBuilderRoleOptions = async () => {
+                if (!formBuilderPanel) return;
+                builderRoleOptions = [{ value: normalizeRoleValue(currentUserRole || 'usuario'), label: String(currentUserRole || 'Usuario') }];
+                try {
+                    const res = await fetch('/api/roles-disponibles');
+                    const payload = await res.json();
+                    if (!res.ok || !payload?.success) throw new Error(payload?.error || 'No se pudieron cargar roles');
+                    const items = Array.isArray(payload?.data) ? payload.data : [];
+                    builderRoleOptions = items.map((role) => {
+                        const value = normalizeRoleValue(role?.nombre || role?.value || '');
+                        const label = String(role?.label || role?.nombre || value || '').trim();
+                        return { value, label };
+                    }).filter((role) => role.value);
+                    if (!builderRoleOptions.length) {
+                        builderRoleOptions = [{ value: normalizeRoleValue(currentUserRole || 'usuario'), label: String(currentUserRole || 'Usuario') }];
+                    }
+                } catch (error) {
+                    builderRoleOptions = [{ value: normalizeRoleValue(currentUserRole || 'usuario'), label: String(currentUserRole || 'Usuario') }];
+                }
+                renderBuilderRoleOptions(getBuilderSelectedRoles());
+            };
             const collectBuilderPayload = () => {
                 const name = (builderFormName?.value || '').trim();
                 const slug = (builderFormSlug?.value || '').trim();
                 const description = (builderFormDescription?.value || '').trim();
+                const tenantId = (builderFormTenant?.value || currentTenantId || 'default').trim();
                 const rawConfig = (builderFormConfig?.value || '').trim();
                 if (!name) {
                     throw new Error('El nombre del formulario es obligatorio.');
@@ -3547,9 +3768,11 @@
                 return {
                     name,
                     slug: slug || slugifyText(name),
+                    tenant_id: tenantId || 'default',
                     description: description || null,
                     is_active: (builderFormActive?.value || 'true') === 'true',
                     config,
+                    allowed_roles: getBuilderSelectedRoles(),
                     fields: builderFields.map((field, index) => ({
                         ...field,
                         order: index,
@@ -3638,6 +3861,7 @@
                 }
                 setFloatingScreen('plantillas');
                 ensureFloatingVisible();
+                await loadBuilderRoleOptions();
                 loadPlantillas();
                 templatePreviewBtn && templatePreviewBtn.addEventListener('click', renderTemplatePreview);
                 templateHtmlInput && templateHtmlInput.addEventListener('input', renderTemplatePreview);
@@ -3786,6 +4010,7 @@
                     }
                 });
                 if (formBuilderPanel && !formBuilderPanel.classList.contains('hidden')) {
+                    clearBuilderForm();
                     loadFormDefinitions();
                     if (!builderFields.length) renderBuilderFields();
                 }

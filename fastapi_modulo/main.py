@@ -34,6 +34,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 HIDDEN_SYSTEM_USERS = {"0konomiyaki"}
 IDENTIDAD_LOGIN_CONFIG_PATH = "fastapi_modulo/identidad_login.json"
 IDENTIDAD_LOGIN_IMAGE_DIR = "fastapi_modulo/templates/imagenes"
+DOCUMENTS_UPLOAD_DIR = "fastapi_modulo/uploads/documentos"
 DEFAULT_LOGIN_IDENTITY = {
     "favicon_filename": "icon.png",
     "logo_filename": "icon.png",
@@ -77,6 +78,25 @@ def get_current_role(request: Request) -> str:
     if role is None:
         role = request.cookies.get("user_role") or os.environ.get("DEFAULT_USER_ROLE") or ""
     return normalize_role_name(role)
+
+
+def _normalize_tenant_id(value: Optional[str]) -> str:
+    raw = (value or "").strip().lower()
+    normalized = re.sub(r"[^a-z0-9._-]+", "-", raw).strip("-._")
+    return normalized or "default"
+
+
+def get_current_tenant(request: Request) -> str:
+    tenant = getattr(request.state, "tenant_id", None)
+    if tenant:
+        return _normalize_tenant_id(tenant)
+    cookie_tenant = request.cookies.get("tenant_id")
+    if cookie_tenant:
+        return _normalize_tenant_id(cookie_tenant)
+    header_tenant = request.headers.get("x-tenant-id")
+    if header_tenant and is_superadmin(request):
+        return _normalize_tenant_id(header_tenant)
+    return _normalize_tenant_id(os.environ.get("DEFAULT_TENANT_ID", "default"))
 
 
 def is_superadmin(request: Request) -> bool:
@@ -223,6 +243,52 @@ async def _store_login_image(upload: UploadFile, prefix: str) -> Optional[str]:
     with open(image_path, "wb") as fh:
         fh.write(data)
     return new_filename
+
+
+def _sanitize_document_name(value: str) -> str:
+    normalized = re.sub(r"[^a-zA-Z0-9._-]+", "_", (value or "").strip())
+    return normalized.strip("._") or "documento"
+
+
+def _ensure_documents_dir() -> None:
+    os.makedirs(DOCUMENTS_UPLOAD_DIR, exist_ok=True)
+
+
+async def _store_evidence_file(upload: UploadFile) -> Dict[str, Any]:
+    if not upload or not upload.filename:
+        raise HTTPException(status_code=400, detail="Archivo requerido")
+
+    data = await upload.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="El archivo está vacío")
+    if len(data) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="El archivo supera 25MB")
+
+    _ensure_documents_dir()
+    ext = os.path.splitext(upload.filename or "")[1].lower()
+    safe_base = _sanitize_document_name(os.path.splitext(upload.filename or "documento")[0])
+    final_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe_base}_{secrets.token_hex(4)}{ext}"
+    final_path = os.path.join(DOCUMENTS_UPLOAD_DIR, final_name)
+    with open(final_path, "wb") as f:
+        f.write(data)
+
+    return {
+        "filename": upload.filename,
+        "path": final_path,
+        "mime": (upload.content_type or "").strip() or "application/octet-stream",
+        "size": len(data),
+    }
+
+
+def _delete_evidence_file(path: Optional[str]) -> None:
+    if not path:
+        return
+    safe_root = os.path.abspath(DOCUMENTS_UPLOAD_DIR)
+    target = os.path.abspath(path)
+    if not target.startswith(safe_root):
+        return
+    if os.path.exists(target):
+        os.remove(target)
 
 
 def _build_login_asset_url(filename: Optional[str], default_filename: str) -> str:
@@ -532,8 +598,10 @@ class FormDefinition(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, index=True, nullable=False)
+    tenant_id = Column(String, index=True, default="default")
     description = Column(String)
     config = Column(JSON, default=dict)
+    allowed_roles = Column(JSON, default=list)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
@@ -573,6 +641,32 @@ class FormSubmission(Base):
     user_agent = Column(String)
 
     form = relationship("FormDefinition", back_populates="submissions")
+
+
+class DocumentoEvidencia(Base):
+    __tablename__ = "documentos_evidencia"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(String, index=True, default="default")
+    titulo = Column(String, nullable=False)
+    descripcion = Column(String)
+    proceso = Column(String, default="envio")
+    estado = Column(String, default="borrador")
+    version = Column(Integer, default=1)
+    archivo_nombre = Column(String, nullable=False)
+    archivo_ruta = Column(String, nullable=False)
+    archivo_tipo = Column(String)
+    archivo_tamano = Column(Integer, default=0)
+    observaciones = Column(String)
+    creado_por = Column(String)
+    enviado_por = Column(String)
+    autorizado_por = Column(String)
+    actualizado_por = Column(String)
+    creado_at = Column(DateTime, default=datetime.utcnow)
+    enviado_at = Column(DateTime)
+    autorizado_at = Column(DateTime)
+    actualizado_at = Column(DateTime)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 DEFAULT_SYSTEM_ROLES = [
@@ -703,6 +797,43 @@ def protect_sensitive_user_fields() -> None:
         db.commit()
     finally:
         db.close()
+
+
+def ensure_documentos_schema() -> None:
+    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
+        table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='documentos_evidencia'"
+        ).fetchone()
+        if not table_exists:
+            return
+        cols = {row[1] for row in conn.execute('PRAGMA table_info(\"documentos_evidencia\")').fetchall()}
+        if "tenant_id" not in cols:
+            conn.execute('ALTER TABLE \"documentos_evidencia\" ADD COLUMN \"tenant_id\" VARCHAR DEFAULT \"default\"')
+            conn.execute('UPDATE \"documentos_evidencia\" SET tenant_id = \"default\" WHERE tenant_id IS NULL OR tenant_id = \"\"')
+        conn.execute(
+            'CREATE INDEX IF NOT EXISTS \"ix_documentos_evidencia_tenant_id\" ON \"documentos_evidencia\" (\"tenant_id\")'
+        )
+        conn.commit()
+
+
+def ensure_forms_schema() -> None:
+    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
+        table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='form_definitions'"
+        ).fetchone()
+        if not table_exists:
+            return
+        cols = {row[1] for row in conn.execute('PRAGMA table_info(\"form_definitions\")').fetchall()}
+        if "tenant_id" not in cols:
+            conn.execute('ALTER TABLE \"form_definitions\" ADD COLUMN \"tenant_id\" VARCHAR DEFAULT \"default\"')
+            conn.execute('UPDATE \"form_definitions\" SET tenant_id = \"default\" WHERE tenant_id IS NULL OR tenant_id = \"\"')
+        if "allowed_roles" not in cols:
+            conn.execute('ALTER TABLE \"form_definitions\" ADD COLUMN \"allowed_roles\" JSON DEFAULT \"[]\"')
+            conn.execute('UPDATE \"form_definitions\" SET allowed_roles = \"[]\" WHERE allowed_roles IS NULL OR trim(allowed_roles) = \"\"')
+        conn.execute(
+            'CREATE INDEX IF NOT EXISTS \"ix_form_definitions_tenant_id\" ON \"form_definitions\" (\"tenant_id\")'
+        )
+        conn.commit()
 
 
 def unify_users_table() -> None:
@@ -891,6 +1022,8 @@ def unify_users_table() -> None:
 
 
 Base.metadata.create_all(bind=engine)
+ensure_documentos_schema()
+ensure_forms_schema()
 unify_users_table()
 ensure_default_roles()
 protect_sensitive_user_fields()
@@ -990,6 +1123,7 @@ async def enforce_backend_login(request: Request, call_next):
 
     request.state.user_name = session_data["username"]
     request.state.user_role = session_data["role"]
+    request.state.tenant_id = _normalize_tenant_id(session_data.get("tenant_id"))
     return await call_next(request)
 
 
@@ -1026,9 +1160,13 @@ def is_hidden_user(request: Request, username: Optional[str]) -> bool:
     return (username or "").strip().lower() in {u.lower() for u in HIDDEN_SYSTEM_USERS}
 
 
-def _build_session_cookie(username: str, role: str) -> str:
+def _build_session_cookie(username: str, role: str, tenant_id: str) -> str:
     payload_json = json.dumps(
-        {"u": username.strip(), "r": role.strip().lower()},
+        {
+            "u": username.strip(),
+            "r": role.strip().lower(),
+            "t": _normalize_tenant_id(tenant_id),
+        },
         separators=(",", ":"),
         ensure_ascii=True,
     )
@@ -1064,7 +1202,8 @@ def _read_session_cookie(token: str) -> Optional[Dict[str, str]]:
     role = str(data.get("r", "")).strip().lower()
     if not username or not role:
         return None
-    return {"username": username, "role": role}
+    tenant_id = _normalize_tenant_id(str(data.get("t", "")).strip() or os.environ.get("DEFAULT_TENANT_ID", "default"))
+    return {"username": username, "role": role, "tenant_id": tenant_id}
 
 @app.post("/guardar-colores")
 async def guardar_colores(request: Request, data: dict = Body(...)):
@@ -1201,14 +1340,16 @@ def web_login_submit(
 
     session_username = _decrypt_sensitive(user.usuario) or username
     response = RedirectResponse(url="/inicio", status_code=303)
+    tenant_id = _normalize_tenant_id(request.cookies.get("tenant_id") or os.environ.get("DEFAULT_TENANT_ID", "default"))
     response.set_cookie(
         AUTH_COOKIE_NAME,
-        _build_session_cookie(session_username, role_name),
+        _build_session_cookie(session_username, role_name, tenant_id),
         httponly=True,
         samesite="lax",
     )
     response.set_cookie("user_role", normalize_role_name(role_name), httponly=True, samesite="lax")
     response.set_cookie("user_name", session_username, httponly=True, samesite="lax")
+    response.set_cookie("tenant_id", tenant_id, httponly=True, samesite="lax")
     return response
 
 
@@ -1219,6 +1360,7 @@ def logout():
     response.delete_cookie(AUTH_COOKIE_NAME)
     response.delete_cookie("user_role")
     response.delete_cookie("user_name")
+    response.delete_cookie("tenant_id")
     return response
 
 
@@ -1262,8 +1404,10 @@ class FormDefinitionCreateSchema(BaseModel):
     name: str
     description: Optional[str] = None
     slug: Optional[str] = None
+    tenant_id: Optional[str] = None
     is_active: bool = True
     config: Dict[str, Any] = Field(default_factory=dict)
+    allowed_roles: List[str] = Field(default_factory=list)
     fields: List[FormFieldCreateSchema] = Field(default_factory=list)
 
 
@@ -1291,8 +1435,10 @@ class FormDefinitionResponseSchema(BaseModel):
     id: int
     name: str
     slug: str
+    tenant_id: str
     description: Optional[str]
     config: Dict[str, Any]
+    allowed_roles: List[str]
     fields: List[FormFieldResponseSchema]
     is_active: bool
 
@@ -1551,7 +1697,9 @@ class FormRenderer:
             "id": form_definition.id,
             "name": form_definition.name,
             "slug": form_definition.slug,
+            "tenant_id": _normalize_tenant_id(form_definition.tenant_id or "default"),
             "description": form_definition.description,
+            "allowed_roles": form_definition.allowed_roles if isinstance(form_definition.allowed_roles, list) else [],
             "fields": fields,
             "config": form_definition.config or {},
         }
@@ -5423,6 +5571,255 @@ REPORTES_HTML = dedent("""
     </section>
 """)
 
+DOCUMENTOS_HTML = dedent("""
+    <section class="pe-page">
+        <style>
+            .doc-wrap{display:grid;gap:14px}
+            .doc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+            .doc-card{background:rgba(255,255,255,.88);border:1px solid rgba(148,163,184,.35);border-radius:16px;padding:14px}
+            .doc-card h3{margin:0 0 10px}
+            .doc-form{display:grid;gap:10px}
+            .doc-form input,.doc-form select,.doc-form textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:10px}
+            .doc-actions{display:flex;gap:8px;flex-wrap:wrap}
+            .doc-btn{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer;font-weight:600}
+            .doc-btn.primary{background:#0f3d2e;color:#fff;border-color:#0f3d2e}
+            .doc-btn.warn{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+            .doc-btn.danger{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+            .doc-table{width:100%;border-collapse:collapse}
+            .doc-table th,.doc-table td{padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:top}
+            .doc-pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+            .doc-pill.borrador{background:#f1f5f9;color:#334155}
+            .doc-pill.enviado{background:#eff6ff;color:#1d4ed8}
+            .doc-pill.autorizado{background:#ecfdf5;color:#166534}
+            .doc-pill.actualizado{background:#fff7ed;color:#9a3412}
+            .doc-pill.rechazado{background:#fef2f2;color:#991b1b}
+            .doc-message{display:none;padding:10px;border-radius:10px;font-size:13px}
+            .doc-message.ok{display:block;background:#ecfdf5;color:#166534;border:1px solid #86efac}
+            .doc-message.error{display:block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+            @media (max-width: 980px){.doc-grid{grid-template-columns:1fr}}
+        </style>
+        <div class="doc-wrap">
+            <section class="doc-grid">
+                <article class="doc-card">
+                    <h3>Nuevo documento de evidencia</h3>
+                    <form id="doc-create-form" class="doc-form">
+                        <input type="text" name="titulo" placeholder="Título" required>
+                        <select name="proceso" required>
+                            <option value="envio">Envio</option>
+                            <option value="autorizacion">Autorizacion</option>
+                            <option value="actualizacion">Actualizacion</option>
+                        </select>
+                        <textarea name="descripcion" placeholder="Descripción"></textarea>
+                        <textarea name="observaciones" placeholder="Observaciones"></textarea>
+                        <input type="file" name="archivo" required>
+                        <div class="doc-actions">
+                            <button class="doc-btn primary" type="submit">Subir y guardar</button>
+                        </div>
+                    </form>
+                </article>
+                <article class="doc-card">
+                    <h3>Editar documento</h3>
+                    <form id="doc-edit-form" class="doc-form">
+                        <input type="hidden" name="id">
+                        <input type="text" name="titulo" placeholder="Título" required>
+                        <select name="proceso" required>
+                            <option value="envio">Envio</option>
+                            <option value="autorizacion">Autorizacion</option>
+                            <option value="actualizacion">Actualizacion</option>
+                        </select>
+                        <textarea name="descripcion" placeholder="Descripción"></textarea>
+                        <textarea name="observaciones" placeholder="Observaciones"></textarea>
+                        <div class="doc-actions">
+                            <button class="doc-btn" type="button" id="doc-edit-clear">Limpiar</button>
+                            <button class="doc-btn primary" type="submit">Guardar cambios</button>
+                        </div>
+                    </form>
+                </article>
+            </section>
+            <section class="doc-card">
+                <h3>Documentos de evidencia</h3>
+                <div id="doc-message" class="doc-message"></div>
+                <table class="doc-table">
+                    <thead>
+                        <tr>
+                            <th>Titulo</th>
+                            <th>Proceso</th>
+                            <th>Estado</th>
+                            <th>Version</th>
+                            <th>Archivo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doc-table-body"></tbody>
+                </table>
+            </section>
+        </div>
+        <script>
+            const docBody = document.getElementById('doc-table-body');
+            const docMsg = document.getElementById('doc-message');
+            const createForm = document.getElementById('doc-create-form');
+            const editForm = document.getElementById('doc-edit-form');
+            const editClear = document.getElementById('doc-edit-clear');
+            let docsCache = [];
+            let permissions = { can_create: true, can_authorize: false, can_reject: false };
+            const setDocMessage = (kind, text) => {
+                docMsg.className = `doc-message ${kind}`;
+                docMsg.textContent = text || '';
+            };
+            const fillEdit = (item) => {
+                editForm.id.value = item.id;
+                editForm.titulo.value = item.titulo || '';
+                editForm.proceso.value = item.proceso || 'envio';
+                editForm.descripcion.value = item.descripcion || '';
+                editForm.observaciones.value = item.observaciones || '';
+            };
+            const clearEdit = () => {
+                editForm.reset();
+                editForm.id.value = '';
+            };
+            editClear.addEventListener('click', clearEdit);
+
+            const api = async (url, opts = {}) => {
+                const res = await fetch(url, opts);
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok || json.success === false) throw new Error(json.detail || json.error || 'Operacion fallida');
+                return json;
+            };
+
+            const renderDocs = (items) => {
+                docsCache = Array.isArray(items) ? items : [];
+                docBody.innerHTML = (items || []).map((item) => `
+                    <tr>
+                        <td><strong>${item.titulo || ''}</strong><br><small>${item.descripcion || ''}</small></td>
+                        <td>${item.proceso || ''}</td>
+                        <td><span class="doc-pill ${item.estado || 'borrador'}">${item.estado || 'borrador'}</span></td>
+                        <td>v${item.version || 1}</td>
+                        <td><a href="/api/documentos/${item.id}/download" target="_blank">${item.archivo_nombre || 'archivo'}</a></td>
+                        <td>
+                            <div class="doc-actions">
+                                ${item.actions?.can_edit ? `<button class="doc-btn" data-act="edit" data-id="${item.id}">Editar</button>` : ''}
+                                ${item.actions?.can_send ? `<button class="doc-btn" data-act="send" data-id="${item.id}">Enviar</button>` : ''}
+                                ${item.actions?.can_authorize ? `<button class="doc-btn warn" data-act="authorize" data-id="${item.id}">Autorizar</button>` : ''}
+                                ${item.actions?.can_reject ? `<button class="doc-btn warn" data-act="reject" data-id="${item.id}">Rechazar</button>` : ''}
+                                ${item.actions?.can_update ? `<button class="doc-btn" data-act="update" data-id="${item.id}">Actualizar</button>` : ''}
+                                ${item.actions?.can_delete ? `<button class="doc-btn danger" data-act="delete" data-id="${item.id}">Eliminar</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            const loadDocs = async () => {
+                try {
+                    const json = await api('/api/documentos');
+                    permissions = json.permissions || permissions;
+                    createForm.querySelectorAll('input,select,textarea,button').forEach((el) => {
+                        el.disabled = !permissions.can_create;
+                    });
+                    renderDocs(json.data || []);
+                } catch (error) {
+                    setDocMessage('error', error.message || 'No se pudieron cargar documentos');
+                }
+            };
+
+            createForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                try {
+                    const fd = new FormData(createForm);
+                    await api('/api/documentos', { method: 'POST', body: fd });
+                    createForm.reset();
+                    setDocMessage('ok', 'Documento creado.');
+                    await loadDocs();
+                } catch (error) {
+                    setDocMessage('error', error.message);
+                }
+            });
+
+            editForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const id = editForm.id.value;
+                if (!id) return setDocMessage('error', 'Selecciona un documento para editar.');
+                try {
+                    const payload = {
+                        titulo: editForm.titulo.value,
+                        proceso: editForm.proceso.value,
+                        descripcion: editForm.descripcion.value,
+                        observaciones: editForm.observaciones.value,
+                    };
+                    await api(`/api/documentos/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    setDocMessage('ok', 'Documento actualizado.');
+                    await loadDocs();
+                } catch (error) {
+                    setDocMessage('error', error.message);
+                }
+            });
+
+            docBody.addEventListener('click', async (event) => {
+                const btn = event.target.closest('button[data-id][data-act]');
+                if (!btn) return;
+                const id = btn.dataset.id;
+                const action = btn.dataset.act;
+                try {
+                    if (action === 'edit') {
+                        const found = docsCache.find((item) => String(item.id) === String(id));
+                        if (found) fillEdit(found);
+                        return;
+                    }
+                    if (action === 'send') {
+                        await api(`/api/documentos/${id}/enviar`, { method: 'POST' });
+                        setDocMessage('ok', 'Documento enviado para autorizacion.');
+                    }
+                    if (action === 'authorize') {
+                        await api(`/api/documentos/${id}/autorizar`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ accion: 'autorizar' }),
+                        });
+                        setDocMessage('ok', 'Documento autorizado.');
+                    }
+                    if (action === 'reject') {
+                        const motivo = prompt('Motivo de rechazo (opcional):') || '';
+                        await api(`/api/documentos/${id}/autorizar`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ accion: 'rechazar', observaciones: motivo }),
+                        });
+                        setDocMessage('ok', 'Documento rechazado.');
+                    }
+                    if (action === 'update') {
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.onchange = async () => {
+                            if (!fileInput.files || !fileInput.files.length) return;
+                            const fd = new FormData();
+                            fd.append('archivo', fileInput.files[0]);
+                            await api(`/api/documentos/${id}/actualizar`, { method: 'POST', body: fd });
+                            setDocMessage('ok', 'Documento actualizado a nueva version.');
+                            await loadDocs();
+                        };
+                        fileInput.click();
+                        return;
+                    }
+                    if (action === 'delete') {
+                        if (!confirm('¿Eliminar este documento?')) return;
+                        await api(`/api/documentos/${id}`, { method: 'DELETE' });
+                        setDocMessage('ok', 'Documento eliminado.');
+                    }
+                    await loadDocs();
+                } catch (error) {
+                    setDocMessage('error', error.message);
+                }
+            });
+
+            loadDocs();
+        </script>
+    </section>
+""")
+
 
 def render_personalizacion_page(request: Request) -> HTMLResponse:
     return render_backend_page(
@@ -5500,6 +5897,318 @@ def reportes(request: Request):
         """,
         floating_actions_screen="reportes",
     )
+
+
+def _can_authorize_documents(request: Request) -> bool:
+    return is_admin_or_superadmin(request)
+
+
+def _can_edit_document(request: Request, doc: DocumentoEvidencia) -> bool:
+    if is_admin_or_superadmin(request):
+        return True
+    current_user = (getattr(request.state, "user_name", "") or request.cookies.get("user_name", "") or "").strip().lower()
+    return bool(current_user and current_user == (doc.creado_por or "").strip().lower())
+
+
+def _document_actions_for_request(request: Request, doc: DocumentoEvidencia) -> Dict[str, bool]:
+    can_edit = _can_edit_document(request, doc)
+    can_authorize = _can_authorize_documents(request)
+    return {
+        "can_edit": can_edit,
+        "can_send": can_edit,
+        "can_update": can_edit,
+        "can_delete": can_edit,
+        "can_authorize": can_authorize,
+        "can_reject": can_authorize,
+    }
+
+
+def _get_document_tenant(request: Request) -> str:
+    return _normalize_tenant_id(get_current_tenant(request))
+
+
+def _get_document_for_request(db, request: Request, doc_id: int) -> Optional[DocumentoEvidencia]:
+    tenant_id = _get_document_tenant(request)
+    query = db.query(DocumentoEvidencia).filter(DocumentoEvidencia.id == doc_id)
+    if is_superadmin(request):
+        header_tenant = request.headers.get("x-tenant-id")
+        if header_tenant and _normalize_tenant_id(header_tenant) != "all":
+            query = query.filter(func.lower(DocumentoEvidencia.tenant_id) == _normalize_tenant_id(header_tenant).lower())
+        elif not header_tenant:
+            query = query.filter(func.lower(DocumentoEvidencia.tenant_id) == tenant_id.lower())
+    else:
+        query = query.filter(func.lower(DocumentoEvidencia.tenant_id) == tenant_id.lower())
+    return query.first()
+
+
+def _serialize_documento(doc: DocumentoEvidencia, request: Optional[Request] = None) -> Dict[str, Any]:
+    payload = {
+        "id": doc.id,
+        "tenant_id": _normalize_tenant_id(doc.tenant_id or "default"),
+        "titulo": doc.titulo,
+        "descripcion": doc.descripcion or "",
+        "proceso": doc.proceso or "envio",
+        "estado": doc.estado or "borrador",
+        "version": int(doc.version or 1),
+        "archivo_nombre": doc.archivo_nombre,
+        "archivo_tipo": doc.archivo_tipo or "",
+        "archivo_tamano": int(doc.archivo_tamano or 0),
+        "observaciones": doc.observaciones or "",
+        "creado_por": doc.creado_por or "",
+        "enviado_por": doc.enviado_por or "",
+        "autorizado_por": doc.autorizado_por or "",
+        "actualizado_por": doc.actualizado_por or "",
+        "creado_at": doc.creado_at.isoformat() if doc.creado_at else "",
+        "enviado_at": doc.enviado_at.isoformat() if doc.enviado_at else "",
+        "autorizado_at": doc.autorizado_at.isoformat() if doc.autorizado_at else "",
+        "actualizado_at": doc.actualizado_at.isoformat() if doc.actualizado_at else "",
+    }
+    if request is not None:
+        payload["actions"] = _document_actions_for_request(request, doc)
+    return payload
+
+
+def _serialize_document_permissions(request: Request) -> Dict[str, bool]:
+    can_authorize = _can_authorize_documents(request)
+    return {
+        "can_create": True,
+        "can_authorize": can_authorize,
+        "can_reject": can_authorize,
+    }
+
+@app.get("/reportes/documentos", response_class=HTMLResponse)
+def reportes_documentos(request: Request):
+    return render_backend_page(
+        request,
+        title="Documentos",
+        description="Carga y gestión de evidencias con envío, autorización y actualización.",
+        content=DOCUMENTOS_HTML,
+        hide_floating_actions=True,
+        floating_actions_screen="reportes",
+    )
+
+
+@app.get("/api/documentos")
+def listar_documentos(request: Request):
+    db = SessionLocal()
+    try:
+        tenant_id = _get_document_tenant(request)
+        query = db.query(DocumentoEvidencia)
+        if is_superadmin(request):
+            header_tenant = request.headers.get("x-tenant-id")
+            if header_tenant and _normalize_tenant_id(header_tenant) != "all":
+                query = query.filter(func.lower(DocumentoEvidencia.tenant_id) == _normalize_tenant_id(header_tenant).lower())
+            elif not header_tenant:
+                query = query.filter(func.lower(DocumentoEvidencia.tenant_id) == tenant_id.lower())
+        else:
+            query = query.filter(func.lower(DocumentoEvidencia.tenant_id) == tenant_id.lower())
+        docs = query.order_by(DocumentoEvidencia.updated_at.desc(), DocumentoEvidencia.id.desc()).all()
+        return {
+            "success": True,
+            "tenant_id": tenant_id,
+            "permissions": _serialize_document_permissions(request),
+            "data": [_serialize_documento(doc, request=request) for doc in docs],
+        }
+    finally:
+        db.close()
+
+
+@app.post("/api/documentos")
+async def crear_documento(
+    request: Request,
+    titulo: str = Form(""),
+    descripcion: str = Form(""),
+    proceso: str = Form("envio"),
+    observaciones: str = Form(""),
+    archivo: UploadFile = File(...),
+):
+    clean_title = (titulo or "").strip()
+    if not clean_title:
+        return JSONResponse({"success": False, "error": "El título es obligatorio"}, status_code=422)
+    if (proceso or "").strip().lower() not in {"envio", "autorizacion", "actualizacion"}:
+        return JSONResponse({"success": False, "error": "Proceso inválido"}, status_code=422)
+
+    stored = await _store_evidence_file(archivo)
+    db = SessionLocal()
+    try:
+        doc = DocumentoEvidencia(
+            tenant_id=_get_document_tenant(request),
+            titulo=clean_title,
+            descripcion=(descripcion or "").strip(),
+            proceso=(proceso or "envio").strip().lower(),
+            estado="borrador",
+            version=1,
+            archivo_nombre=stored["filename"],
+            archivo_ruta=stored["path"],
+            archivo_tipo=stored["mime"],
+            archivo_tamano=stored["size"],
+            observaciones=(observaciones or "").strip(),
+            creado_por=getattr(request.state, "user_name", "") or request.cookies.get("user_name", ""),
+            creado_at=datetime.utcnow(),
+        )
+        db.add(doc)
+        db.commit()
+        db.refresh(doc)
+        return {"success": True, "data": _serialize_documento(doc, request=request)}
+    except Exception:
+        _delete_evidence_file(stored.get("path"))
+        raise
+    finally:
+        db.close()
+
+
+@app.put("/api/documentos/{doc_id}")
+def editar_documento(request: Request, doc_id: int, data: dict = Body(...)):
+    db = SessionLocal()
+    try:
+        doc = _get_document_for_request(db, request, doc_id)
+        if not doc:
+            return JSONResponse({"success": False, "error": "Documento no encontrado"}, status_code=404)
+        if not _can_edit_document(request, doc):
+            return JSONResponse({"success": False, "error": "Sin permisos para editar este documento"}, status_code=403)
+        titulo = (data.get("titulo") or "").strip()
+        if not titulo:
+            return JSONResponse({"success": False, "error": "El título es obligatorio"}, status_code=422)
+        proceso = (data.get("proceso") or doc.proceso or "envio").strip().lower()
+        if proceso not in {"envio", "autorizacion", "actualizacion"}:
+            return JSONResponse({"success": False, "error": "Proceso inválido"}, status_code=422)
+        doc.titulo = titulo
+        doc.descripcion = (data.get("descripcion") or "").strip()
+        doc.proceso = proceso
+        doc.observaciones = (data.get("observaciones") or "").strip()
+        doc.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(doc)
+        return {"success": True, "data": _serialize_documento(doc, request=request)}
+    finally:
+        db.close()
+
+
+@app.post("/api/documentos/{doc_id}/enviar")
+def enviar_documento(request: Request, doc_id: int):
+    db = SessionLocal()
+    try:
+        doc = _get_document_for_request(db, request, doc_id)
+        if not doc:
+            return JSONResponse({"success": False, "error": "Documento no encontrado"}, status_code=404)
+        if not _can_edit_document(request, doc):
+            return JSONResponse({"success": False, "error": "Sin permisos para enviar este documento"}, status_code=403)
+        if doc.estado not in {"borrador", "actualizado", "rechazado"}:
+            return JSONResponse({"success": False, "error": "El documento no puede enviarse en su estado actual"}, status_code=409)
+        doc.estado = "enviado"
+        doc.enviado_por = getattr(request.state, "user_name", "") or request.cookies.get("user_name", "")
+        doc.enviado_at = datetime.utcnow()
+        doc.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(doc)
+        return {"success": True, "data": _serialize_documento(doc, request=request)}
+    finally:
+        db.close()
+
+
+@app.post("/api/documentos/{doc_id}/autorizar")
+def autorizar_documento(request: Request, doc_id: int, data: dict = Body(default={})):
+    require_admin_or_superadmin(request)
+    accion = (data.get("accion") or "autorizar").strip().lower()
+    observaciones = (data.get("observaciones") or "").strip()
+    db = SessionLocal()
+    try:
+        doc = _get_document_for_request(db, request, doc_id)
+        if not doc:
+            return JSONResponse({"success": False, "error": "Documento no encontrado"}, status_code=404)
+        if accion == "rechazar":
+            doc.estado = "rechazado"
+            doc.observaciones = observaciones or doc.observaciones
+        else:
+            if doc.estado not in {"enviado", "actualizado"}:
+                return JSONResponse({"success": False, "error": "Solo se autorizan documentos enviados o actualizados"}, status_code=409)
+            doc.estado = "autorizado"
+            doc.autorizado_por = getattr(request.state, "user_name", "") or request.cookies.get("user_name", "")
+            doc.autorizado_at = datetime.utcnow()
+        doc.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(doc)
+        return {"success": True, "data": _serialize_documento(doc, request=request)}
+    finally:
+        db.close()
+
+
+@app.post("/api/documentos/{doc_id}/actualizar")
+async def actualizar_documento_archivo(
+    request: Request,
+    doc_id: int,
+    archivo: UploadFile = File(...),
+    descripcion: str = Form(""),
+    observaciones: str = Form(""),
+):
+    stored = await _store_evidence_file(archivo)
+    db = SessionLocal()
+    try:
+        doc = _get_document_for_request(db, request, doc_id)
+        if not doc:
+            _delete_evidence_file(stored.get("path"))
+            return JSONResponse({"success": False, "error": "Documento no encontrado"}, status_code=404)
+        if not _can_edit_document(request, doc):
+            _delete_evidence_file(stored.get("path"))
+            return JSONResponse({"success": False, "error": "Sin permisos para actualizar este documento"}, status_code=403)
+        previous_path = doc.archivo_ruta
+        doc.archivo_nombre = stored["filename"]
+        doc.archivo_ruta = stored["path"]
+        doc.archivo_tipo = stored["mime"]
+        doc.archivo_tamano = stored["size"]
+        doc.version = int(doc.version or 1) + 1
+        doc.estado = "actualizado"
+        if (descripcion or "").strip():
+            doc.descripcion = descripcion.strip()
+        if (observaciones or "").strip():
+            doc.observaciones = observaciones.strip()
+        doc.actualizado_por = getattr(request.state, "user_name", "") or request.cookies.get("user_name", "")
+        doc.actualizado_at = datetime.utcnow()
+        doc.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(doc)
+        _delete_evidence_file(previous_path)
+        return {"success": True, "data": _serialize_documento(doc, request=request)}
+    finally:
+        db.close()
+
+
+@app.get("/api/documentos/{doc_id}/download")
+def descargar_documento(request: Request, doc_id: int):
+    db = SessionLocal()
+    try:
+        doc = _get_document_for_request(db, request, doc_id)
+        if not doc:
+            raise HTTPException(status_code=404, detail="Documento no encontrado")
+        if not doc.archivo_ruta or not os.path.exists(doc.archivo_ruta):
+            raise HTTPException(status_code=404, detail="Archivo no disponible")
+        with open(doc.archivo_ruta, "rb") as f:
+            content = f.read()
+        return Response(
+            content=content,
+            media_type=doc.archivo_tipo or "application/octet-stream",
+            headers={"Content-Disposition": f'inline; filename="{_sanitize_document_name(doc.archivo_nombre)}"'},
+        )
+    finally:
+        db.close()
+
+
+@app.delete("/api/documentos/{doc_id}")
+def eliminar_documento(request: Request, doc_id: int):
+    db = SessionLocal()
+    try:
+        doc = _get_document_for_request(db, request, doc_id)
+        if not doc:
+            return JSONResponse({"success": False, "error": "Documento no encontrado"}, status_code=404)
+        if not _can_edit_document(request, doc):
+            return JSONResponse({"success": False, "error": "Sin permisos para eliminar este documento"}, status_code=403)
+        path = doc.archivo_ruta
+        db.delete(doc)
+        db.commit()
+        _delete_evidence_file(path)
+        return {"success": True}
+    finally:
+        db.close()
 
 
 @app.get("/api/reportes/export/{formato}")
@@ -5696,6 +6405,15 @@ def plantillas_page(request: Request):
                                     <option value="false">Inactivo</option>
                                 </select>
                             </div>
+                            <div class="form-field">
+                                <label for="builder-form-tenant">Tenant</label>
+                                <input type="text" id="builder-form-tenant" class="campo-personalizado" placeholder="default">
+                            </div>
+                            <div class="form-field">
+                                <label for="builder-form-roles">Roles permitidos</label>
+                                <select id="builder-form-roles" class="campo-personalizado" multiple>
+                                </select>
+                            </div>
                             <div class="form-field form-builder-description">
                                 <label for="builder-form-description">Descripción</label>
                                 <textarea id="builder-form-description" class="campo-personalizado" placeholder="Descripción del formulario"></textarea>
@@ -5830,6 +6548,15 @@ def plantillas_constructor_page(request: Request):
                                     <option value="false">Inactivo</option>
                                 </select>
                             </div>
+                            <div class="form-field">
+                                <label for="builder-form-tenant">Tenant</label>
+                                <input type="text" id="builder-form-tenant" placeholder="default">
+                            </div>
+                            <div class="form-field">
+                                <label for="builder-form-roles">Roles permitidos</label>
+                                <select id="builder-form-roles" multiple>
+                                </select>
+                            </div>
                             <div class="form-field form-builder-description">
                                 <label for="builder-form-description">Descripción</label>
                                 <textarea id="builder-form-description" placeholder="Describe el objetivo del formulario"></textarea>
@@ -5960,6 +6687,79 @@ def guardar_plantilla(data: dict = Body(...)):
     return JSONResponse({"success": True, "data": {"id": template_id}})
 
 
+def _forms_scope_query_by_tenant(query, request: Request):
+    tenant_id = _normalize_tenant_id(get_current_tenant(request))
+    if is_superadmin(request):
+        header_tenant = request.headers.get("x-tenant-id")
+        if header_tenant and _normalize_tenant_id(header_tenant) != "all":
+            return query.filter(func.lower(FormDefinition.tenant_id) == _normalize_tenant_id(header_tenant).lower())
+        if not header_tenant:
+            return query.filter(func.lower(FormDefinition.tenant_id) == tenant_id.lower())
+        return query
+    return query.filter(func.lower(FormDefinition.tenant_id) == tenant_id.lower())
+
+
+def _resolve_form_tenant_for_write(request: Request, requested_tenant: Optional[str]) -> str:
+    if is_superadmin(request):
+        if requested_tenant:
+            return _normalize_tenant_id(requested_tenant)
+        header_tenant = request.headers.get("x-tenant-id")
+        if header_tenant and _normalize_tenant_id(header_tenant) != "all":
+            return _normalize_tenant_id(header_tenant)
+    return _normalize_tenant_id(get_current_tenant(request))
+
+
+def _normalize_form_allowed_roles(request: Request, db, raw_roles: Any) -> List[str]:
+    allowed = {
+        normalize_role_name(role.nombre)
+        for role in db.query(Rol).all()
+        if (role.nombre or "").strip()
+    }
+    if is_admin(request):
+        allowed = {item for item in allowed if item != "superadministrador"}
+    normalized_roles: List[str] = []
+    if isinstance(raw_roles, list):
+        for role in raw_roles:
+            role_name = normalize_role_name(str(role))
+            if role_name in allowed:
+                normalized_roles.append(role_name)
+    return sorted(set(normalized_roles))
+
+
+def _form_role_is_allowed(form: FormDefinition, request: Request) -> bool:
+    if is_superadmin(request):
+        return True
+    allowed_roles_raw = form.allowed_roles if isinstance(form.allowed_roles, list) else []
+    if not allowed_roles_raw:
+        return True
+    allowed_roles = {normalize_role_name(str(item)) for item in allowed_roles_raw if str(item).strip()}
+    return get_current_role(request) in allowed_roles
+
+
+def _get_form_by_id_for_request(db, form_id: int, request: Request) -> FormDefinition:
+    query = _forms_scope_query_by_tenant(
+        db.query(FormDefinition).filter(FormDefinition.id == form_id),
+        request,
+    )
+    form = query.first()
+    if not form:
+        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    return form
+
+
+def _get_form_by_slug_for_request(db, slug: str, request: Request, active_only: bool = True) -> FormDefinition:
+    query = db.query(FormDefinition).filter(FormDefinition.slug == slug)
+    if active_only:
+        query = query.filter(FormDefinition.is_active == True)  # noqa: E712
+    query = _forms_scope_query_by_tenant(query, request)
+    form = query.first()
+    if not form:
+        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    if not _form_role_is_allowed(form, request):
+        raise HTTPException(status_code=403, detail="Tu rol no tiene acceso a este formulario")
+    return form
+
+
 @app.post("/api/admin/forms", response_model=FormDefinitionResponseSchema)
 def create_form_definition(
     request: Request,
@@ -5972,11 +6772,15 @@ def create_form_definition(
     if existing:
         raise HTTPException(status_code=400, detail="El slug ya existe")
 
+    tenant_id = _resolve_form_tenant_for_write(request, form_data.tenant_id)
+    allowed_roles = _normalize_form_allowed_roles(request, db, form_data.allowed_roles)
     form = FormDefinition(
         name=form_data.name,
         slug=slug,
+        tenant_id=tenant_id,
         description=form_data.description,
         config=form_data.config or {},
+        allowed_roles=allowed_roles,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
         is_active=form_data.is_active,
@@ -6013,7 +6817,8 @@ def list_form_definitions(
     db=Depends(get_db),
 ):
     require_admin_or_superadmin(request)
-    return db.query(FormDefinition).order_by(FormDefinition.id.desc()).all()
+    query = _forms_scope_query_by_tenant(db.query(FormDefinition), request)
+    return query.order_by(FormDefinition.id.desc()).all()
 
 
 @app.get("/api/admin/forms/{form_id}", response_model=FormDefinitionResponseSchema)
@@ -6023,10 +6828,7 @@ def get_form_definition(
     db=Depends(get_db),
 ):
     require_admin_or_superadmin(request)
-    form = db.query(FormDefinition).filter(FormDefinition.id == form_id).first()
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
-    return form
+    return _get_form_by_id_for_request(db, form_id, request)
 
 
 @app.put("/api/admin/forms/{form_id}")
@@ -6037,9 +6839,7 @@ def update_form_definition(
     db=Depends(get_db),
 ):
     require_admin_or_superadmin(request)
-    form = db.query(FormDefinition).filter(FormDefinition.id == form_id).first()
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_id_for_request(db, form_id, request)
 
     new_slug = slugify_value(form_data.slug or form_data.name)
     duplicate = (
@@ -6052,8 +6852,10 @@ def update_form_definition(
 
     form.name = form_data.name
     form.slug = new_slug
+    form.tenant_id = _resolve_form_tenant_for_write(request, form_data.tenant_id or form.tenant_id)
     form.description = form_data.description
     form.config = form_data.config or {}
+    form.allowed_roles = _normalize_form_allowed_roles(request, db, form_data.allowed_roles)
     form.is_active = form_data.is_active
     form.updated_at = datetime.utcnow()
     db.add(form)
@@ -6088,9 +6890,7 @@ def delete_form_definition(
     db=Depends(get_db),
 ):
     require_admin_or_superadmin(request)
-    form = db.query(FormDefinition).filter(FormDefinition.id == form_id).first()
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_id_for_request(db, form_id, request)
     db.delete(form)
     db.commit()
     return {"success": True, "message": "Formulario eliminado"}
@@ -6104,9 +6904,7 @@ def export_form_submissions(
     db=Depends(get_db),
 ):
     require_admin_or_superadmin(request)
-    form = db.query(FormDefinition).filter(FormDefinition.id == form_id).first()
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_id_for_request(db, form_id, request)
 
     submissions = (
         db.query(FormSubmission)
@@ -6172,15 +6970,10 @@ def export_form_submissions(
 @app.get("/api/forms/{slug}")
 def get_public_form_definition(
     slug: str,
+    request: Request,
     db=Depends(get_db),
 ):
-    form = (
-        db.query(FormDefinition)
-        .filter(FormDefinition.slug == slug, FormDefinition.is_active == True)  # noqa: E712
-        .first()
-    )
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_slug_for_request(db, slug, request, active_only=True)
     return {"success": True, "data": FormRenderer.render_to_json(form)}
 
 
@@ -6191,13 +6984,7 @@ def submit_public_form(
     payload: Dict[str, Any] = Body(default_factory=dict),
     db=Depends(get_db),
 ):
-    form = (
-        db.query(FormDefinition)
-        .filter(FormDefinition.slug == slug, FormDefinition.is_active == True)  # noqa: E712
-        .first()
-    )
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_slug_for_request(db, slug, request, active_only=True)
 
     normalized_payload = _normalize_form_submission_payload(form, payload)
     visible_fields = FormRenderer.visible_field_names(form, normalized_payload)
@@ -6248,13 +7035,7 @@ def render_public_form(
     request: Request,
     db=Depends(get_db),
 ):
-    form = (
-        db.query(FormDefinition)
-        .filter(FormDefinition.slug == slug, FormDefinition.is_active == True)  # noqa: E712
-        .first()
-    )
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_slug_for_request(db, slug, request, active_only=True)
     login_identity = _get_login_identity_context()
     return request.app.state.templates.TemplateResponse(
         "form.html",
@@ -6271,15 +7052,10 @@ def render_public_form(
 @app.get("/forms/api/{slug}")
 def get_public_form_definition_v2(
     slug: str,
+    request: Request,
     db=Depends(get_db),
 ):
-    form = (
-        db.query(FormDefinition)
-        .filter(FormDefinition.slug == slug, FormDefinition.is_active == True)  # noqa: E712
-        .first()
-    )
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_slug_for_request(db, slug, request, active_only=True)
     return {"success": True, "data": FormRenderer.render_to_json(form)}
 
 
@@ -6289,13 +7065,7 @@ async def submit_public_form_v2(
     request: Request,
     db=Depends(get_db),
 ):
-    form = (
-        db.query(FormDefinition)
-        .filter(FormDefinition.slug == slug, FormDefinition.is_active == True)  # noqa: E712
-        .first()
-    )
-    if not form:
-        raise HTTPException(status_code=404, detail="Formulario no encontrado")
+    form = _get_form_by_slug_for_request(db, slug, request, active_only=True)
 
     form_data = await request.form()
     payload: Dict[str, Any] = {}
