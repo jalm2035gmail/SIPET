@@ -598,6 +598,7 @@ async def enforce_backend_login(request: Request, call_next):
         "/web",
         "/web/404",
         "/web/login",
+        "/logout",
         "/health",
         "/docs",
         "/redoc",
@@ -637,10 +638,13 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, stored_hash: str) -> bool:
+    stored = (stored_hash or "").strip()
+    if not stored:
+        return False
     try:
-        algo, iterations, salt, digest_hex = stored_hash.split("$", 3)
+        algo, iterations, salt, digest_hex = stored.split("$", 3)
         if algo != "pbkdf2_sha256":
-            return False
+            return hmac.compare_digest(password, stored)
         digest = hashlib.pbkdf2_hmac(
             "sha256",
             password.encode("utf-8"),
@@ -649,7 +653,8 @@ def verify_password(password: str, stored_hash: str) -> bool:
         )
         return hmac.compare_digest(digest.hex(), digest_hex)
     except Exception:
-        return False
+        # Compatibilidad con usuarios legacy guardados en texto plano.
+        return hmac.compare_digest(password, stored)
 
 
 def is_hidden_user(request: Request, username: Optional[str]) -> bool:
@@ -814,6 +819,16 @@ def web_login_submit(
     )
     response.set_cookie("user_role", role_name, httponly=True, samesite="lax")
     response.set_cookie("user_name", username, httponly=True, samesite="lax")
+    return response
+
+
+@app.get("/logout")
+@app.get("/logout/")
+def logout():
+    response = RedirectResponse(url="/web/login", status_code=303)
+    response.delete_cookie(AUTH_COOKIE_NAME)
+    response.delete_cookie("user_role")
+    response.delete_cookie("user_name")
     return response
 
 

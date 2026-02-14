@@ -307,12 +307,48 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 0;
+            cursor: pointer;
+            padding: 0;
         }
         .navbar-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
+        }
+        .navbar-user-menu {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            min-width: 168px;
+            background: #ffffff;
+            border: 1px solid #dbe3ef;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+            padding: 8px;
+            display: none;
+            z-index: 40;
+        }
+        .user-dropdown.open {
+            display: block;
+        }
+        .user-dropdown a {
+            display: block;
+            text-decoration: none;
+            color: #0f172a;
+            font-weight: 600;
+            padding: 10px 12px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+        .user-dropdown a:hover {
+            background: #f1f5f9;
         }
             display: flex;
             flex-direction: column;
@@ -2057,8 +2093,13 @@
                     <a class="navbar-route" href="/inicio">/ inicio</a>
                 </div>
             </div>
-            <div class="navbar-avatar" aria-hidden="true">
-                <img id="navbar-avatar-img" src="/templates/icon/usuarios.svg" alt="Avatar" data-default="/templates/icon/usuarios.svg">
+            <div class="navbar-user-menu">
+                <button class="navbar-avatar" id="navbar-avatar-btn" aria-label="Menú de usuario" aria-expanded="false">
+                    <img id="navbar-avatar-img" src="/templates/icon/usuarios.svg" alt="Avatar" data-default="/templates/icon/usuarios.svg">
+                </button>
+                <div class="user-dropdown" id="user-dropdown">
+                    <a href="/logout" id="logout-link">Cerrar sesión</a>
+                </div>
             </div>
         </div>
     </div>
@@ -2204,6 +2245,9 @@
             const actionExportReportes = document.getElementById('action-export-reportes');
             const actionExportPdf = document.getElementById('action-export-pdf');
             const actionExportExcel = document.getElementById('action-export-excel');
+            const navbarAvatarBtn = document.getElementById('navbar-avatar-btn');
+            const userDropdown = document.getElementById('user-dropdown');
+            const logoutLink = document.getElementById('logout-link');
             const personalizationPanel = document.querySelector('.personalization-panel');
             const viewPills = document.querySelectorAll('.view-buttons .view-pill[data-view]');
             const activateViewButton = (view) => {
@@ -2780,15 +2824,15 @@
                                 <div class="column">
                                     <div class="form-field">
                                         <label>Nombre</label>
-                                        <input type="text" placeholder="Nombre completo">
+                                        <input type="text" id="usuario-nombre" placeholder="Nombre completo">
                                     </div>
                                     <div class="form-field">
                                         <label>Usuario</label>
-                                        <input type="text" placeholder="Nombre de usuario">
+                                        <input type="text" id="usuario-usuario" placeholder="Nombre de usuario">
                                     </div>
                                     <div class="form-field">
                                         <label>Correo electrónico</label>
-                                        <input type="email" placeholder="usuario@empresa.com">
+                                        <input type="email" id="usuario-correo" placeholder="usuario@empresa.com">
                                     </div>
                                     <div class="form-field">
                                         <label>Contraseña</label>
@@ -2796,7 +2840,7 @@
                                     </div>
                                     <div class="form-field">
                                         <label>Rol</label>
-                                        <select>
+                                        <select id="usuario-rol">
                                             <option value="">Selecciona un rol</option>
                                             ${getUsuarioRolOptions()}
                                         </select>
@@ -3728,7 +3772,47 @@
             actionSaveUsuario && actionSaveUsuario.addEventListener('click', (event) => {
                 if (activeFloatingScreen !== 'usuarios') return;
                 event.preventDefault();
-                showMessage('Cambios en usuarios guardados.', 'success');
+                if (!usuarioPanel || usuarioPanel.classList.contains('hidden')) {
+                    showMessage('Abre la vista de formulario para guardar usuarios.', 'error');
+                    return;
+                }
+                const nombreInput = usuarioView.querySelector('#usuario-nombre');
+                const usuarioInput = usuarioView.querySelector('#usuario-usuario');
+                const correoInput = usuarioView.querySelector('#usuario-correo');
+                const passwordInput = usuarioView.querySelector('#usuario-password');
+                const rolSelect = usuarioView.querySelector('#usuario-rol');
+                if (!nombreInput || !usuarioInput || !correoInput || !passwordInput) {
+                    showMessage('No se pudo leer el formulario de usuario.', 'error');
+                    return;
+                }
+                const payload = {
+                    nombre: (nombreInput.value || '').trim(),
+                    usuario: (usuarioInput.value || '').trim(),
+                    correo: (correoInput.value || '').trim(),
+                    contrasena: passwordInput.value || '',
+                    rol: (rolSelect?.value || '').trim(),
+                };
+                if (!payload.nombre || !payload.usuario || !payload.correo || !payload.contrasena) {
+                    showMessage('Nombre, usuario, correo y contraseña son obligatorios.', 'error');
+                    return;
+                }
+                fetch('/api/usuarios/registro-seguro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                })
+                    .then(async (res) => {
+                        const json = await res.json().catch(() => ({}));
+                        if (!res.ok || !json?.success) {
+                            throw new Error(json?.error || 'No se pudo guardar el usuario');
+                        }
+                        showMessage('Usuario registrado correctamente.', 'success');
+                        passwordInput.value = '';
+                        await loadUsuariosImagenes();
+                    })
+                    .catch((err) => {
+                        showMessage(err?.message || 'Error al registrar usuario.', 'error');
+                    });
             });
             actionDelete && actionDelete.addEventListener('click', (event) => {
                 if (activeFloatingScreen !== 'usuarios') return;
@@ -4219,6 +4303,40 @@
             };
             applyFallback(navbarAvatarImg);
             applyFallback(sidebarUserImg);
+            if (navbarAvatarBtn && userDropdown) {
+                const closeUserDropdown = () => {
+                    userDropdown.classList.remove('open');
+                    navbarAvatarBtn.setAttribute('aria-expanded', 'false');
+                };
+                navbarAvatarBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const willOpen = !userDropdown.classList.contains('open');
+                    if (willOpen) {
+                        userDropdown.classList.add('open');
+                        navbarAvatarBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        closeUserDropdown();
+                    }
+                });
+                document.addEventListener('click', (event) => {
+                    if (!userDropdown.contains(event.target) && !navbarAvatarBtn.contains(event.target)) {
+                        closeUserDropdown();
+                    }
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        closeUserDropdown();
+                    }
+                });
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        closeUserDropdown();
+                        window.location.assign('/logout');
+                    });
+                }
+            }
             const empresaToggle = document.getElementById("empresa-section-toggle");
             const empresaContent = document.getElementById("empresa-section-content");
             if (empresaToggle && empresaContent) {
