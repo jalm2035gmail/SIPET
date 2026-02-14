@@ -444,14 +444,20 @@
     <script>
         const ingresarBtn = document.querySelector(".cta-ingresar");
         const formPanel = document.getElementById("login-form");
+        const loginForm = document.querySelector(".login-form");
         const usuarioInput = document.getElementById("usuario");
         const contrasenaInput = document.getElementById("contrasena");
         const loginError = document.getElementById("login-error");
+        const setFormPanelState = (open) => {
+            if (!ingresarBtn || !formPanel) return;
+            ingresarBtn.setAttribute("aria-expanded", String(open));
+            formPanel.classList.toggle("active", open);
+            formPanel.setAttribute("aria-hidden", String(!open));
+        };
+
         ingresarBtn.addEventListener("click", () => {
             const isExpanded = ingresarBtn.getAttribute("aria-expanded") === "true";
-            ingresarBtn.setAttribute("aria-expanded", String(!isExpanded));
-            formPanel.classList.toggle("active");
-            formPanel.setAttribute("aria-hidden", String(isExpanded));
+            setFormPanelState(!isExpanded);
         });
 
         const clearLoginError = () => {
@@ -462,6 +468,17 @@
 
         usuarioInput && usuarioInput.addEventListener("input", clearLoginError);
         contrasenaInput && contrasenaInput.addEventListener("input", clearLoginError);
+        loginForm && loginForm.addEventListener("submit", () => setFormPanelState(true));
+
+        // Si backend devolvió error, mostrar panel automáticamente.
+        if (loginError) {
+            setFormPanelState(true);
+            if (usuarioInput && !usuarioInput.value) {
+                usuarioInput.focus();
+            } else if (contrasenaInput) {
+                contrasenaInput.focus();
+            }
+        }
     </script>
 </body>
 </html>
