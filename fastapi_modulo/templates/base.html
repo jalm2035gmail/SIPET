@@ -276,6 +276,25 @@
             letter-spacing: 0.02em;
             text-transform: none;
         }
+        .menu-notification-link {
+            position: relative;
+        }
+        .menu-notification-badge {
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            line-height: 22px;
+            text-align: center;
+            display: none;
+        }
+        .menu-notification-badge.visible {
+            display: inline-block;
+        }
         .menu-icon.placeholder {
             visibility: hidden;
         }
@@ -365,6 +384,102 @@
         }
         .user-dropdown a:hover {
             background: #f1f5f9;
+        }
+        .sidebar-notifications-panel {
+            position: fixed;
+            top: 86px;
+            left: 230px;
+            width: 340px;
+            max-width: calc(100vw - 246px);
+            max-height: 72vh;
+            border-radius: 14px;
+            background: #ffffff;
+            border: 1px solid #dbe3ef;
+            box-shadow: 0 16px 38px rgba(15, 23, 42, 0.22);
+            overflow: hidden;
+            z-index: 45;
+            display: none;
+        }
+        .sidebar-notifications-panel.open {
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-notifications-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .sidebar-notifications-header strong {
+            font-size: 0.95rem;
+            color: #0f172a;
+        }
+        .sidebar-notifications-count {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .sidebar-notifications-refresh {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+        .sidebar-notifications-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sidebar-notifications-list {
+            list-style: none;
+            margin: 0;
+            padding: 8px 10px 10px;
+            overflow-y: auto;
+            max-height: calc(72vh - 56px);
+        }
+        .sidebar-notifications-empty {
+            margin: 8px 10px 12px;
+            padding: 12px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.84rem;
+            display: none;
+        }
+        .notification-item {
+            display: block;
+            text-decoration: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #0f172a;
+            margin-bottom: 8px;
+            background: #ffffff;
+        }
+        .notification-item:hover {
+            background: #f8fafc;
+        }
+        .notification-item.read {
+            opacity: 0.7;
+            background: #f8fafc;
+        }
+        .notification-item-title {
+            font-size: 0.84rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .notification-item-msg {
+            font-size: 0.8rem;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+        .notification-item-date {
+            font-size: 0.72rem;
+            color: #64748b;
         }
             display: flex;
             flex-direction: column;
@@ -1841,6 +1956,13 @@
             .sidebar {
                 width: 0;
             }
+            .sidebar-notifications-panel {
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: none;
+                top: 78px;
+            }
             .navbar,
             .main-content {
                 margin-left: 0;
@@ -1923,6 +2045,13 @@
                 </span>
                 <span class="menu-label">KPIs</span>
             </a>
+            <a href="#" id="sidebar-notifications-trigger" class="menu-notification-link" data-menu-name="Notificaciones" data-route="/notificaciones">
+                <span class="menu-icon" aria-hidden="true">
+                    <img src="/templates/icon/notificaciones.svg" alt="Notificaciones">
+                </span>
+                <span class="menu-label">Notificaciones</span>
+                <span class="menu-notification-badge" id="sidebar-notifications-badge">0</span>
+            </a>
             <div class="accordion">
                 <button type="button" class="accordion-header" id="reportes-btn" data-menu-name="Reportes" data-route="/reportes">
                     <span class="menu-indicator">
@@ -1977,6 +2106,20 @@
             </div>
             {% endif %}
         </nav>
+        <div class="sidebar-notifications-panel" id="sidebar-notifications-panel" aria-hidden="true">
+            <div class="sidebar-notifications-header">
+                <div>
+                    <strong>Notificaciones</strong>
+                    <div class="sidebar-notifications-count" id="sidebar-notifications-count">Sin pendientes</div>
+                </div>
+                <div class="sidebar-notifications-actions">
+                    <button type="button" class="sidebar-notifications-refresh" id="sidebar-notifications-mark-all">Marcar todo</button>
+                    <button type="button" class="sidebar-notifications-refresh" id="sidebar-notifications-refresh">Actualizar</button>
+                </div>
+            </div>
+            <div class="sidebar-notifications-empty" id="sidebar-notifications-empty">No tienes notificaciones pendientes.</div>
+            <ul class="sidebar-notifications-list" id="sidebar-notifications-list"></ul>
+        </div>
     </div>
     <div class="navbar">
         <div class="navbar-inner">
@@ -2038,6 +2181,10 @@
                 </button>
             </div>
             <div class="floating-actions-group{% if (floating_actions_screen | default('personalization')) == 'usuarios' %} active{% endif %}" data-floating-screen="usuarios"{% if (floating_actions_screen | default('personalization')) == 'usuarios' %} style="display:flex"{% endif %}>
+                <button class="action-button" type="button" id="action-create-user" aria-label="Crear usuario">
+                    <img src="/templates/icon/nuevo.svg" alt="Crear usuario">
+                    <span class="action-label">Crear Usuario</span>
+                </button>
                 <button class="action-button" type="button" id="action-edit" aria-label="Editar">
                     <img src="/templates/icon/editar.svg" alt="Editar">
                     <span class="action-label">Editar</span>
@@ -2123,6 +2270,7 @@
             const identityForm = document.getElementById('identity-form');
             const actionSavePersonal = document.getElementById('action-save-personal');
             const actionResetPersonal = document.getElementById('action-reset-personal');
+            const actionCreateUser = document.getElementById('action-create-user');
             const actionEdit = document.getElementById('action-edit');
             const actionSaveUsuario = document.getElementById('action-save-usuario');
             const actionDelete = document.getElementById('action-delete');
@@ -2147,6 +2295,14 @@
             const navbarAvatarBtn = document.getElementById('navbar-avatar-btn');
             const userDropdown = document.getElementById('user-dropdown');
             const logoutLink = document.getElementById('logout-link');
+            const sidebarNotificationsTrigger = document.getElementById('sidebar-notifications-trigger');
+            const sidebarNotificationsBadge = document.getElementById('sidebar-notifications-badge');
+            const sidebarNotificationsPanel = document.getElementById('sidebar-notifications-panel');
+            const sidebarNotificationsCount = document.getElementById('sidebar-notifications-count');
+            const sidebarNotificationsList = document.getElementById('sidebar-notifications-list');
+            const sidebarNotificationsEmpty = document.getElementById('sidebar-notifications-empty');
+            const sidebarNotificationsRefresh = document.getElementById('sidebar-notifications-refresh');
+            const sidebarNotificationsMarkAll = document.getElementById('sidebar-notifications-mark-all');
             const personalizationPanel = document.querySelector('.personalization-panel');
             const viewPills = document.querySelectorAll('.view-buttons .view-pill[data-view]');
             const convertFloatingIconsToMasks = () => {
@@ -2391,6 +2547,81 @@
                 hideTimeout = setTimeout(() => {
                     messageBox.classList.remove('visible');
                 }, 2200);
+            };
+            const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char
+            ));
+            const formatNotificationDate = (value) => {
+                if (!value) return '';
+                const parsed = new Date(value);
+                if (Number.isNaN(parsed.getTime())) return '';
+                return parsed.toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                });
+            };
+            const renderNotifications = (payload) => {
+                if (!sidebarNotificationsList || !sidebarNotificationsBadge || !sidebarNotificationsCount || !sidebarNotificationsEmpty) return;
+                const total = Number(payload?.total || 0);
+                const unread = Number(payload?.unread || 0);
+                const items = Array.isArray(payload?.items) ? payload.items : [];
+                sidebarNotificationsBadge.textContent = unread > 99 ? '99+' : String(unread);
+                sidebarNotificationsBadge.classList.toggle('visible', unread > 0);
+                sidebarNotificationsCount.textContent = unread > 0 ? `${unread} pendiente${unread === 1 ? '' : 's'}` : 'Sin pendientes';
+                if (!items.length) {
+                    sidebarNotificationsList.innerHTML = '';
+                    sidebarNotificationsEmpty.style.display = 'block';
+                    return;
+                }
+                sidebarNotificationsEmpty.style.display = 'none';
+                sidebarNotificationsList.innerHTML = items.map((item) => {
+                    const href = item.href || '#';
+                    const itemClass = item.read ? 'notification-item read' : 'notification-item';
+                    const notificationId = escapeHtml(item.id || '');
+                    return `
+                        <li>
+                            <a class="${itemClass}" href="${escapeHtml(href)}" data-notification-id="${notificationId}">
+                                <div class="notification-item-title">${escapeHtml(item.title || 'Notificación')}</div>
+                                <div class="notification-item-msg">${escapeHtml(item.message || '')}</div>
+                                <div class="notification-item-date">${escapeHtml(formatNotificationDate(item.created_at))}</div>
+                            </a>
+                        </li>
+                    `;
+                }).join('');
+            };
+            const markNotificationRead = async (notificationId) => {
+                if (!notificationId) return;
+                await fetch('/api/notificaciones/marcar-leida', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: notificationId }),
+                });
+            };
+            const markAllNotificationsRead = async (notificationIds) => {
+                if (!Array.isArray(notificationIds) || !notificationIds.length) return;
+                await fetch('/api/notificaciones/marcar-todas-leidas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: notificationIds }),
+                });
+            };
+            const loadNotifications = async (silent = true) => {
+                if (!sidebarNotificationsList) return;
+                try {
+                    const res = await fetch('/api/notificaciones/resumen', { headers: { 'Accept': 'application/json' } });
+                    const payload = await res.json();
+                    if (!res.ok || !payload?.success) {
+                        throw new Error(payload?.error || 'No se pudieron cargar las notificaciones');
+                    }
+                    renderNotifications(payload);
+                } catch (error) {
+                    if (!silent) {
+                        showMessage(error.message || 'No se pudieron cargar las notificaciones', 'error');
+                    }
+                }
             };
             let guardarColores = () => {};
             let restablecerColores = () => {};
@@ -4034,6 +4265,29 @@
                 });
             };
             notebookTabs.forEach(tab => tab.addEventListener('click', () => activateNotebookTab(tab.dataset.tab)));
+            actionCreateUser && actionCreateUser.addEventListener('click', (event) => {
+                if (activeFloatingScreen !== 'usuarios') return;
+                event.preventDefault();
+                setUsuarioView('form');
+                const nombreInput = usuarioView ? usuarioView.querySelector('#usuario-nombre') : null;
+                const usuarioInput = usuarioView ? usuarioView.querySelector('#usuario-usuario') : null;
+                const correoInput = usuarioView ? usuarioView.querySelector('#usuario-correo') : null;
+                const passwordInput = usuarioView ? usuarioView.querySelector('#usuario-password') : null;
+                const rolSelect = usuarioView ? usuarioView.querySelector('#usuario-rol') : null;
+                const estadoSelect = usuarioView ? usuarioView.querySelector('#usuario-estado') : null;
+                const departamentoSelect = usuarioView ? usuarioView.querySelector('#usuario-departamento-select') : null;
+                const jefeSelect = usuarioView ? usuarioView.querySelector('#usuario-jefe-select') : null;
+                if (nombreInput) nombreInput.value = '';
+                if (usuarioInput) usuarioInput.value = '';
+                if (correoInput) correoInput.value = '';
+                if (passwordInput) passwordInput.value = '';
+                if (rolSelect) rolSelect.value = '';
+                if (estadoSelect) estadoSelect.value = 'Activo';
+                if (departamentoSelect) departamentoSelect.value = '';
+                if (jefeSelect) jefeSelect.innerHTML = '<option value="">Selecciona un jefe inmediato</option>';
+                if (nombreInput) nombreInput.focus();
+                showMessage('Formulario listo para crear usuario.', 'success');
+            });
             actionEdit && actionEdit.addEventListener('click', (event) => {
                 if (activeFloatingScreen !== 'usuarios') return;
                 event.preventDefault();
@@ -4618,6 +4872,78 @@
                         window.location.assign('/logout');
                     });
                 }
+            }
+            if (sidebarNotificationsTrigger && sidebarNotificationsPanel) {
+                const closeNotifications = () => {
+                    sidebarNotificationsPanel.classList.remove('open');
+                    sidebarNotificationsPanel.setAttribute('aria-hidden', 'true');
+                };
+                const openNotifications = async () => {
+                    sidebarNotificationsPanel.classList.add('open');
+                    sidebarNotificationsPanel.setAttribute('aria-hidden', 'false');
+                    await loadNotifications(false);
+                };
+                sidebarNotificationsTrigger.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setMenuInfo(sidebarNotificationsTrigger);
+                    const willOpen = !sidebarNotificationsPanel.classList.contains('open');
+                    if (willOpen) {
+                        await openNotifications();
+                    } else {
+                        closeNotifications();
+                    }
+                });
+                sidebarNotificationsRefresh && sidebarNotificationsRefresh.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    await loadNotifications(false);
+                });
+                sidebarNotificationsMarkAll && sidebarNotificationsMarkAll.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    const ids = Array.from(
+                        sidebarNotificationsList.querySelectorAll('[data-notification-id]')
+                    ).map((el) => (el.getAttribute('data-notification-id') || '').trim()).filter(Boolean);
+                    try {
+                        await markAllNotificationsRead(ids);
+                        await loadNotifications(false);
+                    } catch (error) {
+                        showMessage(error.message || 'No se pudieron marcar las notificaciones', 'error');
+                    }
+                });
+                sidebarNotificationsList.addEventListener('click', async (event) => {
+                    const link = event.target && event.target.closest ? event.target.closest('[data-notification-id]') : null;
+                    if (!link) return;
+                    const notificationId = (link.getAttribute('data-notification-id') || '').trim();
+                    const href = link.getAttribute('href') || '#';
+                    event.preventDefault();
+                    try {
+                        await markNotificationRead(notificationId);
+                    } catch (error) {
+                        // Si falla la persistencia, no bloqueamos navegación.
+                    }
+                    await loadNotifications(true);
+                    if (href && href !== '#') {
+                        window.location.assign(href);
+                    }
+                });
+                document.addEventListener('click', (event) => {
+                    if (
+                        sidebarNotificationsPanel.classList.contains('open')
+                        && !sidebarNotificationsPanel.contains(event.target)
+                        && !sidebarNotificationsTrigger.contains(event.target)
+                    ) {
+                        closeNotifications();
+                    }
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        closeNotifications();
+                    }
+                });
+                loadNotifications(true);
+                window.setInterval(() => {
+                    loadNotifications(true);
+                }, 60000);
             }
             const empresaToggle = document.getElementById("empresa-section-toggle");
             const empresaContent = document.getElementById("empresa-section-content");

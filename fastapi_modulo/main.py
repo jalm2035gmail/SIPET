@@ -7,15 +7,19 @@ import smtplib
 import csv
 import sqlite3
 from io import BytesIO, StringIO
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from html import escape
 import os
 import re
 import secrets
+import time
 from textwrap import dedent
 from email.message import EmailMessage
 from urllib.parse import urlparse
 from cryptography.fernet import Fernet, InvalidToken
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
 
 from typing import Any, Dict, List, Optional, Set
 from fastapi import FastAPI, Request, Body, HTTPException, UploadFile, File, Form, Depends
@@ -28,7 +32,7 @@ from reportlab.pdfgen import canvas
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from sqlalchemy import create_engine, Column, String, Integer, JSON, ForeignKey, Boolean, DateTime, func
+from sqlalchemy import create_engine, Column, String, Integer, JSON, ForeignKey, Boolean, Date, DateTime, UniqueConstraint, func
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 HIDDEN_SYSTEM_USERS = {"0konomiyaki"}
@@ -48,6 +52,9 @@ SYSTEM_REPORT_HEADER_TEMPLATE_ID = "system-report-header"
 AUTH_COOKIE_NAME = "auth_session"
 AUTH_COOKIE_SECRET = os.environ.get("AUTH_COOKIE_SECRET", "sipet-dev-auth-secret")
 SENSITIVE_DATA_SECRET = os.environ.get("SENSITIVE_DATA_SECRET", AUTH_COOKIE_SECRET)
+PASSKEY_COOKIE_REGISTER = "passkey_register"
+PASSKEY_COOKIE_AUTH = "passkey_auth"
+PASSKEY_CHALLENGE_TTL_SECONDS = 300
 NON_DATA_FIELD_TYPES = {"header", "paragraph", "html", "divider", "pagebreak"}
 
 
@@ -590,6 +597,104 @@ class Usuario(Base):
     imagen = Column(String)
     role = Column(String)
     is_active = Column(Boolean, default=True)
+    webauthn_credential_id = Column(String, unique=True, index=True)
+    webauthn_public_key = Column(String)
+    webauthn_sign_count = Column(Integer, default=0)
+
+
+class StrategicAxisConfig(Base):
+    __tablename__ = "strategic_axes_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, nullable=False)
+    codigo = Column(String, default="")
+    lider_departamento = Column(String, default="")
+    descripcion = Column(String, default="")
+    orden = Column(Integer, default=0, index=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    objetivos = relationship(
+        "StrategicObjectiveConfig",
+        back_populates="eje",
+        cascade="all, delete-orphan",
+        order_by="StrategicObjectiveConfig.orden",
+    )
+
+
+class StrategicObjectiveConfig(Base):
+    __tablename__ = "strategic_objectives_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    eje_id = Column(Integer, ForeignKey("strategic_axes_config.id"), nullable=False, index=True)
+    codigo = Column(String, default="")
+    nombre = Column(String, nullable=False)
+    lider = Column(String, default="")
+    fecha_inicial = Column(Date)
+    fecha_final = Column(Date)
+    descripcion = Column(String, default="")
+    orden = Column(Integer, default=0, index=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    eje = relationship("StrategicAxisConfig", back_populates="objetivos")
+
+
+class POAActivity(Base):
+    __tablename__ = "poa_activities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    objective_id = Column(Integer, ForeignKey("strategic_objectives_config.id"), nullable=False, index=True)
+    nombre = Column(String, nullable=False)
+    codigo = Column(String, default="")
+    responsable = Column(String, nullable=False)
+    entregable = Column(String, default="")
+    fecha_inicial = Column(Date)
+    fecha_final = Column(Date)
+    descripcion = Column(String, default="")
+    entrega_estado = Column(String, default="ninguna")
+    entrega_solicitada_por = Column(String, default="")
+    entrega_solicitada_at = Column(DateTime)
+    entrega_aprobada_por = Column(String, default="")
+    entrega_aprobada_at = Column(DateTime)
+    created_by = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class POASubactivity(Base):
+    __tablename__ = "poa_subactivities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("poa_activities.id"), nullable=False, index=True)
+    nombre = Column(String, nullable=False)
+    codigo = Column(String, default="")
+    responsable = Column(String, nullable=False)
+    entregable = Column(String, default="")
+    fecha_inicial = Column(Date)
+    fecha_final = Column(Date)
+    descripcion = Column(String, default="")
+    assigned_by = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class POADeliverableApproval(Base):
+    __tablename__ = "poa_deliverable_approvals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("poa_activities.id"), nullable=False, index=True)
+    objective_id = Column(Integer, ForeignKey("strategic_objectives_config.id"), nullable=False, index=True)
+    process_owner = Column(String, nullable=False)
+    requester = Column(String, nullable=False)
+    status = Column(String, default="pendiente")
+    comment = Column(String, default="")
+    resolved_by = Column(String, default="")
+    resolved_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class FormDefinition(Base):
@@ -667,6 +772,19 @@ class DocumentoEvidencia(Base):
     autorizado_at = Column(DateTime)
     actualizado_at = Column(DateTime)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class UserNotificationRead(Base):
+    __tablename__ = "user_notification_reads"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "user_key", "notification_id", name="uq_notification_read_scope"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(String, nullable=False, index=True, default="default")
+    user_key = Column(String, nullable=False, index=True)
+    notification_id = Column(String, nullable=False, index=True)
+    read_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 DEFAULT_SYSTEM_ROLES = [
@@ -769,6 +887,73 @@ def ensure_system_superadmin_user() -> None:
         db.close()
 
 
+def ensure_default_strategic_axes_data() -> None:
+    default_axes = [
+        (
+            "Gobernanza y cumplimiento",
+            "AX-01",
+            "Fortalecer controles, normatividad y gestión de riesgos.",
+            [
+                ("OE-01", "Fortalecer la sostenibilidad financiera institucional."),
+                ("OE-02", "Consolidar el marco de cumplimiento y auditoría."),
+                ("OE-03", "Mejorar la gestión integral de riesgos."),
+            ],
+        ),
+        (
+            "Excelencia operativa",
+            "AX-02",
+            "Optimizar procesos críticos y tiempos de respuesta.",
+            [
+                ("OE-04", "Estandarizar procesos clave con enfoque en calidad."),
+                ("OE-05", "Reducir tiempos de ciclo en servicios prioritarios."),
+                ("OE-06", "Mejorar productividad y uso de recursos."),
+                ("OE-07", "Incrementar satisfacción de clientes internos y externos."),
+            ],
+        ),
+        (
+            "Innovación y digitalización",
+            "AX-03",
+            "Acelerar transformación digital y uso de datos.",
+            [
+                ("OE-08", "Digitalizar procesos de alto impacto."),
+                ("OE-09", "Fortalecer analítica e inteligencia de negocio."),
+            ],
+        ),
+        (
+            "Desarrollo del talento",
+            "AX-04",
+            "Potenciar capacidades del equipo y cultura de mejora.",
+            [
+                ("OE-10", "Fortalecer competencias estratégicas del personal."),
+                ("OE-11", "Aumentar compromiso y clima organizacional."),
+                ("OE-12", "Consolidar liderazgo y sucesión."),
+            ],
+        ),
+    ]
+
+    db = SessionLocal()
+    try:
+        has_axes = db.query(StrategicAxisConfig).first()
+        if has_axes:
+            return
+        for axis_idx, (axis_name, axis_code, axis_desc, objectives) in enumerate(default_axes, start=1):
+            axis = StrategicAxisConfig(nombre=axis_name, codigo=axis_code, descripcion=axis_desc, orden=axis_idx)
+            db.add(axis)
+            db.flush()
+            for objective_idx, (code, objective_name) in enumerate(objectives, start=1):
+                db.add(
+                    StrategicObjectiveConfig(
+                        eje_id=axis.id,
+                        codigo=code,
+                        nombre=objective_name,
+                        orden=objective_idx,
+                    )
+                )
+        db.commit()
+    finally:
+        db.close()
+
+
 def protect_sensitive_user_fields() -> None:
     with sqlite3.connect(PRIMARY_DB_PATH) as conn:
         cols = {row[1] for row in conn.execute('PRAGMA table_info("users")').fetchall()}
@@ -797,6 +982,75 @@ def protect_sensitive_user_fields() -> None:
         db.commit()
     finally:
         db.close()
+
+
+def ensure_passkey_user_schema() -> None:
+    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
+        cols = {row[1] for row in conn.execute('PRAGMA table_info("users")').fetchall()}
+        if "webauthn_credential_id" not in cols:
+            conn.execute('ALTER TABLE "users" ADD COLUMN "webauthn_credential_id" VARCHAR')
+        if "webauthn_public_key" not in cols:
+            conn.execute('ALTER TABLE "users" ADD COLUMN "webauthn_public_key" VARCHAR')
+        if "webauthn_sign_count" not in cols:
+            conn.execute('ALTER TABLE "users" ADD COLUMN "webauthn_sign_count" INTEGER DEFAULT 0')
+        conn.execute(
+            'CREATE UNIQUE INDEX IF NOT EXISTS "ix_users_webauthn_credential_id" ON "users" ("webauthn_credential_id")'
+        )
+        conn.commit()
+
+
+def ensure_strategic_axes_schema() -> None:
+    with sqlite3.connect(PRIMARY_DB_PATH) as conn:
+        table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='strategic_axes_config'"
+        ).fetchone()
+        if not table_exists:
+            return
+        cols = {row[1] for row in conn.execute('PRAGMA table_info("strategic_axes_config")').fetchall()}
+        if "codigo" not in cols:
+            conn.execute('ALTER TABLE "strategic_axes_config" ADD COLUMN "codigo" VARCHAR DEFAULT ""')
+        if "lider_departamento" not in cols:
+            conn.execute('ALTER TABLE "strategic_axes_config" ADD COLUMN "lider_departamento" VARCHAR DEFAULT ""')
+        objectives_table_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='strategic_objectives_config'"
+        ).fetchone()
+        if objectives_table_exists:
+            obj_cols = {row[1] for row in conn.execute('PRAGMA table_info("strategic_objectives_config")').fetchall()}
+            if "lider" not in obj_cols:
+                conn.execute('ALTER TABLE "strategic_objectives_config" ADD COLUMN "lider" VARCHAR DEFAULT ""')
+            if "fecha_inicial" not in obj_cols:
+                conn.execute('ALTER TABLE "strategic_objectives_config" ADD COLUMN "fecha_inicial" DATE')
+            if "fecha_final" not in obj_cols:
+                conn.execute('ALTER TABLE "strategic_objectives_config" ADD COLUMN "fecha_final" DATE')
+        poa_activities_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='poa_activities'"
+        ).fetchone()
+        if poa_activities_exists:
+            poa_cols = {row[1] for row in conn.execute('PRAGMA table_info("poa_activities")').fetchall()}
+            if "fecha_inicial" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "fecha_inicial" DATE')
+            if "fecha_final" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "fecha_final" DATE')
+            if "entrega_estado" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "entrega_estado" VARCHAR DEFAULT "ninguna"')
+            if "entrega_solicitada_por" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "entrega_solicitada_por" VARCHAR DEFAULT ""')
+            if "entrega_solicitada_at" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "entrega_solicitada_at" DATETIME')
+            if "entrega_aprobada_por" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "entrega_aprobada_por" VARCHAR DEFAULT ""')
+            if "entrega_aprobada_at" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "entrega_aprobada_at" DATETIME')
+        poa_subactivities_exists = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='poa_subactivities'"
+        ).fetchone()
+        if poa_subactivities_exists:
+            poa_sub_cols = {row[1] for row in conn.execute('PRAGMA table_info("poa_subactivities")').fetchall()}
+            if "fecha_inicial" not in poa_sub_cols:
+                conn.execute('ALTER TABLE "poa_subactivities" ADD COLUMN "fecha_inicial" DATE')
+            if "fecha_final" not in poa_sub_cols:
+                conn.execute('ALTER TABLE "poa_subactivities" ADD COLUMN "fecha_final" DATE')
+        conn.commit()
 
 
 def ensure_documentos_schema() -> None:
@@ -1026,8 +1280,11 @@ ensure_documentos_schema()
 ensure_forms_schema()
 unify_users_table()
 ensure_default_roles()
+ensure_passkey_user_schema()
+ensure_strategic_axes_schema()
 protect_sensitive_user_fields()
 ensure_system_superadmin_user()
+ensure_default_strategic_axes_data()
 
 app = FastAPI(title="Módulo de Planificación Estratégica y POA", docs_url="/docs", redoc_url="/redoc")
 templates = Jinja2Templates(directory="fastapi_modulo/templates")
@@ -1104,6 +1361,7 @@ async def enforce_backend_login(request: Request, call_next):
     if (
         request.method == "OPTIONS"
         or path in public_paths
+        or path.startswith("/web/passkey/")
         or path.startswith("/templates/")
         or path.startswith("/docs/")
         or path.startswith("/redoc/")
@@ -1152,6 +1410,256 @@ def verify_password(password: str, stored_hash: str) -> bool:
     except Exception:
         # Compatibilidad con usuarios legacy guardados en texto plano.
         return hmac.compare_digest(password, stored)
+
+
+def _find_user_by_login(db, login_value: str) -> Optional[Usuario]:
+    normalized_login = (login_value or "").strip().lower()
+    if not normalized_login:
+        return None
+    login_hash = _sensitive_lookup_hash(normalized_login)
+    user = db.query(Usuario).filter(Usuario.usuario_hash == login_hash).first()
+    if not user:
+        user = db.query(Usuario).filter(Usuario.correo_hash == login_hash).first()
+    if not user:
+        user = db.query(Usuario).filter(func.lower(Usuario.usuario) == normalized_login).first()
+    if not user:
+        user = db.query(Usuario).filter(func.lower(Usuario.correo) == normalized_login).first()
+    return user
+
+
+def _resolve_user_role_name(db, user: Usuario) -> str:
+    role_name = "usuario"
+    if user.rol_id:
+        role = db.query(Rol).filter(Rol.id == user.rol_id).first()
+        if role and role.nombre:
+            role_name = normalize_role_name(role.nombre)
+    elif user.role:
+        role_name = normalize_role_name(user.role)
+    return role_name
+
+
+def _apply_auth_cookies(response: Response, request: Request, username: str, role_name: str) -> None:
+    tenant_id = _normalize_tenant_id(request.cookies.get("tenant_id") or os.environ.get("DEFAULT_TENANT_ID", "default"))
+    response.set_cookie(
+        AUTH_COOKIE_NAME,
+        _build_session_cookie(username, role_name, tenant_id),
+        httponly=True,
+        samesite="lax",
+    )
+    response.set_cookie("user_role", normalize_role_name(role_name), httponly=True, samesite="lax")
+    response.set_cookie("user_name", username, httponly=True, samesite="lax")
+    response.set_cookie("tenant_id", tenant_id, httponly=True, samesite="lax")
+
+
+def _b64url_encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
+
+
+def _b64url_decode(value: str) -> bytes:
+    raw = (value or "").strip()
+    if not raw:
+        return b""
+    raw += "=" * (-len(raw) % 4)
+    return base64.urlsafe_b64decode(raw.encode("ascii"))
+
+
+def _passkey_rp_id(request: Request) -> str:
+    host = (request.url.hostname or "").strip().lower()
+    if host:
+        return host
+    host_header = (request.headers.get("host") or "").split(":")[0].strip().lower()
+    return host_header or "localhost"
+
+
+def _passkey_origin(request: Request) -> str:
+    origin_header = (request.headers.get("origin") or "").strip()
+    if origin_header:
+        return origin_header
+    return f"{request.url.scheme}://{request.url.netloc}"
+
+
+def _build_passkey_token(action: str, user_id: int, challenge: str, rp_id: str, origin: str) -> str:
+    payload_json = json.dumps(
+        {
+            "a": action,
+            "u": int(user_id),
+            "c": challenge,
+            "r": rp_id,
+            "o": origin,
+            "exp": int(time.time()) + PASSKEY_CHALLENGE_TTL_SECONDS,
+        },
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+    payload = _b64url_encode(payload_json.encode("utf-8"))
+    signature = hmac.new(
+        AUTH_COOKIE_SECRET.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return f"{payload}.{signature}"
+
+
+def _read_passkey_token(token: str, expected_action: str) -> Optional[Dict[str, Any]]:
+    if not token or "." not in token:
+        return None
+    payload, signature = token.rsplit(".", 1)
+    expected_signature = hmac.new(
+        AUTH_COOKIE_SECRET.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected_signature):
+        return None
+    try:
+        data = json.loads(_b64url_decode(payload).decode("utf-8"))
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    if data.get("a") != expected_action:
+        return None
+    try:
+        if int(data.get("exp", 0)) < int(time.time()):
+            return None
+        data["u"] = int(data.get("u"))
+        data["c"] = str(data.get("c", ""))
+        data["r"] = str(data.get("r", ""))
+        data["o"] = str(data.get("o", ""))
+    except (TypeError, ValueError):
+        return None
+    return data
+
+
+def _parse_client_data(client_data_b64: str) -> Optional[Dict[str, Any]]:
+    try:
+        client_data_bytes = _b64url_decode(client_data_b64)
+        payload = json.loads(client_data_bytes.decode("utf-8"))
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    payload["_raw_bytes"] = client_data_bytes
+    return payload
+
+
+def _is_demo_account(username: str) -> bool:
+    return (username or "").strip().lower() == "demo"
+
+
+def _current_user_record(request: Request, db) -> Optional[Usuario]:
+    session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+    if not session_username:
+        return None
+    lookup_hash = _sensitive_lookup_hash(session_username)
+    user = db.query(Usuario).filter(Usuario.usuario_hash == lookup_hash).first()
+    if not user:
+        user = db.query(Usuario).filter(Usuario.correo_hash == lookup_hash).first()
+    if not user:
+        normalized = session_username.lower()
+        user = db.query(Usuario).filter(func.lower(Usuario.usuario) == normalized).first()
+    if not user:
+        user = db.query(Usuario).filter(func.lower(Usuario.correo) == session_username.lower()).first()
+    return user
+
+
+def _user_aliases(user: Optional[Usuario], session_username: str) -> Set[str]:
+    aliases: Set[str] = set()
+    for raw in [
+        session_username,
+        _decrypt_sensitive(user.usuario) if user else "",
+        _decrypt_sensitive(user.correo) if user else "",
+        (user.nombre if user else "") or "",
+    ]:
+        value = (raw or "").strip().lower()
+        if value:
+            aliases.add(value)
+    return aliases
+
+
+def _date_to_iso(value: Optional[date]) -> str:
+    if not value:
+        return ""
+    return value.isoformat()
+
+
+def _parse_date_field(value: Any, field_name: str, required: bool = True) -> tuple[Optional[date], Optional[str]]:
+    raw = str(value or "").strip()
+    if not raw:
+        if required:
+            return None, f"{field_name} es obligatoria"
+        return None, None
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d").date(), None
+    except ValueError:
+        return None, f"{field_name} debe tener formato YYYY-MM-DD"
+
+
+def _validate_date_range(start_date: Optional[date], end_date: Optional[date], label: str) -> Optional[str]:
+    if not start_date or not end_date:
+        return f"{label}: fecha inicial y fecha final son obligatorias"
+    if start_date > end_date:
+        return f"{label}: la fecha inicial no puede ser mayor que la fecha final"
+    return None
+
+
+def _validate_child_date_range(
+    child_start: date,
+    child_end: date,
+    parent_start: Optional[date],
+    parent_end: Optional[date],
+    child_label: str,
+    parent_label: str,
+) -> Optional[str]:
+    if not parent_start or not parent_end:
+        return f"{parent_label} no tiene fechas definidas para delimitar {child_label.lower()}"
+    if child_start < parent_start or child_end > parent_end:
+        return (
+            f"{child_label} debe estar dentro del rango de {parent_label} "
+            f"({parent_start.isoformat()} a {parent_end.isoformat()})"
+        )
+    return None
+
+
+def _activity_status(activity: POAActivity, today: Optional[date] = None) -> str:
+    if (activity.entrega_estado or "").strip().lower() == "aprobada":
+        return "Terminada"
+    current = today or datetime.utcnow().date()
+    if activity.fecha_inicial and current < activity.fecha_inicial:
+        return "No iniciada"
+    return "En proceso"
+
+
+def _resolve_process_owner_for_objective(objective: StrategicObjectiveConfig, axis: Optional[StrategicAxisConfig]) -> str:
+    owner = (objective.lider or "").strip()
+    if owner:
+        return owner
+    return (axis.lider_departamento or "").strip() if axis else ""
+
+
+def _is_user_process_owner(request: Request, db, process_owner: str) -> bool:
+    if is_admin_or_superadmin(request):
+        return True
+    owner = (process_owner or "").strip().lower()
+    if not owner:
+        return False
+    session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+    user = _current_user_record(request, db)
+    aliases = _user_aliases(user, session_username)
+    if owner in aliases:
+        return True
+    user_department = (user.departamento or "").strip().lower() if user and user.departamento else ""
+    return bool(user_department and user_department == owner)
+
+
+def _notification_user_key(request: Request, db) -> str:
+    session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+    user = _current_user_record(request, db)
+    if user and getattr(user, "id", None):
+        return f"user:{int(user.id)}"
+    if session_username:
+        return f"username:{session_username.lower()}"
+    return ""
 
 
 def is_hidden_user(request: Request, username: Optional[str]) -> bool:
@@ -1291,31 +1799,7 @@ def web_login_submit(
 
     db = SessionLocal()
     try:
-        normalized_login = username.lower()
-        login_hash = _sensitive_lookup_hash(normalized_login)
-        user = (
-            db.query(Usuario)
-            .filter(Usuario.usuario_hash == login_hash)
-            .first()
-        )
-        if not user:
-            user = (
-                db.query(Usuario)
-                .filter(Usuario.correo_hash == login_hash)
-                .first()
-            )
-        if not user:
-            user = (
-                db.query(Usuario)
-                .filter(func.lower(Usuario.usuario) == normalized_login)
-                .first()
-            )
-        if not user:
-            user = (
-                db.query(Usuario)
-                .filter(func.lower(Usuario.correo) == normalized_login)
-                .first()
-            )
+        user = _find_user_by_login(db, username)
         if not user or not verify_password(password, user.contrasena or ""):
             return templates.TemplateResponse(
                 "web_login.html",
@@ -1328,28 +1812,273 @@ def web_login_submit(
                 status_code=401,
             )
 
-        role_name = "usuario"
-        if user.rol_id:
-            role = db.query(Rol).filter(Rol.id == user.rol_id).first()
-            if role and role.nombre:
-                role_name = normalize_role_name(role.nombre)
-        elif user.role:
-            role_name = normalize_role_name(user.role)
+        role_name = _resolve_user_role_name(db, user)
+        session_username = _decrypt_sensitive(user.usuario) or username
     finally:
         db.close()
 
-    session_username = _decrypt_sensitive(user.usuario) or username
     response = RedirectResponse(url="/inicio", status_code=303)
-    tenant_id = _normalize_tenant_id(request.cookies.get("tenant_id") or os.environ.get("DEFAULT_TENANT_ID", "default"))
+    _apply_auth_cookies(response, request, session_username, role_name)
+    return response
+
+
+@app.post("/web/passkey/register/options")
+def passkey_register_options(
+    request: Request,
+    payload: dict = Body(default={}),
+):
+    username = str(payload.get("usuario", "")).strip()
+    password = str(payload.get("contrasena", ""))
+    if not username or not password:
+        return JSONResponse({"success": False, "error": "Usuario y contraseña son obligatorios"}, status_code=400)
+    if _is_demo_account(username):
+        return JSONResponse(
+            {"success": False, "error": "La biometría no está habilitada para el usuario demo"},
+            status_code=403,
+        )
+
+    db = SessionLocal()
+    try:
+        user = _find_user_by_login(db, username)
+        if not user or not verify_password(password, user.contrasena or ""):
+            return JSONResponse({"success": False, "error": "Credenciales inválidas"}, status_code=401)
+        username_plain = _decrypt_sensitive(user.usuario) or username
+        display_name = (user.nombre or "").strip() or username_plain
+        challenge = _b64url_encode(secrets.token_bytes(32))
+        rp_id = _passkey_rp_id(request)
+        origin = _passkey_origin(request)
+        token = _build_passkey_token("register", user.id, challenge, rp_id, origin)
+        options: Dict[str, Any] = {
+            "challenge": challenge,
+            "rp": {"name": "SIPET", "id": rp_id},
+            "user": {
+                "id": _b64url_encode(f"user:{user.id}".encode("utf-8")),
+                "name": username_plain,
+                "displayName": display_name,
+            },
+            "pubKeyCredParams": [{"type": "public-key", "alg": -7}],
+            "timeout": 60000,
+            "attestation": "none",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "residentKey": "preferred",
+                "userVerification": "preferred",
+            },
+        }
+        if user.webauthn_credential_id:
+            options["excludeCredentials"] = [
+                {
+                    "id": user.webauthn_credential_id,
+                    "type": "public-key",
+                    "transports": ["internal"],
+                }
+            ]
+    finally:
+        db.close()
+
+    response = JSONResponse({"success": True, "options": options})
     response.set_cookie(
-        AUTH_COOKIE_NAME,
-        _build_session_cookie(session_username, role_name, tenant_id),
+        PASSKEY_COOKIE_REGISTER,
+        token,
         httponly=True,
         samesite="lax",
+        max_age=PASSKEY_CHALLENGE_TTL_SECONDS,
     )
-    response.set_cookie("user_role", normalize_role_name(role_name), httponly=True, samesite="lax")
-    response.set_cookie("user_name", session_username, httponly=True, samesite="lax")
-    response.set_cookie("tenant_id", tenant_id, httponly=True, samesite="lax")
+    return response
+
+
+@app.post("/web/passkey/register/verify")
+def passkey_register_verify(
+    request: Request,
+    payload: dict = Body(default={}),
+):
+    token_data = _read_passkey_token(request.cookies.get(PASSKEY_COOKIE_REGISTER, ""), "register")
+    if not token_data:
+        return JSONResponse({"success": False, "error": "Solicitud biométrica expirada, inténtalo de nuevo"}, status_code=400)
+
+    credential_id = str(payload.get("id", "")).strip()
+    response_payload = payload.get("response") or {}
+    if not credential_id or not isinstance(response_payload, dict):
+        return JSONResponse({"success": False, "error": "Respuesta biométrica inválida"}, status_code=400)
+
+    client_data = _parse_client_data(str(response_payload.get("clientDataJSON", "")))
+    public_key_b64 = str(response_payload.get("publicKey", "")).strip()
+    if not client_data or not public_key_b64:
+        return JSONResponse({"success": False, "error": "No se pudo registrar la clave biométrica"}, status_code=400)
+    if str(client_data.get("type", "")) != "webauthn.create":
+        return JSONResponse({"success": False, "error": "Tipo de autenticación no válido"}, status_code=400)
+    if str(client_data.get("challenge", "")) != token_data["c"]:
+        return JSONResponse({"success": False, "error": "Desafío biométrico inválido"}, status_code=400)
+    if str(client_data.get("origin", "")).rstrip("/") != token_data["o"].rstrip("/"):
+        return JSONResponse({"success": False, "error": "Origen no permitido para biometría"}, status_code=400)
+
+    try:
+        public_key_der = _b64url_decode(public_key_b64)
+        serialization.load_der_public_key(public_key_der)
+    except Exception:
+        return JSONResponse({"success": False, "error": "Llave pública biométrica inválida"}, status_code=400)
+
+    db = SessionLocal()
+    try:
+        user = db.query(Usuario).filter(Usuario.id == token_data["u"]).first()
+        if not user:
+            return JSONResponse({"success": False, "error": "Usuario no encontrado"}, status_code=404)
+        user.webauthn_credential_id = credential_id
+        user.webauthn_public_key = _b64url_encode(public_key_der)
+        user.webauthn_sign_count = 0
+        db.add(user)
+        db.commit()
+    except Exception:
+        db.rollback()
+        return JSONResponse({"success": False, "error": "No se pudo guardar la biometría"}, status_code=500)
+    finally:
+        db.close()
+
+    response = JSONResponse({"success": True, "message": "Biometría registrada correctamente"})
+    response.delete_cookie(PASSKEY_COOKIE_REGISTER)
+    return response
+
+
+@app.post("/web/passkey/auth/options")
+def passkey_auth_options(
+    request: Request,
+    payload: dict = Body(default={}),
+):
+    username = str(payload.get("usuario", "")).strip()
+    if not username:
+        return JSONResponse({"success": False, "error": "Ingresa tu usuario para autenticar con biometría"}, status_code=400)
+    if _is_demo_account(username):
+        return JSONResponse(
+            {"success": False, "error": "La biometría no está habilitada para el usuario demo"},
+            status_code=403,
+        )
+
+    db = SessionLocal()
+    try:
+        user = _find_user_by_login(db, username)
+        if not user or not user.webauthn_credential_id or not user.webauthn_public_key:
+            return JSONResponse({"success": False, "error": "Este usuario no tiene biometría registrada"}, status_code=404)
+        challenge = _b64url_encode(secrets.token_bytes(32))
+        rp_id = _passkey_rp_id(request)
+        origin = _passkey_origin(request)
+        token = _build_passkey_token("auth", user.id, challenge, rp_id, origin)
+        options = {
+            "challenge": challenge,
+            "rpId": rp_id,
+            "allowCredentials": [
+                {
+                    "id": user.webauthn_credential_id,
+                    "type": "public-key",
+                    "transports": ["internal"],
+                }
+            ],
+            "timeout": 60000,
+            "userVerification": "preferred",
+        }
+    finally:
+        db.close()
+
+    response = JSONResponse({"success": True, "options": options})
+    response.set_cookie(
+        PASSKEY_COOKIE_AUTH,
+        token,
+        httponly=True,
+        samesite="lax",
+        max_age=PASSKEY_CHALLENGE_TTL_SECONDS,
+    )
+    return response
+
+
+@app.post("/web/passkey/auth/verify")
+def passkey_auth_verify(
+    request: Request,
+    payload: dict = Body(default={}),
+):
+    token_data = _read_passkey_token(request.cookies.get(PASSKEY_COOKIE_AUTH, ""), "auth")
+    if not token_data:
+        return JSONResponse({"success": False, "error": "Solicitud biométrica expirada, inténtalo de nuevo"}, status_code=400)
+
+    credential_id = str(payload.get("id", "")).strip()
+    response_payload = payload.get("response") or {}
+    if not credential_id or not isinstance(response_payload, dict):
+        return JSONResponse({"success": False, "error": "Respuesta biométrica inválida"}, status_code=400)
+
+    client_data_b64 = str(response_payload.get("clientDataJSON", "")).strip()
+    auth_data_b64 = str(response_payload.get("authenticatorData", "")).strip()
+    signature_b64 = str(response_payload.get("signature", "")).strip()
+    if not client_data_b64 or not auth_data_b64 or not signature_b64:
+        return JSONResponse({"success": False, "error": "Datos biométricos incompletos"}, status_code=400)
+
+    client_data = _parse_client_data(client_data_b64)
+    if not client_data:
+        return JSONResponse({"success": False, "error": "No se pudo leer la respuesta del autenticador"}, status_code=400)
+    if str(client_data.get("type", "")) != "webauthn.get":
+        return JSONResponse({"success": False, "error": "Tipo de autenticación no válido"}, status_code=400)
+    if str(client_data.get("challenge", "")) != token_data["c"]:
+        return JSONResponse({"success": False, "error": "Desafío biométrico inválido"}, status_code=400)
+    if str(client_data.get("origin", "")).rstrip("/") != token_data["o"].rstrip("/"):
+        return JSONResponse({"success": False, "error": "Origen no permitido para biometría"}, status_code=400)
+
+    try:
+        authenticator_data = _b64url_decode(auth_data_b64)
+        signature = _b64url_decode(signature_b64)
+    except ValueError:
+        return JSONResponse({"success": False, "error": "Formato biométrico inválido"}, status_code=400)
+
+    if len(authenticator_data) < 37:
+        return JSONResponse({"success": False, "error": "AuthenticatorData inválido"}, status_code=400)
+
+    expected_rp_hash = hashlib.sha256(token_data["r"].encode("utf-8")).digest()
+    rp_hash = authenticator_data[:32]
+    flags = authenticator_data[32]
+    sign_count = int.from_bytes(authenticator_data[33:37], "big")
+    if not hmac.compare_digest(rp_hash, expected_rp_hash):
+        return JSONResponse({"success": False, "error": "RP ID inválido para biometría"}, status_code=400)
+    if not (flags & 0x01):
+        return JSONResponse({"success": False, "error": "Se requiere presencia del usuario"}, status_code=400)
+
+    client_data_hash = hashlib.sha256(client_data["_raw_bytes"]).digest()
+    signed_payload = authenticator_data + client_data_hash
+
+    db = SessionLocal()
+    try:
+        user = db.query(Usuario).filter(Usuario.id == token_data["u"]).first()
+        if not user or not user.webauthn_credential_id or not user.webauthn_public_key:
+            return JSONResponse({"success": False, "error": "Usuario sin biometría registrada"}, status_code=404)
+        if user.webauthn_credential_id != credential_id:
+            return JSONResponse({"success": False, "error": "Credencial biométrica no coincide"}, status_code=401)
+
+        try:
+            public_key = serialization.load_der_public_key(_b64url_decode(user.webauthn_public_key))
+        except Exception:
+            return JSONResponse({"success": False, "error": "Llave biométrica inválida"}, status_code=400)
+
+        try:
+            if isinstance(public_key, ec.EllipticCurvePublicKey):
+                public_key.verify(signature, signed_payload, ec.ECDSA(hashes.SHA256()))
+            elif isinstance(public_key, rsa.RSAPublicKey):
+                public_key.verify(signature, signed_payload, padding.PKCS1v15(), hashes.SHA256())
+            else:
+                return JSONResponse({"success": False, "error": "Tipo de llave biométrica no soportado"}, status_code=400)
+        except InvalidSignature:
+            return JSONResponse({"success": False, "error": "Firma biométrica inválida"}, status_code=401)
+
+        stored_sign_count = int(user.webauthn_sign_count or 0)
+        if sign_count > 0 and stored_sign_count > 0 and sign_count <= stored_sign_count:
+            return JSONResponse({"success": False, "error": "Contador biométrico inválido"}, status_code=401)
+        if sign_count > stored_sign_count:
+            user.webauthn_sign_count = sign_count
+            db.add(user)
+            db.commit()
+
+        role_name = _resolve_user_role_name(db, user)
+        session_username = _decrypt_sensitive(user.usuario) or _decrypt_sensitive(user.correo) or f"user-{user.id}"
+    finally:
+        db.close()
+
+    response = JSONResponse({"success": True, "redirect": "/inicio"})
+    _apply_auth_cookies(response, request, session_username, role_name)
+    response.delete_cookie(PASSKEY_COOKIE_AUTH)
     return response
 
 
@@ -1361,6 +2090,8 @@ def logout():
     response.delete_cookie("user_role")
     response.delete_cookie("user_name")
     response.delete_cookie("tenant_id")
+    response.delete_cookie(PASSKEY_COOKIE_AUTH)
+    response.delete_cookie(PASSKEY_COOKIE_REGISTER)
     return response
 
 
@@ -3047,6 +3778,7 @@ PLAN_ESTRATEGICO_HTML = dedent("""
       </style>
 
       <div class="pe-wrap">
+        __CREATE_PLAN_BUTTON__
         <section class="pe-kpis">
           <article class="pe-kpi">
             <div class="pe-kpi__label">Objetivos estratégicos</div>
@@ -3127,10 +3859,10 @@ PLAN_ESTRATEGICO_HTML = dedent("""
             </div>
 
             <div class="pe-axis">
-              <button class="pe-axis__btn pe-axis__btn--active" type="button"><span class="pe-axis__dot"></span><span>Gobernanza y cumplimiento</span><span class="pe-axis__count">3</span></button>
-              <button class="pe-axis__btn" type="button"><span class="pe-axis__dot pe-axis__dot--alt"></span><span>Excelencia operativa</span><span class="pe-axis__count">4</span></button>
-              <button class="pe-axis__btn" type="button"><span class="pe-axis__dot pe-axis__dot--alt2"></span><span>Innovación y digitalización</span><span class="pe-axis__count">2</span></button>
-              <button class="pe-axis__btn" type="button"><span class="pe-axis__dot pe-axis__dot--alt3"></span><span>Desarrollo del talento</span><span class="pe-axis__count">3</span></button>
+              <button class="pe-axis__btn pe-axis__btn--active" type="button" onclick="window.location.href='/ejes-estrategicos'"><span class="pe-axis__dot"></span><span>Gobernanza y cumplimiento</span><span class="pe-axis__count">3</span></button>
+              <button class="pe-axis__btn" type="button" onclick="window.location.href='/ejes-estrategicos'"><span class="pe-axis__dot pe-axis__dot--alt"></span><span>Excelencia operativa</span><span class="pe-axis__count">4</span></button>
+              <button class="pe-axis__btn" type="button" onclick="window.location.href='/ejes-estrategicos'"><span class="pe-axis__dot pe-axis__dot--alt2"></span><span>Innovación y digitalización</span><span class="pe-axis__count">2</span></button>
+              <button class="pe-axis__btn" type="button" onclick="window.location.href='/ejes-estrategicos'"><span class="pe-axis__dot pe-axis__dot--alt3"></span><span>Desarrollo del talento</span><span class="pe-axis__count">3</span></button>
             </div>
 
             <div class="pe-sidebox">
@@ -4815,6 +5547,7 @@ POA_HTML = dedent("""
       </style>
 
       <div class="pe-wrap">
+        __CREATE_POA_BUTTON__
         <section class="pe-kpis">
           <article class="pe-kpi">
             <div class="pe-kpi__label">Actividades programadas</div>
@@ -4931,6 +5664,524 @@ POA_HTML = dedent("""
           </div>
         </article>
       </div>
+    </section>
+""")
+
+POA_CREAR_HTML = dedent("""
+    <section class="poac-wrap">
+      <style>
+        .poac-wrap *{ box-sizing:border-box; }
+        .poac-wrap{
+          font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+          color:#0f172a;
+        }
+        .poac-head{
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:10px;
+          margin-bottom: 12px;
+        }
+        .poac-btn{
+          border:1px solid rgba(148,163,184,.38);
+          border-radius: 12px;
+          padding: 9px 12px;
+          background:#fff;
+          cursor:pointer;
+          font-weight:700;
+        }
+        .poac-btn.primary{
+          background:#0f3d2e;
+          color:#fff;
+          border-color:#0f3d2e;
+        }
+        .poac-grid{
+          display:grid;
+          grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+          gap: 12px;
+        }
+        .poac-card{
+          background: rgba(255,255,255,.92);
+          border:1px solid rgba(148,163,184,.32);
+          border-radius: 16px;
+          padding: 12px;
+        }
+        .poac-list{ display:flex; flex-direction:column; gap:8px; max-height: 68vh; overflow:auto; }
+        .poac-item{
+          border:1px solid rgba(148,163,184,.32);
+          border-radius: 12px;
+          background:#fff;
+          padding:10px;
+          cursor:pointer;
+          text-align:left;
+        }
+        .poac-item.active{ background: rgba(15,61,46,.08); border-color: rgba(15,61,46,.30); }
+        .poac-sub{ color:#64748b; font-size: 12px; margin-top: 4px; }
+        .poac-field{ display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+        .poac-field label{ font-size:12px; color:#475569; font-weight:700; }
+        .poac-input, .poac-textarea{
+          width:100%;
+          border:1px solid rgba(148,163,184,.42);
+          border-radius: 10px;
+          padding:10px 12px;
+          background:#fff;
+          font-size:14px;
+        }
+        .poac-textarea{ min-height: 80px; resize:vertical; }
+        .poac-row{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+        .poac-activity{ border:1px solid rgba(148,163,184,.32); border-radius: 12px; background:#fff; padding: 10px; margin-top: 10px; }
+        .poac-activity-head{ display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+        .poac-inline-actions{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+        .poac-subactivity{ margin-top:8px; border-top:1px dashed rgba(148,163,184,.32); padding-top:8px; }
+        .poac-msg{ margin-top:10px; min-height:1.2em; font-size:13px; color:#0f3d2e; }
+        .poac-status{
+          display:inline-flex;
+          align-items:center;
+          gap:4px;
+          font-size:11px;
+          font-weight:800;
+          border-radius:999px;
+          padding:4px 8px;
+          border:1px solid rgba(148,163,184,.35);
+          background: rgba(255,255,255,.82);
+          margin-top:6px;
+        }
+        .poac-status.ni{ background: rgba(148,163,184,.18); color:#475569; }
+        .poac-status.ep{ background: rgba(245,158,11,.16); color:#92400e; }
+        .poac-status.te{ background: rgba(22,163,74,.15); color:#166534; }
+        .poac-approval-card{
+          margin-top: 12px;
+          border:1px solid rgba(148,163,184,.32);
+          border-radius: 12px;
+          padding: 10px;
+          background:#fff;
+        }
+        @media (max-width: 980px){
+          .poac-grid{ grid-template-columns: 1fr; }
+          .poac-row{ grid-template-columns: 1fr; }
+        }
+      </style>
+
+      <div class="poac-head">
+        <div>
+          <h2 style="margin:0;">Tablero de creación de POA</h2>
+          <p style="margin:4px 0 0;color:#64748b;">Trabaja sobre ejes y objetivos estratégicos asignados a tu usuario.</p>
+        </div>
+        <button class="poac-btn" type="button" onclick="window.location.href='/poa'">Volver a POA</button>
+      </div>
+
+      <div class="poac-grid">
+        <aside class="poac-card">
+          <h3 style="margin:0;font-size:16px;">Ejes y objetivos asignados</h3>
+          <div class="poac-list" id="poac-objective-list"></div>
+        </aside>
+        <section class="poac-card">
+          <h3 style="margin:0;font-size:16px;">Actividad POA</h3>
+          <div class="poac-row">
+            <div class="poac-field">
+              <label for="poac-act-name">Nombre</label>
+              <input id="poac-act-name" class="poac-input" type="text" placeholder="Nombre de la actividad">
+            </div>
+            <div class="poac-field">
+              <label for="poac-act-code">Código</label>
+              <input id="poac-act-code" class="poac-input" type="text" placeholder="Código">
+            </div>
+          </div>
+          <div class="poac-row">
+            <div class="poac-field">
+              <label for="poac-act-owner">Responsable</label>
+              <input id="poac-act-owner" class="poac-input" type="text" placeholder="Responsable">
+            </div>
+            <div class="poac-field">
+              <label for="poac-act-deliverable">Entregable</label>
+              <input id="poac-act-deliverable" class="poac-input" type="text" placeholder="Entregable">
+            </div>
+          </div>
+          <div class="poac-row">
+            <div class="poac-field">
+              <label for="poac-act-start">Fecha inicial</label>
+              <input id="poac-act-start" class="poac-input" type="date">
+            </div>
+            <div class="poac-field">
+              <label for="poac-act-end">Fecha final</label>
+              <input id="poac-act-end" class="poac-input" type="date">
+            </div>
+          </div>
+          <div class="poac-field">
+            <label for="poac-act-desc">Descripción</label>
+            <textarea id="poac-act-desc" class="poac-textarea" placeholder="Descripción"></textarea>
+          </div>
+          <div class="poac-inline-actions">
+            <button class="poac-btn primary" id="poac-add-activity" type="button">Agregar actividad</button>
+          </div>
+
+          <div id="poac-activities"></div>
+          <div class="poac-approval-card">
+            <h4 style="margin:0 0 6px 0; font-size:14px;">Aprobaciones pendientes de entregables</h4>
+            <div id="poac-approvals"></div>
+          </div>
+          <div class="poac-msg" id="poac-msg" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <script>
+        (() => {
+          const objectiveListEl = document.getElementById("poac-objective-list");
+          const activitiesEl = document.getElementById("poac-activities");
+          const approvalsEl = document.getElementById("poac-approvals");
+          const msgEl = document.getElementById("poac-msg");
+          const addActivityBtn = document.getElementById("poac-add-activity");
+          const actNameEl = document.getElementById("poac-act-name");
+          const actCodeEl = document.getElementById("poac-act-code");
+          const actOwnerEl = document.getElementById("poac-act-owner");
+          const actDeliverableEl = document.getElementById("poac-act-deliverable");
+          const actStartEl = document.getElementById("poac-act-start");
+          const actEndEl = document.getElementById("poac-act-end");
+          const actDescEl = document.getElementById("poac-act-desc");
+
+          let objectives = [];
+          let activities = [];
+          let pendingApprovals = [];
+          let selectedObjectiveId = null;
+
+          const showMsg = (text, isError = false) => {
+            if (!msgEl) return;
+            msgEl.style.color = isError ? "#b91c1c" : "#0f3d2e";
+            msgEl.textContent = text || "";
+          };
+
+          const requestJson = async (url, options = {}) => {
+            const response = await fetch(url, {
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              ...options,
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.success === false) {
+              throw new Error(payload.error || "No se pudo completar la operación.");
+            }
+            return payload;
+          };
+
+          const selectedObjective = () => objectives.find((item) => item.id === selectedObjectiveId) || null;
+          const statusClass = (status) => {
+            if (status === "Terminada") return "te";
+            if (status === "No iniciada") return "ni";
+            return "ep";
+          };
+          const visualRangeError = (start, end, label) => {
+            if (!start || !end) return `${label}: fecha inicial y fecha final son obligatorias.`;
+            if (start > end) return `${label}: la fecha inicial no puede ser mayor que la final.`;
+            return "";
+          };
+          const visualChildRangeError = (childStart, childEnd, parentStart, parentEnd, childLabel, parentLabel) => {
+            if (!parentStart || !parentEnd) return `${parentLabel} no tiene fechas definidas para delimitar ${childLabel.toLowerCase()}.`;
+            if (childStart < parentStart || childEnd > parentEnd) {
+              return `${childLabel} debe quedar dentro de ${parentLabel} (${parentStart} a ${parentEnd}).`;
+            }
+            return "";
+          };
+
+          const renderObjectives = () => {
+            if (!objectiveListEl) return;
+            objectiveListEl.innerHTML = objectives.map((obj) => `
+              <button class="poac-item ${obj.id === selectedObjectiveId ? "active" : ""}" type="button" data-obj-id="${obj.id}">
+                <strong>${obj.codigo || "OBJ"} - ${obj.nombre}</strong>
+                <div class="poac-sub">${obj.axis_name || "Sin eje"} | ${obj.fecha_inicial || "-"} a ${obj.fecha_final || "-"}</div>
+              </button>
+            `).join("");
+            objectiveListEl.querySelectorAll("[data-obj-id]").forEach((button) => {
+              button.addEventListener("click", () => {
+                selectedObjectiveId = Number(button.getAttribute("data-obj-id"));
+                renderObjectives();
+                renderActivities();
+              });
+            });
+          };
+
+          const renderActivities = () => {
+            const objective = selectedObjective();
+            if (!activitiesEl || !objective) {
+              if (activitiesEl) activitiesEl.innerHTML = "";
+              return;
+            }
+            const objectiveActivities = activities.filter((item) => item.objective_id === objective.id);
+            activitiesEl.innerHTML = objectiveActivities.map((activity) => `
+              <article class="poac-activity" data-activity-id="${activity.id}">
+                <div class="poac-activity-head">
+                  <div>
+                    <strong>${activity.codigo || "ACT"} - ${activity.nombre}</strong>
+                    <div class="poac-sub">Responsable: ${activity.responsable || "-"} | Entregable: ${activity.entregable || "-"}</div>
+                    <div class="poac-sub">Fechas: ${activity.fecha_inicial || "-"} a ${activity.fecha_final || "-"}</div>
+                    <span class="poac-status ${statusClass(activity.status)}">${activity.status}</span>
+                    ${(activity.entrega_estado === "pendiente") ? '<div class="poac-sub">Aprobación de entregable pendiente.</div>' : ''}
+                    ${(activity.entrega_estado === "rechazada") ? '<div class="poac-sub">Entregable rechazado, requiere ajustes.</div>' : ''}
+                  </div>
+                </div>
+                <div class="poac-sub">${activity.descripcion || ""}</div>
+                <div class="poac-inline-actions">
+                  <button class="poac-btn" type="button" data-act="edit">Editar</button>
+                  <button class="poac-btn" type="button" data-act="delete">Eliminar</button>
+                  ${(activity.status !== "Terminada" && activity.entrega_estado !== "pendiente") ? '<button class="poac-btn primary" type="button" data-act="finish">Terminar</button>' : ''}
+                </div>
+                <div class="poac-subactivity">
+                  <strong style="font-size:13px;">Subactividades</strong>
+                  ${(activity.subactivities || []).map((sub) => `
+                    <div class="poac-sub" data-sub-id="${sub.id}">
+                      ${sub.codigo || "SUB"} - ${sub.nombre} | Responsable: ${sub.responsable || "-"} | Entregable: ${sub.entregable || "-"} | ${sub.fecha_inicial || "-"} a ${sub.fecha_final || "-"}
+                    </div>
+                  `).join("") || '<div class="poac-sub">Sin subactividades.</div>'}
+                  <div class="poac-row" style="margin-top:8px;">
+                    <input class="poac-input" data-sub-field="nombre" type="text" placeholder="Nombre subactividad">
+                    <input class="poac-input" data-sub-field="codigo" type="text" placeholder="Código">
+                  </div>
+                  <div class="poac-row" style="margin-top:8px;">
+                    <input class="poac-input" data-sub-field="responsable" type="text" placeholder="Responsable">
+                    <input class="poac-input" data-sub-field="entregable" type="text" placeholder="Entregable">
+                  </div>
+                  <div class="poac-row" style="margin-top:8px;">
+                    <input class="poac-input" data-sub-field="fecha_inicial" type="date" placeholder="Fecha inicial">
+                    <input class="poac-input" data-sub-field="fecha_final" type="date" placeholder="Fecha final">
+                  </div>
+                  <textarea class="poac-textarea" data-sub-field="descripcion" placeholder="Descripción" style="margin-top:8px;"></textarea>
+                  <div class="poac-inline-actions">
+                    <button class="poac-btn primary" type="button" data-act="add-sub">Agregar subactividad</button>
+                  </div>
+                </div>
+              </article>
+            `).join("");
+
+            activitiesEl.querySelectorAll("[data-act='delete']").forEach((button) => {
+              button.addEventListener("click", async () => {
+                const card = button.closest("[data-activity-id]");
+                const id = Number(card.getAttribute("data-activity-id"));
+                if (!window.confirm("¿Eliminar esta actividad y sus subactividades?")) return;
+                try {
+                  await requestJson(`/api/poa/activities/${id}`, { method: "DELETE" });
+                  await loadBoard();
+                  showMsg("Actividad eliminada.");
+                } catch (err) {
+                  showMsg(err.message || "No se pudo eliminar.", true);
+                }
+              });
+            });
+
+            activitiesEl.querySelectorAll("[data-act='edit']").forEach((button) => {
+              button.addEventListener("click", async () => {
+                const card = button.closest("[data-activity-id]");
+                const id = Number(card.getAttribute("data-activity-id"));
+                const source = objectiveActivities.find((a) => a.id === id);
+                if (!source) return;
+                actNameEl.value = source.nombre || "";
+                actCodeEl.value = source.codigo || "";
+                actOwnerEl.value = source.responsable || "";
+                actDeliverableEl.value = source.entregable || "";
+                actStartEl.value = source.fecha_inicial || "";
+                actEndEl.value = source.fecha_final || "";
+                actDescEl.value = source.descripcion || "";
+                addActivityBtn.textContent = "Guardar actividad";
+                addActivityBtn.dataset.editId = String(id);
+              });
+            });
+
+            activitiesEl.querySelectorAll("[data-act='finish']").forEach((button) => {
+              button.addEventListener("click", async () => {
+                const card = button.closest("[data-activity-id]");
+                const id = Number(card.getAttribute("data-activity-id"));
+                if (!window.confirm("¿Enviar entregable a aprobación para terminar la actividad?")) return;
+                try {
+                  await requestJson(`/api/poa/activities/${id}/request-completion`, { method: "POST" });
+                  await loadBoard();
+                  showMsg("Solicitud de aprobación enviada al dueño del proceso.");
+                } catch (err) {
+                  showMsg(err.message || "No se pudo solicitar aprobación.", true);
+                }
+              });
+            });
+
+            activitiesEl.querySelectorAll("[data-act='add-sub']").forEach((button) => {
+              button.addEventListener("click", async () => {
+                const card = button.closest("[data-activity-id]");
+                const activityId = Number(card.getAttribute("data-activity-id"));
+                const body = {
+                  nombre: (card.querySelector("[data-sub-field='nombre']")?.value || "").trim(),
+                  codigo: (card.querySelector("[data-sub-field='codigo']")?.value || "").trim(),
+                  responsable: (card.querySelector("[data-sub-field='responsable']")?.value || "").trim(),
+                  entregable: (card.querySelector("[data-sub-field='entregable']")?.value || "").trim(),
+                  fecha_inicial: (card.querySelector("[data-sub-field='fecha_inicial']")?.value || "").trim(),
+                  fecha_final: (card.querySelector("[data-sub-field='fecha_final']")?.value || "").trim(),
+                  descripcion: (card.querySelector("[data-sub-field='descripcion']")?.value || "").trim(),
+                };
+                if (!body.nombre || !body.responsable) {
+                  showMsg("Subactividad: nombre y responsable son obligatorios.", true);
+                  return;
+                }
+                const subDateError = visualRangeError(body.fecha_inicial, body.fecha_final, "Subactividad");
+                if (subDateError) {
+                  showMsg(subDateError, true);
+                  return;
+                }
+                const source = objectiveActivities.find((item) => item.id === activityId);
+                const subParentError = visualChildRangeError(
+                  body.fecha_inicial,
+                  body.fecha_final,
+                  source?.fecha_inicial || "",
+                  source?.fecha_final || "",
+                  "Subactividad",
+                  "Actividad",
+                );
+                if (subParentError) {
+                  showMsg(subParentError, true);
+                  return;
+                }
+                try {
+                  await requestJson(`/api/poa/activities/${activityId}/subactivities`, { method: "POST", body: JSON.stringify(body) });
+                  await loadBoard();
+                  showMsg("Subactividad agregada.");
+                } catch (err) {
+                  showMsg(err.message || "No se pudo agregar la subactividad.", true);
+                }
+              });
+            });
+          };
+
+          const renderApprovals = () => {
+            if (!approvalsEl) return;
+            if (!pendingApprovals.length) {
+              approvalsEl.innerHTML = '<div class="poac-sub">Sin aprobaciones pendientes.</div>';
+              return;
+            }
+            approvalsEl.innerHTML = pendingApprovals.map((approval) => `
+              <div class="poac-subactivity" data-approval-id="${approval.id}" style="border-top:0; padding-top:0; margin-top:0;">
+                <div class="poac-sub"><strong>${approval.activity_codigo || "ACT"} - ${approval.activity_nombre || ""}</strong></div>
+                <div class="poac-sub">Objetivo: ${approval.objective_codigo || "OBJ"} - ${approval.objective_nombre || ""}</div>
+                <div class="poac-sub">Solicitó: ${approval.requester || "-"}</div>
+                <textarea class="poac-textarea" data-f="comentario" placeholder="Comentario de validación (opcional)" style="margin-top:6px;"></textarea>
+                <div class="poac-inline-actions">
+                  <button class="poac-btn primary" type="button" data-act="approve">Autorizar</button>
+                  <button class="poac-btn" type="button" data-act="reject">Rechazar</button>
+                </div>
+              </div>
+            `).join("");
+
+            approvalsEl.querySelectorAll("[data-act='approve']").forEach((button) => {
+              button.addEventListener("click", async () => {
+                const card = button.closest("[data-approval-id]");
+                const id = Number(card.getAttribute("data-approval-id"));
+                const comentario = (card.querySelector("[data-f='comentario']")?.value || "").trim();
+                try {
+                  await requestJson(`/api/poa/approvals/${id}/decision`, {
+                    method: "POST",
+                    body: JSON.stringify({ accion: "autorizar", comentario }),
+                  });
+                  await loadBoard();
+                  showMsg("Entregable autorizado. Actividad terminada.");
+                } catch (err) {
+                  showMsg(err.message || "No se pudo autorizar.", true);
+                }
+              });
+            });
+
+            approvalsEl.querySelectorAll("[data-act='reject']").forEach((button) => {
+              button.addEventListener("click", async () => {
+                const card = button.closest("[data-approval-id]");
+                const id = Number(card.getAttribute("data-approval-id"));
+                const comentario = (card.querySelector("[data-f='comentario']")?.value || "").trim();
+                try {
+                  await requestJson(`/api/poa/approvals/${id}/decision`, {
+                    method: "POST",
+                    body: JSON.stringify({ accion: "rechazar", comentario }),
+                  });
+                  await loadBoard();
+                  showMsg("Entregable rechazado.");
+                } catch (err) {
+                  showMsg(err.message || "No se pudo rechazar.", true);
+                }
+              });
+            });
+          };
+
+          const loadBoard = async () => {
+            const payload = await requestJson("/api/poa/board-data");
+            objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
+            activities = Array.isArray(payload.activities) ? payload.activities : [];
+            pendingApprovals = Array.isArray(payload.pending_approvals) ? payload.pending_approvals : [];
+            if (!selectedObjectiveId || !objectives.some((item) => item.id === selectedObjectiveId)) {
+              selectedObjectiveId = objectives.length ? objectives[0].id : null;
+            }
+            renderObjectives();
+            renderActivities();
+            renderApprovals();
+          };
+
+          addActivityBtn && addActivityBtn.addEventListener("click", async () => {
+            const objective = selectedObjective();
+            if (!objective) {
+              showMsg("No tienes objetivos asignados para crear actividades.", true);
+              return;
+            }
+            const body = {
+              objective_id: objective.id,
+              nombre: (actNameEl.value || "").trim(),
+              codigo: (actCodeEl.value || "").trim(),
+              responsable: (actOwnerEl.value || "").trim(),
+              entregable: (actDeliverableEl.value || "").trim(),
+              fecha_inicial: (actStartEl.value || "").trim(),
+              fecha_final: (actEndEl.value || "").trim(),
+              descripcion: (actDescEl.value || "").trim(),
+            };
+            if (!body.nombre || !body.responsable) {
+              showMsg("Actividad: nombre y responsable son obligatorios.", true);
+              return;
+            }
+            if (!body.entregable) {
+              showMsg("Actividad: el entregable es obligatorio.", true);
+              return;
+            }
+            const activityDateError = visualRangeError(body.fecha_inicial, body.fecha_final, "Actividad");
+            if (activityDateError) {
+              showMsg(activityDateError, true);
+              return;
+            }
+            const activityParentError = visualChildRangeError(
+              body.fecha_inicial,
+              body.fecha_final,
+              objective.fecha_inicial || "",
+              objective.fecha_final || "",
+              "Actividad",
+              "Objetivo",
+            );
+            if (activityParentError) {
+              showMsg(activityParentError, true);
+              return;
+            }
+            try {
+              const editId = Number(addActivityBtn.dataset.editId || 0);
+              if (editId) {
+                await requestJson(`/api/poa/activities/${editId}`, { method: "PUT", body: JSON.stringify(body) });
+                showMsg("Actividad actualizada.");
+              } else {
+                await requestJson("/api/poa/activities", { method: "POST", body: JSON.stringify(body) });
+                showMsg("Actividad agregada.");
+              }
+              actNameEl.value = "";
+              actCodeEl.value = "";
+              actOwnerEl.value = "";
+              actDeliverableEl.value = "";
+              actStartEl.value = "";
+              actEndEl.value = "";
+              actDescEl.value = "";
+              addActivityBtn.textContent = "Agregar actividad";
+              delete addActivityBtn.dataset.editId;
+              await loadBoard();
+            } catch (err) {
+              showMsg(err.message || "No se pudo guardar la actividad.", true);
+            }
+          });
+
+          loadBoard().catch((err) => showMsg(err.message || "No se pudo cargar tablero POA.", true));
+        })();
+      </script>
     </section>
 """)
 
@@ -6335,10 +7586,1574 @@ def _render_usuarios_page(request: Request) -> HTMLResponse:
     )
 
 
+def _serialize_strategic_objective(obj: StrategicObjectiveConfig) -> Dict[str, Any]:
+    return {
+        "id": obj.id,
+        "eje_id": obj.eje_id,
+        "codigo": obj.codigo or "",
+        "nombre": obj.nombre or "",
+        "lider": obj.lider or "",
+        "fecha_inicial": _date_to_iso(obj.fecha_inicial),
+        "fecha_final": _date_to_iso(obj.fecha_final),
+        "descripcion": obj.descripcion or "",
+        "orden": obj.orden or 0,
+    }
+
+
+def _serialize_strategic_axis(axis: StrategicAxisConfig) -> Dict[str, Any]:
+    objetivos = sorted(axis.objetivos or [], key=lambda item: (item.orden or 0, item.id or 0))
+    return {
+        "id": axis.id,
+        "nombre": axis.nombre or "",
+        "codigo": axis.codigo or "",
+        "lider_departamento": axis.lider_departamento or "",
+        "descripcion": axis.descripcion or "",
+        "orden": axis.orden or 0,
+        "objetivos_count": len(objetivos),
+        "objetivos": [_serialize_strategic_objective(obj) for obj in objetivos],
+    }
+
+
+def _serialize_poa_subactivity(item: POASubactivity) -> Dict[str, Any]:
+    return {
+        "id": item.id,
+        "activity_id": item.activity_id,
+        "nombre": item.nombre or "",
+        "codigo": item.codigo or "",
+        "responsable": item.responsable or "",
+        "entregable": item.entregable or "",
+        "fecha_inicial": _date_to_iso(item.fecha_inicial),
+        "fecha_final": _date_to_iso(item.fecha_final),
+        "descripcion": item.descripcion or "",
+    }
+
+
+def _serialize_poa_activity(item: POAActivity, subactivities: List[POASubactivity]) -> Dict[str, Any]:
+    return {
+        "id": item.id,
+        "objective_id": item.objective_id,
+        "nombre": item.nombre or "",
+        "codigo": item.codigo or "",
+        "responsable": item.responsable or "",
+        "entregable": item.entregable or "",
+        "fecha_inicial": _date_to_iso(item.fecha_inicial),
+        "fecha_final": _date_to_iso(item.fecha_final),
+        "status": _activity_status(item),
+        "entrega_estado": item.entrega_estado or "ninguna",
+        "entrega_solicitada_por": item.entrega_solicitada_por or "",
+        "entrega_solicitada_at": item.entrega_solicitada_at.isoformat() if item.entrega_solicitada_at else "",
+        "entrega_aprobada_por": item.entrega_aprobada_por or "",
+        "entrega_aprobada_at": item.entrega_aprobada_at.isoformat() if item.entrega_aprobada_at else "",
+        "descripcion": item.descripcion or "",
+        "subactivities": [_serialize_poa_subactivity(sub) for sub in subactivities],
+    }
+
+
+EJES_ESTRATEGICOS_HTML = dedent("""
+    <section class="axm-wrap">
+      <style>
+        .axm-wrap *{ box-sizing:border-box; }
+        .axm-wrap{
+          font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+          color:#0f172a;
+          padding: 10px;
+        }
+        .axm-grid{
+          display:grid;
+          grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+          gap: 14px;
+        }
+        .axm-card{
+          background: rgba(255,255,255,.92);
+          border: 1px solid rgba(148,163,184,.30);
+          border-radius: 18px;
+          padding: 14px;
+          box-shadow: 0 8px 20px rgba(15,23,42,.06);
+        }
+        .axm-title{ margin:0; font-size: 20px; letter-spacing: -0.02em; }
+        .axm-sub{ margin: 6px 0 0; color:#64748b; font-size:13px; }
+        .axm-list{ margin-top: 12px; display:flex; flex-direction:column; gap: 10px; max-height: 65vh; overflow:auto; }
+        .axm-axis-btn{
+          width: 100%;
+          border: 1px solid rgba(148,163,184,.32);
+          background: rgba(255,255,255,.96);
+          border-radius: 14px;
+          padding: 12px;
+          text-align: left;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap: 10px;
+          cursor:pointer;
+        }
+        .axm-axis-btn.active{
+          background: rgba(15,61,46,.08);
+          border-color: rgba(15,61,46,.32);
+        }
+        .axm-axis-meta{ color:#64748b; font-size: 12px; }
+        .axm-count{
+          font-size: 12px;
+          font-weight: 800;
+          border:1px solid rgba(15,23,42,.14);
+          border-radius: 999px;
+          padding: 4px 8px;
+          background: rgba(15,23,42,.04);
+        }
+        .axm-row{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .axm-field{ display:flex; flex-direction:column; gap: 6px; margin-top: 10px; }
+        .axm-field label{ font-size: 12px; color:#475569; font-weight:700; letter-spacing: .02em; }
+        .axm-input, .axm-textarea{
+          width:100%;
+          border:1px solid rgba(148,163,184,.42);
+          border-radius: 12px;
+          padding: 10px 12px;
+          font-size: 14px;
+          background: #fff;
+        }
+        .axm-textarea{ min-height: 82px; resize: vertical; }
+        .axm-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px; }
+        .axm-btn{
+          border:1px solid rgba(148,163,184,.42);
+          border-radius: 12px;
+          padding: 9px 12px;
+          background:#fff;
+          cursor:pointer;
+          font-weight:700;
+          font-size: 13px;
+        }
+        .axm-btn.primary{ background:#0f3d2e; border-color:#0f3d2e; color:#fff; }
+        .axm-btn.warn{ background:#ef4444; border-color:#ef4444; color:#fff; }
+        .axm-obj-layout{ margin-top: 12px; display:grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 12px; }
+        .axm-obj-list{ display:flex; flex-direction:column; gap: 8px; max-height: 320px; overflow:auto; }
+        .axm-obj-btn{
+          width: 100%;
+          text-align: left;
+          border:1px solid rgba(148,163,184,.32);
+          border-radius: 12px;
+          padding: 10px;
+          background: rgba(255,255,255,.95);
+          cursor: pointer;
+        }
+        .axm-obj-btn.active{
+          background: rgba(15,61,46,.08);
+          border-color: rgba(15,61,46,.30);
+        }
+        .axm-obj-form{
+          border:1px solid rgba(148,163,184,.32);
+          border-radius: 12px;
+          padding: 10px;
+          background: rgba(255,255,255,.95);
+        }
+        .axm-obj-grid{ display:grid; grid-template-columns: 150px 1fr; gap: 8px; }
+        .axm-msg{ margin-top: 10px; font-size: 13px; color:#0f3d2e; min-height: 1.2em; }
+        @media (max-width: 980px){
+          .axm-grid{ grid-template-columns: 1fr; }
+          .axm-list{ max-height: 36vh; }
+          .axm-row{ grid-template-columns: 1fr; }
+          .axm-obj-layout{ grid-template-columns: 1fr; }
+          .axm-obj-grid{ grid-template-columns: 1fr; }
+        }
+      </style>
+
+      <div class="axm-grid">
+        <aside class="axm-card">
+          <h2 class="axm-title">Ejes estratégicos</h2>
+          <p class="axm-sub">Selecciona un eje para editarlo o crea uno nuevo.</p>
+          <div class="axm-actions">
+            <button class="axm-btn primary" id="axm-add-axis" type="button">Agregar eje</button>
+          </div>
+          <div class="axm-list" id="axm-axis-list"></div>
+        </aside>
+
+        <section class="axm-card">
+          <h2 class="axm-title">Gestión de ejes y objetivos</h2>
+          <p class="axm-sub">Edita, guarda o elimina ejes estratégicos y sus objetivos.</p>
+          <div class="axm-row">
+            <div class="axm-field">
+              <label for="axm-axis-name">Nombre del eje</label>
+              <input id="axm-axis-name" class="axm-input" type="text" placeholder="Ej. Gobernanza y cumplimiento">
+            </div>
+            <div class="axm-field">
+              <label for="axm-axis-code">Código</label>
+              <input id="axm-axis-code" class="axm-input" type="text" placeholder="Ej. AX-01">
+            </div>
+          </div>
+          <div class="axm-field">
+            <label for="axm-axis-leader">Líder del eje estratégico</label>
+            <select id="axm-axis-leader" class="axm-input">
+              <option value="">Selecciona departamento</option>
+            </select>
+          </div>
+          <div class="axm-field">
+            <label for="axm-axis-desc">Descripción</label>
+            <textarea id="axm-axis-desc" class="axm-textarea" placeholder="Describe el propósito del eje"></textarea>
+          </div>
+          <div class="axm-actions">
+            <button class="axm-btn primary" id="axm-save-axis" type="button">Guardar eje</button>
+            <button class="axm-btn warn" id="axm-delete-axis" type="button">Eliminar eje</button>
+          </div>
+
+          <hr style="border:0;border-top:1px solid rgba(148,163,184,.28);margin:14px 0;">
+
+          <h3 style="margin:0;font-size:16px;">Objetivos del eje</h3>
+          <div class="axm-obj-layout">
+            <div>
+              <div class="axm-actions" style="margin-top:0;">
+                <button class="axm-btn primary" id="axm-add-obj" type="button">Agregar objetivo</button>
+              </div>
+              <div class="axm-obj-list" id="axm-obj-list"></div>
+            </div>
+            <div class="axm-obj-form">
+              <div class="axm-field" style="margin-top:0;">
+                <label for="axm-obj-name">Nombre</label>
+                <input id="axm-obj-name" class="axm-input" type="text" placeholder="Nombre del objetivo">
+              </div>
+              <div class="axm-field">
+                <label for="axm-obj-code">Código</label>
+                <input id="axm-obj-code" class="axm-input" type="text" placeholder="Ej. OE-13">
+              </div>
+              <div class="axm-field">
+                <label for="axm-obj-leader">Lider</label>
+                <select id="axm-obj-leader" class="axm-input">
+                  <option value="">Selecciona colaborador</option>
+                </select>
+              </div>
+              <div class="axm-row">
+                <div class="axm-field">
+                  <label for="axm-obj-start">Fecha inicial</label>
+                  <input id="axm-obj-start" class="axm-input" type="date">
+                </div>
+                <div class="axm-field">
+                  <label for="axm-obj-end">Fecha final</label>
+                  <input id="axm-obj-end" class="axm-input" type="date">
+                </div>
+              </div>
+              <div class="axm-field">
+                <label for="axm-obj-desc">Descripción</label>
+                <textarea id="axm-obj-desc" class="axm-textarea" placeholder="Descripción del objetivo"></textarea>
+              </div>
+              <div class="axm-actions">
+                <button class="axm-btn primary" id="axm-save-obj" type="button">Guardar objetivo</button>
+                <button class="axm-btn warn" id="axm-delete-obj" type="button">Eliminar objetivo</button>
+              </div>
+            </div>
+          </div>
+          <div class="axm-msg" id="axm-msg" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <script>
+        (() => {
+          const axisListEl = document.getElementById("axm-axis-list");
+          const objListEl = document.getElementById("axm-obj-list");
+          const axisNameEl = document.getElementById("axm-axis-name");
+          const axisCodeEl = document.getElementById("axm-axis-code");
+          const axisLeaderEl = document.getElementById("axm-axis-leader");
+          const axisDescEl = document.getElementById("axm-axis-desc");
+          const objNameEl = document.getElementById("axm-obj-name");
+          const objCodeEl = document.getElementById("axm-obj-code");
+          const objLeaderEl = document.getElementById("axm-obj-leader");
+          const objStartEl = document.getElementById("axm-obj-start");
+          const objEndEl = document.getElementById("axm-obj-end");
+          const objDescEl = document.getElementById("axm-obj-desc");
+          const msgEl = document.getElementById("axm-msg");
+          const addAxisBtn = document.getElementById("axm-add-axis");
+          const saveAxisBtn = document.getElementById("axm-save-axis");
+          const deleteAxisBtn = document.getElementById("axm-delete-axis");
+          const addObjBtn = document.getElementById("axm-add-obj");
+          const saveObjBtn = document.getElementById("axm-save-obj");
+          const deleteObjBtn = document.getElementById("axm-delete-obj");
+
+          let axes = [];
+          let departments = [];
+          let collaborators = [];
+          let selectedAxisId = null;
+          let selectedObjectiveId = null;
+
+          const showMsg = (text, isError = false) => {
+            if (!msgEl) return;
+            msgEl.style.color = isError ? "#b91c1c" : "#0f3d2e";
+            msgEl.textContent = text || "";
+          };
+
+          const requestJson = async (url, options = {}) => {
+            const response = await fetch(url, {
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              ...options,
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || payload.success === false) {
+              throw new Error(payload.error || "No se pudo completar la operación.");
+            }
+            return payload;
+          };
+
+          const selectedAxis = () => axes.find((axis) => axis.id === selectedAxisId) || null;
+          const selectedObjective = () => {
+            const axis = selectedAxis();
+            if (!axis) return null;
+            return (axis.objetivos || []).find((obj) => obj.id === selectedObjectiveId) || null;
+          };
+          const visualRangeError = (start, end, label) => {
+            if (!start && !end) return "";
+            if (!start || !end) return `${label}: completa fecha inicial y fecha final.`;
+            if (start > end) return `${label}: la fecha inicial no puede ser mayor que la final.`;
+            return "";
+          };
+
+          const renderDepartmentOptions = (selectedValue = "") => {
+            if (!axisLeaderEl) return;
+            const options = ['<option value="">Selecciona departamento</option>']
+              .concat(
+                departments.map((name) => {
+                  const selected = name === selectedValue ? "selected" : "";
+                  return `<option value="${name}" ${selected}>${name}</option>`;
+                })
+              );
+            axisLeaderEl.innerHTML = options.join("");
+          };
+
+          const renderCollaboratorOptions = (selectedValue = "") => {
+            if (!objLeaderEl) return;
+            const options = ['<option value="">Selecciona colaborador</option>']
+              .concat(
+                collaborators.map((name) => {
+                  const selected = name === selectedValue ? "selected" : "";
+                  return `<option value="${name}" ${selected}>${name}</option>`;
+                })
+              );
+            objLeaderEl.innerHTML = options.join("");
+          };
+
+          const renderAxisList = () => {
+            if (!axisListEl) return;
+            axisListEl.innerHTML = axes.map((axis) => `
+              <button class="axm-axis-btn ${axis.id === selectedAxisId ? "active" : ""}" type="button" data-axis-id="${axis.id}">
+                <span>
+                  <strong>${axis.nombre}</strong>
+                  <div class="axm-axis-meta">${axis.codigo || "Sin código"} • ${axis.lider_departamento || "Sin líder"}</div>
+                </span>
+                <span class="axm-count">${axis.objetivos_count || 0}</span>
+              </button>
+            `).join("");
+            axisListEl.querySelectorAll("[data-axis-id]").forEach((button) => {
+              button.addEventListener("click", async () => {
+                selectedAxisId = Number(button.getAttribute("data-axis-id"));
+                selectedObjectiveId = null;
+                await loadCollaborators();
+                renderAll();
+              });
+            });
+          };
+
+          const renderAxisEditor = () => {
+            const axis = selectedAxis();
+            if (!axis) {
+              axisNameEl.value = "";
+              axisCodeEl.value = "";
+              renderDepartmentOptions("");
+              axisDescEl.value = "";
+              return;
+            }
+            axisNameEl.value = axis.nombre || "";
+            axisCodeEl.value = axis.codigo || "";
+            renderDepartmentOptions(axis.lider_departamento || "");
+            axisDescEl.value = axis.descripcion || "";
+          };
+
+          const renderObjectives = () => {
+            const axis = selectedAxis();
+            if (!axis || !objListEl) {
+              if (objListEl) objListEl.innerHTML = "";
+              selectedObjectiveId = null;
+              if (objNameEl) objNameEl.value = "";
+              if (objCodeEl) objCodeEl.value = "";
+              if (objDescEl) objDescEl.value = "";
+              if (objStartEl) objStartEl.value = "";
+              if (objEndEl) objEndEl.value = "";
+              renderCollaboratorOptions("");
+              return;
+            }
+            if (!selectedObjectiveId || !(axis.objetivos || []).some((obj) => obj.id === selectedObjectiveId)) {
+              selectedObjectiveId = (axis.objetivos || [])[0]?.id || null;
+            }
+            objListEl.innerHTML = (axis.objetivos || []).map((obj) => `
+              <button class="axm-obj-btn ${obj.id === selectedObjectiveId ? "active" : ""}" type="button" data-obj-id="${obj.id}">
+                <strong>${obj.codigo || "OBJ"} - ${obj.nombre || "Sin nombre"}</strong>
+              </button>
+            `).join("");
+
+            objListEl.querySelectorAll("[data-obj-id]").forEach((button) => {
+              button.addEventListener("click", () => {
+                selectedObjectiveId = Number(button.getAttribute("data-obj-id"));
+                renderAll();
+              });
+            });
+
+            const objective = selectedObjective();
+            if (!objective) return;
+            if (objNameEl) objNameEl.value = objective.nombre || "";
+            if (objCodeEl) objCodeEl.value = objective.codigo || "";
+            if (objDescEl) objDescEl.value = objective.descripcion || "";
+            if (objStartEl) objStartEl.value = objective.fecha_inicial || "";
+            if (objEndEl) objEndEl.value = objective.fecha_final || "";
+            renderCollaboratorOptions(objective.lider || "");
+          };
+
+          const renderAll = () => {
+            renderAxisList();
+            renderAxisEditor();
+            renderObjectives();
+          };
+
+          const loadAxes = async () => {
+            const payload = await requestJson("/api/strategic-axes");
+            axes = Array.isArray(payload.data) ? payload.data : [];
+            if (!selectedAxisId || !axes.some((axis) => axis.id === selectedAxisId)) {
+              selectedAxisId = axes.length ? axes[0].id : null;
+            }
+            renderAll();
+          };
+
+          const loadDepartments = async () => {
+            const payload = await requestJson("/api/strategic-axes/departments");
+            departments = Array.isArray(payload.data) ? payload.data : [];
+            renderDepartmentOptions(selectedAxis()?.lider_departamento || "");
+          };
+
+          const loadCollaborators = async () => {
+            const axis = selectedAxis();
+            if (!axis || !axis.id) {
+              collaborators = [];
+              renderCollaboratorOptions("");
+              return;
+            }
+            const payload = await requestJson(`/api/strategic-axes/${axis.id}/collaborators`);
+            collaborators = Array.isArray(payload.data) ? payload.data : [];
+            renderCollaboratorOptions(selectedObjective()?.lider || "");
+          };
+
+          addAxisBtn && addAxisBtn.addEventListener("click", async () => {
+            try {
+              const payload = await requestJson("/api/strategic-axes", {
+                method: "POST",
+                body: JSON.stringify({
+                  nombre: "Nuevo eje estratégico",
+                  codigo: "",
+                  lider_departamento: "",
+                  descripcion: "",
+                  orden: axes.length + 1,
+                }),
+              });
+              selectedAxisId = payload.data?.id || null;
+              await loadAxes();
+              await loadCollaborators();
+              showMsg("Eje agregado.");
+            } catch (err) {
+              showMsg(err.message || "No se pudo crear el eje.", true);
+            }
+          });
+
+          saveAxisBtn && saveAxisBtn.addEventListener("click", async () => {
+            const axis = selectedAxis();
+            if (!axis) {
+              showMsg("Selecciona un eje para guardar.", true);
+              return;
+            }
+            const body = {
+              nombre: axisNameEl.value.trim(),
+              codigo: axisCodeEl.value.trim(),
+              lider_departamento: axisLeaderEl && axisLeaderEl.value ? axisLeaderEl.value.trim() : "",
+              descripcion: axisDescEl.value.trim(),
+              orden: Number(axis.orden || 1),
+            };
+            if (!body.nombre) {
+              showMsg("El nombre del eje es obligatorio.", true);
+              return;
+            }
+            try {
+              await requestJson(`/api/strategic-axes/${axis.id}`, { method: "PUT", body: JSON.stringify(body) });
+              await loadAxes();
+              await loadCollaborators();
+              showMsg("Eje guardado correctamente.");
+            } catch (err) {
+              showMsg(err.message || "No se pudo guardar el eje.", true);
+            }
+          });
+
+          deleteAxisBtn && deleteAxisBtn.addEventListener("click", async () => {
+            const axis = selectedAxis();
+            if (!axis) return;
+            if (!window.confirm("¿Eliminar este eje y todos sus objetivos?")) return;
+            try {
+              await requestJson(`/api/strategic-axes/${axis.id}`, { method: "DELETE" });
+              selectedAxisId = null;
+              await loadAxes();
+              await loadCollaborators();
+              showMsg("Eje eliminado.");
+            } catch (err) {
+              showMsg(err.message || "No se pudo eliminar el eje.", true);
+            }
+          });
+
+          addObjBtn && addObjBtn.addEventListener("click", async () => {
+            const axis = selectedAxis();
+            if (!axis) {
+              showMsg("Primero selecciona un eje.", true);
+              return;
+            }
+            const body = {
+              codigo: "",
+              nombre: "Nuevo objetivo",
+              lider: "",
+              descripcion: "",
+            };
+            try {
+              const payload = await requestJson(`/api/strategic-axes/${axis.id}/objectives`, { method: "POST", body: JSON.stringify(body) });
+              await loadAxes();
+              selectedObjectiveId = payload.data?.id || selectedObjectiveId;
+              renderAll();
+              showMsg("Objetivo agregado.");
+            } catch (err) {
+              showMsg(err.message || "No se pudo agregar el objetivo.", true);
+            }
+          });
+
+          saveObjBtn && saveObjBtn.addEventListener("click", async () => {
+            const objective = selectedObjective();
+            if (!objective) {
+              showMsg("Selecciona un objetivo.", true);
+              return;
+            }
+            const body = {
+              nombre: objNameEl && objNameEl.value ? objNameEl.value.trim() : "",
+              codigo: objCodeEl && objCodeEl.value ? objCodeEl.value.trim() : "",
+              lider: objLeaderEl && objLeaderEl.value ? objLeaderEl.value.trim() : "",
+              fecha_inicial: objStartEl && objStartEl.value ? objStartEl.value : "",
+              fecha_final: objEndEl && objEndEl.value ? objEndEl.value : "",
+              descripcion: objDescEl && objDescEl.value ? objDescEl.value.trim() : "",
+            };
+            if (!body.nombre) {
+              showMsg("El nombre del objetivo es obligatorio.", true);
+              return;
+            }
+            const objectiveDateError = visualRangeError(body.fecha_inicial, body.fecha_final, "Objetivo");
+            if (objectiveDateError) {
+              showMsg(objectiveDateError, true);
+              return;
+            }
+            try {
+              await requestJson(`/api/strategic-objectives/${objective.id}`, { method: "PUT", body: JSON.stringify(body) });
+              await loadAxes();
+              renderAll();
+              showMsg("Objetivo guardado correctamente.");
+            } catch (err) {
+              showMsg(err.message || "No se pudo guardar el objetivo.", true);
+            }
+          });
+
+          deleteObjBtn && deleteObjBtn.addEventListener("click", async () => {
+            const objective = selectedObjective();
+            if (!objective) return;
+            if (!window.confirm("¿Eliminar este objetivo?")) return;
+            try {
+              await requestJson(`/api/strategic-objectives/${objective.id}`, { method: "DELETE" });
+              selectedObjectiveId = null;
+              await loadAxes();
+              renderAll();
+              showMsg("Objetivo eliminado.");
+            } catch (err) {
+              showMsg(err.message || "No se pudo eliminar el objetivo.", true);
+            }
+          });
+
+          Promise.all([loadDepartments(), loadAxes()]).then(loadCollaborators).catch((err) => {
+            showMsg(err.message || "No se pudieron cargar los ejes.", true);
+          });
+        })();
+      </script>
+    </section>
+""")
+
+
 @app.get("/usuarios", response_class=HTMLResponse)
 @app.get("/usuarios-sistema", response_class=HTMLResponse)
 def usuarios_page(request: Request):
     return _render_usuarios_page(request)
+
+
+@app.get("/ejes-estrategicos", response_class=HTMLResponse)
+def ejes_estrategicos_page(request: Request):
+    return render_backend_page(
+        request,
+        title="Ejes estratégicos",
+        description="Edición y administración de ejes y objetivos estratégicos.",
+        content=EJES_ESTRATEGICOS_HTML,
+        hide_floating_actions=True,
+        show_page_header=True,
+        view_buttons=[
+            {"label": "Form", "icon": "/templates/icon/formulario.svg", "view": "form", "active": True},
+        ],
+    )
+
+
+@app.get("/api/strategic-axes")
+def list_strategic_axes(request: Request):
+    db = SessionLocal()
+    try:
+        axes = (
+            db.query(StrategicAxisConfig)
+            .filter(StrategicAxisConfig.is_active == True)
+            .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+            .all()
+        )
+        return JSONResponse({"success": True, "data": [_serialize_strategic_axis(axis) for axis in axes]})
+    finally:
+        db.close()
+
+
+@app.get("/api/strategic-axes/departments")
+def list_strategic_axis_departments():
+    db = SessionLocal()
+    try:
+        departments = []
+        rows = (
+            db.query(Usuario.departamento)
+            .filter(Usuario.departamento.isnot(None))
+            .all()
+        )
+        for row in rows:
+            value = (row[0] or "").strip()
+            if value:
+                departments.append(value)
+        unique_departments = sorted(set(departments), key=lambda item: item.lower())
+        return JSONResponse({"success": True, "data": unique_departments})
+    finally:
+        db.close()
+
+
+@app.get("/api/strategic-axes/{axis_id}/collaborators")
+def list_strategic_axis_collaborators(axis_id: int):
+    db = SessionLocal()
+    try:
+        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        if not axis:
+            return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
+        department = (axis.lider_departamento or "").strip()
+        if not department:
+            return JSONResponse({"success": True, "data": []})
+        rows = (
+            db.query(Usuario.nombre)
+            .filter(Usuario.departamento == department)
+            .all()
+        )
+        collaborators = []
+        for row in rows:
+            value = (row[0] or "").strip()
+            if value:
+                collaborators.append(value)
+        unique_collaborators = sorted(set(collaborators), key=lambda item: item.lower())
+        return JSONResponse({"success": True, "data": unique_collaborators})
+    finally:
+        db.close()
+
+
+@app.post("/api/strategic-axes")
+def create_strategic_axis(request: Request, data: dict = Body(...)):
+    nombre = (data.get("nombre") or "").strip()
+    if not nombre:
+        return JSONResponse({"success": False, "error": "El nombre del eje es obligatorio"}, status_code=400)
+
+    db = SessionLocal()
+    try:
+        max_order = db.query(func.max(StrategicAxisConfig.orden)).scalar() or 0
+        axis = StrategicAxisConfig(
+            nombre=nombre,
+            codigo=(data.get("codigo") or "").strip(),
+            lider_departamento=(data.get("lider_departamento") or "").strip(),
+            descripcion=(data.get("descripcion") or "").strip(),
+            orden=int(data.get("orden") or (max_order + 1)),
+            is_active=True,
+        )
+        db.add(axis)
+        db.commit()
+        db.refresh(axis)
+        return JSONResponse({"success": True, "data": _serialize_strategic_axis(axis)})
+    finally:
+        db.close()
+
+
+@app.put("/api/strategic-axes/{axis_id}")
+def update_strategic_axis(axis_id: int, data: dict = Body(...)):
+    db = SessionLocal()
+    try:
+        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        if not axis:
+            return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
+        nombre = (data.get("nombre") or "").strip()
+        if not nombre:
+            return JSONResponse({"success": False, "error": "El nombre del eje es obligatorio"}, status_code=400)
+        axis.nombre = nombre
+        axis.codigo = (data.get("codigo") or "").strip()
+        axis.lider_departamento = (data.get("lider_departamento") or "").strip()
+        axis.descripcion = (data.get("descripcion") or "").strip()
+        axis.orden = int(data.get("orden") or axis.orden or 1)
+        db.add(axis)
+        db.commit()
+        db.refresh(axis)
+        return JSONResponse({"success": True, "data": _serialize_strategic_axis(axis)})
+    finally:
+        db.close()
+
+
+@app.delete("/api/strategic-axes/{axis_id}")
+def delete_strategic_axis(axis_id: int):
+    db = SessionLocal()
+    try:
+        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        if not axis:
+            return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
+        db.delete(axis)
+        db.commit()
+        return JSONResponse({"success": True})
+    finally:
+        db.close()
+
+
+@app.post("/api/strategic-axes/{axis_id}/objectives")
+def create_strategic_objective(axis_id: int, data: dict = Body(...)):
+    nombre = (data.get("nombre") or "").strip()
+    if not nombre:
+        return JSONResponse({"success": False, "error": "El nombre del objetivo es obligatorio"}, status_code=400)
+    db = SessionLocal()
+    try:
+        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        if not axis:
+            return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
+        start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=False)
+        if start_error:
+            return JSONResponse({"success": False, "error": start_error}, status_code=400)
+        end_date, end_error = _parse_date_field(data.get("fecha_final"), "Fecha final", required=False)
+        if end_error:
+            return JSONResponse({"success": False, "error": end_error}, status_code=400)
+        if (start_date and not end_date) or (end_date and not start_date):
+            return JSONResponse(
+                {"success": False, "error": "Objetivo: fecha inicial y fecha final deben definirse juntas"},
+                status_code=400,
+            )
+        if start_date and end_date:
+            range_error = _validate_date_range(start_date, end_date, "Objetivo")
+            if range_error:
+                return JSONResponse({"success": False, "error": range_error}, status_code=400)
+        max_order = (
+            db.query(func.max(StrategicObjectiveConfig.orden))
+            .filter(StrategicObjectiveConfig.eje_id == axis_id)
+            .scalar()
+            or 0
+        )
+        objective = StrategicObjectiveConfig(
+            eje_id=axis_id,
+            codigo=(data.get("codigo") or "").strip(),
+            nombre=nombre,
+            lider=(data.get("lider") or "").strip(),
+            fecha_inicial=start_date,
+            fecha_final=end_date,
+            descripcion=(data.get("descripcion") or "").strip(),
+            orden=int(data.get("orden") or (max_order + 1)),
+            is_active=True,
+        )
+        db.add(objective)
+        db.commit()
+        db.refresh(objective)
+        return JSONResponse({"success": True, "data": _serialize_strategic_objective(objective)})
+    finally:
+        db.close()
+
+
+@app.put("/api/strategic-objectives/{objective_id}")
+def update_strategic_objective(objective_id: int, data: dict = Body(...)):
+    db = SessionLocal()
+    try:
+        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
+        if not objective:
+            return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
+        nombre = (data.get("nombre") or "").strip()
+        if not nombre:
+            return JSONResponse({"success": False, "error": "El nombre del objetivo es obligatorio"}, status_code=400)
+        start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=False)
+        if start_error:
+            return JSONResponse({"success": False, "error": start_error}, status_code=400)
+        end_date, end_error = _parse_date_field(data.get("fecha_final"), "Fecha final", required=False)
+        if end_error:
+            return JSONResponse({"success": False, "error": end_error}, status_code=400)
+        if (start_date and not end_date) or (end_date and not start_date):
+            return JSONResponse(
+                {"success": False, "error": "Objetivo: fecha inicial y fecha final deben definirse juntas"},
+                status_code=400,
+            )
+        if start_date and end_date:
+            range_error = _validate_date_range(start_date, end_date, "Objetivo")
+            if range_error:
+                return JSONResponse({"success": False, "error": range_error}, status_code=400)
+        objective.codigo = (data.get("codigo") or "").strip()
+        objective.nombre = nombre
+        objective.lider = (data.get("lider") or "").strip()
+        objective.fecha_inicial = start_date
+        objective.fecha_final = end_date
+        objective.descripcion = (data.get("descripcion") or "").strip()
+        if data.get("orden") is not None:
+            objective.orden = int(data.get("orden"))
+        db.add(objective)
+        db.commit()
+        db.refresh(objective)
+        return JSONResponse({"success": True, "data": _serialize_strategic_objective(objective)})
+    finally:
+        db.close()
+
+
+@app.delete("/api/strategic-objectives/{objective_id}")
+def delete_strategic_objective(objective_id: int):
+    db = SessionLocal()
+    try:
+        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
+        if not objective:
+            return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
+        db.delete(objective)
+        db.commit()
+        return JSONResponse({"success": True})
+    finally:
+        db.close()
+
+
+def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiveConfig]:
+    if is_admin_or_superadmin(request):
+        return (
+            db.query(StrategicObjectiveConfig)
+            .filter(StrategicObjectiveConfig.is_active == True)
+            .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+            .all()
+        )
+
+    session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+    user = _current_user_record(request, db)
+    aliases = _user_aliases(user, session_username)
+    user_department = (user.departamento or "").strip().lower() if user and user.departamento else ""
+
+    objectives = (
+        db.query(StrategicObjectiveConfig)
+        .join(StrategicAxisConfig, StrategicAxisConfig.id == StrategicObjectiveConfig.eje_id)
+        .filter(StrategicObjectiveConfig.is_active == True)
+        .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+        .all()
+    )
+    allowed: List[StrategicObjectiveConfig] = []
+    for obj in objectives:
+        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == obj.eje_id).first()
+        objective_leader = (obj.lider or "").strip().lower()
+        axis_department = (axis.lider_departamento or "").strip().lower() if axis else ""
+        if objective_leader and objective_leader in aliases:
+            allowed.append(obj)
+            continue
+        if user_department and axis_department and axis_department == user_department:
+            allowed.append(obj)
+    return allowed
+
+
+@app.get("/api/poa/board-data")
+def poa_board_data(request: Request):
+    db = SessionLocal()
+    try:
+        objectives = _allowed_objectives_for_user(request, db)
+        objective_ids = [obj.id for obj in objectives]
+        objective_axis_map = {obj.id: obj.eje_id for obj in objectives}
+        axis_ids = sorted(set(objective_axis_map.values()))
+        axes = (
+            db.query(StrategicAxisConfig)
+            .filter(StrategicAxisConfig.id.in_(axis_ids))
+            .all()
+            if axis_ids else []
+        )
+        axis_name_map = {axis.id: axis.nombre for axis in axes}
+
+        activities = (
+            db.query(POAActivity)
+            .filter(POAActivity.objective_id.in_(objective_ids))
+            .order_by(POAActivity.id.asc())
+            .all()
+            if objective_ids else []
+        )
+        activity_ids = [item.id for item in activities]
+        subactivities = (
+            db.query(POASubactivity)
+            .filter(POASubactivity.activity_id.in_(activity_ids))
+            .order_by(POASubactivity.id.asc())
+            .all()
+            if activity_ids else []
+        )
+        sub_by_activity: Dict[int, List[POASubactivity]] = {}
+        for sub in subactivities:
+            sub_by_activity.setdefault(sub.activity_id, []).append(sub)
+
+        pending_approvals = (
+            db.query(POADeliverableApproval)
+            .filter(POADeliverableApproval.status == "pendiente")
+            .order_by(POADeliverableApproval.created_at.desc())
+            .all()
+        )
+        approvals_for_user = []
+        for approval in pending_approvals:
+            if not _is_user_process_owner(request, db, approval.process_owner):
+                continue
+            activity = next((item for item in activities if item.id == approval.activity_id), None)
+            if not activity:
+                activity = db.query(POAActivity).filter(POAActivity.id == approval.activity_id).first()
+            objective = next((item for item in objectives if item.id == approval.objective_id), None)
+            if not objective:
+                objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == approval.objective_id).first()
+            approvals_for_user.append(
+                {
+                    "id": approval.id,
+                    "activity_id": approval.activity_id,
+                    "objective_id": approval.objective_id,
+                    "process_owner": approval.process_owner or "",
+                    "requester": approval.requester or "",
+                    "created_at": approval.created_at.isoformat() if approval.created_at else "",
+                    "activity_nombre": (activity.nombre if activity else ""),
+                    "activity_codigo": (activity.codigo if activity else ""),
+                    "objective_nombre": (objective.nombre if objective else ""),
+                    "objective_codigo": (objective.codigo if objective else ""),
+                }
+            )
+
+        return JSONResponse(
+            {
+                "success": True,
+                "objectives": [
+                    {
+                        **_serialize_strategic_objective(obj),
+                        "axis_name": axis_name_map.get(obj.eje_id, ""),
+                    }
+                    for obj in objectives
+                ],
+                "activities": [
+                    _serialize_poa_activity(activity, sub_by_activity.get(activity.id, []))
+                    for activity in activities
+                ],
+                "pending_approvals": approvals_for_user,
+            }
+        )
+    finally:
+        db.close()
+
+
+@app.get("/api/notificaciones/resumen")
+def notifications_summary(request: Request):
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        today = now.date()
+        tenant_id = _normalize_tenant_id(get_current_tenant(request))
+        user_key = _notification_user_key(request, db)
+        items: List[Dict[str, Any]] = []
+
+        pending_approvals = (
+            db.query(POADeliverableApproval)
+            .filter(POADeliverableApproval.status == "pendiente")
+            .order_by(POADeliverableApproval.created_at.desc())
+            .all()
+        )
+        for approval in pending_approvals:
+            if not _is_user_process_owner(request, db, approval.process_owner):
+                continue
+            activity = db.query(POAActivity).filter(POAActivity.id == approval.activity_id).first()
+            objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == approval.objective_id).first()
+            items.append(
+                {
+                    "id": f"poa-approval-{approval.id}",
+                    "kind": "poa_aprobacion",
+                    "title": "Aprobación de entregable pendiente",
+                    "message": (
+                        f"Actividad {(activity.nombre if activity else 'sin nombre')} "
+                        f"({activity.codigo if activity else ''}) - Objetivo {(objective.nombre if objective else '')}"
+                    ).strip(),
+                    "created_at": (approval.created_at or now).isoformat(),
+                    "href": "/poa/crear",
+                }
+            )
+
+        if _can_authorize_documents(request):
+            tenant_id = _get_document_tenant(request)
+            docs_query = db.query(DocumentoEvidencia).filter(DocumentoEvidencia.estado.in_(["enviado", "actualizado"]))
+            if is_superadmin(request):
+                header_tenant = request.headers.get("x-tenant-id")
+                if header_tenant and _normalize_tenant_id(header_tenant) != "all":
+                    docs_query = docs_query.filter(
+                        func.lower(DocumentoEvidencia.tenant_id) == _normalize_tenant_id(header_tenant).lower()
+                    )
+                elif not header_tenant:
+                    docs_query = docs_query.filter(func.lower(DocumentoEvidencia.tenant_id) == tenant_id.lower())
+            else:
+                docs_query = docs_query.filter(func.lower(DocumentoEvidencia.tenant_id) == tenant_id.lower())
+            docs_pending = docs_query.order_by(DocumentoEvidencia.updated_at.desc()).limit(20).all()
+            for doc in docs_pending:
+                items.append(
+                    {
+                        "id": f"doc-approval-{doc.id}",
+                        "kind": "documento_autorizacion",
+                        "title": "Documento pendiente de autorización",
+                        "message": f"{(doc.titulo or '').strip()} · Estado: {(doc.estado or '').strip()}",
+                        "created_at": (doc.updated_at or doc.enviado_at or doc.creado_at or now).isoformat(),
+                        "href": "/reportes/documentos",
+                    }
+                )
+
+        session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+        user = _current_user_record(request, db)
+        aliases = sorted(_user_aliases(user, session_username))
+        if aliases:
+            lookahead = today + timedelta(days=2)
+            own_activities = (
+                db.query(POAActivity)
+                .filter(func.lower(POAActivity.responsable).in_(aliases))
+                .order_by(POAActivity.fecha_final.asc(), POAActivity.id.asc())
+                .all()
+            )
+            for activity in own_activities:
+                if not activity.fecha_final:
+                    continue
+                if (activity.entrega_estado or "").strip().lower() == "aprobada":
+                    continue
+                if activity.fecha_final > lookahead:
+                    continue
+                delta_days = (activity.fecha_final - today).days
+                if delta_days < 0:
+                    title = "Actividad vencida"
+                    message = f"{activity.nombre} venció el {activity.fecha_final.isoformat()}"
+                elif delta_days == 0:
+                    title = "Actividad vence hoy"
+                    message = f"{activity.nombre} vence hoy"
+                else:
+                    title = "Actividad por vencer"
+                    message = f"{activity.nombre} vence el {activity.fecha_final.isoformat()}"
+                items.append(
+                    {
+                        "id": f"activity-deadline-{activity.id}",
+                        "kind": "actividad_fecha",
+                        "title": title,
+                        "message": message,
+                        "created_at": datetime.combine(activity.fecha_final, datetime.min.time()).isoformat(),
+                        "href": "/poa/crear",
+                    }
+                )
+
+        items.sort(key=lambda item: item.get("created_at") or "", reverse=True)
+        limited_items = items[:25]
+        notification_ids = [str(item.get("id") or "").strip() for item in limited_items if str(item.get("id") or "").strip()]
+        read_ids: Set[str] = set()
+        if user_key and notification_ids:
+            read_rows = (
+                db.query(UserNotificationRead.notification_id)
+                .filter(
+                    UserNotificationRead.tenant_id == tenant_id,
+                    UserNotificationRead.user_key == user_key,
+                    UserNotificationRead.notification_id.in_(notification_ids),
+                )
+                .all()
+            )
+            read_ids = {str(row[0]) for row in read_rows}
+        for item in limited_items:
+            item["read"] = str(item.get("id") or "") in read_ids
+
+        counts = {
+            "poa_aprobacion": 0,
+            "documento_autorizacion": 0,
+            "actividad_fecha": 0,
+        }
+        for item in limited_items:
+            kind = str(item.get("kind") or "")
+            if kind in counts:
+                counts[kind] += 0 if item.get("read") else 1
+        unread = sum(0 if item.get("read") else 1 for item in limited_items)
+
+        return JSONResponse(
+            {
+                "success": True,
+                "total": len(limited_items),
+                "unread": unread,
+                "counts": counts,
+                "items": limited_items,
+            }
+        )
+    finally:
+        db.close()
+
+
+@app.post("/api/notificaciones/marcar-leida")
+def mark_notification_read(request: Request, data: dict = Body(default={})):
+    notification_id = (data.get("id") or "").strip()
+    if not notification_id:
+        return JSONResponse({"success": False, "error": "ID de notificación requerido"}, status_code=400)
+
+    db = SessionLocal()
+    try:
+        tenant_id = _normalize_tenant_id(get_current_tenant(request))
+        user_key = _notification_user_key(request, db)
+        if not user_key:
+            return JSONResponse({"success": False, "error": "Usuario no autenticado"}, status_code=401)
+
+        row = (
+            db.query(UserNotificationRead)
+            .filter(
+                UserNotificationRead.tenant_id == tenant_id,
+                UserNotificationRead.user_key == user_key,
+                UserNotificationRead.notification_id == notification_id,
+            )
+            .first()
+        )
+        if row:
+            row.read_at = datetime.utcnow()
+            db.add(row)
+        else:
+            db.add(
+                UserNotificationRead(
+                    tenant_id=tenant_id,
+                    user_key=user_key,
+                    notification_id=notification_id,
+                    read_at=datetime.utcnow(),
+                )
+            )
+        db.commit()
+        return JSONResponse({"success": True})
+    finally:
+        db.close()
+
+
+@app.post("/api/notificaciones/marcar-todas-leidas")
+def mark_all_notifications_read(request: Request, data: dict = Body(default={})):
+    raw_ids = data.get("ids")
+    ids = [str(value).strip() for value in (raw_ids if isinstance(raw_ids, list) else [])]
+    ids = [value for value in ids if value][:200]
+
+    db = SessionLocal()
+    try:
+        tenant_id = _normalize_tenant_id(get_current_tenant(request))
+        user_key = _notification_user_key(request, db)
+        if not user_key:
+            return JSONResponse({"success": False, "error": "Usuario no autenticado"}, status_code=401)
+        if not ids:
+            return JSONResponse({"success": True, "updated": 0})
+
+        existing = (
+            db.query(UserNotificationRead)
+            .filter(
+                UserNotificationRead.tenant_id == tenant_id,
+                UserNotificationRead.user_key == user_key,
+                UserNotificationRead.notification_id.in_(ids),
+            )
+            .all()
+        )
+        existing_by_id = {row.notification_id: row for row in existing}
+        now = datetime.utcnow()
+        updates = 0
+        for notif_id in ids:
+            row = existing_by_id.get(notif_id)
+            if row:
+                row.read_at = now
+                db.add(row)
+            else:
+                db.add(
+                    UserNotificationRead(
+                        tenant_id=tenant_id,
+                        user_key=user_key,
+                        notification_id=notif_id,
+                        read_at=now,
+                    )
+                )
+            updates += 1
+        db.commit()
+        return JSONResponse({"success": True, "updated": updates})
+    finally:
+        db.close()
+
+
+@app.post("/api/poa/activities")
+def create_poa_activity(request: Request, data: dict = Body(...)):
+    objective_id = int(data.get("objective_id") or 0)
+    nombre = (data.get("nombre") or "").strip()
+    responsable = (data.get("responsable") or "").strip()
+    entregable = (data.get("entregable") or "").strip()
+    if not objective_id or not nombre or not responsable or not entregable:
+        return JSONResponse(
+            {"success": False, "error": "Objetivo, nombre, responsable y entregable son obligatorios"},
+            status_code=400,
+        )
+    start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=True)
+    if start_error:
+        return JSONResponse({"success": False, "error": start_error}, status_code=400)
+    end_date, end_error = _parse_date_field(data.get("fecha_final"), "Fecha final", required=True)
+    if end_error:
+        return JSONResponse({"success": False, "error": end_error}, status_code=400)
+    range_error = _validate_date_range(start_date, end_date, "Actividad")
+    if range_error:
+        return JSONResponse({"success": False, "error": range_error}, status_code=400)
+
+    db = SessionLocal()
+    try:
+        allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
+        if objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+            return JSONResponse({"success": False, "error": "No autorizado para este objetivo"}, status_code=403)
+        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
+        if not objective:
+            return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
+        parent_error = _validate_child_date_range(
+            start_date,
+            end_date,
+            objective.fecha_inicial,
+            objective.fecha_final,
+            "Actividad",
+            "Objetivo",
+        )
+        if parent_error:
+            return JSONResponse({"success": False, "error": parent_error}, status_code=400)
+        created_by = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+        activity = POAActivity(
+            objective_id=objective_id,
+            nombre=nombre,
+            codigo=(data.get("codigo") or "").strip(),
+            responsable=responsable,
+            entregable=entregable,
+            fecha_inicial=start_date,
+            fecha_final=end_date,
+            descripcion=(data.get("descripcion") or "").strip(),
+            created_by=created_by,
+        )
+        db.add(activity)
+        db.commit()
+        db.refresh(activity)
+        return JSONResponse({"success": True, "data": _serialize_poa_activity(activity, [])})
+    finally:
+        db.close()
+
+
+@app.put("/api/poa/activities/{activity_id}")
+def update_poa_activity(request: Request, activity_id: int, data: dict = Body(...)):
+    db = SessionLocal()
+    try:
+        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        if not activity:
+            return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
+        allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
+        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+            return JSONResponse({"success": False, "error": "No autorizado para editar esta actividad"}, status_code=403)
+        nombre = (data.get("nombre") or "").strip()
+        responsable = (data.get("responsable") or "").strip()
+        entregable = (data.get("entregable") or "").strip()
+        if not nombre or not responsable or not entregable:
+            return JSONResponse(
+                {"success": False, "error": "Nombre, responsable y entregable son obligatorios"},
+                status_code=400,
+            )
+        start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=True)
+        if start_error:
+            return JSONResponse({"success": False, "error": start_error}, status_code=400)
+        end_date, end_error = _parse_date_field(data.get("fecha_final"), "Fecha final", required=True)
+        if end_error:
+            return JSONResponse({"success": False, "error": end_error}, status_code=400)
+        range_error = _validate_date_range(start_date, end_date, "Actividad")
+        if range_error:
+            return JSONResponse({"success": False, "error": range_error}, status_code=400)
+        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
+        if not objective:
+            return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
+        parent_error = _validate_child_date_range(
+            start_date,
+            end_date,
+            objective.fecha_inicial,
+            objective.fecha_final,
+            "Actividad",
+            "Objetivo",
+        )
+        if parent_error:
+            return JSONResponse({"success": False, "error": parent_error}, status_code=400)
+        activity.nombre = nombre
+        activity.codigo = (data.get("codigo") or "").strip()
+        activity.responsable = responsable
+        activity.entregable = entregable
+        activity.fecha_inicial = start_date
+        activity.fecha_final = end_date
+        activity.descripcion = (data.get("descripcion") or "").strip()
+        db.add(activity)
+        db.commit()
+        db.refresh(activity)
+        subs = db.query(POASubactivity).filter(POASubactivity.activity_id == activity.id).all()
+        return JSONResponse({"success": True, "data": _serialize_poa_activity(activity, subs)})
+    finally:
+        db.close()
+
+
+@app.delete("/api/poa/activities/{activity_id}")
+def delete_poa_activity(request: Request, activity_id: int):
+    db = SessionLocal()
+    try:
+        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        if not activity:
+            return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
+        allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
+        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+            return JSONResponse({"success": False, "error": "No autorizado para eliminar esta actividad"}, status_code=403)
+        db.query(POASubactivity).filter(POASubactivity.activity_id == activity.id).delete()
+        db.delete(activity)
+        db.commit()
+        return JSONResponse({"success": True})
+    finally:
+        db.close()
+
+
+@app.post("/api/poa/activities/{activity_id}/request-completion")
+def request_poa_activity_completion(request: Request, activity_id: int):
+    db = SessionLocal()
+    try:
+        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        if not activity:
+            return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
+        allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
+        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+            return JSONResponse({"success": False, "error": "No autorizado para esta actividad"}, status_code=403)
+        session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+        user = _current_user_record(request, db)
+        aliases = _user_aliases(user, session_username)
+        is_activity_owner = (activity.responsable or "").strip().lower() in aliases
+        if not (is_activity_owner or is_admin_or_superadmin(request)):
+            return JSONResponse({"success": False, "error": "Solo el responsable puede solicitar terminación"}, status_code=403)
+        if _activity_status(activity) == "No iniciada":
+            return JSONResponse(
+                {"success": False, "error": "La actividad no ha iniciado; no se puede solicitar terminación"},
+                status_code=409,
+            )
+        if (activity.entrega_estado or "").strip().lower() == "aprobada":
+            return JSONResponse({"success": False, "error": "La actividad ya fue aprobada y terminada"}, status_code=409)
+
+        pending = (
+            db.query(POADeliverableApproval)
+            .filter(
+                POADeliverableApproval.activity_id == activity.id,
+                POADeliverableApproval.status == "pendiente",
+            )
+            .first()
+        )
+        if pending:
+            return JSONResponse({"success": False, "error": "Ya existe una aprobación pendiente para esta actividad"}, status_code=409)
+
+        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
+        if not objective:
+            return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
+        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == objective.eje_id).first()
+        process_owner = _resolve_process_owner_for_objective(objective, axis)
+        if not process_owner:
+            return JSONResponse(
+                {"success": False, "error": "No se pudo identificar dueño del proceso (líder objetivo/departamento eje)"},
+                status_code=400,
+            )
+
+        approval = POADeliverableApproval(
+            activity_id=activity.id,
+            objective_id=objective.id,
+            process_owner=process_owner,
+            requester=session_username or (activity.responsable or ""),
+            status="pendiente",
+        )
+        activity.entrega_estado = "pendiente"
+        activity.entrega_solicitada_por = session_username or (activity.responsable or "")
+        activity.entrega_solicitada_at = datetime.utcnow()
+        activity.entrega_aprobada_por = ""
+        activity.entrega_aprobada_at = None
+        db.add(approval)
+        db.add(activity)
+        db.commit()
+        return JSONResponse({"success": True, "message": "Solicitud de aprobación enviada al dueño del proceso"})
+    finally:
+        db.close()
+
+
+@app.post("/api/poa/approvals/{approval_id}/decision")
+def decide_poa_deliverable_approval(request: Request, approval_id: int, data: dict = Body(default={})):
+    action = (data.get("accion") or "").strip().lower()
+    if action not in {"autorizar", "rechazar"}:
+        return JSONResponse({"success": False, "error": "Acción inválida. Usa autorizar o rechazar"}, status_code=400)
+    comment = (data.get("comentario") or "").strip()
+
+    db = SessionLocal()
+    try:
+        approval = db.query(POADeliverableApproval).filter(POADeliverableApproval.id == approval_id).first()
+        if not approval:
+            return JSONResponse({"success": False, "error": "Solicitud de aprobación no encontrada"}, status_code=404)
+        if approval.status != "pendiente":
+            return JSONResponse({"success": False, "error": "Esta solicitud ya fue resuelta"}, status_code=409)
+        if not _is_user_process_owner(request, db, approval.process_owner):
+            return JSONResponse({"success": False, "error": "No autorizado para resolver esta aprobación"}, status_code=403)
+
+        activity = db.query(POAActivity).filter(POAActivity.id == approval.activity_id).first()
+        if not activity:
+            return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
+        resolver_user = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+
+        approval.status = "autorizada" if action == "autorizar" else "rechazada"
+        approval.comment = comment
+        approval.resolved_by = resolver_user
+        approval.resolved_at = datetime.utcnow()
+        db.add(approval)
+
+        if action == "autorizar":
+            activity.entrega_estado = "aprobada"
+            activity.entrega_aprobada_por = resolver_user
+            activity.entrega_aprobada_at = datetime.utcnow()
+        else:
+            activity.entrega_estado = "rechazada"
+            activity.entrega_aprobada_por = ""
+            activity.entrega_aprobada_at = None
+        db.add(activity)
+        db.commit()
+        return JSONResponse({"success": True, "message": "Aprobación procesada correctamente"})
+    finally:
+        db.close()
+
+
+@app.post("/api/poa/activities/{activity_id}/subactivities")
+def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body(...)):
+    nombre = (data.get("nombre") or "").strip()
+    responsable = (data.get("responsable") or "").strip()
+    if not nombre or not responsable:
+        return JSONResponse({"success": False, "error": "Nombre y responsable son obligatorios"}, status_code=400)
+    start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=True)
+    if start_error:
+        return JSONResponse({"success": False, "error": start_error}, status_code=400)
+    end_date, end_error = _parse_date_field(data.get("fecha_final"), "Fecha final", required=True)
+    if end_error:
+        return JSONResponse({"success": False, "error": end_error}, status_code=400)
+    range_error = _validate_date_range(start_date, end_date, "Subactividad")
+    if range_error:
+        return JSONResponse({"success": False, "error": range_error}, status_code=400)
+
+    db = SessionLocal()
+    try:
+        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        if not activity:
+            return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
+        session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+        user = _current_user_record(request, db)
+        aliases = _user_aliases(user, session_username)
+        is_activity_owner = (activity.responsable or "").strip().lower() in aliases
+        if not (is_activity_owner or is_admin_or_superadmin(request)):
+            return JSONResponse(
+                {"success": False, "error": "Solo el responsable de la actividad puede asignar subactividades"},
+                status_code=403,
+            )
+        parent_error = _validate_child_date_range(
+            start_date,
+            end_date,
+            activity.fecha_inicial,
+            activity.fecha_final,
+            "Subactividad",
+            "Actividad",
+        )
+        if parent_error:
+            return JSONResponse({"success": False, "error": parent_error}, status_code=400)
+        assigned_by = session_username
+        sub = POASubactivity(
+            activity_id=activity.id,
+            nombre=nombre,
+            codigo=(data.get("codigo") or "").strip(),
+            responsable=responsable,
+            entregable=(data.get("entregable") or "").strip(),
+            fecha_inicial=start_date,
+            fecha_final=end_date,
+            descripcion=(data.get("descripcion") or "").strip(),
+            assigned_by=assigned_by,
+        )
+        db.add(sub)
+        db.commit()
+        db.refresh(sub)
+        return JSONResponse({"success": True, "data": _serialize_poa_subactivity(sub)})
+    finally:
+        db.close()
+
+
+@app.put("/api/poa/subactivities/{subactivity_id}")
+def update_poa_subactivity(request: Request, subactivity_id: int, data: dict = Body(...)):
+    db = SessionLocal()
+    try:
+        sub = db.query(POASubactivity).filter(POASubactivity.id == subactivity_id).first()
+        if not sub:
+            return JSONResponse({"success": False, "error": "Subactividad no encontrada"}, status_code=404)
+        activity = db.query(POAActivity).filter(POAActivity.id == sub.activity_id).first()
+        if not activity:
+            return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
+        session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+        user = _current_user_record(request, db)
+        aliases = _user_aliases(user, session_username)
+        is_activity_owner = (activity.responsable or "").strip().lower() in aliases
+        if not (is_activity_owner or is_admin_or_superadmin(request)):
+            return JSONResponse({"success": False, "error": "No autorizado para editar subactividad"}, status_code=403)
+        nombre = (data.get("nombre") or "").strip()
+        responsable = (data.get("responsable") or "").strip()
+        if not nombre or not responsable:
+            return JSONResponse({"success": False, "error": "Nombre y responsable son obligatorios"}, status_code=400)
+        start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=True)
+        if start_error:
+            return JSONResponse({"success": False, "error": start_error}, status_code=400)
+        end_date, end_error = _parse_date_field(data.get("fecha_final"), "Fecha final", required=True)
+        if end_error:
+            return JSONResponse({"success": False, "error": end_error}, status_code=400)
+        range_error = _validate_date_range(start_date, end_date, "Subactividad")
+        if range_error:
+            return JSONResponse({"success": False, "error": range_error}, status_code=400)
+        parent_error = _validate_child_date_range(
+            start_date,
+            end_date,
+            activity.fecha_inicial,
+            activity.fecha_final,
+            "Subactividad",
+            "Actividad",
+        )
+        if parent_error:
+            return JSONResponse({"success": False, "error": parent_error}, status_code=400)
+        sub.nombre = nombre
+        sub.codigo = (data.get("codigo") or "").strip()
+        sub.responsable = responsable
+        sub.entregable = (data.get("entregable") or "").strip()
+        sub.fecha_inicial = start_date
+        sub.fecha_final = end_date
+        sub.descripcion = (data.get("descripcion") or "").strip()
+        db.add(sub)
+        db.commit()
+        db.refresh(sub)
+        return JSONResponse({"success": True, "data": _serialize_poa_subactivity(sub)})
+    finally:
+        db.close()
+
+
+@app.delete("/api/poa/subactivities/{subactivity_id}")
+def delete_poa_subactivity(request: Request, subactivity_id: int):
+    db = SessionLocal()
+    try:
+        sub = db.query(POASubactivity).filter(POASubactivity.id == subactivity_id).first()
+        if not sub:
+            return JSONResponse({"success": False, "error": "Subactividad no encontrada"}, status_code=404)
+        activity = db.query(POAActivity).filter(POAActivity.id == sub.activity_id).first()
+        if not activity:
+            return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
+        session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+        user = _current_user_record(request, db)
+        aliases = _user_aliases(user, session_username)
+        is_activity_owner = (activity.responsable or "").strip().lower() in aliases
+        if not (is_activity_owner or is_admin_or_superadmin(request)):
+            return JSONResponse({"success": False, "error": "No autorizado para eliminar subactividad"}, status_code=403)
+        db.delete(sub)
+        db.commit()
+        return JSONResponse({"success": True})
+    finally:
+        db.close()
 
 
 @app.get("/plantillas", response_class=HTMLResponse)
@@ -7241,10 +10056,26 @@ def listar_usuarios_sanitizados(request: Request):
         roles = {r.id: r.nombre for r in db.query(Rol).all()}
         usuarios = db.query(Usuario).all()
 
+        session_username = (getattr(request.state, "user_name", None) or "").strip()
+        session_lookup_hash = _sensitive_lookup_hash(session_username) if session_username else ""
+        session_user = None
+        if session_username:
+            session_user = (
+                db.query(Usuario)
+                .filter(
+                    (Usuario.usuario_hash == session_lookup_hash)
+                    | (func.lower(Usuario.usuario) == session_username.lower())
+                )
+                .first()
+            )
+
         def resolved_role(u: Usuario) -> str:
             if u.rol_id and roles.get(u.rol_id):
                 return normalize_role_name(roles.get(u.rol_id))
             return normalize_role_name(u.role)
+
+        session_role_from_db = resolved_role(session_user) if session_user else ""
+        session_is_superadmin = is_superadmin(request) or session_role_from_db == "superadministrador"
 
         data = [
             {
@@ -7256,7 +10087,7 @@ def listar_usuarios_sanitizados(request: Request):
             }
             for u in usuarios
             if not is_hidden_user(request, _decrypt_sensitive(u.usuario))
-            and (is_superadmin(request) or resolved_role(u) != "superadministrador")
+            and (session_is_superadmin or resolved_role(u) != "superadministrador")
         ]
         return JSONResponse({"success": True, "data": data})
     finally:
@@ -7327,11 +10158,20 @@ def proyectando_page(request: Request):
 
 @app.get("/planes", response_class=HTMLResponse)
 def plan_estrategico_page(request: Request):
+    create_plan_button = ""
+    if is_admin_or_superadmin(request):
+        create_plan_button = (
+            "<div style=\"display:flex; justify-content:flex-end; margin: 4px 0 12px;\">"
+            "<button class=\"pe-btn pe-btn--primary\" type=\"button\" "
+            "onclick=\"window.location.href='/ejes-estrategicos'\">Crear plan estratégico</button>"
+            "</div>"
+        )
+    plan_content = PLAN_ESTRATEGICO_HTML.replace("__CREATE_PLAN_BUTTON__", create_plan_button)
     return render_backend_page(
         request,
         title="Plan estratégico",
         description="Consolidación de planificación estratégica institucional.",
-        content=PLAN_ESTRATEGICO_HTML,
+        content=plan_content,
         hide_floating_actions=True,
         show_page_header=True,
     )
@@ -7339,11 +10179,30 @@ def plan_estrategico_page(request: Request):
 
 @app.get("/poa", response_class=HTMLResponse)
 def poa_page(request: Request):
+    create_poa_button = (
+        "<div style=\"display:flex; justify-content:flex-end; margin: 4px 0 12px;\">"
+        "<button class=\"pe-btn pe-btn--primary\" type=\"button\" "
+        "onclick=\"window.location.href='/poa/crear'\">Crear POA</button>"
+        "</div>"
+    )
+    poa_content = POA_HTML.replace("__CREATE_POA_BUTTON__", create_poa_button)
     return render_backend_page(
         request,
         title="POA",
         description="Programación operativa anual alineada al plan estratégico.",
-        content=POA_HTML,
+        content=poa_content,
+        hide_floating_actions=True,
+        show_page_header=True,
+    )
+
+
+@app.get("/poa/crear", response_class=HTMLResponse)
+def poa_create_page(request: Request):
+    return render_backend_page(
+        request,
+        title="Crear POA",
+        description="Tablero de creación y delegación de actividades POA.",
+        content=POA_CREAR_HTML,
         hide_floating_actions=True,
         show_page_header=True,
     )

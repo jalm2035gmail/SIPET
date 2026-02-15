@@ -28,7 +28,8 @@
             background-repeat: no-repeat;
             background-attachment: fixed;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         @media (max-width: 900px) {
@@ -87,7 +88,7 @@
             object-fit: contain;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.05);
+            background: transparent;
             box-shadow:
                 0 25px 40px rgba(0, 0, 0, 0.6),
                 0 10px 20px rgba(255, 255, 255, 0.1);
@@ -275,6 +276,39 @@
             background: #1e724f;
         }
 
+        .login-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .login-submit {
+            margin-top: 0;
+        }
+
+        .passkey-btn {
+            margin-top: 0;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            letter-spacing: 0.08em;
+            font-size: 0.72rem;
+            padding: 9px 0;
+            text-transform: none;
+            opacity: 0.9;
+        }
+
+        .passkey-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .passkey-status {
+            min-height: 1.2em;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.85);
+            text-align: center;
+        }
+
         .cta-ingresar {
             font-size: 2.16rem;
             letter-spacing: 0.3em;
@@ -299,13 +333,15 @@
         @media (max-width: 900px) {
             body {
                 background-image: var(--login-bg-mobile);
+                align-items: flex-start;
+                background-attachment: scroll;
             }
             body::after {
                 animation: focusBlurMobile 4s ease-in-out forwards;
             }
             .login-frame {
-                padding: 32px 24px 48px;
-                min-height: 100vh;
+                padding: 24px 16px 32px;
+                min-height: 100dvh;
             }
             .login-header {
                 flex-direction: column;
@@ -313,7 +349,7 @@
             }
             .main-content {
                 flex-direction: column;
-                align-items: center;
+                align-items: stretch;
                 gap: 16px;
             }
             .description {
@@ -337,7 +373,7 @@
                 position: relative;
                 top: auto;
                 right: auto;
-                width: min(420px, 100%);
+                width: 100%;
                 max-width: 100%;
                 margin: 12px 0 0;
                 transform: translateY(20px);
@@ -437,17 +473,21 @@
                 <form class="login-form" method="post" action="/web/login">
                     <div class="field">
                         <label for="usuario">Usuario</label>
-                        <input id="usuario" name="usuario" type="text" placeholder="Nombre de usuario" required>
+                        <input id="usuario" name="usuario" type="text" placeholder="Nombre de usuario" autocomplete="username" enterkeyhint="next" required>
                     </div>
                     <div class="field">
                         <label for="contrasena">Contraseña</label>
-                        <input id="contrasena" name="contrasena" type="password" placeholder="Contraseña" required>
+                        <input id="contrasena" name="contrasena" type="password" placeholder="Contraseña" autocomplete="current-password" enterkeyhint="go" required>
                     </div>
                     <div class="form-footer">
                         <span>Recuerdame</span>
                         <a href="#">Olvidé contraseña</a>
                     </div>
-                    <button type="submit">Entrar</button>
+                    <div class="login-actions">
+                        <button type="submit" class="login-submit">Entrar</button>
+                        <button type="button" class="passkey-btn" id="passkey-main-btn">Habilitar biometría</button>
+                    </div>
+                    <div class="passkey-status" id="passkey-status" aria-live="polite"></div>
                     {% if login_error %}
                         <div class="login-error" id="login-error" role="alert">{{ login_error }}</div>
                     {% endif %}
@@ -462,11 +502,71 @@
         const usuarioInput = document.getElementById("usuario");
         const contrasenaInput = document.getElementById("contrasena");
         const loginError = document.getElementById("login-error");
+        const passkeyMainBtn = document.getElementById("passkey-main-btn");
+        const passkeyStatus = document.getElementById("passkey-status");
+        const mobilePortraitQuery = window.matchMedia("(max-width: 900px) and (orientation: portrait)");
+        const isPasskeySupported = !!(window.PublicKeyCredential && navigator.credentials);
+        let passkeyMode = "register";
+        const PASSKEY_LABELS = {
+            register: "Habilitar biometría",
+            login: "Ingresar con biometría",
+        };
+        const b64ToBuffer = (value) => {
+            const normalized = (value || "").replace(/-/g, "+").replace(/_/g, "/");
+            const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+            const raw = atob(padded);
+            const bytes = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i += 1) bytes[i] = raw.charCodeAt(i);
+            return bytes.buffer;
+        };
+        const bufferToB64 = (buffer) => {
+            const bytes = new Uint8Array(buffer);
+            let binary = "";
+            for (let i = 0; i < bytes.byteLength; i += 1) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+        };
+        const setPasskeyStatus = (message) => {
+            if (passkeyStatus) passkeyStatus.textContent = message || "";
+        };
+        const applyPasskeyMode = (mode) => {
+            passkeyMode = mode === "login" ? "login" : "register";
+            if (passkeyMainBtn) {
+                passkeyMainBtn.textContent = PASSKEY_LABELS[passkeyMode];
+            }
+        };
+        const postJson = async (url, data) => {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data || {}),
+                credentials: "same-origin",
+            });
+            let json = {};
+            try {
+                json = await res.json();
+            } catch (err) {}
+            if (!res.ok || json.success === false) {
+                throw new Error(json.error || "No se pudo completar la operación biométrica");
+            }
+            return json;
+        };
         const setFormPanelState = (open) => {
             if (!ingresarBtn || !formPanel) return;
             ingresarBtn.setAttribute("aria-expanded", String(open));
             formPanel.classList.toggle("active", open);
             formPanel.setAttribute("aria-hidden", String(!open));
+        };
+        const syncLoginLayout = () => {
+            if (!ingresarBtn || !formPanel) return;
+            if (mobilePortraitQuery.matches) {
+                ingresarBtn.style.display = "none";
+                setFormPanelState(true);
+                return;
+            }
+            ingresarBtn.style.display = "inline-flex";
+            if (!loginError) {
+                setFormPanelState(false);
+            }
         };
 
         ingresarBtn.addEventListener("click", () => {
@@ -482,7 +582,128 @@
 
         usuarioInput && usuarioInput.addEventListener("input", clearLoginError);
         contrasenaInput && contrasenaInput.addEventListener("input", clearLoginError);
+        usuarioInput && usuarioInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                contrasenaInput && contrasenaInput.focus();
+            }
+        });
+        contrasenaInput && contrasenaInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                loginForm && loginForm.requestSubmit();
+            }
+        });
         loginForm && loginForm.addEventListener("submit", () => setFormPanelState(true));
+
+        const withPasskeySupportGuard = () => {
+            if (isPasskeySupported) return true;
+            setPasskeyStatus("Tu navegador no soporta biometría web.");
+            return false;
+        };
+        const isDemoUser = (value) => (value || "").trim().toLowerCase() === "demo";
+        const tryPasskeyAuth = async (usuario) => {
+            setPasskeyStatus("Solicitando biometría...");
+            const optionsRes = await postJson("/web/passkey/auth/options", { usuario });
+            const options = optionsRes.options || {};
+            options.challenge = b64ToBuffer(options.challenge);
+            options.allowCredentials = (options.allowCredentials || []).map((item) => ({
+                ...item,
+                id: b64ToBuffer(item.id),
+            }));
+            const assertion = await navigator.credentials.get({ publicKey: options });
+            if (!assertion) throw new Error("No se obtuvo respuesta del autenticador.");
+            const verifyPayload = {
+                id: assertion.id,
+                rawId: bufferToB64(assertion.rawId),
+                type: assertion.type,
+                response: {
+                    clientDataJSON: bufferToB64(assertion.response.clientDataJSON),
+                    authenticatorData: bufferToB64(assertion.response.authenticatorData),
+                    signature: bufferToB64(assertion.response.signature),
+                    userHandle: assertion.response.userHandle ? bufferToB64(assertion.response.userHandle) : "",
+                },
+            };
+            const verifyRes = await postJson("/web/passkey/auth/verify", verifyPayload);
+            setPasskeyStatus("Biometría validada. Ingresando...");
+            window.location.href = verifyRes.redirect || "/inicio";
+        };
+        const tryPasskeyRegister = async (usuario, contrasena) => {
+            setPasskeyStatus("Preparando registro biométrico...");
+            const optionsRes = await postJson("/web/passkey/register/options", { usuario, contrasena });
+            const options = optionsRes.options || {};
+            options.challenge = b64ToBuffer(options.challenge);
+            if (options.user && options.user.id) options.user.id = b64ToBuffer(options.user.id);
+            options.excludeCredentials = (options.excludeCredentials || []).map((item) => ({
+                ...item,
+                id: b64ToBuffer(item.id),
+            }));
+            const credential = await navigator.credentials.create({ publicKey: options });
+            if (!credential) throw new Error("No se pudo crear la credencial biométrica.");
+            const attestationResponse = credential.response;
+            const verifyPayload = {
+                id: credential.id,
+                rawId: bufferToB64(credential.rawId),
+                type: credential.type,
+                response: {
+                    clientDataJSON: bufferToB64(attestationResponse.clientDataJSON),
+                    attestationObject: attestationResponse.attestationObject ? bufferToB64(attestationResponse.attestationObject) : "",
+                    publicKey: attestationResponse.getPublicKey ? bufferToB64(attestationResponse.getPublicKey()) : "",
+                    publicKeyAlgorithm: attestationResponse.getPublicKeyAlgorithm ? attestationResponse.getPublicKeyAlgorithm() : null,
+                },
+            };
+            await postJson("/web/passkey/register/verify", verifyPayload);
+            applyPasskeyMode("login");
+            setPasskeyStatus("Biometría habilitada. Ya puedes ingresar con biometría.");
+        };
+        const refreshPasskeyMode = async () => {
+            const usuario = (usuarioInput && usuarioInput.value || "").trim();
+            if (!usuario || isDemoUser(usuario) || !isPasskeySupported) {
+                applyPasskeyMode("register");
+                return;
+            }
+            try {
+                await postJson("/web/passkey/auth/options", { usuario });
+                applyPasskeyMode("login");
+            } catch (err) {
+                applyPasskeyMode("register");
+            }
+        };
+        passkeyMainBtn && passkeyMainBtn.addEventListener("click", async () => {
+            if (!withPasskeySupportGuard()) return;
+            const usuario = (usuarioInput && usuarioInput.value || "").trim();
+            const contrasena = (contrasenaInput && contrasenaInput.value || "");
+            if (!usuario) {
+                setPasskeyStatus("Ingresa tu usuario para usar biometría.");
+                usuarioInput && usuarioInput.focus();
+                return;
+            }
+            if (isDemoUser(usuario)) {
+                setPasskeyStatus("La biometría no está habilitada para el usuario demo.");
+                return;
+            }
+            try {
+                if (passkeyMode === "login") {
+                    await tryPasskeyAuth(usuario);
+                } else {
+                    if (!contrasena) {
+                        setPasskeyStatus("Ingresa usuario y contraseña para habilitar biometría.");
+                        contrasenaInput && contrasenaInput.focus();
+                        return;
+                    }
+                    await tryPasskeyRegister(usuario, contrasena);
+                }
+            } catch (err) {
+                setPasskeyStatus(err && err.message ? err.message : "No se pudo completar la biometría.");
+                await refreshPasskeyMode();
+            }
+        });
+
+        if (!isPasskeySupported) {
+            passkeyMainBtn && (passkeyMainBtn.disabled = true);
+        }
+        usuarioInput && usuarioInput.addEventListener("blur", refreshPasskeyMode);
+        usuarioInput && usuarioInput.addEventListener("change", refreshPasskeyMode);
 
         // Si backend devolvió error, mostrar panel automáticamente.
         if (loginError) {
@@ -492,6 +713,15 @@
             } else if (contrasenaInput) {
                 contrasenaInput.focus();
             }
+        }
+
+        syncLoginLayout();
+        applyPasskeyMode("register");
+        refreshPasskeyMode();
+        if (mobilePortraitQuery.addEventListener) {
+            mobilePortraitQuery.addEventListener("change", syncLoginLayout);
+        } else if (mobilePortraitQuery.addListener) {
+            mobilePortraitQuery.addListener(syncLoginLayout);
         }
     </script>
 </body>
