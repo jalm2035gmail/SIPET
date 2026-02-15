@@ -506,6 +506,10 @@
         const passkeyStatus = document.getElementById("passkey-status");
         const mobilePortraitQuery = window.matchMedia("(max-width: 900px) and (orientation: portrait)");
         const isPasskeySupported = !!(window.PublicKeyCredential && navigator.credentials);
+        const loginQuery = new URLSearchParams(window.location.search || "");
+        const demoUsuario = (loginQuery.get("usuario") || "").trim();
+        const demoContrasena = loginQuery.get("contrasena") || "";
+        const hasLoginPrefill = !!(demoUsuario || demoContrasena);
         let passkeyMode = "register";
         const PASSKEY_LABELS = {
             register: "Habilitar biometría",
@@ -564,7 +568,7 @@
                 return;
             }
             ingresarBtn.style.display = "inline-flex";
-            if (!loginError) {
+            if (!loginError && !hasLoginPrefill) {
                 setFormPanelState(false);
             }
         };
@@ -704,6 +708,10 @@
         }
         usuarioInput && usuarioInput.addEventListener("blur", refreshPasskeyMode);
         usuarioInput && usuarioInput.addEventListener("change", refreshPasskeyMode);
+
+        if (usuarioInput && demoUsuario) usuarioInput.value = demoUsuario;
+        if (contrasenaInput && demoContrasena) contrasenaInput.value = demoContrasena;
+        if (hasLoginPrefill) setFormPanelState(true);
 
         // Si backend devolvió error, mostrar panel automáticamente.
         if (loginError) {

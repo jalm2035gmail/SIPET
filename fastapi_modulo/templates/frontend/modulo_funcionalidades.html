@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
+    <style>
+        :root {
+            --bg-a: #eaf2f8;
+            --bg-b: #f8fbff;
+            --panel: #ffffff;
+            --title: #0f2743;
+            --text: #2e4a68;
+            --muted: #5c758f;
+            --accent: #0d8a68;
+            --accent-strong: #086149;
+            --accent-soft: #dff4ec;
+            --border: #ccd9e7;
+            --shadow: 0 18px 38px rgba(15, 39, 67, 0.12);
+            --warn: #7d2f2f;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Avenir Next", "Segoe UI", sans-serif;
+            color: var(--text);
+            background: radial-gradient(circle at 6% -20%, #d7eafc 0%, var(--bg-a) 30%, var(--bg-b) 100%);
+        }
+        .page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 24px 16px 44px;
+            display: grid;
+            gap: 16px;
+        }
+        .hero,
+        .section-card,
+        .lead-card,
+        .metrics-card,
+        .summary {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+        }
+        .hero {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 164px minmax(0, 1fr);
+            gap: 20px;
+            align-items: center;
+        }
+        .logo-box {
+            width: 164px;
+            height: 164px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 10px 0 8px;
+            color: var(--title);
+            font-size: clamp(1.6rem, 4.1vw, 2.42rem);
+            line-height: 1.2;
+        }
+        .intro {
+            margin: 0;
+            line-height: 1.62;
+            font-size: 1.02rem;
+        }
+        .actions {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn {
+            border-radius: 12px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            padding: 10px 14px;
+            font-weight: 700;
+            transition: .2s ease;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { background: var(--accent-strong); }
+        .btn-secondary {
+            background: #fff;
+            color: var(--accent-strong);
+            border-color: var(--border);
+        }
+        .btn-secondary:hover {
+            background: #eef6ff;
+            color: var(--title);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border-color: var(--border);
+        }
+        .btn-ghost:hover {
+            background: #fff;
+            color: var(--title);
+        }
+        .sections {
+            display: grid;
+            gap: 12px;
+        }
+        .section-card { padding: 18px; }
+        .section-card h2 {
+            margin: 0 0 8px;
+            color: var(--title);
+            font-size: 1.1rem;
+        }
+        .section-card p {
+            margin: 0;
+            line-height: 1.6;
+        }
+        .section-card ul {
+            margin: 10px 0 0;
+            padding-left: 18px;
+            line-height: 1.6;
+        }
+        .grid-cta {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+        }
+        .metrics-card,
+        .lead-card,
+        .summary {
+            padding: 18px;
+        }
+        .metrics-head,
+        .lead-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .metrics-head h3,
+        .lead-head h3 {
+            margin: 0;
+            color: var(--title);
+            font-size: 1.05rem;
+        }
+        .metrics-head p,
+        .lead-head p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .9rem;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .stat {
+            border: 1px solid var(--border);
+            background: #f6fbff;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .stat-label {
+            display: block;
+            color: var(--muted);
+            font-size: .8rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+        .stat-value {
+            margin-top: 3px;
+            display: block;
+            color: var(--title);
+            font-size: 1.34rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .locations {
+            margin-top: 12px;
+            display: grid;
+            gap: 7px;
+        }
+        .location-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: #fff;
+            font-size: .92rem;
+        }
+        .location-count {
+            color: var(--accent-strong);
+            font-weight: 700;
+        }
+        .lead-form {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .field label {
+            color: var(--title);
+            font-size: .86rem;
+            font-weight: 700;
+        }
+        .field input,
+        .field textarea {
+            width: 100%;
+            border: 1px solid #b9c8d9;
+            border-radius: 10px;
+            padding: 10px 11px;
+            font-size: .95rem;
+            color: var(--title);
+            background: #fff;
+        }
+        .field textarea {
+            min-height: 106px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        .field input:focus,
+        .field textarea:focus {
+            outline: 2px solid rgba(13, 138, 104, .2);
+            border-color: var(--accent);
+        }
+        .field-full { grid-column: 1 / -1; }
+        .hp-field { display: none; }
+        .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .form-status {
+            margin: 0;
+            color: var(--muted);
+            font-size: .9rem;
+            min-height: 1.2em;
+        }
+        .form-status.error { color: var(--warn); }
+        .summary {
+            color: #123a60;
+            line-height: 1.64;
+            font-weight: 600;
+            background: #edf7ff;
+            border-color: #c6ddf0;
+        }
+        .newsletter-card {
+            margin-top: 12px;
+            border: 1px solid var(--border);
+            background: #f2f8ff;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .newsletter-card h4 {
+            margin: 0 0 6px;
+            color: var(--title);
+            font-size: .98rem;
+        }
+        .newsletter-card p {
+            margin: 0 0 10px;
+            color: var(--text);
+            line-height: 1.5;
+            font-size: .92rem;
+        }
+        @media (max-width: 980px) {
+            .hero { grid-template-columns: 1fr; text-align: center; }
+            .logo-box { margin: 0 auto; }
+            .actions { justify-content: center; }
+            .grid-cta { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr; }
+            .lead-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <div class="logo-box" aria-hidden="true">
+                <img src="{{ company_logo_url | default(app_favicon_url | default('/templates/icon/icon.png')) }}" alt="Logo institucional">
+            </div>
+            <div>
+                <span class="chip">SIPET • Inteligencia para Ejecución Estratégica</span>
+                <h1>Convierte la estrategia institucional en resultados medibles</h1>
+                <p class="intro">
+                    SIPET es una plataforma integral para planificar, ejecutar y supervisar el ciclo estratégico-operativo.
+                    Estructura ejes y objetivos, controla el POA, automatiza validaciones de entregables y proporciona
+                    trazabilidad ejecutiva para elevar productividad, cumplimiento y capacidad de respuesta institucional.
+                </p>
+                <div class="actions">
+                    <a class="btn btn-primary" href="/web/login">Ingresar</a>
+                    <a class="btn btn-secondary" href="/web/login?usuario=demo&contrasena=demo">Ingresar como demo</a>
+                    <a class="btn btn-secondary" href="https://wa.me/523327633869" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a>
+                    <a class="btn btn-ghost" href="/web">Volver al inicio público</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="sections" aria-label="Descripción de funcionalidades">
+            <article class="section-card">
+                <h2>1. Gestión estratégica (Ejes y Objetivos)</h2>
+                <p>
+                    Implementa una planeación metodológicamente robusta con estructura jerárquica, criterios de calidad
+                    y consistencia temporal para todo el marco estratégico institucional.
+                </p>
+                <ul>
+                    <li>Ejes estratégicos: Nombre, Código, Líder de eje (departamento), Descripción, Fecha inicial y Fecha final.</li>
+                    <li>Objetivos estratégicos: Nombre, Código, Líder (colaborador del departamento), Descripción, Fecha inicial y Fecha final.</li>
+                    <li>Validación visual y lógica de fechas entre elementos padre-hijo para evitar desviaciones de planificación.</li>
+                    <li>Modelo colaborativo que facilita la participación transversal del capital humano institucional.</li>
+                </ul>
+            </article>
+
+            <article class="section-card">
+                <h2>2. Plan estratégico y control de acceso por rol</h2>
+                <p>
+                    Orquesta la construcción del plan estratégico con controles de gobernanza y segmentación de acceso para
+                    mantener seguridad, responsabilidad operativa y alineación organizacional.
+                </p>
+                <ul>
+                    <li>Creación de plan estratégico habilitada para perfiles <strong>superadministrador</strong> y <strong>administrador</strong>.</li>
+                    <li>Control multinivel por rol, departamento, usuario y región para gestión precisa de alcance y permisos.</li>
+                    <li>Transición efectiva de estrategia a táctica mediante asignación clara de responsables y objetivos ejecutables.</li>
+                    <li>Contribuye al incremento de eficiencia y productividad con trazabilidad por unidad organizativa.</li>
+                </ul>
+            </article>
+
+            <article class="section-card">
+                <h2>3. POA y ejecución operativa</h2>
+                <p>
+                    Centraliza la ejecución del POA con foco en productividad: prioriza lo asignado, acelera seguimiento y
+                    mejora el control de avance de actividades y subactividades.
+                </p>
+                <ul>
+                    <li>Tablero de creación de POA orientado por asignación real de ejes y objetivos por usuario.</li>
+                    <li>Gestión de actividades con datos críticos: Nombre, Código, Responsable, Entregable, Descripción y rango de fechas.</li>
+                    <li>Delegación de subactividades con delimitación temporal por dependencia padre-hija.</li>
+                    <li>Supervisión operativa con trazabilidad por responsable, estado, fecha y nivel de cumplimiento.</li>
+                </ul>
+            </article>
+
+            <article class="section-card">
+                <h2>4. Entregables, estados y aprobación</h2>
+                <p>
+                    Automatiza el ciclo de validación de entregables para garantizar calidad antes del cierre y fortalecer
+                    la disciplina de ejecución en toda la organización.
+                </p>
+                <ul>
+                    <li>Estados automáticos: <strong>No iniciada</strong>, <strong>En proceso</strong> y <strong>Terminada</strong>.</li>
+                    <li>Al marcar una actividad como terminada, se activa el flujo formal de aprobación del entregable.</li>
+                    <li>Notificación al dueño/líder del proceso para autorizar o rechazar, con evidencia y control de calidad.</li>
+                    <li>Cierre definitivo solo con autorización aprobada, evitando cierres prematuros.</li>
+                    <li>Reduce carga manual de seguimiento y empodera a los colaboradores con reglas claras de ejecución.</li>
+                </ul>
+            </article>
+
+            <article class="section-card">
+                <h2>5. Experiencia digital, adopción y productividad</h2>
+                <p>
+                    Diseñado para operación continua en escritorio y móvil, con herramientas de acceso rápido y
+                    comunicación oportuna para acelerar adopción y desempeño.
+                </p>
+                <ul>
+                    <li>Login optimizado para móvil (tecla Enter/Ir), biometría WebAuthn y flujo de acceso demo.</li>
+                    <li>Sistema de notificaciones con contador, lectura individual y marcado masivo.</li>
+                    <li>Personalización visual institucional para mayor coherencia de marca y usabilidad.</li>
+                </ul>
+            </article>
+        </section>
+
+        <section class="grid-cta" aria-label="Conversión de leads y analítica pública">
+            <article class="metrics-card">
+                <div class="metrics-head">
+                    <h3>Interés en esta página</h3>
+                    <p>Control de accesos y origen de visitas</p>
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">Visitas totales</span>
+                        <span class="stat-value" id="metric-total">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Visitantes únicos</span>
+                        <span class="stat-value" id="metric-unique">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Visitas hoy</span>
+                        <span class="stat-value" id="metric-today">0</span>
+                    </div>
+                </div>
+                <div class="locations" id="metric-locations">
+                    <div class="location-item"><span>Ubicación no disponible</span><span class="location-count">0</span></div>
+                </div>
+            </article>
+
+            <article class="lead-card">
+                <div class="lead-head">
+                    <h3>Solicitar más información</h3>
+                    <p>Un especialista te contactará</p>
+                </div>
+                <form id="lead-form" class="lead-form" novalidate>
+                    <div class="field">
+                        <label for="lead-nombre">Nombre completo *</label>
+                        <input id="lead-nombre" name="nombre" type="text" required>
+                    </div>
+                    <div class="field">
+                        <label for="lead-email">Correo corporativo *</label>
+                        <input id="lead-email" name="email" type="email" required>
+                    </div>
+                    <div class="field">
+                        <label for="lead-organizacion">Organización</label>
+                        <input id="lead-organizacion" name="organizacion" type="text">
+                    </div>
+                    <div class="field">
+                        <label for="lead-cargo">Cargo</label>
+                        <input id="lead-cargo" name="cargo" type="text">
+                    </div>
+                    <div class="field">
+                        <label for="lead-telefono">Teléfono</label>
+                        <input id="lead-telefono" name="telefono" type="text">
+                    </div>
+                    <div class="field hp-field" aria-hidden="true">
+                        <label for="lead-website">Website</label>
+                        <input id="lead-website" name="website" type="text" tabindex="-1" autocomplete="off">
+                    </div>
+                    <div class="field field-full">
+                        <label for="lead-mensaje">¿Qué necesitas resolver? *</label>
+                        <textarea id="lead-mensaje" name="mensaje" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button id="lead-submit" class="btn btn-primary" type="submit">Enviar solicitud</button>
+                        <p id="lead-status" class="form-status" aria-live="polite"></p>
+                    </div>
+                </form>
+                <div class="newsletter-card">
+                    <h4>Suscríbete al boletín de Avancoop</h4>
+                    <p>
+                        Recibe novedades, mejores prácticas y actualizaciones sobre planeación estratégica,
+                        productividad institucional y transformación operativa.
+                    </p>
+                    <a
+                        class="btn btn-secondary"
+                        href="https://avancoop.ipzmarketing.com/f/DR3SX0JOGhc"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Suscribirme al boletín
+                    </a>
+                </div>
+            </article>
+        </section>
+
+        <div class="summary">
+            SIPET integra gobierno estratégico, ejecución táctica y control de entregables en una sola plataforma,
+            permitiendo decisiones basadas en evidencia, mayor productividad operativa y mejora continua del desempeño institucional.
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            const page = "funcionalidades";
+            const metrics = {
+                total: document.getElementById("metric-total"),
+                unique: document.getElementById("metric-unique"),
+                today: document.getElementById("metric-today"),
+                locations: document.getElementById("metric-locations"),
+            };
+            const leadForm = document.getElementById("lead-form");
+            const leadStatus = document.getElementById("lead-status");
+            const leadSubmit = document.getElementById("lead-submit");
+
+            const requestJson = async (url, options) => {
+                const response = await fetch(url, {
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json" },
+                    ...options,
+                });
+                let payload = {};
+                try { payload = await response.json(); } catch (err) {}
+                if (!response.ok || payload.success === false) {
+                    throw new Error(payload.error || "No se pudo completar la operación");
+                }
+                return payload;
+            };
+            const escapeHtml = (value) => String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+
+            const renderLocations = (items) => {
+                if (!metrics.locations) return;
+                const safeItems = Array.isArray(items) ? items : [];
+                if (!safeItems.length) {
+                    metrics.locations.innerHTML = '<div class="location-item"><span>Ubicación no disponible</span><span class="location-count">0</span></div>';
+                    return;
+                }
+                metrics.locations.innerHTML = safeItems
+                    .map((item) => {
+                        const label = escapeHtml(item.label || "Ubicación no disponible");
+                        const count = Number(item.count || 0);
+                        return `<div class="location-item"><span>${label}</span><span class="location-count">${count}</span></div>`;
+                    })
+                    .join("");
+            };
+
+            const loadMetrics = async () => {
+                try {
+                    const payload = await requestJson(`/api/public/landing-metrics?page=${encodeURIComponent(page)}`, { method: "GET" });
+                    const data = payload.data || {};
+                    if (metrics.total) metrics.total.textContent = Number(data.total_visits || 0).toLocaleString("es-MX");
+                    if (metrics.unique) metrics.unique.textContent = Number(data.unique_visitors || 0).toLocaleString("es-MX");
+                    if (metrics.today) metrics.today.textContent = Number(data.visits_today || 0).toLocaleString("es-MX");
+                    renderLocations(data.top_locations || []);
+                } catch (err) {
+                    renderLocations([]);
+                }
+            };
+
+            const trackVisit = async () => {
+                try {
+                    await requestJson("/api/public/track-visit", {
+                        method: "POST",
+                        body: JSON.stringify({ page }),
+                    });
+                } catch (err) {}
+            };
+
+            const setFormStatus = (message, isError) => {
+                if (!leadStatus) return;
+                leadStatus.textContent = message || "";
+                leadStatus.classList.toggle("error", !!isError);
+            };
+
+            leadForm && leadForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const formData = new FormData(leadForm);
+                if ((formData.get("website") || "").toString().trim()) {
+                    setFormStatus("Gracias por tu interés. Nuestro equipo te contactará pronto.", false);
+                    leadForm.reset();
+                    return;
+                }
+                const payload = {
+                    nombre: (formData.get("nombre") || "").toString().trim(),
+                    email: (formData.get("email") || "").toString().trim(),
+                    organizacion: (formData.get("organizacion") || "").toString().trim(),
+                    cargo: (formData.get("cargo") || "").toString().trim(),
+                    telefono: (formData.get("telefono") || "").toString().trim(),
+                    mensaje: (formData.get("mensaje") || "").toString().trim(),
+                    source_page: page,
+                };
+                if (!payload.nombre || !payload.email || !payload.mensaje) {
+                    setFormStatus("Completa nombre, correo y mensaje.", true);
+                    return;
+                }
+                try {
+                    if (leadSubmit) leadSubmit.disabled = true;
+                    setFormStatus("Enviando solicitud...", false);
+                    const result = await requestJson("/api/public/lead-request", {
+                        method: "POST",
+                        body: JSON.stringify(payload),
+                    });
+                    setFormStatus(result.message || "Solicitud enviada correctamente.", false);
+                    leadForm.reset();
+                } catch (err) {
+                    setFormStatus(err && err.message ? err.message : "No se pudo enviar la solicitud.", true);
+                } finally {
+                    if (leadSubmit) leadSubmit.disabled = false;
+                }
+            });
+
+            trackVisit().finally(loadMetrics);
+        })();
+    </script>
+</body>
+</html>

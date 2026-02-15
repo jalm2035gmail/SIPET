@@ -787,6 +787,40 @@ class UserNotificationRead(Base):
     read_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
+class PublicLandingVisit(Base):
+    __tablename__ = "public_landing_visits"
+
+    id = Column(Integer, primary_key=True, index=True)
+    page = Column(String, index=True, default="funcionalidades")
+    ip_address = Column(String, index=True)
+    user_agent = Column(String)
+    referrer = Column(String)
+    country = Column(String, index=True)
+    region = Column(String, index=True)
+    city = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class PublicLeadRequest(Base):
+    __tablename__ = "public_lead_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String, nullable=False)
+    organizacion = Column(String)
+    cargo = Column(String)
+    email = Column(String, nullable=False, index=True)
+    telefono = Column(String)
+    mensaje = Column(String, nullable=False)
+    source_page = Column(String, index=True, default="funcionalidades")
+    ip_address = Column(String, index=True)
+    user_agent = Column(String)
+    country = Column(String, index=True)
+    region = Column(String, index=True)
+    city = Column(String, index=True)
+    status = Column(String, default="nuevo", index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 DEFAULT_SYSTEM_ROLES = [
     ("superadministrador", "Acceso total a todo el módulo"),
     ("administrador", "Acceso a todo menos a Personalización"),
@@ -1349,6 +1383,7 @@ async def enforce_backend_login(request: Request, call_next):
     path = request.url.path
     public_paths = {
         "/web",
+        "/web/funcionalidades",
         "/web/404",
         "/web/login",
         "/logout",
@@ -1361,6 +1396,7 @@ async def enforce_backend_login(request: Request, call_next):
     if (
         request.method == "OPTIONS"
         or path in public_paths
+        or path.startswith("/api/public/")
         or path.startswith("/web/passkey/")
         or path.startswith("/templates/")
         or path.startswith("/docs/")
@@ -1662,6 +1698,38 @@ def _notification_user_key(request: Request, db) -> str:
     return ""
 
 
+def _public_client_ip(request: Request) -> str:
+    forwarded_for = (request.headers.get("x-forwarded-for") or "").strip()
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    real_ip = (request.headers.get("x-real-ip") or "").strip()
+    if real_ip:
+        return real_ip
+    return (request.client.host if request.client else "") or ""
+
+
+def _public_client_location(request: Request) -> Dict[str, str]:
+    country = (
+        request.headers.get("cf-ipcountry")
+        or request.headers.get("x-vercel-ip-country")
+        or request.headers.get("x-country-code")
+        or ""
+    ).strip().upper()
+    region = (
+        request.headers.get("x-vercel-ip-country-region")
+        or request.headers.get("x-region")
+        or ""
+    ).strip()
+    city = (request.headers.get("x-vercel-ip-city") or request.headers.get("x-city") or "").strip()
+    return {"country": country, "region": region, "city": city}
+
+
+def _sanitize_public_page(value: str) -> str:
+    raw = (value or "").strip().lower()
+    sanitized = re.sub(r"[^a-z0-9_-]+", "-", raw).strip("-")
+    return sanitized or "funcionalidades"
+
+
 def is_hidden_user(request: Request, username: Optional[str]) -> bool:
     if is_superadmin(request):
         return False
@@ -1752,6 +1820,158 @@ def web(request: Request):
             "company_logo_url": login_identity.get("login_logo_url"),
         },
     )
+
+
+@app.get("/web/funcionalidades", response_class=HTMLResponse)
+def web_funcionalidades(request: Request):
+    login_identity = _get_login_identity_context()
+    return templates.TemplateResponse(
+        "frontend/modulo_funcionalidades.html",
+        {
+            "request": request,
+            "title": "Funcionalidades | SIPET",
+            "app_favicon_url": login_identity.get("login_favicon_url"),
+            "company_logo_url": login_identity.get("login_logo_url"),
+        },
+    )
+
+
+@app.post("/api/public/track-visit")
+def track_public_visit(request: Request, data: dict = Body(default={})):
+    page = _sanitize_public_page(str(data.get("page") or "funcionalidades"))
+    db = SessionLocal()
+    try:
+        geo = _public_client_location(request)
+        visit = PublicLandingVisit(
+            page=page,
+            ip_address=_public_client_ip(request),
+            user_agent=request.headers.get("user-agent") or "",
+            referrer=request.headers.get("referer") or "",
+            country=geo["country"],
+            region=geo["region"],
+            city=geo["city"],
+        )
+        db.add(visit)
+        db.commit()
+        return JSONResponse({"success": True})
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    finally:
+        db.close()
+
+
+@app.get("/api/public/landing-metrics")
+def public_landing_metrics(request: Request):
+    page = _sanitize_public_page(request.query_params.get("page", "funcionalidades"))
+    db = SessionLocal()
+    try:
+        total_visits = db.query(PublicLandingVisit).filter(PublicLandingVisit.page == page).count()
+        unique_visitors = (
+            db.query(func.count(func.distinct(PublicLandingVisit.ip_address)))
+            .filter(PublicLandingVisit.page == page, PublicLandingVisit.ip_address.isnot(None))
+            .scalar()
+            or 0
+        )
+        today_start = datetime.combine(datetime.utcnow().date(), datetime.min.time())
+        visits_today = (
+            db.query(PublicLandingVisit)
+            .filter(PublicLandingVisit.page == page, PublicLandingVisit.created_at >= today_start)
+            .count()
+        )
+        recent_rows = (
+            db.query(PublicLandingVisit.country, PublicLandingVisit.region, PublicLandingVisit.city)
+            .filter(PublicLandingVisit.page == page)
+            .order_by(PublicLandingVisit.created_at.desc())
+            .limit(700)
+            .all()
+        )
+        location_counts: Dict[str, int] = {}
+        for row in recent_rows:
+            country = (row.country or "").strip()
+            region = (row.region or "").strip()
+            city = (row.city or "").strip()
+            if city and region:
+                key = f"{city}, {region}"
+            elif city and country:
+                key = f"{city}, {country}"
+            elif region and country:
+                key = f"{region}, {country}"
+            elif country:
+                key = country
+            else:
+                key = "Ubicación no disponible"
+            location_counts[key] = location_counts.get(key, 0) + 1
+        top_locations = sorted(
+            [{"label": key, "count": value} for key, value in location_counts.items()],
+            key=lambda item: item["count"],
+            reverse=True,
+        )[:4]
+        return JSONResponse(
+            {
+                "success": True,
+                "data": {
+                    "page": page,
+                    "total_visits": int(total_visits),
+                    "unique_visitors": int(unique_visitors),
+                    "visits_today": int(visits_today),
+                    "top_locations": top_locations,
+                },
+            }
+        )
+    except Exception as exc:
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    finally:
+        db.close()
+
+
+@app.post("/api/public/lead-request")
+def public_lead_request(request: Request, data: dict = Body(default={})):
+    nombre = (data.get("nombre") or "").strip()
+    organizacion = (data.get("organizacion") or "").strip()
+    cargo = (data.get("cargo") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    telefono = (data.get("telefono") or "").strip()
+    mensaje = (data.get("mensaje") or "").strip()
+    source_page = _sanitize_public_page(str(data.get("source_page") or "funcionalidades"))
+
+    if len(nombre) < 2:
+        return JSONResponse({"success": False, "error": "Nombre requerido"}, status_code=400)
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return JSONResponse({"success": False, "error": "Correo electrónico inválido"}, status_code=400)
+    if len(mensaje) < 10:
+        return JSONResponse({"success": False, "error": "Describe brevemente tu requerimiento"}, status_code=400)
+
+    db = SessionLocal()
+    try:
+        geo = _public_client_location(request)
+        record = PublicLeadRequest(
+            nombre=nombre,
+            organizacion=organizacion,
+            cargo=cargo,
+            email=email,
+            telefono=telefono,
+            mensaje=mensaje,
+            source_page=source_page,
+            ip_address=_public_client_ip(request),
+            user_agent=request.headers.get("user-agent") or "",
+            country=geo["country"],
+            region=geo["region"],
+            city=geo["city"],
+        )
+        db.add(record)
+        db.commit()
+        return JSONResponse(
+            {
+                "success": True,
+                "message": "Gracias por tu interés. Nuestro equipo te contactará pronto.",
+            }
+        )
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    finally:
+        db.close()
 
 
 @app.get("/web/login", response_class=HTMLResponse)
