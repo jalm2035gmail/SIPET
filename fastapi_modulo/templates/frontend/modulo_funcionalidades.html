@@ -1,643 +1,729 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>{{ title }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
-    <link rel="shortcut icon" type="image/x-icon" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
-    <style>
-        :root {
-            --bg-a: #eaf2f8;
-            --bg-b: #f8fbff;
-            --panel: #ffffff;
-            --title: #0f2743;
-            --text: #2e4a68;
-            --muted: #5c758f;
-            --accent: #0d8a68;
-            --accent-strong: #086149;
-            --accent-soft: #dff4ec;
-            --border: #ccd9e7;
-            --shadow: 0 18px 38px rgba(15, 39, 67, 0.12);
-            --warn: #7d2f2f;
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: "Avenir Next", "Segoe UI", sans-serif;
-            color: var(--text);
-            background: radial-gradient(circle at 6% -20%, #d7eafc 0%, var(--bg-a) 30%, var(--bg-b) 100%);
-        }
-        .page {
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 24px 16px 44px;
-            display: grid;
-            gap: 16px;
-        }
-        .hero,
-        .section-card,
-        .lead-card,
-        .metrics-card,
-        .summary {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            box-shadow: var(--shadow);
-        }
-        .hero {
-            padding: 24px;
-            display: grid;
-            grid-template-columns: 164px minmax(0, 1fr);
-            gap: 20px;
-            align-items: center;
-        }
-        .logo-box {
-            width: 164px;
-            height: 164px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 14px;
-        }
-        .logo-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--accent-soft);
-            color: var(--accent-strong);
-            border-radius: 999px;
-            padding: 8px 14px;
-            font-size: .82rem;
-            font-weight: 700;
-            letter-spacing: .03em;
-            text-transform: uppercase;
-        }
-        h1 {
-            margin: 10px 0 8px;
-            color: var(--title);
-            font-size: clamp(1.6rem, 4.1vw, 2.42rem);
-            line-height: 1.2;
-        }
-        .intro {
-            margin: 0;
-            line-height: 1.62;
-            font-size: 1.02rem;
-        }
-        .actions {
-            margin-top: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-        .pain-points {
-            margin-top: 14px;
-            border: 1px solid #f1cf9c;
-            background: #fff7eb;
-            border-radius: 12px;
-            padding: 11px 12px;
-        }
-        .pain-points strong {
-            display: block;
-            color: #7f4b00;
-            font-size: .86rem;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-            margin-bottom: 5px;
-        }
-        .pain-points ul {
-            margin: 0;
-            padding-left: 18px;
-            color: #6b4b1c;
-            line-height: 1.5;
-            font-size: .93rem;
-        }
-        .btn {
-            border-radius: 12px;
-            border: 1px solid transparent;
-            text-decoration: none;
-            padding: 10px 14px;
-            font-weight: 700;
-            transition: .2s ease;
-            cursor: pointer;
-        }
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
-        }
-        .btn-primary:hover { background: var(--accent-strong); }
-        .btn-secondary {
-            background: #fff;
-            color: var(--accent-strong);
-            border-color: var(--border);
-        }
-        .btn-secondary:hover {
-            background: #eef6ff;
-            color: var(--title);
-        }
-        .btn-ghost {
-            background: transparent;
-            color: var(--muted);
-            border-color: var(--border);
-        }
-        .btn-ghost:hover {
-            background: #fff;
-            color: var(--title);
-        }
-        .sections {
-            display: grid;
-            gap: 12px;
-        }
-        .section-card { padding: 18px; }
-        .section-card h2 {
-            margin: 0 0 8px;
-            color: var(--title);
-            font-size: 1.1rem;
-        }
-        .section-card p {
-            margin: 0;
-            line-height: 1.6;
-        }
-        .section-card ul {
-            margin: 10px 0 0;
-            padding-left: 18px;
-            line-height: 1.6;
-        }
-        .grid-cta {
-            display: grid;
-            gap: 12px;
-            grid-template-columns: 1fr 1fr;
-        }
-        .metrics-card,
-        .lead-card,
-        .summary {
-            padding: 18px;
-        }
-        .metrics-head,
-        .lead-head {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .metrics-head h3,
-        .lead-head h3 {
-            margin: 0;
-            color: var(--title);
-            font-size: 1.05rem;
-        }
-        .metrics-head p,
-        .lead-head p {
-            margin: 0;
-            color: var(--muted);
-            font-size: .9rem;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
-        }
-        .stat {
-            border: 1px solid var(--border);
-            background: #f6fbff;
-            border-radius: 12px;
-            padding: 12px;
-        }
-        .stat-label {
-            display: block;
-            color: var(--muted);
-            font-size: .8rem;
-            text-transform: uppercase;
-            letter-spacing: .04em;
-        }
-        .stat-value {
-            margin-top: 3px;
-            display: block;
-            color: var(--title);
-            font-size: 1.34rem;
-            font-weight: 800;
-            line-height: 1.2;
-        }
-        .locations {
-            margin-top: 12px;
-            display: grid;
-            gap: 7px;
-        }
-        .location-item {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 8px 10px;
-            background: #fff;
-            font-size: .92rem;
-        }
-        .location-count {
-            color: var(--accent-strong);
-            font-weight: 700;
-        }
-        .lead-form {
-            display: grid;
-            gap: 10px;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .field label {
-            color: var(--title);
-            font-size: .86rem;
-            font-weight: 700;
-        }
-        .field input,
-        .field textarea {
-            width: 100%;
-            border: 1px solid #b9c8d9;
-            border-radius: 10px;
-            padding: 10px 11px;
-            font-size: .95rem;
-            color: var(--title);
-            background: #fff;
-        }
-        .field textarea {
-            min-height: 106px;
-            resize: vertical;
-            font-family: inherit;
-        }
-        .field input:focus,
-        .field textarea:focus {
-            outline: 2px solid rgba(13, 138, 104, .2);
-            border-color: var(--accent);
-        }
-        .field-full { grid-column: 1 / -1; }
-        .hp-field { display: none; }
-        .form-actions {
-            grid-column: 1 / -1;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-        .form-status {
-            margin: 0;
-            color: var(--muted);
-            font-size: .9rem;
-            min-height: 1.2em;
-        }
-        .form-status.error { color: var(--warn); }
-        .summary {
-            color: #123a60;
-            line-height: 1.64;
-            font-weight: 600;
-            background: #edf7ff;
-            border-color: #c6ddf0;
-        }
-        .newsletter-card {
-            margin-top: 12px;
-            border: 1px solid var(--border);
-            background: #f2f8ff;
-            border-radius: 12px;
-            padding: 12px;
-        }
-        .newsletter-card h4 {
-            margin: 0 0 6px;
-            color: var(--title);
-            font-size: .98rem;
-        }
-        .newsletter-card p {
-            margin: 0 0 10px;
-            color: var(--text);
-            line-height: 1.5;
-            font-size: .92rem;
-        }
-        @media (max-width: 980px) {
-            .hero { grid-template-columns: 1fr; text-align: center; }
-            .logo-box { margin: 0 auto; }
-            .actions { justify-content: center; }
-            .grid-cta { grid-template-columns: 1fr; }
-            .stats { grid-template-columns: 1fr; }
-            .lead-form { grid-template-columns: 1fr; }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIPET | Funcionalidades</title>
+  <link rel="icon" type="image/png" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
+  <link rel="shortcut icon" type="image/x-icon" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
+  <link rel="stylesheet" href="/templates/sipet-funcionalidades.css" />
 </head>
+
 <body>
-    <main class="page">
-        <section class="hero">
-            <div class="logo-box" aria-hidden="true">
-                <img src="{{ company_logo_url | default(app_favicon_url | default('/templates/icon/icon.png')) }}" alt="Logo institucional">
+  <div class="promo-bar" role="note" aria-label="Promoción cuestionario">
+    <div class="wrap promo-bar__inner">
+      <span>Responda este cuestionario y obtenga hasta un 60% de descuento (solo para 5 cooperativas).</span>
+      <a href="#quiz-descuento" class="promo-bar__link" id="promo-quiz-open">Abrir cuestionario</a>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <header class="topbar" role="banner">
+    <div class="wrap topbar__inner">
+      <a class="brand" href="/web" aria-label="SIPET - Inicio">
+        <span class="brand__mark" aria-hidden="true">SI</span>
+        <span class="brand__text">
+          <strong>SIPET</strong>
+          <small>Planeación estratégica y POA para cooperativas</small>
+        </span>
+      </a>
+
+      <nav class="topbar__actions" aria-label="Acciones">
+        <a class="btn btn--ghost" href="/web/login">Ingresar</a>
+        <a class="btn btn--ghost" href="/web/login?usuario=demo&contrasena=demo">Ingresar como demo</a>
+        <a class="btn btn--wa" href="https://wa.me/523327633869" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn btn--primary" href="#solicitar-info">Solicitar información</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main>
+    <section class="hero" aria-label="Hero">
+      <div class="wrap hero__grid">
+        <div class="hero__copy">
+          <p class="pill">
+            <span class="dot"></span>
+            Hecho para cooperativas: foco en control, trazabilidad y ejecución
+          </p>
+
+          <h1>Convierta su plan estratégico en resultados medibles.</h1>
+          <p class="lead">
+            SIPET ordena la planeación, baja a POA, controla entregables, evidencia avances y habilita tableros
+            para directivos y áreas. Menos improvisación, más cumplimiento.
+          </p>
+
+          <div class="hero__cta">
+            <a class="btn btn--primary btn--lg" href="#solicitar-info">Agendar una demo</a>
+            <a class="btn btn--ghost btn--lg" href="#funcionalidades">Ver funcionalidades</a>
+          </div>
+
+          <div class="trust">
+            <div class="trust__item">
+              <strong>Seguridad</strong>
+              <span>Roles, permisos y segmentación</span>
             </div>
-            <div>
-                <span class="chip">SIPET • Inteligencia para Ejecución Estratégica</span>
-                <h1>Convierte la estrategia institucional en resultados medibles</h1>
-                <p class="intro">
-                    SIPET es una plataforma integral para planificar, ejecutar y supervisar el ciclo estratégico-operativo.
-                    Estructura ejes y objetivos, controla el POA, automatiza validaciones de entregables y proporciona
-                    trazabilidad ejecutiva para elevar productividad, cumplimiento y capacidad de respuesta institucional.
-                </p>
-                <div class="pain-points" aria-label="Dolores que resuelve SIPET">
-                    <strong>Dolores que resuelve SIPET</strong>
-                    <ul>
-                        <li>Falta de visibilidad sobre el avance de los planes y el cumplimiento de metas.</li>
-                    </ul>
-                </div>
-                <div class="actions">
-                    <a class="btn btn-primary" href="/web/login">Ingresar</a>
-                    <a class="btn btn-secondary" href="/web/login?usuario=demo&contrasena=demo">Ingresar como demo</a>
-                    <a class="btn btn-secondary" href="https://wa.me/523327633869" target="_blank" rel="noopener noreferrer">Hablar por WhatsApp</a>
-                    <a class="btn btn-ghost" href="/web">Volver al inicio público</a>
-                </div>
+            <div class="trust__item">
+              <strong>Trazabilidad</strong>
+              <span>Evidencias y flujo de aprobación</span>
             </div>
-        </section>
-
-        <section class="sections" aria-label="Descripción de funcionalidades">
-            <article class="section-card">
-                <h2>1. Gestión estratégica (Ejes y Objetivos)</h2>
-                <p>
-                    Implementa una planeación metodológicamente robusta con estructura jerárquica, criterios de calidad
-                    y consistencia temporal para todo el marco estratégico institucional.
-                </p>
-                <ul>
-                    <li>Ejes estratégicos: Nombre, Código, Líder de eje (departamento), Descripción, Fecha inicial y Fecha final.</li>
-                    <li>Objetivos estratégicos: Nombre, Código, Líder (colaborador del departamento), Descripción, Fecha inicial y Fecha final.</li>
-                    <li>Validación visual y lógica de fechas entre elementos padre-hijo para evitar desviaciones de planificación.</li>
-                    <li>Modelo colaborativo que facilita la participación transversal del capital humano institucional.</li>
-                </ul>
-            </article>
-
-            <article class="section-card">
-                <h2>2. Plan estratégico y control de acceso por rol</h2>
-                <p>
-                    Orquesta la construcción del plan estratégico con controles de gobernanza y segmentación de acceso para
-                    mantener seguridad, responsabilidad operativa y alineación organizacional.
-                </p>
-                <ul>
-                    <li>Creación de plan estratégico habilitada para perfiles <strong>superadministrador</strong> y <strong>administrador</strong>.</li>
-                    <li>Control multinivel por rol, departamento, usuario y región para gestión precisa de alcance y permisos.</li>
-                    <li>Transición efectiva de estrategia a táctica mediante asignación clara de responsables y objetivos ejecutables.</li>
-                    <li>Contribuye al incremento de eficiencia y productividad con trazabilidad por unidad organizativa.</li>
-                </ul>
-            </article>
-
-            <article class="section-card">
-                <h2>3. POA y ejecución operativa</h2>
-                <p>
-                    Centraliza la ejecución del POA con foco en productividad: prioriza lo asignado, acelera seguimiento y
-                    mejora el control de avance de actividades y subactividades.
-                </p>
-                <ul>
-                    <li>Tablero de creación de POA orientado por asignación real de ejes y objetivos por usuario.</li>
-                    <li>Gestión de actividades con datos críticos: Nombre, Código, Responsable, Entregable, Descripción y rango de fechas.</li>
-                    <li>Delegación de subactividades con delimitación temporal por dependencia padre-hija.</li>
-                    <li>Supervisión operativa con trazabilidad por responsable, estado, fecha y nivel de cumplimiento.</li>
-                </ul>
-            </article>
-
-            <article class="section-card">
-                <h2>4. Entregables, estados y aprobación</h2>
-                <p>
-                    Automatiza el ciclo de validación de entregables para garantizar calidad antes del cierre y fortalecer
-                    la disciplina de ejecución en toda la organización.
-                </p>
-                <ul>
-                    <li>Estados automáticos: <strong>No iniciada</strong>, <strong>En proceso</strong> y <strong>Terminada</strong>.</li>
-                    <li>Al marcar una actividad como terminada, se activa el flujo formal de aprobación del entregable.</li>
-                    <li>Notificación al dueño/líder del proceso para autorizar o rechazar, con evidencia y control de calidad.</li>
-                    <li>Cierre definitivo solo con autorización aprobada, evitando cierres prematuros.</li>
-                    <li>Reduce carga manual de seguimiento y empodera a los colaboradores con reglas claras de ejecución.</li>
-                </ul>
-            </article>
-
-            <article class="section-card">
-                <h2>5. Experiencia digital, adopción y productividad</h2>
-                <p>
-                    Diseñado para operación continua en escritorio y móvil, con herramientas de acceso rápido y
-                    comunicación oportuna para acelerar adopción y desempeño.
-                </p>
-                <ul>
-                    <li>Login optimizado para móvil (tecla Enter/Ir), biometría WebAuthn y flujo de acceso demo.</li>
-                    <li>Sistema de notificaciones con contador, lectura individual y marcado masivo.</li>
-                    <li>Personalización visual institucional para mayor coherencia de marca y usabilidad.</li>
-                </ul>
-            </article>
-        </section>
-
-        <section class="grid-cta" aria-label="Conversión de leads y analítica pública">
-            <article class="metrics-card">
-                <div class="metrics-head">
-                    <h3>Interés en esta página</h3>
-                    <p>Control de accesos y origen de visitas</p>
-                </div>
-                <div class="stats">
-                    <div class="stat">
-                        <span class="stat-label">Visitas totales</span>
-                        <span class="stat-value" id="metric-total">0</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Visitantes únicos</span>
-                        <span class="stat-value" id="metric-unique">0</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">Visitas hoy</span>
-                        <span class="stat-value" id="metric-today">0</span>
-                    </div>
-                </div>
-                <div class="locations" id="metric-locations">
-                    <div class="location-item"><span>Ubicación no disponible</span><span class="location-count">0</span></div>
-                </div>
-            </article>
-
-            <article class="lead-card">
-                <div class="lead-head">
-                    <h3>Solicitar más información</h3>
-                    <p>Un especialista te contactará</p>
-                </div>
-                <form id="lead-form" class="lead-form" novalidate>
-                    <div class="field">
-                        <label for="lead-nombre">Nombre completo *</label>
-                        <input id="lead-nombre" name="nombre" type="text" required>
-                    </div>
-                    <div class="field">
-                        <label for="lead-email">Correo corporativo *</label>
-                        <input id="lead-email" name="email" type="email" required>
-                    </div>
-                    <div class="field">
-                        <label for="lead-organizacion">Organización</label>
-                        <input id="lead-organizacion" name="organizacion" type="text">
-                    </div>
-                    <div class="field">
-                        <label for="lead-cargo">Cargo</label>
-                        <input id="lead-cargo" name="cargo" type="text">
-                    </div>
-                    <div class="field">
-                        <label for="lead-telefono">Teléfono</label>
-                        <input id="lead-telefono" name="telefono" type="text">
-                    </div>
-                    <div class="field hp-field" aria-hidden="true">
-                        <label for="lead-website">Website</label>
-                        <input id="lead-website" name="website" type="text" tabindex="-1" autocomplete="off">
-                    </div>
-                    <div class="field field-full">
-                        <label for="lead-mensaje">¿Qué necesitas resolver? *</label>
-                        <textarea id="lead-mensaje" name="mensaje" required></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button id="lead-submit" class="btn btn-primary" type="submit">Enviar solicitud</button>
-                        <p id="lead-status" class="form-status" aria-live="polite"></p>
-                    </div>
-                </form>
-                <div class="newsletter-card">
-                    <h4>Suscríbete al boletín de Avancoop</h4>
-                    <p>
-                        Recibe novedades, mejores prácticas y actualizaciones sobre planeación estratégica,
-                        productividad institucional y transformación operativa.
-                    </p>
-                    <a
-                        class="btn btn-secondary"
-                        href="https://avancoop.ipzmarketing.com/f/DR3SX0JOGhc"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Suscribirme al boletín
-                    </a>
-                </div>
-            </article>
-        </section>
-
-        <div class="summary">
-            SIPET integra gobierno estratégico, ejecución táctica y control de entregables en una sola plataforma,
-            permitiendo decisiones basadas en evidencia, mayor productividad operativa y mejora continua del desempeño institucional.
+            <div class="trust__item">
+              <strong>Gestión</strong>
+              <span>Tableros, KPI y reportes</span>
+            </div>
+          </div>
         </div>
-    </main>
 
-    <script>
-        (function () {
-            const page = "funcionalidades";
-            const metrics = {
-                total: document.getElementById("metric-total"),
-                unique: document.getElementById("metric-unique"),
-                today: document.getElementById("metric-today"),
-                locations: document.getElementById("metric-locations"),
-            };
-            const leadForm = document.getElementById("lead-form");
-            const leadStatus = document.getElementById("lead-status");
-            const leadSubmit = document.getElementById("lead-submit");
+        <aside class="hero__card" aria-label="Resumen ejecutivo">
+          <div class="card card--glass">
+            <div class="card__header">
+              <h2>Lo que resolvemos</h2>
+              <p>Problemas típicos en cooperativas al ejecutar estrategia y POA.</p>
+            </div>
 
-            const requestJson = async (url, options) => {
-                const response = await fetch(url, {
-                    credentials: "same-origin",
-                    headers: { "Content-Type": "application/json" },
-                    ...options,
-                });
-                let payload = {};
-                try { payload = await response.json(); } catch (err) {}
-                if (!response.ok || payload.success === false) {
-                    throw new Error(payload.error || "No se pudo completar la operación");
-                }
-                return payload;
-            };
-            const escapeHtml = (value) => String(value || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/\"/g, "&quot;")
-                .replace(/'/g, "&#39;");
+            <ul class="checklist" role="list">
+              <li>
+                <span class="check" aria-hidden="true"></span>
+                Planes que se quedan en documentos sin seguimiento
+              </li>
+              <li>
+                <span class="check" aria-hidden="true"></span>
+                Actividades sin responsable, fechas o entregables claros
+              </li>
+              <li>
+                <span class="check" aria-hidden="true"></span>
+                Falta de evidencia y control de aprobaciones
+              </li>
+              <li>
+                <span class="check" aria-hidden="true"></span>
+                Reportes tardíos y decisiones con información incompleta
+              </li>
+              <li>
+                <span class="check" aria-hidden="true"></span>
+                Accesos desordenados, sin segmentación por área o región
+              </li>
+            </ul>
 
-            const renderLocations = (items) => {
-                if (!metrics.locations) return;
-                const safeItems = Array.isArray(items) ? items : [];
-                if (!safeItems.length) {
-                    metrics.locations.innerHTML = '<div class="location-item"><span>Ubicación no disponible</span><span class="location-count">0</span></div>';
-                    return;
-                }
-                metrics.locations.innerHTML = safeItems
-                    .map((item) => {
-                        const label = escapeHtml(item.label || "Ubicación no disponible");
-                        const count = Number(item.count || 0);
-                        return `<div class="location-item"><span>${label}</span><span class="location-count">${count}</span></div>`;
-                    })
-                    .join("");
-            };
+            <div class="mini-metrics" aria-label="Indicadores">
+              <div class="mini">
+                <span class="mini__kpi">+Control</span>
+                <span class="mini__txt">con flujos y permisos</span>
+              </div>
+              <div class="mini">
+                <span class="mini__kpi">+Ejecución</span>
+                <span class="mini__txt">con POA y entregables</span>
+              </div>
+              <div class="mini">
+                <span class="mini__kpi">+Transparencia</span>
+                <span class="mini__txt">con evidencias y tableros</span>
+              </div>
+            </div>
 
-            const loadMetrics = async () => {
-                try {
-                    const payload = await requestJson(`/api/public/landing-metrics?page=${encodeURIComponent(page)}`, { method: "GET" });
-                    const data = payload.data || {};
-                    if (metrics.total) metrics.total.textContent = Number(data.total_visits || 0).toLocaleString("es-MX");
-                    if (metrics.unique) metrics.unique.textContent = Number(data.unique_visitors || 0).toLocaleString("es-MX");
-                    if (metrics.today) metrics.today.textContent = Number(data.visits_today || 0).toLocaleString("es-MX");
-                    renderLocations(data.top_locations || []);
-                } catch (err) {
-                    renderLocations([]);
-                }
-            };
+            <div class="card__footer">
+              <a class="btn btn--primary" href="#solicitar-info">Solicitar propuesta</a>
+              <a class="btn btn--ghost" href="https://wa.me/523327633869" target="_blank" rel="noopener">
+                Hablar por WhatsApp
+              </a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
 
-            const trackVisit = async () => {
-                try {
-                    await requestJson("/api/public/track-visit", {
-                        method: "POST",
-                        body: JSON.stringify({ page }),
-                    });
-                } catch (err) {}
-            };
+    <!-- Value strip -->
+    <section class="value">
+      <div class="wrap value__grid" aria-label="Propuesta de valor">
+        <article class="value__item">
+          <div class="icon" aria-hidden="true">
+            <!-- shield -->
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 2l8 4v6c0 5-3 9-8 10C7 21 4 17 4 12V6l8-4Z" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M9 12l2 2 4-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>Gobierno y control</h3>
+          <p>Permisos por rol, departamento, usuario y región. Cada persona ve lo que debe ver.</p>
+        </article>
 
-            const setFormStatus = (message, isError) => {
-                if (!leadStatus) return;
-                leadStatus.textContent = message || "";
-                leadStatus.classList.toggle("error", !!isError);
-            };
+        <article class="value__item">
+          <div class="icon" aria-hidden="true">
+            <!-- roadmap -->
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 6h6l2 3h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M4 18h6l2-3h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M10 6v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M20 6v12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>
+            </svg>
+          </div>
+          <h3>Planeación aterrizada</h3>
+          <p>Ejes y objetivos con validaciones de fechas padre-hijo. Del plan al POA sin fricción.</p>
+        </article>
 
-            leadForm && leadForm.addEventListener("submit", async (event) => {
-                event.preventDefault();
-                const formData = new FormData(leadForm);
-                if ((formData.get("website") || "").toString().trim()) {
-                    setFormStatus("Gracias por tu interés. Nuestro equipo te contactará pronto.", false);
-                    leadForm.reset();
-                    return;
-                }
-                const payload = {
-                    nombre: (formData.get("nombre") || "").toString().trim(),
-                    email: (formData.get("email") || "").toString().trim(),
-                    organizacion: (formData.get("organizacion") || "").toString().trim(),
-                    cargo: (formData.get("cargo") || "").toString().trim(),
-                    telefono: (formData.get("telefono") || "").toString().trim(),
-                    mensaje: (formData.get("mensaje") || "").toString().trim(),
-                    source_page: page,
-                };
-                if (!payload.nombre || !payload.email || !payload.mensaje) {
-                    setFormStatus("Completa nombre, correo y mensaje.", true);
-                    return;
-                }
-                try {
-                    if (leadSubmit) leadSubmit.disabled = true;
-                    setFormStatus("Enviando solicitud...", false);
-                    const result = await requestJson("/api/public/lead-request", {
-                        method: "POST",
-                        body: JSON.stringify(payload),
-                    });
-                    setFormStatus(result.message || "Solicitud enviada correctamente.", false);
-                    leadForm.reset();
-                } catch (err) {
-                    setFormStatus(err && err.message ? err.message : "No se pudo enviar la solicitud.", true);
-                } finally {
-                    if (leadSubmit) leadSubmit.disabled = false;
-                }
-            });
+        <article class="value__item">
+          <div class="icon" aria-hidden="true">
+            <!-- dashboard -->
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 4h16v16H4V4Z" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M7 16v-5M12 16V8M17 16v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Seguimiento ejecutivo</h3>
+          <p>Tableros, KPI y reportes para decisiones rápidas. Menos reuniones, más claridad.</p>
+        </article>
+      </div>
+    </section>
 
-            trackVisit().finally(loadMetrics);
-        })();
-    </script>
+    <!-- Features -->
+    <section id="funcionalidades" class="features" aria-label="Funcionalidades">
+      <div class="wrap">
+        <header class="section-head">
+          <h2>Funcionalidades clave</h2>
+          <p>
+            Cada módulo está diseñado para resolver problemas reales: seguridad, disciplina operativa, evidencia,
+            aprobación y visibilidad de resultados.
+          </p>
+        </header>
+
+        <div class="feature-grid">
+          <!-- Seguridad y acceso -->
+          <article class="feature-card">
+            <div class="feature-card__top">
+              <span class="tag">Seguridad</span>
+              <h3>Autenticación y control de acceso</h3>
+              <p>Entrada segura, experiencia moderna y segmentación fina para cooperativas multiárea y multiregión.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Autenticación web con usuario/contraseña.</li>
+              <li>Inicio de sesión biométrico (WebAuthn), con restricciones para usuario demo.</li>
+              <li>Soporte móvil en login: flujo vertical, Enter/Ir y formulario adaptado.</li>
+              <li>Gestión de usuarios: alta/edición y control por rol.</li>
+              <li>Roles y permisos: superadministrador, administrador, departamento y usuario.</li>
+              <li>Segmentación por rol, departamento, usuario y región.</li>
+            </ul>
+          </article>
+
+          <!-- Planeación estratégica -->
+          <article class="feature-card">
+            <div class="feature-card__top">
+              <span class="tag">Estrategia</span>
+              <h3>Plan estratégico estructurado</h3>
+              <p>Defina ejes, objetivos y responsables con reglas claras para evitar inconsistencias.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Gestión de ejes estratégicos: crear, editar, guardar y eliminar.</li>
+              <li>Objetivos estratégicos por eje: crear, editar, guardar y eliminar.</li>
+              <li>Campos clave: nombre, código, líder, descripción, fecha inicial y fecha final.</li>
+              <li>Validaciones visuales y lógicas de fechas entre elementos padre-hijo.</li>
+              <li>Flujo de creación y administración con controles (solo admin/superadmin en acciones críticas).</li>
+            </ul>
+          </article>
+
+          <!-- POA -->
+          <article class="feature-card">
+            <div class="feature-card__top">
+              <span class="tag">POA</span>
+              <h3>POA con responsables, entregables y fechas</h3>
+              <p>Deje de “dar seguimiento por WhatsApp”. Con SIPET cada actividad tiene dueño y evidencia.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Tablero de creación con filtrado por ejes/objetivos asignados al usuario.</li>
+              <li>Actividades POA: nombre, código, responsable, entregable, descripción, fecha inicial y final.</li>
+              <li>Subactividades delegables con restricción por fechas de la actividad padre.</li>
+              <li>Estados automáticos: No iniciada, En proceso, Terminada.</li>
+            </ul>
+          </article>
+
+          <!-- Evidencias y aprobación -->
+          <article class="feature-card">
+            <div class="feature-card__top">
+              <span class="tag">Evidencia</span>
+              <h3>Entregables con flujo de aprobación</h3>
+              <p>Controle calidad y cumplimiento: solicitud, revisión, autorización/rechazo y cierre real.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Gestión documental/evidencias: carga, envío, autorización, actualización y descarga.</li>
+              <li>Flujo de aprobación de entregables: solicitud, revisión por dueño/líder, autorización/rechazo y cierre.</li>
+              <li>Notificaciones: panel, contador, lectura individual y marcado masivo como leídas.</li>
+              <li>Notificaciones por usuario (aislamiento por usuario/sesión).</li>
+            </ul>
+          </article>
+
+          <!-- Tableros y análisis -->
+          <article class="feature-card">
+            <div class="feature-card__top">
+              <span class="tag">Gestión</span>
+              <h3>Dashboard, KPI y análisis estratégico</h3>
+              <p>Visibilidad para directivos y gerentes: avance, indicadores y análisis para decisiones.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Dashboard y módulos de seguimiento: avance estratégico, KPI, reportes y tableros operativos.</li>
+              <li>Módulos de análisis: FODA, PESTEL, Porter y percepción.</li>
+            </ul>
+          </article>
+
+          <!-- Formularios -->
+          <article class="feature-card">
+            <div class="feature-card__top">
+              <span class="tag">Automatización</span>
+              <h3>Constructor de formularios dinámicos</h3>
+              <p>Levante diagnósticos y capturas internas sin desarrollo: configure, publique y controle permisos.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Diseño, configuración, permisos y publicación de formularios.</li>
+              <li>Envíos con registro de IP/User-Agent y opciones de notificación.</li>
+            </ul>
+          </article>
+
+          <!-- UX / Personalización -->
+          <article class="feature-card">
+            <div class="feature-card__top">
+              <span class="tag">Experiencia</span>
+              <h3>Interfaz moderna y personalizable</h3>
+              <p>Una plataforma que se siente “de marca”: rápida, clara y con navegación eficiente.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Sidebar/Navbar con iconografía configurable y hover personalizado.</li>
+              <li>Menú flotante de acciones rápidas con mejoras de usabilidad.</li>
+              <li>Personalización visual: colores, identidad de login, logo, favicon y fondos.</li>
+            </ul>
+          </article>
+
+          <!-- Público / Leads -->
+          <article class="feature-card feature-card--accent">
+            <div class="feature-card__top">
+              <span class="tag tag--accent">Comercial</span>
+              <h3>Página pública orientada a conversión</h3>
+              <p>Diseñada para generar leads: CTA claros, formulario y analítica básica para medir el interés.</p>
+            </div>
+            <ul class="bullets" role="list">
+              <li>Página pública de funcionalidades con CTA comerciales.</li>
+              <li>Botones públicos: Ingresar, Demo, WhatsApp y suscripción al boletín.</li>
+              <li>Formulario “Solicitar más información” para captación de leads.</li>
+              <li>Analítica pública básica: visitas, visitantes únicos, visitas del día y origen aproximado.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Proof / Process -->
+    <section class="proof" aria-label="Cómo se implementa">
+      <div class="wrap proof__grid">
+        <div class="proof__copy">
+          <h2>Implementación enfocada en resultados</h2>
+          <p>
+            No vendemos “software por software”. Aterrizamos su operación: roles, estructura estratégica, POA,
+            entregables y tableros para dirección. Lo que importa es ejecutar y demostrar avance.
+          </p>
+
+          <div class="steps" role="list">
+            <div class="step" role="listitem">
+              <span class="step__n">1</span>
+              <div class="step__b">
+                <strong>Diagnóstico rápido</strong>
+                <span>Definimos ejes, responsables, estructura y reglas.</span>
+              </div>
+            </div>
+            <div class="step" role="listitem">
+              <span class="step__n">2</span>
+              <div class="step__b">
+                <strong>Configuración y permisos</strong>
+                <span>Roles, departamentos, regiones y accesos por perfil.</span>
+              </div>
+            </div>
+            <div class="step" role="listitem">
+              <span class="step__n">3</span>
+              <div class="step__b">
+                <strong>POA y entregables</strong>
+                <span>Actividades, subactividades, evidencias y aprobación.</span>
+              </div>
+            </div>
+            <div class="step" role="listitem">
+              <span class="step__n">4</span>
+              <div class="step__b">
+                <strong>Tableros y KPI</strong>
+                <span>Seguimiento ejecutivo y reportes listos para comité.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="proof__cta">
+            <a class="btn btn--primary" href="#solicitar-info">Quiero una demo</a>
+            <a class="btn btn--ghost" href="https://wa.me/523327633869" target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+        </div>
+
+        <div class="proof__panel">
+          <div class="panel">
+            <h3>Checklist de control operativo</h3>
+            <p class="muted">Lo que su cooperativa gana con SIPET:</p>
+            <ul class="checklist checklist--tight" role="list">
+              <li><span class="check" aria-hidden="true"></span>Responsables definidos por actividad y entregable</li>
+              <li><span class="check" aria-hidden="true"></span>Reglas de fechas para evitar planes irreales</li>
+              <li><span class="check" aria-hidden="true"></span>Evidencia centralizada y auditable</li>
+              <li><span class="check" aria-hidden="true"></span>Aprobaciones con trazabilidad</li>
+              <li><span class="check" aria-hidden="true"></span>Notificaciones por usuario (sin ruido)</li>
+              <li><span class="check" aria-hidden="true"></span>Tableros para dirección y áreas</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lead form -->
+    <section id="solicitar-info" class="lead" aria-label="Solicitar información">
+      <div class="wrap lead__grid">
+        <div class="lead__copy">
+          <h2>Solicite información</h2>
+          <p class="lead__text">
+            Compártenos tus datos y te enviamos una propuesta clara: alcance, tiempos y costos. Si prefieres,
+            escríbenos por WhatsApp y agendamos una demo.
+          </p>
+
+          <div class="lead__chips" aria-label="Canales">
+            <span class="chip">Demo guiada</span>
+            <span class="chip">Propuesta económica</span>
+            <span class="chip">Implementación</span>
+            <span class="chip">Capacitación</span>
+          </div>
+
+          <div class="lead__alt">
+            <a class="btn btn--wa" href="https://wa.me/523327633869" target="_blank" rel="noopener">WhatsApp directo</a>
+            <a class="btn btn--ghost" href="mailto:contacto@avancoop.org">contacto@avancoop.org</a>
+          </div>
+        </div>
+
+        <form class="form card" id="lead-form" method="post" action="/web/lead" autocomplete="on">
+          <div class="form__row">
+            <label class="field">
+              <span>Nombre</span>
+              <input name="name" type="text" placeholder="Tu nombre" required />
+            </label>
+            <label class="field">
+              <span>Cooperativa</span>
+              <input name="org" type="text" placeholder="Nombre de la cooperativa" required />
+            </label>
+          </div>
+
+          <div class="form__row">
+            <label class="field">
+              <span>Correo</span>
+              <input name="email" type="email" placeholder="nombre@cooperativa.com" required />
+            </label>
+            <label class="field">
+              <span>Teléfono</span>
+              <input name="phone" type="tel" placeholder="+52..." />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>¿Qué necesitas resolver?</span>
+            <select name="need" required>
+              <option value="" selected disabled>Selecciona una opción</option>
+              <option>Planeación estratégica</option>
+              <option>POA y seguimiento</option>
+              <option>Control de entregables y evidencias</option>
+              <option>Tableros y KPI</option>
+              <option>Roles y permisos</option>
+              <option>Todo lo anterior</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Mensaje</span>
+            <textarea name="message" rows="4" placeholder="Describe brevemente tu contexto y objetivos."></textarea>
+          </label>
+
+          <div class="form__foot">
+            <button class="btn btn--primary btn--lg" type="submit">Enviar solicitud</button>
+            <p class="fineprint" id="lead-status">
+              Al enviar aceptas ser contactado. No compartimos tu información con terceros.
+            </p>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="quiz-modal" id="quiz-modal" aria-hidden="true" aria-label="Cuestionario de descuento">
+      <div class="quiz-modal__backdrop" id="quiz-close-backdrop"></div>
+      <div class="quiz-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="quiz-title">
+        <div class="quiz-modal__head">
+          <h3 id="quiz-title">Cuestionario de descuento SIPET</h3>
+          <button type="button" class="quiz-close" id="quiz-close-btn" aria-label="Cerrar cuestionario">×</button>
+        </div>
+        <p class="quiz-lead">
+          Responde 10 preguntas sobre funcionalidades de SIPET. El descuento se calcula al enviar:
+          3 correctas = 10%, 5 = 20%, 6 = 30%, 7 = 40%, 8 = 50%, 9 o más = 60%.
+        </p>
+
+        <form id="quiz-form" class="quiz-form">
+          <div class="quiz-ident">
+            <label class="field"><span>Nombre</span><input type="text" name="nombre" required></label>
+            <label class="field"><span>Cooperativa</span><input type="text" name="cooperativa" required></label>
+            <label class="field"><span>País</span><input type="text" name="pais" required></label>
+            <label class="field"><span>Celular</span><input type="text" name="celular" required></label>
+          </div>
+
+          <fieldset class="quiz-q">
+            <legend>1. ¿Qué enfoque principal tiene SIPET para cooperativas?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q1" value="a" required> Solo gestión contable.</label>
+              <label><input type="radio" name="q1" value="b"> Planeación estratégica, POA, control y trazabilidad.</label>
+              <label><input type="radio" name="q1" value="c"> Venta de productos financieros.</label>
+              <label><input type="radio" name="q1" value="d"> Marketing digital.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>2. ¿Qué niveles de segmentación de acceso maneja SIPET?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q2" value="a" required> Rol, departamento, usuario y región.</label>
+              <label><input type="radio" name="q2" value="b"> Solo por contraseña.</label>
+              <label><input type="radio" name="q2" value="c"> Solo por área.</label>
+              <label><input type="radio" name="q2" value="d"> Sin segmentación.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>3. En objetivos y actividades, ¿qué validación clave aplica SIPET?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q3" value="a" required> Solo valida texto obligatorio.</label>
+              <label><input type="radio" name="q3" value="b"> Solo valida correo.</label>
+              <label><input type="radio" name="q3" value="c"> Consistencia de fechas padre-hijo.</label>
+              <label><input type="radio" name="q3" value="d"> No valida fechas.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>4. ¿Qué incluye una actividad en el POA?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q4" value="a" required> Únicamente nombre.</label>
+              <label><input type="radio" name="q4" value="b"> Nombre, código, responsable, entregable, descripción y fechas.</label>
+              <label><input type="radio" name="q4" value="c"> Solo entregable y comentario.</label>
+              <label><input type="radio" name="q4" value="d"> Solo fecha final.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>5. ¿Qué módulo centraliza evidencia documental?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q5" value="a" required> Personalización.</label>
+              <label><input type="radio" name="q5" value="b"> Dashboard gráfico.</label>
+              <label><input type="radio" name="q5" value="c"> Login biométrico.</label>
+              <label><input type="radio" name="q5" value="d"> Gestión documental/evidencias.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>6. ¿Cómo se cierra una actividad marcada como terminada?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q6" value="a" required> Requiere aprobación del entregable.</label>
+              <label><input type="radio" name="q6" value="b"> Se cierra automáticamente sin revisión.</label>
+              <label><input type="radio" name="q6" value="c"> Solo el responsable decide.</label>
+              <label><input type="radio" name="q6" value="d"> Se cierra al cambiar de mes.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>7. ¿Qué canal de alerta incluye SIPET para trabajo operativo?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q7" value="a" required> Únicamente correo externo.</label>
+              <label><input type="radio" name="q7" value="b"> Solo SMS.</label>
+              <label><input type="radio" name="q7" value="c"> Notificaciones internas con contador y lectura.</label>
+              <label><input type="radio" name="q7" value="d"> No tiene alertas.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>8. ¿Qué nivel de seguimiento ofrece SIPET para dirección?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q8" value="a" required> Ninguno.</label>
+              <label><input type="radio" name="q8" value="b"> Dashboard, KPI y reportes ejecutivos.</label>
+              <label><input type="radio" name="q8" value="c"> Solo reportes en PDF manuales.</label>
+              <label><input type="radio" name="q8" value="d"> Solo bitácora de usuarios.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>9. ¿Qué módulo facilita capturas internas sin desarrollo?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q9" value="a" required> Constructor de formularios dinámicos.</label>
+              <label><input type="radio" name="q9" value="b"> Menú flotante.</label>
+              <label><input type="radio" name="q9" value="c"> Configuración de colores.</label>
+              <label><input type="radio" name="q9" value="d"> Login demo.</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="quiz-q">
+            <legend>10. ¿Qué resultado busca SIPET en cooperativas?</legend>
+            <div class="quiz-options">
+              <label><input type="radio" name="q10" value="a" required> Aumentar reuniones sin evidencia.</label>
+              <label><input type="radio" name="q10" value="b"> Operar sin responsables claros.</label>
+              <label><input type="radio" name="q10" value="c"> Evitar medición de resultados.</label>
+              <label><input type="radio" name="q10" value="d"> Convertir planeación en ejecución medible y controlada.</label>
+            </div>
+          </fieldset>
+
+          <div class="quiz-foot">
+            <button type="submit" class="btn btn--primary">Enviar y calcular descuento</button>
+            <span class="fineprint" id="quiz-status">Completa tus datos y responde las 10 preguntas.</span>
+          </div>
+          <div class="quiz-result" id="quiz-result"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+      <div class="wrap footer__inner">
+        <div class="footer__left">
+          <div class="brand brand--footer">
+            <span class="brand__mark" aria-hidden="true">SI</span>
+            <span class="brand__text">
+              <strong>SIPET</strong>
+              <small>Transformamos planeación en ejecución</small>
+            </span>
+          </div>
+          <p class="muted">
+            Plataforma diseñada para cooperativas que requieren control operativo, evidencia, trazabilidad y
+            seguimiento ejecutivo.
+          </p>
+        </div>
+
+        <div class="footer__right">
+          <a href="/web/funcionalidades" class="footer__link">Funcionalidades</a>
+          <a href="/web/login" class="footer__link">Ingresar</a>
+          <a href="/web/login?usuario=demo&contrasena=demo" class="footer__link">Demo</a>
+          <a href="https://wa.me/523327633869" target="_blank" rel="noopener" class="footer__link">WhatsApp</a>
+          <a href="mailto:contacto@avancoop.org" class="footer__link">Correo</a>
+        </div>
+      </div>
+      <div class="wrap footer__bottom">
+        <small>© <span id="year"></span> SIPET. Todos los derechos reservados.</small>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    (function () {
+      const requestJson = async (url, options) => {
+        const response = await fetch(url, {
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          ...options,
+        });
+        let payload = {};
+        try { payload = await response.json(); } catch (err) {}
+        if (!response.ok || payload.success === false) {
+          throw new Error(payload.error || "No se pudo completar la operación");
+        }
+        return payload;
+      };
+
+      const quizModal = document.getElementById("quiz-modal");
+      const quizOpen = document.getElementById("promo-quiz-open");
+      const quizCloseBtn = document.getElementById("quiz-close-btn");
+      const quizCloseBackdrop = document.getElementById("quiz-close-backdrop");
+      const quizForm = document.getElementById("quiz-form");
+      const quizStatus = document.getElementById("quiz-status");
+      const quizResult = document.getElementById("quiz-result");
+      const openQuiz = () => {
+        if (!quizModal) return;
+        quizModal.classList.add("is-open");
+        quizModal.setAttribute("aria-hidden", "false");
+      };
+      const closeQuiz = () => {
+        if (!quizModal) return;
+        quizModal.classList.remove("is-open");
+        quizModal.setAttribute("aria-hidden", "true");
+      };
+      quizOpen && quizOpen.addEventListener("click", (event) => {
+        event.preventDefault();
+        openQuiz();
+      });
+      quizCloseBtn && quizCloseBtn.addEventListener("click", closeQuiz);
+      quizCloseBackdrop && quizCloseBackdrop.addEventListener("click", closeQuiz);
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeQuiz();
+      });
+
+      // Analítica pública de acceso
+      requestJson("/api/public/track-visit", {
+        method: "POST",
+        body: JSON.stringify({ page: "funcionalidades" }),
+      }).catch(() => {});
+
+      const form = document.getElementById("lead-form");
+      const status = document.getElementById("lead-status");
+      form && form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(form);
+        const payload = {
+          nombre: (data.get("name") || "").toString().trim(),
+          organizacion: (data.get("org") || "").toString().trim(),
+          cargo: "",
+          email: (data.get("email") || "").toString().trim(),
+          telefono: (data.get("phone") || "").toString().trim(),
+          mensaje: [
+            (data.get("need") || "").toString().trim(),
+            (data.get("message") || "").toString().trim(),
+          ].filter(Boolean).join(" | "),
+          source_page: "funcionalidades",
+        };
+        try {
+          status && (status.textContent = "Enviando solicitud...");
+          const res = await requestJson("/api/public/lead-request", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          status && (status.textContent = res.message || "Solicitud enviada correctamente.");
+          form.reset();
+        } catch (err) {
+          status && (status.textContent = err && err.message ? err.message : "No se pudo enviar la solicitud.");
+        }
+      });
+
+      quizForm && quizForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(quizForm);
+        const answers = {};
+        for (let i = 1; i <= 10; i += 1) {
+          answers[`q${i}`] = (data.get(`q${i}`) || "").toString().trim().toLowerCase();
+        }
+        const payload = {
+          nombre: (data.get("nombre") || "").toString().trim(),
+          cooperativa: (data.get("cooperativa") || "").toString().trim(),
+          pais: (data.get("pais") || "").toString().trim(),
+          celular: (data.get("celular") || "").toString().trim(),
+          answers,
+          source_page: "funcionalidades",
+        };
+        try {
+          quizStatus && (quizStatus.textContent = "Calculando descuento...");
+          const res = await requestJson("/api/public/quiz-discount", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          const result = res.data || {};
+          const promoInfo = result.promo_aplicada
+            ? `Promoción activa. Cupos restantes: ${result.cupos_restantes ?? 0}.`
+            : "Promoción cerrada: los 5 cupos de descuento ya fueron asignados.";
+          if (quizResult) {
+            quizResult.classList.add("is-visible");
+            quizResult.textContent =
+              `Resultado: ${result.correctas || 0}/10 correctas. ` +
+              `Descuento asignado: ${result.descuento || 0}%. ` +
+              `${promoInfo} ` +
+              `Se notificó al superadministrador para seguimiento comercial.`;
+          }
+          quizStatus && (quizStatus.textContent = "Cuestionario enviado correctamente.");
+        } catch (err) {
+          quizStatus && (quizStatus.textContent = err && err.message ? err.message : "No se pudo enviar el cuestionario.");
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

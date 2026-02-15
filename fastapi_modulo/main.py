@@ -821,6 +821,24 @@ class PublicLeadRequest(Base):
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
+class PublicQuizSubmission(Base):
+    __tablename__ = "public_quiz_submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(String, index=True, default="default")
+    nombre = Column(String, nullable=False)
+    cooperativa = Column(String, nullable=False)
+    pais = Column(String, nullable=False)
+    celular = Column(String, nullable=False)
+    correctas = Column(Integer, default=0, index=True)
+    descuento = Column(Integer, default=0, index=True)
+    total_preguntas = Column(Integer, default=10)
+    answers = Column(JSON, default=dict)
+    ip_address = Column(String, index=True)
+    user_agent = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 DEFAULT_SYSTEM_ROLES = [
     ("superadministrador", "Acceso total a todo el módulo"),
     ("administrador", "Acceso a todo menos a Personalización"),
@@ -1730,6 +1748,37 @@ def _sanitize_public_page(value: str) -> str:
     return sanitized or "funcionalidades"
 
 
+QUIZ_CORRECT_ANSWERS: Dict[str, str] = {
+    "q1": "b",
+    "q2": "a",
+    "q3": "c",
+    "q4": "b",
+    "q5": "d",
+    "q6": "a",
+    "q7": "c",
+    "q8": "b",
+    "q9": "a",
+    "q10": "d",
+}
+
+
+def _quiz_discount_by_correct(correct_count: int) -> int:
+    score = max(0, int(correct_count))
+    if score >= 9:
+        return 60
+    if score == 8:
+        return 50
+    if score == 7:
+        return 40
+    if score == 6:
+        return 30
+    if score == 5:
+        return 20
+    if score >= 3:
+        return 10
+    return 0
+
+
 def is_hidden_user(request: Request, username: Optional[str]) -> bool:
     if is_superadmin(request):
         return False
@@ -1965,6 +2014,87 @@ def public_lead_request(request: Request, data: dict = Body(default={})):
             {
                 "success": True,
                 "message": "Gracias por tu interés. Nuestro equipo te contactará pronto.",
+            }
+        )
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    finally:
+        db.close()
+
+
+@app.post("/api/public/quiz-discount")
+def public_quiz_discount(request: Request, data: dict = Body(default={})):
+    nombre = (data.get("nombre") or "").strip()
+    cooperativa = (data.get("cooperativa") or "").strip()
+    pais = (data.get("pais") or "").strip()
+    celular = (data.get("celular") or "").strip()
+    raw_answers = data.get("answers") if isinstance(data.get("answers"), dict) else {}
+    tenant_id = _normalize_tenant_id(str(data.get("tenant_id") or "default"))
+
+    if len(nombre) < 2:
+        return JSONResponse({"success": False, "error": "Nombre requerido"}, status_code=400)
+    if len(cooperativa) < 2:
+        return JSONResponse({"success": False, "error": "Cooperativa requerida"}, status_code=400)
+    if len(pais) < 2:
+        return JSONResponse({"success": False, "error": "País requerido"}, status_code=400)
+    if len(celular) < 6:
+        return JSONResponse({"success": False, "error": "Celular requerido"}, status_code=400)
+
+    normalized_answers: Dict[str, str] = {}
+    for key in QUIZ_CORRECT_ANSWERS.keys():
+        value = str(raw_answers.get(key, "")).strip().lower()
+        normalized_answers[key] = value
+    answered = sum(1 for value in normalized_answers.values() if value)
+    if answered < len(QUIZ_CORRECT_ANSWERS):
+        return JSONResponse({"success": False, "error": "Responde las 10 preguntas"}, status_code=400)
+
+    correct_count = sum(
+        1 for key, expected in QUIZ_CORRECT_ANSWERS.items()
+        if normalized_answers.get(key, "") == expected
+    )
+    discount = _quiz_discount_by_correct(correct_count)
+
+    db = SessionLocal()
+    try:
+        current_count = db.query(PublicQuizSubmission).count()
+        available_slots = max(0, 5 - int(current_count))
+        promo_enabled = available_slots > 0
+        if not promo_enabled:
+            discount = 0
+
+        record = PublicQuizSubmission(
+            tenant_id=tenant_id,
+            nombre=nombre,
+            cooperativa=cooperativa,
+            pais=pais,
+            celular=celular,
+            correctas=int(correct_count),
+            descuento=int(discount),
+            total_preguntas=len(QUIZ_CORRECT_ANSWERS),
+            answers=normalized_answers,
+            ip_address=_public_client_ip(request),
+            user_agent=request.headers.get("user-agent") or "",
+        )
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+        return JSONResponse(
+            {
+                "success": True,
+                "data": {
+                    "id": record.id,
+                    "correctas": int(correct_count),
+                    "total": len(QUIZ_CORRECT_ANSWERS),
+                    "descuento": int(discount),
+                    "promo_aplicada": bool(promo_enabled),
+                    "cupos_restantes": max(0, available_slots - 1),
+                },
+                "message": (
+                    "Cuestionario enviado. Tu resultado fue calculado correctamente."
+                    if promo_enabled
+                    else "Cuestionario enviado. El cupo promocional de descuento ya fue cubierto."
+                ),
             }
         )
     except Exception as exc:
@@ -8849,6 +8979,28 @@ def notifications_summary(request: Request):
                     }
                 )
 
+        if is_superadmin(request):
+            quiz_rows = (
+                db.query(PublicQuizSubmission)
+                .order_by(PublicQuizSubmission.created_at.desc(), PublicQuizSubmission.id.desc())
+                .limit(20)
+                .all()
+            )
+            for quiz in quiz_rows:
+                items.append(
+                    {
+                        "id": f"quiz-submission-{quiz.id}",
+                        "kind": "quiz_descuento",
+                        "title": "Nuevo cuestionario de descuento",
+                        "message": (
+                            f"{(quiz.nombre or '').strip()} · {(quiz.cooperativa or '').strip()} · "
+                            f"{int(quiz.correctas or 0)}/10 correctas · {int(quiz.descuento or 0)}% de descuento"
+                        ),
+                        "created_at": (quiz.created_at or now).isoformat(),
+                        "href": "/usuarios",
+                    }
+                )
+
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
         user = _current_user_record(request, db)
         aliases = sorted(_user_aliases(user, session_username))
@@ -8910,6 +9062,7 @@ def notifications_summary(request: Request):
             "poa_aprobacion": 0,
             "documento_autorizacion": 0,
             "actividad_fecha": 0,
+            "quiz_descuento": 0,
         }
         for item in limited_items:
             kind = str(item.get("kind") or "")
