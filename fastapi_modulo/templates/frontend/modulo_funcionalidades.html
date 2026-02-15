@@ -21,7 +21,13 @@
   <header class="topbar" role="banner">
     <div class="wrap topbar__inner">
       <a class="brand" href="/web" aria-label="SIPET - Inicio">
-        <span class="brand__mark" aria-hidden="true">SI</span>
+        <span class="brand__mark" aria-hidden="true">
+          <img
+            class="brand__logo"
+            src="{{ company_logo_url | default(app_favicon_url | default('/templates/icon/icon.png')) }}"
+            alt=""
+          />
+        </span>
         <span class="brand__text">
           <strong>SIPET</strong>
           <small>Planeación estratégica y POA para cooperativas</small>
@@ -578,7 +584,13 @@
       <div class="wrap footer__inner">
         <div class="footer__left">
           <div class="brand brand--footer">
-            <span class="brand__mark" aria-hidden="true">SI</span>
+            <span class="brand__mark" aria-hidden="true">
+              <img
+                class="brand__logo"
+                src="{{ company_logo_url | default(app_favicon_url | default('/templates/icon/icon.png')) }}"
+                alt=""
+              />
+            </span>
             <span class="brand__text">
               <strong>SIPET</strong>
               <small>Transformamos planeación en ejecución</small>
@@ -725,5 +737,15 @@
       });
     })();
   </script>
+
+  <a
+    class="floating-wa"
+    href="https://wa.me/523327633869"
+    target="_blank"
+    rel="noopener"
+    aria-label="Enviar WhatsApp"
+  >
+    Enviar WhatsApp
+  </a>
 </body>
 </html>
