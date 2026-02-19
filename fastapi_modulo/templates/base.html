@@ -365,7 +365,7 @@
             width: 20px;
             height: 20px;
             display: block;
-            background: var(--navbar-notifications-icon-color, var(--sidebar-text, #ffffff));
+            background: var(--navbar-notifications-icon-color, var(--navbar-text, #1f2933));
             -webkit-mask: url("/templates/icon/notificaciones.svg") center / contain no-repeat;
             mask: url("/templates/icon/notificaciones.svg") center / contain no-repeat;
             filter: none;
@@ -2699,8 +2699,9 @@
                 }, 2200);
             };
             const syncNavbarNotificationIconColor = (color) => {
-                const fromSidebar = sidebarElem ? getComputedStyle(sidebarElem).color : '';
-                const value = (color || '').trim() || (fromSidebar || '').trim() || '#ffffff';
+                const fromNavbar = navbar ? getComputedStyle(navbar).color : '';
+                const fromVar = getComputedStyle(document.documentElement).getPropertyValue('--navbar-text');
+                const value = (color || '').trim() || (fromNavbar || '').trim() || (fromVar || '').trim() || '#1f2933';
                 document.documentElement.style.setProperty('--navbar-notifications-icon-color', value);
                 if (navbarNotificationsIcon) {
                     navbarNotificationsIcon.style.background = value;
@@ -2834,6 +2835,9 @@
                         if (hamburger) {
                             hamburger.style.color = navbarText.value;
                         }
+                        syncNavbarNotificationIconColor(navbarText.value);
+                    } else {
+                        syncNavbarNotificationIconColor(getComputedStyle(document.documentElement).getPropertyValue('--navbar-text'));
                     }
                     if (sidebarTop && sidebarElem) {
                         if (sidebarBottom && sidebarBottom.value) {
@@ -2845,9 +2849,6 @@
                     if (sidebarText && sidebarElem) {
                         sidebarElem.style.color = sidebarText.value;
                         document.documentElement.style.setProperty('--sidebar-text', sidebarText.value);
-                        syncNavbarNotificationIconColor(sidebarText.value || getComputedStyle(sidebarElem).color);
-                    } else {
-                        syncNavbarNotificationIconColor(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-text'));
                     }
                     if (sidebarIcon) {
                         document.querySelectorAll('.menu-icon svg path').forEach(path => {
@@ -5043,8 +5044,8 @@
             applyFallback(navbarAvatarImg);
             applyFallback(sidebarUserImg);
             syncNavbarNotificationIconColor(
-                (sidebarElem ? getComputedStyle(sidebarElem).color : '')
-                || getComputedStyle(document.documentElement).getPropertyValue('--sidebar-text')
+                (navbar ? getComputedStyle(navbar).color : '')
+                || getComputedStyle(document.documentElement).getPropertyValue('--navbar-text')
             );
             if (navbarAvatarBtn && userDropdown) {
                 const closeUserDropdown = () => {

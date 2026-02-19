@@ -383,19 +383,35 @@ def _clear_failed_login_attempts(request: Request) -> None:
 
 def _is_same_origin_request(request: Request) -> bool:
     host = (request.headers.get("host") or "").strip().lower()
-    if not host:
+    forwarded_host = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip().lower()
+    effective_host = forwarded_host or host
+    if not effective_host:
         return False
-    current_origin = f"{request.url.scheme}://{host}"
+    forwarded_proto = (request.headers.get("x-forwarded-proto") or "").split(",")[0].strip().lower()
+    effective_scheme = forwarded_proto or request.url.scheme
+    current_origin = f"{effective_scheme}://{effective_host}"
 
     origin = (request.headers.get("origin") or "").strip().rstrip("/")
     if origin:
-        return origin.lower() == current_origin
+        origin_normalized = origin.lower()
+        if origin_normalized == current_origin:
+            return True
+        try:
+            parsed_origin = urlparse(origin_normalized)
+            parsed_current = urlparse(current_origin)
+            # Detrás de proxy puede diferir el esquema interno/externo.
+            return parsed_origin.netloc == parsed_current.netloc and parsed_origin.scheme in {"http", "https"}
+        except Exception:
+            return False
 
     referer = (request.headers.get("referer") or "").strip()
     if referer:
         parsed = urlparse(referer)
-        referer_origin = f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
-        return referer_origin.lower() == current_origin
+        referer_origin = f"{parsed.scheme}://{parsed.netloc}".rstrip("/").lower()
+        if referer_origin == current_origin:
+            return True
+        parsed_current = urlparse(current_origin)
+        return parsed.netloc.lower() == parsed_current.netloc and parsed.scheme in {"http", "https"}
 
     return False
 
@@ -1892,7 +1908,7 @@ async def enforce_backend_login(request: Request, call_next):
         and not path.startswith("/web/passkey/")
         and not _is_same_origin_request(request)
     ):
-        if path.startswith("/api/"):
+        if path.startswith("/api/") or path.startswith("/guardar-colores"):
             return JSONResponse({"success": False, "error": "CSRF validation failed"}, status_code=403)
         return templates.TemplateResponse(
             "not_found.html",
