@@ -3239,7 +3239,7 @@
                             <article class="usuario-stat"><strong>${activeUsers}</strong><span>Usuarios activos</span></article>
                             <article class="usuario-stat"><strong>${roleCount}</strong><span>Roles en uso</span></article>
                         </section>
-                        <section class="ar-grid">
+                        <section class="ar-grid ar-grid--stacked">
                             <section class="ar-card ar-card--pad">
                                 <header class="ar-card__head">
                                     <div>
@@ -3311,10 +3311,6 @@
                                             <label>Telefono</label>
                                             <input type="text" placeholder="+52 55 0000 0000">
                                         </div>
-                                    </div>
-                                    <div class="ar-actions">
-                                        <button type="button" class="ar-btn ar-btn--soft" id="usuario-form-cancel">Cancelar</button>
-                                        <button type="button" class="ar-btn ar-btn--primary2" id="usuario-form-save">Guardar</button>
                                     </div>
                                 </form>
                             </section>
@@ -3433,18 +3429,6 @@
                     passwordConfirmed = true;
                     closePasswordModal();
                     showMessage('Contrasena confirmada.', 'success');
-                });
-                const formSaveBtn = usuarioView.querySelector('#usuario-form-save');
-                const formCancelBtn = usuarioView.querySelector('#usuario-form-cancel');
-                formSaveBtn && formSaveBtn.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    submitUsuarioFromPanel && submitUsuarioFromPanel();
-                });
-                formCancelBtn && formCancelBtn.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    createUsuarioMode = false;
-                    selectedUsuarioName = null;
-                    setUsuarioView('list');
                 });
                 submitUsuarioFromPanel = async () => {
                     if (!usuarioPanel || usuarioPanel.classList.contains('hidden')) {

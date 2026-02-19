@@ -102,6 +102,9 @@
   gap: 14px;
   align-items:start;
 }
+.ar-grid--stacked{
+  grid-template-columns: 1fr;
+}
 .ar-form{ display:flex; flex-direction:column; gap: 12px; }
 .ar-row{
   display:grid;
