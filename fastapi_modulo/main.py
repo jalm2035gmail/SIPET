@@ -38,6 +38,7 @@ from sqlalchemy import create_engine, Column, String, Integer, JSON, ForeignKey,
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 HIDDEN_SYSTEM_USERS = {"0konomiyaki"}
+APP_ENV_DEFAULT = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "development").strip().lower()
 IDENTIDAD_LOGIN_CONFIG_PATH = "fastapi_modulo/identidad_login.json"
 IDENTIDAD_LOGIN_IMAGE_DIR = "fastapi_modulo/templates/imagenes"
 DOCUMENTS_UPLOAD_DIR = "fastapi_modulo/uploads/documentos"
@@ -49,12 +50,13 @@ DEFAULT_LOGIN_IDENTITY = {
     "company_short_name": "AVAN",
     "login_message": "Incrementando el nivel de eficiencia",
 }
-PLANTILLAS_STORE_PATH = "fastapi_modulo/plantillas_store.json"
+RUNTIME_STORE_DIR = (os.environ.get("RUNTIME_STORE_DIR") or f"fastapi_modulo/runtime_store/{APP_ENV_DEFAULT}").strip()
+PLANTILLAS_STORE_PATH = (os.environ.get("PLANTILLAS_STORE_PATH") or os.path.join(RUNTIME_STORE_DIR, "plantillas_store.json")).strip()
 SYSTEM_REPORT_HEADER_TEMPLATE_ID = "system-report-header"
 AUTH_COOKIE_NAME = "auth_session"
-DATOS_PRELIMINARES_STORE_PATH = "fastapi_modulo/datos_preliminares_store.json"
-REGIONES_STORE_PATH = "fastapi_modulo/regiones_store.json"
-SUCURSALES_STORE_PATH = "fastapi_modulo/sucursales_store.json"
+DATOS_PRELIMINARES_STORE_PATH = (os.environ.get("DATOS_PRELIMINARES_STORE_PATH") or os.path.join(RUNTIME_STORE_DIR, "datos_preliminares_store.json")).strip()
+REGIONES_STORE_PATH = (os.environ.get("REGIONES_STORE_PATH") or os.path.join(RUNTIME_STORE_DIR, "regiones_store.json")).strip()
+SUCURSALES_STORE_PATH = (os.environ.get("SUCURSALES_STORE_PATH") or os.path.join(RUNTIME_STORE_DIR, "sucursales_store.json")).strip()
 DEFAULT_DATOS_GENERALES = {
     "responsable_general": "",
     "primer_anio_proyeccion": "",
@@ -443,6 +445,12 @@ def _ensure_login_identity_paths() -> None:
     os.makedirs(IDENTIDAD_LOGIN_IMAGE_DIR, exist_ok=True)
 
 
+def _ensure_store_parent_dir(path: str) -> None:
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+
 def _load_login_identity() -> Dict[str, str]:
     data = DEFAULT_LOGIN_IDENTITY.copy()
     if os.path.exists(IDENTIDAD_LOGIN_CONFIG_PATH):
@@ -457,6 +465,7 @@ def _load_login_identity() -> Dict[str, str]:
 
 
 def _save_login_identity(data: Dict[str, str]) -> None:
+    _ensure_store_parent_dir(IDENTIDAD_LOGIN_CONFIG_PATH)
     with open(IDENTIDAD_LOGIN_CONFIG_PATH, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False, indent=2)
 
@@ -481,6 +490,7 @@ def _save_datos_preliminares_store(data: Dict[str, str]) -> None:
     safe_payload: Dict[str, str] = {}
     for key, default_value in DEFAULT_DATOS_GENERALES.items():
         safe_payload[key] = str(data.get(key, default_value) or "").strip()
+    _ensure_store_parent_dir(DATOS_PRELIMINARES_STORE_PATH)
     with open(DATOS_PRELIMINARES_STORE_PATH, "w", encoding="utf-8") as fh:
         json.dump(safe_payload, fh, ensure_ascii=False, indent=2)
 
@@ -531,6 +541,7 @@ def _save_regiones_store(rows: List[Dict[str, str]]) -> None:
                 "descripcion": descripcion,
             }
         )
+    _ensure_store_parent_dir(REGIONES_STORE_PATH)
     with open(REGIONES_STORE_PATH, "w", encoding="utf-8") as fh:
         json.dump(safe_rows, fh, ensure_ascii=False, indent=2)
 
@@ -585,6 +596,7 @@ def _save_sucursales_store(rows: List[Dict[str, str]]) -> None:
                 "descripcion": descripcion,
             }
         )
+    _ensure_store_parent_dir(SUCURSALES_STORE_PATH)
     with open(SUCURSALES_STORE_PATH, "w", encoding="utf-8") as fh:
         json.dump(safe_rows, fh, ensure_ascii=False, indent=2)
 
@@ -958,7 +970,8 @@ def _resolve_database_url() -> str:
         if raw_url.startswith("postgres://"):
             return raw_url.replace("postgres://", "postgresql://", 1)
         return raw_url
-    sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or "strategic_planning.db").strip()
+    default_sqlite_name = f"strategic_planning_{APP_ENV_DEFAULT}.db"
+    sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or default_sqlite_name).strip()
     return f"sqlite:///./{sqlite_db_path}"
 
 
@@ -974,7 +987,7 @@ def _extract_sqlite_path(db_url: str) -> Optional[str]:
 DATABASE_URL = _resolve_database_url()
 IS_SQLITE_DATABASE = DATABASE_URL.startswith("sqlite:///")
 PRIMARY_DB_PATH = _extract_sqlite_path(DATABASE_URL)
-APP_ENV = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "development").strip().lower()
+APP_ENV = APP_ENV_DEFAULT
 SESSION_MAX_AGE_SECONDS = int((os.environ.get("SESSION_MAX_AGE_SECONDS") or "28800").strip() or "28800")
 COOKIE_SECURE = (os.environ.get("COOKIE_SECURE") or "").strip().lower() in {"1", "true", "yes", "on"} or APP_ENV in {
     "production",
@@ -11154,6 +11167,7 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
     nombre = (data.get("nombre") or "").strip()
     usuario_login = (data.get("usuario") or "").strip()
     correo = (data.get("correo") or "").strip()
+    imagen = (data.get("imagen") or "").strip()
     password = data.get("contrasena") or ""
     rol_nombre = normalize_role_name(data.get("rol"))
 
@@ -11202,6 +11216,7 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
             correo_hash=email_hash,
             contrasena=hash_password(password),
             rol_id=rol_id,
+            imagen=imagen or None,
             role=rol_nombre,
             is_active=True,
         )
@@ -11215,7 +11230,91 @@ def crear_usuario_seguro(request: Request, data: dict = Body(...)):
                     "id": nuevo.id,
                     "nombre": nuevo.nombre,
                     "correo": correo,
+                    "imagen": nuevo.imagen,
                     "rol_id": nuevo.rol_id,
+                },
+            }
+        )
+    finally:
+        db.close()
+
+
+@app.put("/api/usuarios/{user_id}")
+def actualizar_usuario_seguro(request: Request, user_id: int, data: dict = Body(...)):
+    require_admin_or_superadmin(request)
+    nombre = (data.get("nombre") or "").strip()
+    usuario_login = (data.get("usuario") or "").strip()
+    correo = (data.get("correo") or "").strip()
+    imagen = (data.get("imagen") or "").strip()
+    password = data.get("contrasena") or ""
+    rol_nombre = normalize_role_name(data.get("rol"))
+
+    if not nombre or not usuario_login or not correo:
+        return JSONResponse(
+            {"success": False, "error": "nombre, usuario y correo son obligatorios"},
+            status_code=400,
+        )
+    if password and len(password) < 8:
+        return JSONResponse(
+            {"success": False, "error": "La contraseña debe tener al menos 8 caracteres"},
+            status_code=400,
+        )
+
+    db = SessionLocal()
+    try:
+        user = db.query(Usuario).filter(Usuario.id == user_id).first()
+        if not user:
+            return JSONResponse({"success": False, "error": "Usuario no encontrado"}, status_code=404)
+
+        login_hash = _sensitive_lookup_hash(usuario_login)
+        email_hash = _sensitive_lookup_hash(correo)
+        exists_login = (
+            db.query(Usuario)
+            .filter(Usuario.id != user_id, Usuario.usuario_hash == login_hash)
+            .first()
+        )
+        if exists_login:
+            return JSONResponse({"success": False, "error": "El usuario ya existe"}, status_code=409)
+        exists_email = (
+            db.query(Usuario)
+            .filter(Usuario.id != user_id, Usuario.correo_hash == email_hash)
+            .first()
+        )
+        if exists_email:
+            return JSONResponse({"success": False, "error": "El correo ya existe"}, status_code=409)
+
+        if not rol_nombre:
+            rol_nombre = "usuario"
+        if not can_assign_role(request, rol_nombre):
+            rol_nombre = "usuario"
+        rol = db.query(Rol).filter(Rol.nombre == rol_nombre).first()
+        if not rol:
+            return JSONResponse({"success": False, "error": "Rol no encontrado"}, status_code=404)
+
+        user.nombre = nombre
+        user.usuario = _encrypt_sensitive(usuario_login)
+        user.usuario_hash = login_hash
+        user.correo = _encrypt_sensitive(correo)
+        user.correo_hash = email_hash
+        user.rol_id = rol.id
+        user.role = rol_nombre
+        user.imagen = imagen or None
+        if password:
+            user.contrasena = hash_password(password)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        return JSONResponse(
+            {
+                "success": True,
+                "data": {
+                    "id": user.id,
+                    "nombre": user.nombre,
+                    "correo": _decrypt_sensitive(user.correo),
+                    "usuario": _decrypt_sensitive(user.usuario),
+                    "imagen": user.imagen,
+                    "rol": rol_nombre,
                 },
             }
         )
@@ -11282,9 +11381,12 @@ def listar_usuarios_sanitizados(request: Request):
             {
                 "id": u.id,
                 "nombre": u.nombre,
+                "usuario": _decrypt_sensitive(u.usuario),
                 "correo": _decrypt_sensitive(u.correo),
                 "rol": resolved_role(u),
                 "imagen": u.imagen,
+                "departamento": u.departamento or "",
+                "estado": "Activo" if bool(u.is_active) else "Observando",
             }
             for u in usuarios
             if not is_hidden_user(request, _decrypt_sensitive(u.usuario))
@@ -11313,6 +11415,7 @@ def _render_areas_page(
         hide_floating_actions=False,
         view_buttons=[
             {"label": "Form", "icon": "/templates/icon/formulario.svg", "view": "form", "active": True},
+            {"label": "Lista", "icon": "/templates/icon/list.svg", "view": "list"},
             {"label": "Kanban", "icon": "/templates/icon/kanban.svg", "view": "kanban"},
             {"label": "Organigrama", "view": "organigrama"},
         ],
@@ -12842,6 +12945,37 @@ def _render_regiones_page(request: Request) -> HTMLResponse:
                     text-transform:uppercase;
                     letter-spacing:.04em;
                 }
+                .view-list-excel {
+                    width:100%;
+                    border-collapse:collapse;
+                    border:1px solid rgba(15,23,42,.16);
+                    border-radius:12px;
+                    overflow:hidden;
+                    background:#ffffff;
+                }
+                .view-list-excel thead th {
+                    text-align:left;
+                    font-size:12px;
+                    letter-spacing:.06em;
+                    text-transform:uppercase;
+                    color:rgba(15,23,42,.82);
+                    background:linear-gradient(180deg, rgba(239,246,255,.96), rgba(219,234,254,.90));
+                    border:1px solid rgba(15,23,42,.14);
+                    padding:10px 12px;
+                    white-space:nowrap;
+                }
+                .view-list-excel tbody td {
+                    border:1px solid rgba(15,23,42,.10);
+                    padding:10px 12px;
+                    color:#0f172a;
+                    background:#ffffff;
+                }
+                .view-list-excel tbody tr:nth-child(even) td {
+                    background:#f3f4f6;
+                }
+                .view-list-excel tbody tr:hover td {
+                    background:#e5e7eb;
+                }
                 .reg-kanban {
                     display:grid;
                     grid-template-columns:repeat(3, minmax(0, 1fr));
@@ -12981,7 +13115,7 @@ def _render_regiones_page(request: Request) -> HTMLResponse:
                     mount.innerHTML = `
                         <article class="reg-card">
                             <h3 class="reg-title">Lista de regiones</h3>
-                            <table class="reg-table">
+                            <table class="reg-table view-list-excel">
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
@@ -13254,6 +13388,37 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     font-size:0.85rem;
                     text-transform:uppercase;
                     letter-spacing:.04em;
+                }}
+                .view-list-excel {{
+                    width:100%;
+                    border-collapse:collapse;
+                    border:1px solid rgba(15,23,42,.16);
+                    border-radius:12px;
+                    overflow:hidden;
+                    background:#ffffff;
+                }}
+                .view-list-excel thead th {{
+                    text-align:left;
+                    font-size:12px;
+                    letter-spacing:.06em;
+                    text-transform:uppercase;
+                    color:rgba(15,23,42,.82);
+                    background:linear-gradient(180deg, rgba(239,246,255,.96), rgba(219,234,254,.90));
+                    border:1px solid rgba(15,23,42,.14);
+                    padding:10px 12px;
+                    white-space:nowrap;
+                }}
+                .view-list-excel tbody td {{
+                    border:1px solid rgba(15,23,42,.10);
+                    padding:10px 12px;
+                    color:#0f172a;
+                    background:#ffffff;
+                }}
+                .view-list-excel tbody tr:nth-child(even) td {{
+                    background:#f3f4f6;
+                }}
+                .view-list-excel tbody tr:hover td {{
+                    background:#e5e7eb;
                 }}
                 .suc-kanban {{
                     display:grid;
@@ -13771,7 +13936,7 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     mount.innerHTML = `
                         <article class="suc-card">
                             <h3 class="suc-title">Lista de sucursales</h3>
-                            <table class="suc-table">
+                            <table class="suc-table view-list-excel">
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
@@ -14421,7 +14586,6 @@ def _render_identidad_institucional_page(request: Request) -> HTMLResponse:
                                 </div>
                                 <div class="id-actions">
                                     <button class="id-btn id-btn--soft" type="reset">Restablecer</button>
-                                    <button class="id-btn id-btn--primary2" type="submit">Guardar identidad</button>
                                 </div>
                             </div>
                         </section>
@@ -14454,7 +14618,6 @@ def _render_identidad_institucional_page(request: Request) -> HTMLResponse:
                             </div>
                             <div class="id-card__tools">
                                 <span class="id-pill">4 recursos</span>
-                                <button class="id-btn id-btn--primary" type="submit">Guardar cambios</button>
                             </div>
                         </header>
                         <div class="id-assets__grid">

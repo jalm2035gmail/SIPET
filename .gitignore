@@ -6,5 +6,6 @@ __pycache__/
 nohup.out
 uvicorn.log
 colores.db
+fastapi_modulo/runtime_store/
 
 .DS_Store
