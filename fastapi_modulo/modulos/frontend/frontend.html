@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Constructor — SIPET</title>
+  <link rel="stylesheet" href="/static/vendor/grapesjs/css/grapes.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; }
+    #wb-top {
+      display: flex; align-items: center; gap: 8px;
+      height: 48px; padding: 0 12px;
+      background: #0f172a; border-bottom: 1px solid #1e293b;
+      flex-shrink: 0; z-index: 100; position: relative;
+    }
+    #wb-top .wb-logo {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: #94a3b8; text-decoration: none; font-size: 13px; font-weight: 700;
+      padding: 4px 8px; border-radius: 6px; margin-right: 4px;
+    }
+    #wb-top .wb-logo:hover { background: #1e293b; color: #f8fafc; }
+    .wb-sep { width: 1px; height: 24px; background: #1e293b; flex-shrink: 0; }
+    #wb-page-select {
+      background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+      border-radius: 7px; padding: 5px 30px 5px 10px; font-size: 13px;
+      font-weight: 600; cursor: pointer; outline: none; max-width: 200px;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+    }
+    #wb-page-title {
+      background: transparent; border: none; border-bottom: 1px solid #334155;
+      color: #f8fafc; font-size: 14px; font-weight: 600; padding: 4px 6px;
+      outline: none; min-width: 120px; max-width: 200px;
+    }
+    #wb-page-title:focus { border-bottom-color: #3b82f6; }
+    #wb-page-slug-wrap { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #64748b; }
+    #wb-page-slug { background: transparent; border: none; border-bottom: 1px dashed #334155; color: #64748b; font-size: 11px; outline: none; width: 120px; }
+    #wb-page-slug:focus { border-bottom-color: #3b82f6; color: #94a3b8; }
+    #wb-status-sel {
+      background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+      border-radius: 7px; padding: 5px 10px; font-size: 12px; font-weight: 700; outline: none; cursor: pointer;
+    }
+    .wb-spacer { flex: 1; }
+    .wb-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border: none; border-radius: 7px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, background .12s;
+    }
+    .wb-btn:active { opacity: .75; }
+    .wb-btn-ghost { background: transparent; color: #94a3b8; border: 1px solid #1e293b; }
+    .wb-btn-ghost:hover, .wb-btn-ghost.active { background: #1e293b; color: #f8fafc; border-color: #334155; }
+    .wb-btn-primary { background: #3b82f6; color: #fff; }
+    .wb-btn-primary:hover { background: #2563eb; }
+    .wb-btn-success { background: #10b981; color: #fff; }
+    .wb-btn-success:hover { background: #059669; }
+    /* Páginas modal */
+    #wb-pages-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 10000; align-items: center; justify-content: center;
+    }
+    #wb-pages-modal-overlay.open { display: flex; }
+    #wb-pages-modal {
+      background: #1e293b; border-radius: 14px; width: 480px; max-width: 96vw; max-height: 80vh;
+      display: flex; flex-direction: column; box-shadow: 0 24px 60px rgba(0,0,0,.5); overflow: hidden;
+    }
+    #wb-pages-modal header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #334155; font-size: 15px; font-weight: 700;
+    }
+    #wb-pages-modal header button { background: none; border: none; color: #64748b; font-size: 18px; cursor: pointer; }
+    #wb-pages-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+    .wb-page-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 9px; cursor: pointer; border: 2px solid transparent;
+      transition: background .1s, border-color .1s;
+    }
+    .wb-page-item:hover { background: #0f172a; }
+    .wb-page-item.active { background: #0f172a; border-color: #3b82f6; }
+    .wb-page-item .pi-title { flex: 1; font-size: 13px; font-weight: 600; color: #e2e8f0; }
+    .wb-page-item .pi-slug { font-size: 11px; color: #64748b; }
+    .wb-page-item .pi-status { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+    .pi-status.draft { background: #451a03; color: #fb923c; }
+    .pi-status.published { background: #052e16; color: #34d399; }
+    .wb-page-item .pi-del {
+      background: none; border: none; color: #ef4444; cursor: pointer;
+      font-size: 14px; opacity: 0; padding: 2px 6px; border-radius: 4px;
+    }
+    .wb-page-item:hover .pi-del { opacity: 1; }
+    .wb-page-item .pi-del:hover { background: #1e293b; }
+    .wb-page-item .pi-dup {
+      background: none; border: none; color: #60a5fa; cursor: pointer;
+      font-size: 13px; opacity: 0; padding: 2px 6px; border-radius: 4px;
+    }
+    .wb-page-item:hover .pi-dup { opacity: 1; }
+    .wb-page-item .pi-dup:hover { background: #1e293b; }
+    #wb-pages-modal footer { padding: 12px 20px; border-top: 1px solid #334155; display: flex; gap: 8px; }
+    /* Toast */
+    #wb-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; color: #f8fafc; padding: 10px 22px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .25s;
+      z-index: 99999; pointer-events: none; border: 1px solid #334155;
+    }
+    #wb-toast.show { opacity: 1; }
+    /* SEO modal */
+    #wb-seo-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 10000; align-items: center; justify-content: center;
+    }
+    #wb-seo-modal-overlay.open { display: flex; }
+    #wb-seo-modal {
+      background: #1e293b; border-radius: 14px; width: 480px; max-width: 95vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5); overflow: hidden;
+    }
+    #wb-seo-modal header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #334155; font-size: 15px; font-weight: 700;
+    }
+    #wb-seo-modal header button { background: none; border: none; color: #64748b; font-size: 18px; cursor: pointer; }
+    #wb-seo-modal .seo-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    #wb-seo-modal label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 5px; }
+    #wb-seo-modal input, #wb-seo-modal textarea {
+      width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 7px;
+      color: #e2e8f0; font-size: 13px; padding: 9px 12px; outline: none;
+    }
+    #wb-seo-modal input:focus, #wb-seo-modal textarea:focus { border-color: #3b82f6; }
+    #wb-seo-modal textarea { resize: vertical; min-height: 70px; }
+    #wb-seo-modal .seo-hint { font-size: 11px; color: #475569; margin-top: -8px; }
+    #wb-seo-modal footer { padding: 14px 20px; border-top: 1px solid #334155; display: flex; gap: 8px; }
+    /* Templates modal */
+    #wb-tpl-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 10000; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 16px;
+    }
+    #wb-tpl-modal-overlay.open { display: flex; }
+    #wb-tpl-modal {
+      background: #1e293b; border-radius: 14px; width: 860px; max-width: 98vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5); overflow: hidden;
+    }
+    #wb-tpl-modal header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px; border-bottom: 1px solid #334155; font-size: 15px; font-weight: 700;
+    }
+    #wb-tpl-modal header button { background: none; border: none; color: #64748b; font-size: 18px; cursor: pointer; }
+    #wb-tpl-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; padding: 24px;
+    }
+    .tpl-card {
+      background: #0f172a; border: 2px solid #334155; border-radius: 12px;
+      overflow: hidden; cursor: pointer; transition: border-color .15s, transform .12s;
+    }
+    .tpl-card:hover { border-color: #3b82f6; transform: translateY(-2px); }
+    .tpl-thumb {
+      height: 110px; background: #1e293b; display: flex; align-items: center;
+      justify-content: center; font-size: 3rem;
+    }
+    .tpl-info { padding: 12px 14px; }
+    .tpl-info h3 { font-size: 13px; font-weight: 700; color: #e2e8f0; margin: 0 0 4px; }
+    .tpl-info p { font-size: 11px; color: #64748b; margin: 0; line-height: 1.5; }
+    .tpl-info button {
+      margin-top: 10px; width: 100%; padding: 7px; background: #3b82f6; color: #fff;
+      border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .tpl-info button:hover { background: #2563eb; }
+    /* Export/Import modal */
+    #wb-io-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 10000; align-items: center; justify-content: center;
+    }
+    #wb-io-modal-overlay.open { display: flex; }
+    #wb-io-modal {
+      background: #1e293b; border-radius: 14px; width: 620px; max-width: 97vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5); overflow: hidden;
+    }
+    #wb-io-modal header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #334155; font-size: 15px; font-weight: 700;
+    }
+    #wb-io-modal header button { background: none; border: none; color: #64748b; font-size: 18px; cursor: pointer; }
+    #wb-io-modal .io-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    #wb-io-modal label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 5px; }
+    #wb-io-json {
+      width: 100%; height: 200px; background: #0f172a; border: 1px solid #334155;
+      border-radius: 7px; color: #e2e8f0; font-size: 12px; font-family: monospace;
+      padding: 10px 12px; outline: none; resize: vertical;
+    }
+    #wb-io-json:focus { border-color: #3b82f6; }
+    #wb-io-modal footer { padding: 14px 20px; border-top: 1px solid #334155; display: flex; gap: 8px; flex-wrap: wrap; }
+    /* Preview overlay */
+    #wb-preview-overlay {
+      display: none; position: fixed; inset: 0; z-index: 10000;
+      flex-direction: column; background: #0f172a;
+    }
+    #wb-preview-overlay.open { display: flex; }
+    #wb-preview-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px; height: 44px; background: #1e293b;
+      border-bottom: 1px solid #334155; flex-shrink: 0;
+    }
+    #wb-preview-bar span { font-size: 12px; color: #94a3b8; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #wb-preview-bar a { font-size: 11px; font-weight: 700; color: #3b82f6; text-decoration: none; }
+    #wb-preview-bar a:hover { text-decoration: underline; }
+    #wb-preview-iframe { flex: 1; border: none; background: #fff; }
+    /* Versions modal */
+    #wb-ver-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      z-index: 10000; align-items: center; justify-content: center;
+    }
+    #wb-ver-modal-overlay.open { display: flex; }
+    #wb-ver-modal {
+      background: #1e293b; border-radius: 14px; width: 580px; max-width: 97vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5); overflow: hidden;
+    }
+    #wb-ver-modal header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #334155; font-size: 15px; font-weight: 700;
+    }
+    #wb-ver-modal header button { background: none; border: none; color: #64748b; font-size: 18px; cursor: pointer; }
+    #wb-ver-list { padding: 10px 16px 4px; display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
+    .ver-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+      background: #0f172a; border-radius: 9px; border: 1px solid #334155;
+    }
+    .ver-item .ver-meta { flex: 1; }
+    .ver-item .ver-meta strong { font-size: 13px; color: #e2e8f0; display: block; }
+    .ver-item .ver-meta span  { font-size: 11px; color: #64748b; }
+    .ver-item button {
+      padding: 6px 14px; background: #334155; color: #e2e8f0;
+      border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .ver-item button:hover { background: #3b82f6; color: #fff; }
+    #wb-ver-modal footer { padding: 12px 20px; border-top: 1px solid #334155; text-align: right; }
+    /* Unsaved indicator */
+    #wb-save-btn { position: relative; }
+    #wb-unsaved-dot {
+      display: none; position: absolute; top: 4px; right: 4px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #f59e0b; box-shadow: 0 0 0 2px #1e293b;
+      pointer-events: none;
+    }
+    #wb-save-btn.dirty { outline: 2px solid #f59e0b; outline-offset: 1px; }
+    #wb-save-btn.dirty #wb-unsaved-dot { display: block; }
+    #wb-unsaved-label {
+      display: none; align-items: center; gap: 5px;
+      font-size: 11px; color: #f59e0b; font-weight: 700;
+      padding: 0 6px; white-space: nowrap;
+    }
+    #wb-unsaved-label.visible { display: flex; }
+    #wb-unsaved-label::before { content: '●'; font-size: 9px; }
+    /* ── Layout ──────────────────────────────────────────────────── */
+    #wb-editor-wrap { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 48px); }
+
+    #wb-sidebar {
+      width: 268px; min-width: 220px; max-width: 320px;
+      background: #0a1120; border-right: 1px solid #1e293b;
+      display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+      box-shadow: 2px 0 12px rgba(0,0,0,.3);
+    }
+
+    /* Tab switcher */
+    #wb-panel-switcher {
+      display: flex; gap: 0; padding: 0;
+      border-bottom: 1px solid #1e293b; flex-shrink: 0;
+      background: #0f172a;
+    }
+    #wb-panel-switcher .gjs-pn-btn {
+      flex: 1; padding: 10px 4px; border-radius: 0;
+      font-size: 17px; text-align: center; cursor: pointer;
+      color: #475569; border: none; background: transparent;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, background .15s, border-color .15s;
+      position: relative;
+    }
+    #wb-panel-switcher .gjs-pn-btn:hover {
+      color: #94a3b8; background: #1e293b;
+    }
+    #wb-panel-switcher .gjs-pn-active {
+      color: #f8fafc !important; background: #1e293b !important;
+      border-bottom-color: #3b82f6 !important;
+    }
+    #wb-panel-switcher .gjs-pn-btn:first-child { border-left: none; }
+    #wb-panel-switcher .gjs-pn-btn + .gjs-pn-btn { border-left: 1px solid #1e293b; }
+
+    /* Scrollable content area */
+    #wb-sidebar-content {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+    }
+    #wb-sidebar-content::-webkit-scrollbar { width: 4px; }
+    #wb-sidebar-content::-webkit-scrollbar-track { background: transparent; }
+    #wb-sidebar-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    #wb-sidebar-content::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* GrapesJS panels inside sidebar */
+    #wb-sidebar-content .gjs-sm-sectors,
+    #wb-sidebar-content .gjs-blocks-c,
+    #wb-sidebar-content .gjs-trt-traits,
+    #wb-sidebar-content .gjs-layer-list { padding-bottom: 16px; }
+
+    #wb-sidebar-content .gjs-sm-sector__title {
+      padding: 8px 12px !important; font-size: 10px !important;
+      letter-spacing: .08em !important; text-transform: uppercase !important;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer;
+    }
+    #wb-sidebar-content .gjs-sm-sector__title:hover { background: #1e293b !important; }
+
+    #wb-sidebar-content .gjs-blocks-c {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 6px !important; padding: 8px !important;
+    }
+    #wb-sidebar-content .gjs-block {
+      width: auto !important; min-height: 64px !important;
+      padding: 10px 6px !important; border-radius: 8px !important;
+      display: flex !important; flex-direction: column !important;
+      align-items: center !important; justify-content: center !important;
+      transition: background .12s, border-color .12s, transform .1s !important;
+    }
+    #wb-sidebar-content .gjs-block:hover { transform: translateY(-1px); }
+    #wb-sidebar-content .gjs-block__media { font-size: 20px !important; line-height: 1 !important; }
+    #wb-sidebar-content .gjs-block-label { font-size: 10px !important; font-weight: 600 !important; margin-top: 5px !important; text-align: center !important; line-height: 1.3 !important; }
+
+    #wb-sidebar-content .gjs-block-category .gjs-title {
+      padding: 6px 10px !important; font-size: 10px !important;
+      text-transform: uppercase !important; letter-spacing: .08em !important;
+      color: #475569 !important; background: #0a1120 !important;
+      border-bottom: 1px solid #1e293b !important;
+    }
+
+    #wb-sidebar-content .gjs-trt-trait {
+      padding: 6px 12px !important;
+      border-bottom: 1px solid #1a2535 !important;
+    }
+    #wb-sidebar-content .gjs-trt-trait__label {
+      font-size: 11px !important; font-weight: 600 !important;
+      color: #64748b !important; text-transform: uppercase !important;
+      letter-spacing: .05em !important;
+    }
+
+    #wb-sidebar-content .gjs-layer {
+      border-color: #1e293b !important; font-size: 12px !important;
+    }
+    #wb-sidebar-content .gjs-layer__title:hover { background: #1e293b !important; }
+
+    #gjs { flex: 1; overflow: hidden; }
+    /* GrapesJS dark theme */
+    .gjs-cv-canvas { background: #e2e8f0; }
+    .gjs-one-bg { background-color: #0f172a !important; }
+    .gjs-two-bg { background-color: #1e293b !important; }
+    .gjs-three-bg { background-color: #334155 !important; }
+    .gjs-four-color { color: #94a3b8 !important; }
+    .gjs-four-color-h:hover { color: #f8fafc !important; }
+    .gjs-pn-panels { background: #0f172a !important; }
+    .gjs-pn-panel { background: #0f172a !important; border-color: #1e293b !important; }
+    .gjs-sm-sector { border-color: #334155 !important; }
+    .gjs-sm-sector__title { background: #0f172a !important; color: #94a3b8 !important; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+    .gjs-block {
+      background: #1e293b !important; border-color: #334155 !important;
+      color: #94a3b8 !important; border-radius: 8px !important;
+    }
+    .gjs-block:hover { border-color: #3b82f6 !important; color: #f8fafc !important; background: #1e293b !important; }
+    .gjs-block__media { font-size: 24px; }
+    .gjs-block-label { font-size: 11px; font-weight: 600; margin-top: 4px; }
+    .gjs-field { background: #0f172a !important; border-color: #334155 !important; color: #e2e8f0 !important; border-radius: 6px !important; }
+    .gjs-field input, .gjs-field select { color: #e2e8f0 !important; }
+    .gjs-trt-trait__label { color: #94a3b8 !important; font-size: 11px !important; }
+    .gjs-pn-btn { color: #94a3b8 !important; }
+    .gjs-pn-btn.gjs-pn-active, .gjs-pn-btn:hover { color: #f8fafc !important; background: #334155 !important; border-radius: 5px; }
+    .gjs-toolbar { background: #0f172a !important; border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,.4); }
+    .gjs-toolbar-item { color: #94a3b8 !important; }
+    .gjs-toolbar-item:hover { color: #f8fafc !important; background: #1e293b !important; border-radius: 4px; }
+    .gjs-selected { outline: 2px solid #3b82f6 !important; }
+    .gjs-highlighted { outline: 2px dashed #60a5fa !important; }
+    .gjs-rte-toolbar { background: #1e293b !important; border-color: #334155 !important; border-radius: 8px; }
+    .gjs-rte-actionbar button { color: #94a3b8 !important; }
+    .gjs-rte-actionbar button:hover, .gjs-rte-actionbar button.active { color: #f8fafc !important; background: #334155 !important; }
+    .gjs-layer { border-color: #1e293b !important; }
+    .gjs-layer__title { color: #94a3b8 !important; }
+    .gjs-layer--selected > .gjs-layer__item { background: #1e293b !important; }
+    .gjs-mdl-dialog { background: #1e293b !important; border-radius: 12px; border-color: #334155 !important; }
+    .gjs-mdl-title { color: #f8fafc !important; }
+    .gjs-clm-tag { background: #334155 !important; color: #e2e8f0 !important; }
+  </style>
+</head>
+<body style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+
+  <div id="wb-top">
+    <a class="wb-logo" href="/panel" title="Volver al panel">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+      SIPET
+    </a>
+    <div class="wb-sep"></div>
+    <select id="wb-page-select" title="Seleccionar página"></select>
+    <button class="wb-btn wb-btn-ghost" id="wb-manage-pages-btn" title="Administrar páginas" style="padding:5px 10px;font-size:14px;">⊞ Páginas</button>
+    <div class="wb-sep"></div>
+    <input type="text" id="wb-page-title" placeholder="Título de la página…" maxlength="100">
+    <div id="wb-page-slug-wrap" class="wb-page-slug-wrap">
+      <span style="color:#475569">/p/</span>
+      <input type="text" id="wb-page-slug" placeholder="url-slug" maxlength="80">
+    </div>
+    <select id="wb-status-sel">
+      <option value="draft">📝 Borrador</option>
+      <option value="published">🌐 Publicado</option>
+    </select>
+    <button class="wb-btn wb-btn-ghost" id="wb-seo-btn" title="Configurar SEO" style="font-size:13px;">🔍 SEO</button>
+    <button class="wb-btn wb-btn-ghost" id="wb-tpl-btn" title="Plantillas prearmadas" style="font-size:13px;">🗂 Plantillas</button>
+    <button class="wb-btn wb-btn-ghost" id="wb-io-btn" title="Exportar / Importar JSON" style="font-size:13px;">⬇⬆ JSON</button>
+    <div class="wb-spacer"></div>
+    <div id="wb-devices" style="display:flex;gap:4px;"></div>
+    <div class="wb-sep"></div>
+    <button class="wb-btn wb-btn-ghost" id="wb-undo-btn" title="Deshacer (Ctrl+Z)">↩</button>
+    <button class="wb-btn wb-btn-ghost" id="wb-redo-btn" title="Rehacer (Ctrl+Y)">↪</button>
+    <button class="wb-btn wb-btn-ghost" id="wb-preview-btn" title="Vista previa del borrador" style="font-size:13px;">👁 Borrador</button>
+    <button class="wb-btn wb-btn-ghost" id="wb-view-published-btn" title="Ver página publicada" style="font-size:13px;">🌐 Ver publicado</button>
+    <button class="wb-btn wb-btn-success" id="wb-publish-btn" title="Publicar página" style="font-size:13px;">↗ Publicar</button>
+    <button class="wb-btn wb-btn-ghost" id="wb-ver-btn" title="Historial de versiones" style="font-size:13px;">🕐 Versiones</button>
+    <div class="wb-sep"></div>
+    <span id="wb-unsaved-label">Sin guardar</span>
+    <button class="wb-btn wb-btn-primary" id="wb-save-btn" style="font-size:13px;position:relative;">
+      💾 Guardar<span id="wb-unsaved-dot"></span>
+    </button>
+  </div>
+
+  <div id="wb-editor-wrap">
+    <div id="wb-sidebar">
+      <div id="wb-panel-switcher"></div>
+      <div id="wb-sidebar-content"></div>
+    </div>
+    <div id="gjs"></div>
+  </div>
+
+  <div id="wb-pages-modal-overlay">
+    <div id="wb-pages-modal">
+      <header>
+        <span>Páginas del sitio</span>
+        <button onclick="closePagesModal()">✕</button>
+      </header>
+      <div id="wb-pages-list"></div>
+      <footer>
+        <button class="wb-btn wb-btn-primary" style="flex:1" onclick="createNewPage()">+ Nueva página</button>
+        <button class="wb-btn wb-btn-ghost" onclick="closePagesModal()">Cerrar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- SEO Modal -->
+  <div id="wb-seo-modal-overlay">
+    <div id="wb-seo-modal">
+      <header>
+        <span>⚙ SEO de la página</span>
+        <button onclick="closeSeoModal()">✕</button>
+      </header>
+      <div class="seo-body">
+        <div>
+          <label for="seo-meta-title">Meta title</label>
+          <input type="text" id="seo-meta-title" placeholder="Título para buscadores (50-60 caracteres)" maxlength="120">
+          <p class="seo-hint">Si está vacío se usa el título de la página.</p>
+        </div>
+        <div>
+          <label for="seo-meta-desc">Meta description</label>
+          <textarea id="seo-meta-desc" placeholder="Descripción breve para motores de búsqueda (150-160 caracteres)" maxlength="320"></textarea>
+        </div>
+        <div>
+          <label for="seo-og-image">og:image (URL)</label>
+          <input type="url" id="seo-og-image" placeholder="https://…/imagen.jpg">
+          <p class="seo-hint">Imagen al compartir en redes sociales. Tamaño recomendado: 1200×630px.</p>
+        </div>
+      </div>
+      <footer>
+        <button class="wb-btn wb-btn-primary" style="flex:1" onclick="saveSeoModal()">Guardar SEO</button>
+        <button class="wb-btn wb-btn-ghost" onclick="closeSeoModal()">Cancelar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Preview overlay – Fase 7 -->
+  <div id="wb-preview-overlay">
+    <div id="wb-preview-bar">
+      <button class="wb-btn wb-btn-ghost" onclick="closePreviewModal()" style="font-size:12px;padding:5px 12px;">✕ Cerrar</button>
+      <span id="wb-preview-label">Previsualización</span>
+      <a id="wb-preview-link" href="#" target="_blank">Abrir en nueva pestaña ↗</a>
+    </div>
+    <iframe id="wb-preview-iframe" title="Preview"></iframe>
+  </div>
+
+  <!-- Versions modal – Fase 7 -->
+  <div id="wb-ver-modal-overlay">
+    <div id="wb-ver-modal">
+      <header>
+        <span>🕐 Historial de versiones</span>
+        <button onclick="closeVerModal()">✕</button>
+      </header>
+      <div id="wb-ver-list"><p style="color:#64748b;padding:20px;text-align:center;">Cargando…</p></div>
+      <footer>
+        <button class="wb-btn wb-btn-ghost" onclick="closeVerModal()">Cerrar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Templates Modal -->
+  <div id="wb-tpl-modal-overlay">
+    <div id="wb-tpl-modal">
+      <header>
+        <span>🗂 Plantillas de página</span>
+        <button onclick="closeTplModal()">✕</button>
+      </header>
+      <div id="wb-tpl-grid"></div>
+    </div>
+  </div>
+
+  <!-- Export / Import Modal -->
+  <div id="wb-io-modal-overlay">
+    <div id="wb-io-modal">
+      <header>
+        <span>⬇⬆ Exportar / Importar JSON</span>
+        <button onclick="closeIOModal()">✕</button>
+      </header>
+      <div class="io-body">
+        <div>
+          <label>JSON de la página actual</label>
+          <textarea id="wb-io-json" readonly placeholder="Presiona Exportar para ver el JSON…"></textarea>
+        </div>
+        <p style="font-size:11px;color:#475569;margin:0;">Para importar: pega el JSON de una página exportada previamente y presiona Importar.</p>
+      </div>
+      <footer>
+        <button class="wb-btn wb-btn-ghost" onclick="exportPage()">⬇ Exportar</button>
+        <button class="wb-btn wb-btn-ghost" onclick="copyJSON()">📋 Copiar</button>
+        <button class="wb-btn wb-btn-primary" onclick="importPage()">⬆ Importar JSON</button>
+        <button class="wb-btn wb-btn-ghost" onclick="closeIOModal()" style="margin-left:auto">Cerrar</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="wb-toast"></div>
+
+  <script src="/static/vendor/grapesjs/grapes.min.js"></script>
+  <script>
+  (function(){
+  'use strict';
+
+  var _pages = [], _currentPageId = null, _slugEdited = false, _editor = null, _saving = false;
+
+  function uid(){ return '_' + Math.random().toString(36).slice(2,10); }
+  function toast(msg, ok){
+    ok = ok !== false;
+    var t = document.getElementById('wb-toast');
+    t.textContent = msg;
+    t.style.background = ok ? '#0f172a' : '#7f1d1d';
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2400);
+  }
+  function slugify(s){
+    return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'pagina';
+  }
+  function currentPage(){ return _pages.find(function(p){ return p.id === _currentPageId; }) || null; }
+  function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  /* API */
+  function apiPages(){ return fetch('/api/frontend/pages',{credentials:'include'}).then(function(r){return r.json();}).then(function(j){return j.data||[];}); }
+  function apiSave(page){ return fetch('/api/frontend/pages',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(page)}).then(function(r){return r.json();}); }
+  function apiDelete(id){ return fetch('/api/frontend/pages',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id:id})}).then(function(r){return r.json();}); }
+
+  /* GrapesJS init */
+  function initEditor(){
+    _editor = grapesjs.init({
+      container: '#gjs',
+      height: '100%',
+      width: 'auto',
+      fromElement: false,
+      storageManager: false,
+      noticeOnUnload: false,
+      plugins: [],
+
+      deviceManager: {
+        devices: [
+          { name: 'Escritorio', id: 'desktop', width: '' },
+          { name: 'Tablet',     id: 'tablet',  width: '768px', widthMedia: '768px' },
+          { name: 'Movil',      id: 'mobile',  width: '390px', widthMedia: '480px' },
+        ]
+      },
+
+      panels: {
+        defaults: [
+          {
+            id: 'panel-switcher', el: '#wb-panel-switcher',
+            buttons: [
+              { id:'show-blocks', active:true, label:'🧱', command:'show-blocks', togglable:false, attributes:{title:'Bloques'} },
+              { id:'show-styles',              label:'🎨', command:'show-styles', togglable:false, attributes:{title:'Estilos'} },
+              { id:'show-traits',              label:'⚙',  command:'show-traits', togglable:false, attributes:{title:'Propiedades'} },
+              { id:'show-layers',              label:'☰',  command:'show-layers', togglable:false, attributes:{title:'Capas'} },
+            ]
+          },
+          {
+            id: 'panel-devices', el: '#wb-devices',
+            buttons: [
+              { id:'device-desktop', label:'🖥',  command:'set-device-desktop', active:true, togglable:false, className:'wb-btn wb-btn-ghost active', attributes:{title:'Escritorio'} },
+              { id:'device-tablet',  label:'📱',  command:'set-device-tablet',  togglable:false, className:'wb-btn wb-btn-ghost', attributes:{title:'Tablet'} },
+              { id:'device-mobile',  label:'📲',  command:'set-device-mobile',  togglable:false, className:'wb-btn wb-btn-ghost', attributes:{title:'Movil'} },
+            ]
+          },
+        ]
+      },
+
+      styleManager: {
+        appendTo: '#wb-sidebar-content',
+        sectors: [
+          { name:'Dimensiones', open:false, properties:[
+            {property:'width'},{property:'height'},{property:'min-width'},{property:'max-width'},{property:'min-height'},
+            {property:'margin',type:'composite',detached:true},{property:'padding',type:'composite',detached:true},
+          ]},
+          { name:'Tipografia', open:false, properties:[
+            {property:'font-family',type:'select',options:[
+              {value:'system-ui,sans-serif',name:'Sistema'},{value:'Georgia,serif',name:'Georgia'},
+              {value:'Inter,sans-serif',name:'Inter'},{value:'Montserrat,sans-serif',name:'Montserrat'},
+            ]},
+            {property:'font-size'},{property:'font-weight',type:'select',options:[
+              {value:'400',name:'Normal'},{value:'600',name:'Semibold'},{value:'700',name:'Bold'},{value:'800',name:'Extrabold'},
+            ]},
+            {property:'line-height'},{property:'letter-spacing'},
+            {property:'color',type:'color'},
+            {property:'text-align',type:'radio',options:[
+              {value:'left',name:'←'},{value:'center',name:'↔'},{value:'right',name:'→'},{value:'justify',name:'≡'},
+            ]},
+            {property:'text-transform',type:'select',options:[
+              {value:'none',name:'Ninguno'},{value:'uppercase',name:'MAYUSCULAS'},{value:'capitalize',name:'Capitalizado'},
+            ]},
+          ]},
+          { name:'Decoracion', open:false, properties:[
+            {property:'background-color',type:'color'},
+            {property:'border-radius'},{property:'box-shadow'},
+            {property:'opacity',type:'slider',min:0,max:1,step:0.01},
+          ]},
+          { name:'Bordes', open:false, properties:[
+            {property:'border-width', label:'Grosor', type:'composite', detached:true, properties:[
+              {property:'border-top-width',    label:'↑', type:'integer', units:['px','em','rem'], default:'0'},
+              {property:'border-right-width',  label:'→', type:'integer', units:['px','em','rem'], default:'0'},
+              {property:'border-bottom-width', label:'↓', type:'integer', units:['px','em','rem'], default:'0'},
+              {property:'border-left-width',   label:'←', type:'integer', units:['px','em','rem'], default:'0'},
+            ]},
+            {property:'border-style', label:'Estilo', type:'select', options:[
+              {value:'none',   name:'Ninguno'},
+              {value:'solid',  name:'Solid'},
+              {value:'dashed', name:'Dashed'},
+              {value:'dotted', name:'Dotted'},
+              {value:'double', name:'Double'},
+              {value:'groove', name:'Groove'},
+              {value:'inset',  name:'Inset'},
+            ]},
+            {property:'border-color', label:'Color', type:'color'},
+          ]},
+          { name:'Layout Flex', open:false, properties:[
+            {property:'display',type:'select',options:[
+              {value:'block',name:'Block'},{value:'flex',name:'Flex'},{value:'grid',name:'Grid'},{value:'inline-block',name:'Inline Block'},
+            ]},
+            {property:'flex-direction',type:'radio',options:[{value:'row',name:'→'},{value:'column',name:'↓'}]},
+            {property:'justify-content',type:'select',options:[
+              {value:'flex-start',name:'Inicio'},{value:'center',name:'Centro'},{value:'flex-end',name:'Fin'},{value:'space-between',name:'Entre'},{value:'space-around',name:'Alrededor'},
+            ]},
+            {property:'align-items',type:'select',options:[
+              {value:'stretch',name:'Estirar'},{value:'center',name:'Centro'},{value:'flex-start',name:'Inicio'},{value:'flex-end',name:'Fin'},
+            ]},
+            {property:'flex-wrap',type:'radio',options:[{value:'wrap',name:'Wrap'},{value:'nowrap',name:'No wrap'}]},
+            {property:'gap'},
+          ]},
+          { name:'Imagen', open:false, properties:[
+            {property:'background-image'},
+            {property:'background-size',type:'select',options:[{value:'cover',name:'Cover'},{value:'contain',name:'Contain'},{value:'auto',name:'Auto'}]},
+            {property:'background-position',type:'select',options:[
+              {value:'center',name:'Centro'},{value:'top',name:'Arriba'},{value:'bottom',name:'Abajo'},
+            ]},
+            {property:'background-repeat',type:'select',options:[
+              {value:'no-repeat',name:'Sin repetir'},{value:'repeat',name:'Repetir'},
+            ]},
+          ]},
+          { name:'Posicion', open:false, properties:[
+            {property:'position',type:'select',options:[
+              {value:'static',name:'Static'},{value:'relative',name:'Relative'},
+              {value:'absolute',name:'Absolute'},{value:'fixed',name:'Fixed'},{value:'sticky',name:'Sticky'},
+            ]},
+            {property:'top'},{property:'right'},{property:'bottom'},{property:'left'},{property:'z-index'},
+          ]},
+        ]
+      },
+
+      traitManager:  { appendTo: '#wb-sidebar-content' },
+      layerManager:  { appendTo: '#wb-sidebar-content' },
+      blockManager:  { appendTo: '#wb-sidebar-content' },
+
+      canvas: {
+        styles: ['https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap']
+      }
+    });
+
+    /* Commands */
+    function makeShowCmd(sel){
+      return {
+        run: function(e){
+          document.querySelectorAll('#wb-sidebar-content .gjs-blocks-c,#wb-sidebar-content .gjs-sm-sectors,#wb-sidebar-content .gjs-trt-traits,#wb-sidebar-content .gjs-layer-list').forEach(function(el){ el.style.display='none'; });
+          var el = document.querySelector(sel); if(el) el.style.display='';
+        },
+        stop: function(){}
+      };
+    }
+    _editor.Commands.add('show-blocks', makeShowCmd('.gjs-blocks-c'));
+    _editor.Commands.add('show-styles', makeShowCmd('.gjs-sm-sectors'));
+    _editor.Commands.add('show-traits', makeShowCmd('.gjs-trt-traits'));
+    _editor.Commands.add('show-layers', makeShowCmd('.gjs-layer-list'));
+
+    function makeDeviceCmd(deviceName){
+      return {
+        run: function(e){
+          e.setDevice(deviceName);
+          document.querySelectorAll('#wb-devices .wb-btn').forEach(function(b){ b.classList.remove('active'); });
+        },
+        stop: function(){}
+      };
+    }
+    _editor.Commands.add('set-device-desktop', makeDeviceCmd('Escritorio'));
+    _editor.Commands.add('set-device-tablet',  makeDeviceCmd('Tablet'));
+    _editor.Commands.add('set-device-mobile',  makeDeviceCmd('Movil'));
+    document.getElementById('wb-undo-btn').onclick = function(){ _editor.runCommand('core:undo'); };
+    document.getElementById('wb-redo-btn').onclick = function(){ _editor.runCommand('core:redo'); };
+
+    registerBlocks(_editor);
+  }
+
+  function registerBlocks(bm){
+    bm = bm.BlockManager;
+
+    bm.add('section-hero', { label:'Hero', category:'Secciones', media:'🦸',
+      content:'<section style="background:#1e293b;color:#fff;padding:80px 24px;text-align:center;"><h1 style="font-size:2.5rem;font-weight:800;margin:0 0 16px;line-height:1.2;">Titulo principal</h1><p style="color:#94a3b8;margin:0 0 28px;font-size:1.1rem;max-width:560px;margin-left:auto;margin-right:auto;">Explica tu propuesta de valor aqui.</p><a href="#" style="display:inline-block;padding:13px 32px;background:#3b82f6;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:1rem;">Empezar ahora</a></section>'
+    });
+
+    bm.add('section-hero-img', { label:'Hero + Imagen', category:'Secciones', media:'🖼',
+      content:'<section style="display:flex;align-items:center;gap:48px;padding:64px 5%;background:#f8fafc;flex-wrap:wrap;"><div style="flex:1;min-width:280px;"><p style="font-size:.85rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px;">Bienvenidos</p><h1 style="font-size:2.2rem;font-weight:800;color:#0f172a;margin:0 0 16px;line-height:1.2;">Tu solucion financiera de confianza</h1><p style="color:#64748b;margin:0 0 28px;line-height:1.7;">Descripcion de beneficios del servicio.</p><a href="#" style="display:inline-block;padding:13px 30px;background:#0f172a;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;">Conocer mas</a></div><div style="flex:1;min-width:240px;text-align:center;"><img src="https://placehold.co/520x360/e2e8f0/94a3b8?text=Imagen" style="width:100%;border-radius:12px;box-shadow:0 20px 40px rgba(0,0,0,.12);" alt="Imagen hero"></div></section>'
+    });
+
+    bm.add('section-cta', { label:'Call to Action', category:'Secciones', media:'📣',
+      content:'<section style="background:#0f172a;color:#fff;padding:64px 24px;text-align:center;"><h2 style="font-size:2rem;font-weight:800;margin:0 0 12px;">Listo para comenzar?</h2><p style="opacity:.75;margin:0 0 28px;font-size:1.05rem;max-width:520px;margin-left:auto;margin-right:auto;">Unete a miles de socios que ya confian en nosotros.</p><a href="#" style="display:inline-block;padding:14px 36px;background:#3b82f6;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:1rem;">Contactanos</a></section>'
+    });
+
+    bm.add('section-features', { label:'Caracteristicas', category:'Secciones', media:'⭐',
+      content:'<section style="padding:64px 5%;background:#fff;"><div style="text-align:center;margin-bottom:40px;"><h2 style="font-size:2rem;font-weight:800;color:#0f172a;margin:0 0 12px;">Nuestros servicios</h2><p style="color:#64748b;font-size:1rem;">Descubre todo lo que podemos ofrecerte.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;max-width:1100px;margin:0 auto;"><div style="background:#f8fafc;border-radius:12px;padding:28px;text-align:center;"><div style="font-size:2rem;margin-bottom:14px;">💳</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Ahorro</h3><p style="color:#64748b;font-size:.9rem;line-height:1.6;">Haz crecer tu dinero con nuestras cuentas.</p></div><div style="background:#f8fafc;border-radius:12px;padding:28px;text-align:center;"><div style="font-size:2rem;margin-bottom:14px;">🏦</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Creditos</h3><p style="color:#64748b;font-size:.9rem;line-height:1.6;">Prestamos con las mejores tasas del mercado.</p></div><div style="background:#f8fafc;border-radius:12px;padding:28px;text-align:center;"><div style="font-size:2rem;margin-bottom:14px;">📱</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Digital</h3><p style="color:#64748b;font-size:.9rem;line-height:1.6;">Gestiona tu cuenta desde cualquier dispositivo.</p></div></div></section>'
+    });
+
+    bm.add('section-stats', { label:'Estadisticas', category:'Secciones', media:'📊',
+      content:'<section style="padding:48px 5%;background:#0f172a;color:#fff;text-align:center;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:24px;max-width:900px;margin:0 auto;"><div><div style="font-size:2.5rem;font-weight:800;color:#3b82f6;">12,000+</div><div style="color:#94a3b8;font-size:.9rem;margin-top:4px;">Socios activos</div></div><div><div style="font-size:2.5rem;font-weight:800;color:#3b82f6;">25 anos</div><div style="color:#94a3b8;font-size:.9rem;margin-top:4px;">De experiencia</div></div><div><div style="font-size:2.5rem;font-weight:800;color:#3b82f6;">Q450M</div><div style="color:#94a3b8;font-size:.9rem;margin-top:4px;">En cartera</div></div><div><div style="font-size:2.5rem;font-weight:800;color:#3b82f6;">8</div><div style="color:#94a3b8;font-size:.9rem;margin-top:4px;">Sucursales</div></div></div></section>'
+    });
+
+    bm.add('section-contact', { label:'Contacto', category:'Secciones', media:'📬',
+      content:'<section style="padding:64px 5%;background:#fff;"><div style="max-width:520px;margin:0 auto;text-align:center;"><h2 style="font-size:2rem;font-weight:800;color:#0f172a;margin:0 0 12px;">Como podemos ayudarte?</h2><p style="color:#64748b;margin:0 0 32px;">Escribenos y nos pondremos en contacto contigo.</p><form style="display:flex;flex-direction:column;gap:14px;text-align:left;" onsubmit="return false;"><input type="text" placeholder="Nombre completo" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><input type="email" placeholder="Correo electronico" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><textarea placeholder="Tu mensaje..." rows="4" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;resize:vertical;"></textarea><button type="submit" style="padding:13px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Enviar mensaje</button></form></div></section>'
+    });
+
+    bm.add('section-cards', { label:'Cards', category:'Secciones', media:'🃏',
+      content:'<section style="padding:64px 5%;background:#f8fafc;"><div style="text-align:center;margin-bottom:36px;"><h2 style="font-size:1.9rem;font-weight:800;color:#0f172a;margin:0 0 10px;">Nuestros productos</h2><p style="color:#64748b;font-size:1rem;">Elige el que mejor se adapta a tus necesidades.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;max-width:1100px;margin:0 auto;"><div style="background:#fff;border-radius:14px;padding:28px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);border:1px solid #e2e8f0;"><div style="font-size:2rem;margin-bottom:14px;">💳</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Cuenta de Ahorro</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;margin:0 0 20px;">Haz crecer tu dinero con rendimientos competitivos y sin comisiones.</p><a href="#" style="display:inline-block;padding:9px 20px;background:#0f172a;color:#fff;border-radius:7px;font-size:.875rem;font-weight:700;text-decoration:none;">Saber mas</a></div><div style="background:#fff;border-radius:14px;padding:28px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);border:1px solid #e2e8f0;"><div style="font-size:2rem;margin-bottom:14px;">🏦</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Credito Personal</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;margin:0 0 20px;">Financiamiento rapido con tasas preferenciales para socios.</p><a href="#" style="display:inline-block;padding:9px 20px;background:#0f172a;color:#fff;border-radius:7px;font-size:.875rem;font-weight:700;text-decoration:none;">Saber mas</a></div><div style="background:#fff;border-radius:14px;padding:28px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);border:1px solid #e2e8f0;"><div style="font-size:2rem;margin-bottom:14px;">🏠</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Credito Hipotecario</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;margin:0 0 20px;">Adquiere tu vivienda con plazos flexibles y cuotas accesibles.</p><a href="#" style="display:inline-block;padding:9px 20px;background:#0f172a;color:#fff;border-radius:7px;font-size:.875rem;font-weight:700;text-decoration:none;">Saber mas</a></div></div></section>'
+    });
+
+    bm.add('section-tasas', { label:'Tasas de interes', category:'Cooperativa', media:'📈',
+      content:'<section style="padding:64px 5%;background:#fff;"><div style="max-width:900px;margin:0 auto;"><div style="text-align:center;margin-bottom:36px;"><h2 style="font-size:1.9rem;font-weight:800;color:#0f172a;margin:0 0 10px;">Tasas de interes vigentes</h2><p style="color:#64748b;">Actualizadas al '+new Date().toLocaleDateString('es-GT',{year:'numeric',month:'long',day:'numeric'})+'</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;"><div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid #3b82f6;"><div style="font-size:.75rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Ahorro a la vista</div><div style="font-size:2.4rem;font-weight:800;color:#0f172a;line-height:1;">3.5%</div><div style="font-size:.85rem;color:#64748b;margin-top:4px;">Tasa anual</div></div><div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid #10b981;"><div style="font-size:.75rem;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">DPF 6 meses</div><div style="font-size:2.4rem;font-weight:800;color:#0f172a;line-height:1;">6.25%</div><div style="font-size:.85rem;color:#64748b;margin-top:4px;">Tasa anual</div></div><div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid #f59e0b;"><div style="font-size:.75rem;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Credito personal</div><div style="font-size:2.4rem;font-weight:800;color:#0f172a;line-height:1;">14%</div><div style="font-size:.85rem;color:#64748b;margin-top:4px;">Tasa anual</div></div><div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid #8b5cf6;"><div style="font-size:.75rem;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Credito hipotecario</div><div style="font-size:2.4rem;font-weight:800;color:#0f172a;line-height:1;">10%</div><div style="font-size:.85rem;color:#64748b;margin-top:4px;">Tasa anual</div></div></div><p style="text-align:center;font-size:.78rem;color:#94a3b8;margin-top:20px;">Las tasas pueden cambiar sin previo aviso. Consulta en sucursal para mas informacion.</p></div></section>'
+    });
+
+    bm.add('section-mapa', { label:'Ubicacion / Mapa', category:'Cooperativa', media:'📍',
+      content:'<section style="padding:64px 5%;background:#f8fafc;"><div style="max-width:1100px;margin:0 auto;"><div style="text-align:center;margin-bottom:36px;"><h2 style="font-size:1.9rem;font-weight:800;color:#0f172a;margin:0 0 10px;">Donde encontrarnos</h2><p style="color:#64748b;">Visita cualquiera de nuestras sucursales.</p></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;flex-wrap:wrap;"><div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);"><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 16px;">Sucursal Central</h3><div style="display:flex;flex-direction:column;gap:12px;font-size:.9rem;color:#475569;"><div style="display:flex;gap:10px;align-items:flex-start;"><span style="font-size:1.1rem;">📍</span><span>4a Avenida 12-34, Zona 1, Ciudad de Guatemala</span></div><div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.1rem;">📞</span><span>(502) 2222-3333</span></div><div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.1rem;">🕐</span><span>Lunes a Viernes: 8:00 - 17:00 hrs</span></div><div style="display:flex;gap:10px;align-items:center;"><span style="font-size:1.1rem;">✉</span><span>info@cooperativa.com</span></div></div></div><div style="border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);min-height:280px;background:#e2e8f0;"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3860.3!2d-90.5069!3d14.6349!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTTCsDM4JzA1LjYiTiA5MMKwMzAnMjQuOCJX!5e0!3m2!1ses!2sgt!4v1000000000000" width="100%" height="280" style="border:none;display:block;" allowfullscreen loading="lazy"></iframe></div></div></div></section>'
+    });
+
+    bm.add('navbar', { label:'Navegacion', category:'Estructura', media:'🔝',
+      content:'<nav style="display:flex;align-items:center;justify-content:space-between;padding:16px 5%;background:#fff;box-shadow:0 1px 10px rgba(0,0,0,.07);position:sticky;top:0;z-index:100;"><a href="#" style="font-size:1.3rem;font-weight:800;color:#0f172a;text-decoration:none;">MiEmpresa</a><div style="display:flex;gap:24px;align-items:center;"><a href="#" style="color:#475569;text-decoration:none;font-size:.95rem;font-weight:500;">Inicio</a><a href="#" style="color:#475569;text-decoration:none;font-size:.95rem;font-weight:500;">Servicios</a><a href="#" style="color:#475569;text-decoration:none;font-size:.95rem;font-weight:500;">Nosotros</a><a href="#" style="display:inline-block;padding:8px 20px;background:#0f172a;color:#fff;border-radius:7px;font-size:.9rem;font-weight:700;text-decoration:none;">Ingresar</a></div></nav>'
+    });
+
+    bm.add('footer', { label:'Pie de pagina', category:'Estructura', media:'⬇',
+      content:'<footer style="background:#0f172a;color:#94a3b8;padding:48px 5% 24px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px;margin-bottom:32px;"><div><h3 style="color:#f8fafc;font-size:1.1rem;font-weight:700;margin:0 0 12px;">MiEmpresa</h3><p style="font-size:.87rem;line-height:1.7;">Descripcion breve de la empresa.</p></div><div><h4 style="color:#f8fafc;font-size:.9rem;font-weight:700;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;">Servicios</h4><ul style="list-style:none;display:flex;flex-direction:column;gap:7px;font-size:.87rem;"><li><a href="#" style="color:#94a3b8;text-decoration:none;">Ahorro</a></li><li><a href="#" style="color:#94a3b8;text-decoration:none;">Creditos</a></li></ul></div><div><h4 style="color:#f8fafc;font-size:.9rem;font-weight:700;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;">Contacto</h4><ul style="list-style:none;gap:7px;display:flex;flex-direction:column;font-size:.87rem;"><li>📞 (502) 2222-3333</li><li>✉ info@empresa.com</li></ul></div></div><div style="border-top:1px solid #1e293b;padding-top:20px;text-align:center;font-size:.8rem;">© 2026 MiEmpresa. Todos los derechos reservados.</div></footer>'
+    });
+
+    bm.add('text-rich', { label:'Texto', category:'Contenido', media:'📝',
+      content:'<div style="max-width:760px;margin:0 auto;padding:48px 24px;font-size:1rem;line-height:1.8;color:#1e293b;"><h2 style="font-size:1.8rem;font-weight:700;margin:0 0 16px;">Titulo de seccion</h2><p>Parrafo de texto. Haz clic para editar el contenido.</p></div>'
+    });
+
+    bm.add('image-block', { label:'Imagen', category:'Contenido', media:'🖼',
+      content:'<div style="padding:24px;text-align:center;"><img src="https://placehold.co/800x400/e2e8f0/94a3b8?text=Imagen" alt="Imagen" style="max-width:100%;border-radius:8px;"><p style="font-size:.85rem;color:#94a3b8;margin-top:10px;">Descripcion opcional</p></div>'
+    });
+
+    bm.add('button-block', { label:'Boton', category:'Contenido', media:'🔘',
+      content:'<div style="padding:16px;text-align:center;"><a href="#" style="display:inline-block;padding:13px 32px;background:#3b82f6;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:1rem;">Boton de accion</a></div>'
+    });
+
+    bm.add('divider', { label:'Divisor', category:'Contenido', media:'━',
+      content:'<hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 24px;">'
+    });
+
+    bm.add('spacer', { label:'Espacio', category:'Contenido', media:'↕',
+      content:'<div style="height:48px;"></div>'
+    });
+
+    bm.add('video-yt', { label:'Video YouTube', category:'Contenido', media:'▶',
+      content:'<div style="padding:24px;"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#0f172a;"><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div></div>'
+    });
+
+    bm.add('html-raw', { label:'HTML libre', category:'Contenido', media:'</>',
+      content:'<div data-gjs-type="text"><!-- HTML personalizado --></div>'
+    });
+
+    bm.add('columns-2', { label:'2 Columnas', category:'Estructura', media:'⊞',
+      content:'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:32px 5%;"><div style="padding:16px;border:1px dashed #e2e8f0;border-radius:8px;min-height:80px;">Columna 1</div><div style="padding:16px;border:1px dashed #e2e8f0;border-radius:8px;min-height:80px;">Columna 2</div></div>'
+    });
+
+    bm.add('columns-3', { label:'3 Columnas', category:'Estructura', media:'⊟',
+      content:'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;padding:32px 5%;"><div style="padding:14px;border:1px dashed #e2e8f0;border-radius:8px;min-height:60px;">Col 1</div><div style="padding:14px;border:1px dashed #e2e8f0;border-radius:8px;min-height:60px;">Col 2</div><div style="padding:14px;border:1px dashed #e2e8f0;border-radius:8px;min-height:60px;">Col 3</div></div>'
+    });
+
+    bm.add('section-wrap', { label:'Seccion', category:'Estructura', media:'□',
+      content:'<section style="padding:48px 5%;background:#fff;"><div style="max-width:1100px;margin:0 auto;"><p style="color:#64748b;">Contenido de la secci\u00f3n</p></div></section>'
+    });
+
+  } /* fin initEditor */
+
+  /* -- Fase 8: renderPageSelect con estado visual -------------------- */
+  function renderPageSelect(){
+    var sel = document.getElementById('wb-page-select');
+    if(!sel) return;
+    sel.innerHTML = _pages.length
+      ? _pages.map(function(p){
+          var icon = p.status === 'published' ? '\ud83c\udf10' : '\ud83d\udcdd';
+          return '<option value="'+p.id+'"'+(p.id===_currentPageId?' selected':'')+'>'+icon+' '+(p.title||'Sin titulo')+'</option>';
+        }).join('')
+      : '<option value="">Sin paginas</option>';
+  }
+
+  /* -- renderPagesModal ----------------------------------------------- */
+  function renderPagesModal(){
+    var list = document.getElementById('wb-pages-list');
+    if(!list) return;
+    if(!_pages.length){
+      list.innerHTML = '<p style="color:#64748b;padding:16px;text-align:center;">Sin paginas. Crea una nueva.</p>';
+      return;
+    }
+    list.innerHTML = _pages.map(function(p){
+      var esc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+      return '<div class="page-item'+(p.id===_currentPageId?' active':'')+'" onclick="selectPageFromModal(\''+p.id+'\')">'
+        +'<div style="flex:1;min-width:0;">'
+        +'<strong style="display:block;font-size:13px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;">'+esc(p.title||'Sin titulo')+'</strong>'
+        +'<span style="font-size:11px;color:#64748b;">/p/'+esc(p.slug||'')+'</span>'
+        +'</div>'
+        +'<span class="pi-status '+(p.status||'draft')+'">'+(p.status==="published"?"Pub":"Bor")+'</span>'
+        +'<button class="pi-dup" onclick="duplicatePageById(event,\''+p.id+'\')" title="Duplicar">&#9944;</button>'
+        +'<button class="pi-del" onclick="deletePageById(event,\''+p.id+'\')" title="Eliminar">&times;</button>'
+        +'</div>';
+    }).join('');
+  }
+
+  function openPagesModal(){ document.getElementById('wb-pages-modal-overlay').classList.add('open'); }
+  window.closePagesModal = function(){ document.getElementById('wb-pages-modal-overlay').classList.remove('open'); };
+  window.selectPageFromModal = function(id){ window.closePagesModal(); loadPageIntoEditor(id); };
+
+  function loadPageIntoEditor(id){
+    var page = _pages.find(function(p){ return p.id===id; });
+    if(!page) return;
+    _currentPageId = id; _slugEdited = false;
+    _setDirty(false);
+    document.getElementById('wb-page-title').value = page.title||'';
+    document.getElementById('wb-page-slug').value  = page.slug||'';
+    document.getElementById('wb-status-sel').value = page.status||'draft';
+    /* cargar SEO */
+    var m = page.meta || {};
+    var seoTitle = document.getElementById('seo-meta-title');
+    var seoDesc  = document.getElementById('seo-meta-desc');
+    var seoImg   = document.getElementById('seo-og-image');
+    if(seoTitle) seoTitle.value = m.title || '';
+    if(seoDesc)  seoDesc.value  = m.description || '';
+    if(seoImg)   seoImg.value   = m.og_image || '';
+    renderPageSelect();
+    if(_editor){
+      _editor.setComponents(page.gjs_html||page.html||'');
+      _editor.setStyle(page.gjs_css||page.css||'');
+      setTimeout(injectBrandCSSVars, 200);
+    }
+  }
+
+  window.createNewPage = function(ask){
+    var title;
+    if(ask===false){ title='Inicio'; }
+    else { title=prompt('Nombre de la nueva pagina:','Nueva pagina'); if(!title) return; }
+    var page = { id:uid(), title:title.trim(), slug:slugify(title), status:'draft', gjs_html:'', gjs_css:'', blocks:[] };
+    _pages.push(page);
+    apiSave(page).then(function(j){ if(j.data) _pages=j.data; renderPageSelect(); renderPagesModal(); });
+    loadPageIntoEditor(page.id);
+    if(ask!==false) toast('Pagina creada');
+  };
+
+  window.deletePageById = function(e, id){
+    e.stopPropagation();
+    if(!confirm('Eliminar esta pagina?')) return;
+    apiDelete(id).then(function(){
+      _pages = _pages.filter(function(p){ return p.id!==id; });
+      if(_currentPageId===id){
+        if(_pages.length) loadPageIntoEditor(_pages[0].id);
+        else { _currentPageId=null; if(_editor) _editor.setComponents(''); }
+      }
+      renderPageSelect(); renderPagesModal(); toast('Pagina eliminada');
+    });
+  };
+
+  /* Save */
+  var _dirty = false;
+  function _setDirty(v){
+    _dirty = v;
+    var btn = document.getElementById('wb-save-btn');
+    var lbl = document.getElementById('wb-unsaved-label');
+    if(btn) btn.classList.toggle('dirty', v);
+    if(lbl) lbl.classList.toggle('visible', v);
+  }
+
+  window.saveCurrentPage = function(){
+    if(_saving) return Promise.resolve();
+    if(!_currentPageId){ toast('Selecciona una página primero', false); return Promise.resolve(); }
+    var page = currentPage(); if(!page) return Promise.resolve();
+    _saving = true;
+    var btn = document.getElementById('wb-save-btn');
+    var origHTML = btn ? btn.innerHTML : '';
+    if(btn) btn.innerHTML = '⏳ Guardando…';
+    page.title  = (document.getElementById('wb-page-title').value || '').trim() || page.title;
+    page.slug   = (document.getElementById('wb-page-slug').value  || '').trim() || page.slug;
+    page.status = document.getElementById('wb-status-sel').value;
+    if(_editor){ page.gjs_html = _editor.getHtml(); page.gjs_css = _editor.getCss(); }
+    page.meta = {
+      title:       (document.getElementById('seo-meta-title').value || '').trim(),
+      description: (document.getElementById('seo-meta-desc').value  || '').trim(),
+      og_image:    (document.getElementById('seo-og-image').value   || '').trim(),
+    };
+    return apiSave(page).then(function(j){
+      if(j.success){ if(j.data) _pages = j.data; renderPageSelect(); renderPagesModal(); toast('Guardado ✓'); _setDirty(false); }
+      else toast('Error al guardar', false);
+    }).catch(function(){ toast('Error de red', false); }).finally(function(){
+      _saving = false;
+      if(btn) btn.innerHTML = origHTML;
+    });
+  };
+
+  /* ── Duplicar página ─── */
+  window.duplicatePageById = function(e, id){
+    e.stopPropagation();
+    var src = _pages.find(function(p){ return p.id===id; });
+    if(!src) return;
+    var copy = JSON.parse(JSON.stringify(src));
+    copy.id    = uid();
+    copy.title = copy.title + ' (copia)';
+    copy.slug  = slugify(copy.title);
+    copy.status = 'draft';
+    _pages.push(copy);
+    apiSave(copy).then(function(j){ if(j.data) _pages=j.data; renderPageSelect(); renderPagesModal(); toast('Página duplicada'); });
+    loadPageIntoEditor(copy.id);
+  };
+
+  /* ── SEO modal ─── */
+  window.openSeoModal = function(){
+    if(!_currentPageId){ toast('Selecciona una página primero', false); return; }
+    document.getElementById('wb-seo-modal-overlay').classList.add('open');
+  };
+  window.closeSeoModal = function(){
+    document.getElementById('wb-seo-modal-overlay').classList.remove('open');
+  };
+  window.saveSeoModal = function(){
+    var page = currentPage(); if(!page) return;
+    page.meta = {
+      title:       (document.getElementById('seo-meta-title').value || '').trim(),
+      description: (document.getElementById('seo-meta-desc').value  || '').trim(),
+      og_image:    (document.getElementById('seo-og-image').value   || '').trim(),
+    };
+    window.closeSeoModal();
+    window.saveCurrentPage().then(function(){ toast('SEO guardado ✓'); });
+  };
+  document.getElementById('wb-seo-btn').addEventListener('click', window.openSeoModal);
+  document.getElementById('wb-seo-modal-overlay').addEventListener('click', function(e){ if(e.target===this) window.closeSeoModal(); });
+
+  /* Toolbar wiring */
+  document.getElementById('wb-page-select').addEventListener('change', function(){ loadPageIntoEditor(this.value); });
+  document.getElementById('wb-manage-pages-btn').addEventListener('click', openPagesModal);
+  document.getElementById('wb-pages-modal-overlay').addEventListener('click', function(e){ if(e.target===this) window.closePagesModal(); });
+  document.getElementById('wb-page-title').addEventListener('input', function(){
+    var page = currentPage(); if(!page) return;
+    page.title = this.value;
+    if(!_slugEdited){
+      var s = slugify(this.value);
+      document.getElementById('wb-page-slug').value = s;
+      page.slug = s;
+    }
+    renderPageSelect();
+    _setDirty(true);
+  });
+  document.getElementById('wb-page-slug').addEventListener('input', function(){
+    _slugEdited = true;
+    var page = currentPage(); if(page) page.slug = this.value;
+    _setDirty(true);
+  });
+  document.getElementById('wb-status-sel').addEventListener('change', function(){
+    var page = currentPage(); if(page) page.status = this.value;
+    _setDirty(true);
+  });
+  document.addEventListener('keydown', function(e){
+    if((e.ctrlKey || e.metaKey) && e.key === 's'){ e.preventDefault(); window.saveCurrentPage(); }
+  });
+
+  /* ── Paleta corporativa ─────────────────────────────────────────── */
+  var _brandColors = [];
+
+  /* Etiquetas legibles para cada clave de /guardar-colores */
+  var _colorLabels = {
+    'navbar-bg':      'Navbar fondo',
+    'navbar-text':    'Navbar texto',
+    'sidebar-top':    'Sidebar superior',
+    'sidebar-bottom': 'Sidebar inferior',
+    'sidebar-text':   'Sidebar texto',
+    'field-color':    'Campos',
+    'button-bg':      'Botón fondo',
+    'button-text':    'Botón texto',
+    'sidebar-icon':   'Iconos',
+    'sidebar-hover':  'Hover sidebar'
+  };
+
+  /* Inyecta CSS variables en el iframe del canvas para que los bloques puedan usarlas */
+  function injectBrandCSSVars(){
+    if(!_editor || !_brandColors.length) return;
+    try {
+      var doc = _editor.Canvas.getDocument();
+      var existing = doc.getElementById('_sipet_brand_vars');
+      if(existing) existing.parentNode.removeChild(existing);
+      var css = ':root{';
+      _brandColors.forEach(function(c){ css += '--'+c.key.replace(/[^a-z0-9]/gi,'-')+':'+c.value+';'; });
+      css += '}';
+      var s = doc.createElement('style');
+      s.id = '_sipet_brand_vars';
+      s.textContent = css;
+      doc.head.appendChild(s);
+    } catch(e){}
+  }
+
+  /* Construye la barra de swatches corporativos en el panel lateral */
+  function renderBrandSwatches(){
+    var container = document.getElementById('_wb_brand_palette');
+    if(!container) return;
+    if(!_brandColors.length){
+      container.innerHTML = '<p style="color:#475569;font-size:11px;padding:8px 12px;">Sin colores corporativos guardados.</p>';
+      return;
+    }
+    var html = '<div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;">';
+    _brandColors.forEach(function(c){
+      var label = _colorLabels[c.key] || c.key;
+      html += '<div title="'+label+' — '+c.value+'" '
+            + 'onclick="applySwatch(\''+c.value+'\')" '
+            + 'style="width:26px;height:26px;border-radius:5px;cursor:pointer;'
+            + 'background:'+c.value+';border:2px solid rgba(255,255,255,.15);'
+            + 'box-shadow:0 1px 4px rgba(0,0,0,.35);transition:transform .1s;" '
+            + 'onmouseover="this.style.transform=\'scale(1.2)\'" '
+            + 'onmouseout="this.style.transform=\'\'"></div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  /* Aplica el color del swatch a la propiedad de estilo activa del componente seleccionado */
+  window.applySwatch = function(color){
+    if(!_editor) return;
+    var sel = _editor.getSelected();
+    if(!sel){ toast('Selecciona un elemento en el canvas primero', false); return; }
+    /* Intenta aplicar al último sector de color activo; si no, aplica background-color */
+    var sm = _editor.StyleManager;
+    var focusedProp = null;
+    ['color','background-color','border-color'].forEach(function(prop){
+      var el = document.activeElement;
+      if(el && el.dataset && el.dataset.property === prop) focusedProp = prop;
+    });
+    var prop = focusedProp || 'background-color';
+    sel.addStyle({ [prop]: color });
+    _editor.trigger('component:update', sel);
+    toast('Color '+color+' aplicado a '+prop);
+  };
+
+  /* Carga colores desde la API y actualiza la paleta + canvas */
+  function loadBrandColors(){
+    fetch('/guardar-colores', {credentials:'include'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(!j.success || !j.data) return;
+        _brandColors = Object.keys(j.data).map(function(k){ return {key:k, value:j.data[k]}; })
+          .filter(function(c){ return /^#[0-9a-fA-F]{3,8}$/.test(c.value); });
+        renderBrandSwatches();
+        injectBrandCSSVars();
+      })
+      .catch(function(){});
+  }
+
+  /* ── Fase 6: Plantillas, Exportar/Importar ─────────────────────── */
+
+  var _TEMPLATES = [
+    {
+      id: 'home-coop', title: 'Home Cooperativa', thumb: '🏦',
+      desc: 'Página de inicio completa: navbar, hero, estadísticas, servicios, CTA, pie.',
+      css: 'section,nav,footer{box-sizing:border-box}',
+      html: '<nav style="display:flex;align-items:center;justify-content:space-between;padding:16px 5%;background:#fff;box-shadow:0 1px 10px rgba(0,0,0,.07);position:sticky;top:0;z-index:100;"><a href="#" style="font-size:1.3rem;font-weight:800;color:#0f172a;text-decoration:none;">Cooperativa</a><div style="display:flex;gap:20px;align-items:center;"><a href="#" style="color:#475569;text-decoration:none;font-size:.9rem;font-weight:500;">Inicio</a><a href="#" style="color:#475569;text-decoration:none;font-size:.9rem;font-weight:500;">Servicios</a><a href="#" style="color:#475569;text-decoration:none;font-size:.9rem;font-weight:500;">Nosotros</a><a href="#" style="display:inline-block;padding:7px 18px;background:#0f172a;color:#fff;border-radius:7px;font-size:.85rem;font-weight:700;text-decoration:none;">Ingresar</a></div></nav><section style="display:flex;align-items:center;gap:48px;padding:80px 5%;background:#f8fafc;flex-wrap:wrap;"><div style="flex:1;min-width:280px;"><p style="font-size:.8rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px;">Bienvenidos</p><h1 style="font-size:2.4rem;font-weight:800;color:#0f172a;margin:0 0 16px;line-height:1.2;">Tu solución financiera de confianza</h1><p style="color:#64748b;margin:0 0 28px;line-height:1.7;">Ahorro, crédito y servicios financieros para toda la familia.</p><a href="#" style="display:inline-block;padding:13px 30px;background:#0f172a;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;margin-right:10px;">Conocer más</a><a href="#" style="display:inline-block;padding:13px 30px;border:2px solid #0f172a;color:#0f172a;border-radius:8px;font-weight:700;text-decoration:none;">Asociarme</a></div><div style="flex:1;min-width:240px;text-align:center;"><img src="https://placehold.co/520x360/e2e8f0/94a3b8?text=Cooperativa" style="width:100%;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.12);" alt="Hero"></div></section><section style="padding:48px 5%;background:#0f172a;color:#fff;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:24px;max-width:900px;margin:0 auto;text-align:center;"><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">12,000+</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">Socios activos</div></div><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">25 años</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">De experiencia</div></div><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">Q450M</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">En cartera</div></div><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">8</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">Sucursales</div></div></div></section><section style="padding:64px 5%;background:#fff;"><div style="text-align:center;margin-bottom:36px;"><h2 style="font-size:1.9rem;font-weight:800;color:#0f172a;margin:0 0 10px;">Nuestros servicios</h2><p style="color:#64748b;">Diseñados para acompañar cada etapa de tu vida.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;max-width:1100px;margin:0 auto;"><div style="background:#f8fafc;border-radius:12px;padding:28px;text-align:center;"><div style="font-size:2rem;margin-bottom:12px;">💳</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Ahorro</h3><p style="color:#64748b;font-size:.875rem;line-height:1.65;">Cuentas con rendimientos competitivos y sin comisiones.</p></div><div style="background:#f8fafc;border-radius:12px;padding:28px;text-align:center;"><div style="font-size:2rem;margin-bottom:12px;">🏦</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Créditos</h3><p style="color:#64748b;font-size:.875rem;line-height:1.65;">Préstamos personales e hipotecarios a tu medida.</p></div><div style="background:#f8fafc;border-radius:12px;padding:28px;text-align:center;"><div style="font-size:2rem;margin-bottom:12px;">📱</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Digital</h3><p style="color:#64748b;font-size:.875rem;line-height:1.65;">Gestiona tu cuenta desde cualquier dispositivo.</p></div><div style="background:#f8fafc;border-radius:12px;padding:28px;text-align:center;"><div style="font-size:2rem;margin-bottom:12px;">🔒</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Seguro</h3><p style="color:#64748b;font-size:.875rem;line-height:1.65;">Fondos protegidos y auditados cada año.</p></div></div></section><section style="background:#3b82f6;color:#fff;padding:64px 24px;text-align:center;"><h2 style="font-size:2rem;font-weight:800;margin:0 0 12px;">¿Listo para empezar?</h2><p style="opacity:.85;margin:0 0 28px;font-size:1.05rem;max-width:520px;margin-left:auto;margin-right:auto;">Únete a miles de socios que ya confían en nosotros.</p><a href="#" style="display:inline-block;padding:14px 36px;background:#fff;color:#3b82f6;border-radius:8px;font-weight:700;text-decoration:none;font-size:1rem;">Asociarme ahora</a></section><footer style="background:#0f172a;color:#94a3b8;padding:48px 5% 24px;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:32px;margin-bottom:32px;"><div><h3 style="color:#f8fafc;font-size:1.05rem;font-weight:700;margin:0 0 10px;">Cooperativa</h3><p style="font-size:.85rem;line-height:1.7;">Financiando el futuro de nuestros socios desde 2001.</p></div><div><h4 style="color:#f8fafc;font-size:.85rem;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em;">Servicios</h4><ul style="list-style:none;display:flex;flex-direction:column;gap:6px;font-size:.85rem;"><li><a href="#" style="color:#94a3b8;text-decoration:none;">Ahorro</a></li><li><a href="#" style="color:#94a3b8;text-decoration:none;">Créditos</a></li><li><a href="#" style="color:#94a3b8;text-decoration:none;">Digital</a></li></ul></div><div><h4 style="color:#f8fafc;font-size:.85rem;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em;">Contacto</h4><ul style="list-style:none;gap:6px;display:flex;flex-direction:column;font-size:.85rem;"><li>📞 (502) 2222-3333</li><li>✉ info@cooperativa.com</li></ul></div></div><div style="border-top:1px solid #1e293b;padding-top:18px;text-align:center;font-size:.8rem;">© 2026 Cooperativa. Todos los derechos reservados.</div></footer>'
+    },
+    {
+      id: 'servicios', title: 'Página de Servicios', thumb: '💼',
+      desc: 'Muestra tus productos y servicios con cards detalladas y sección de tasas.',
+      css: 'section,nav{box-sizing:border-box}',
+      html: '<nav style="display:flex;align-items:center;justify-content:space-between;padding:16px 5%;background:#fff;box-shadow:0 1px 10px rgba(0,0,0,.07);position:sticky;top:0;z-index:100;"><a href="#" style="font-size:1.3rem;font-weight:800;color:#0f172a;text-decoration:none;">Cooperativa</a><div style="display:flex;gap:20px;align-items:center;"><a href="#" style="color:#475569;font-size:.9rem;font-weight:500;text-decoration:none;">Inicio</a><a href="#" style="color:#3b82f6;font-size:.9rem;font-weight:700;text-decoration:none;border-bottom:2px solid #3b82f6;">Servicios</a><a href="#" style="color:#475569;font-size:.9rem;font-weight:500;text-decoration:none;">Contacto</a></div></nav><section style="background:#0f172a;color:#fff;padding:64px 5%;text-align:center;"><p style="font-size:.8rem;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px;">Productos financieros</p><h1 style="font-size:2.2rem;font-weight:800;margin:0 0 14px;">Soluciones a tu medida</h1><p style="color:#94a3b8;font-size:1rem;max-width:560px;margin:0 auto;">Elige el producto que mejor se adapta a tus necesidades y metas financieras.</p></section><section style="padding:64px 5%;background:#f8fafc;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;max-width:1100px;margin:0 auto;"><div style="background:#fff;border-radius:14px;padding:28px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);border-top:4px solid #3b82f6;"><div style="font-size:2rem;margin-bottom:14px;">💳</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 10px;">Cuenta de Ahorro</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;margin:0 0 20px;">Haz crecer tu dinero con rendimientos competitivos. Sin comisiones de mantenimiento.</p><ul style="padding-left:18px;color:#64748b;font-size:.875rem;line-height:1.9;margin:0 0 20px;"><li>Tasa del 3.5% anual</li><li>Retiros sin límite</li><li>Acceso digital</li></ul><a href="#" style="display:inline-block;padding:9px 20px;background:#0f172a;color:#fff;border-radius:7px;font-size:.875rem;font-weight:700;text-decoration:none;">Abrir cuenta</a></div><div style="background:#fff;border-radius:14px;padding:28px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);border-top:4px solid #10b981;"><div style="font-size:2rem;margin-bottom:14px;">📈</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 10px;">DPF — Depósito a Plazo</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;margin:0 0 20px;">Maximiza tus ahorros con tasas preferenciales a 3, 6 y 12 meses.</p><ul style="padding-left:18px;color:#64748b;font-size:.875rem;line-height:1.9;margin:0 0 20px;"><li>Hasta 7% anual</li><li>Seguro de depósito</li><li>Renovación automática</li></ul><a href="#" style="display:inline-block;padding:9px 20px;background:#0f172a;color:#fff;border-radius:7px;font-size:.875rem;font-weight:700;text-decoration:none;">Invertir ahora</a></div><div style="background:#fff;border-radius:14px;padding:28px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);border-top:4px solid #f59e0b;"><div style="font-size:2rem;margin-bottom:14px;">🏦</div><h3 style="font-size:1.05rem;font-weight:700;color:#0f172a;margin:0 0 10px;">Crédito Personal</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;margin:0 0 20px;">Financiamiento rápido con cuotas fijas adaptables a tu capacidad de pago.</p><ul style="padding-left:18px;color:#64748b;font-size:.875rem;line-height:1.9;margin:0 0 20px;"><li>Desde Q5,000</li><li>Plazo hasta 60 meses</li><li>Tasa del 14% anual</li></ul><a href="#" style="display:inline-block;padding:9px 20px;background:#0f172a;color:#fff;border-radius:7px;font-size:.875rem;font-weight:700;text-decoration:none;">Solicitar crédito</a></div></div></section><section style="background:#0f172a;color:#fff;padding:64px 24px;text-align:center;"><h2 style="font-size:1.9rem;font-weight:800;margin:0 0 12px;">¿Necesitas orientación?</h2><p style="opacity:.75;margin:0 0 28px;max-width:480px;margin-left:auto;margin-right:auto;">Nuestros asesores están listos para ayudarte a elegir el producto correcto.</p><a href="#" style="display:inline-block;padding:13px 32px;background:#3b82f6;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;">Hablar con un asesor</a></section>'
+    },
+    {
+      id: 'contacto', title: 'Contacto', thumb: '📬',
+      desc: 'Página de contacto con formulario, teléfonos, horarios y mapa de ubicación.',
+      css: 'section,nav{box-sizing:border-box}',
+      html: '<nav style="display:flex;align-items:center;justify-content:space-between;padding:16px 5%;background:#fff;box-shadow:0 1px 10px rgba(0,0,0,.07);position:sticky;top:0;z-index:100;"><a href="#" style="font-size:1.3rem;font-weight:800;color:#0f172a;text-decoration:none;">Cooperativa</a><div style="display:flex;gap:20px;align-items:center;"><a href="#" style="color:#475569;font-size:.9rem;font-weight:500;text-decoration:none;">Inicio</a><a href="#" style="color:#475569;font-size:.9rem;font-weight:500;text-decoration:none;">Servicios</a><a href="#" style="color:#3b82f6;font-size:.9rem;font-weight:700;text-decoration:none;border-bottom:2px solid #3b82f6;">Contacto</a></div></nav><section style="background:#0f172a;color:#fff;padding:56px 5%;text-align:center;"><h1 style="font-size:2.2rem;font-weight:800;margin:0 0 12px;">¿Cómo podemos ayudarte?</h1><p style="color:#94a3b8;max-width:480px;margin:0 auto;">Escríbenos o visítanos. Estamos disponibles de lunes a viernes.</p></section><section style="padding:64px 5%;background:#f8fafc;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:1000px;margin:0 auto;"><div><h2 style="font-size:1.4rem;font-weight:700;color:#0f172a;margin:0 0 20px;">Envíanos un mensaje</h2><form style="display:flex;flex-direction:column;gap:14px;" onsubmit="return false;"><input type="text" placeholder="Nombre completo" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><input type="email" placeholder="Correo electrónico" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><input type="tel" placeholder="Teléfono (opcional)" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><textarea rows="4" placeholder="Tu mensaje…" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;resize:vertical;"></textarea><button type="submit" style="padding:13px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Enviar mensaje</button></form></div><div style="display:flex;flex-direction:column;gap:20px;"><h2 style="font-size:1.4rem;font-weight:700;color:#0f172a;margin:0 0 4px;">Información de contacto</h2><div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06);"><div style="display:flex;flex-direction:column;gap:14px;font-size:.9rem;color:#475569;"><div style="display:flex;gap:12px;align-items:flex-start;"><span style="font-size:1.2rem;">📍</span><div><strong style="color:#0f172a;display:block;margin-bottom:2px;">Sede Central</strong>4a Avenida 12-34, Zona 1, Guatemala</div></div><div style="display:flex;gap:12px;align-items:center;"><span style="font-size:1.2rem;">📞</span><span>(502) 2222-3333</span></div><div style="display:flex;gap:12px;align-items:center;"><span style="font-size:1.2rem;">✉</span><span>info@cooperativa.com</span></div><div style="display:flex;gap:12px;align-items:center;"><span style="font-size:1.2rem;">🕐</span><span>Lunes a Viernes: 8:00 – 17:00 hrs</span></div></div></div><div style="border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3860.3!2d-90.5069!3d14.6349!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTTCsDM4JzA1LjYiTiA5MMKwMzAnMjQuOCJX!5e0!3m2!1ses!2sgt!4v1000000000000" width="100%" height="220" style="border:none;display:block;" allowfullscreen loading="lazy"></iframe></div></div></div></section>'
+    },
+    {
+      id: 'nosotros', title: 'Sobre Nosotros', thumb: '🤝',
+      desc: 'Historia, misión, visión, estadísticas y equipo de la cooperativa.',
+      css: 'section,nav{box-sizing:border-box}',
+      html: '<nav style="display:flex;align-items:center;justify-content:space-between;padding:16px 5%;background:#fff;box-shadow:0 1px 10px rgba(0,0,0,.07);position:sticky;top:0;z-index:100;"><a href="#" style="font-size:1.3rem;font-weight:800;color:#0f172a;text-decoration:none;">Cooperativa</a><div style="display:flex;gap:20px;align-items:center;"><a href="#" style="color:#475569;font-size:.9rem;text-decoration:none;">Inicio</a><a href="#" style="color:#3b82f6;font-size:.9rem;font-weight:700;text-decoration:none;border-bottom:2px solid #3b82f6;">Nosotros</a><a href="#" style="color:#475569;font-size:.9rem;text-decoration:none;">Contacto</a></div></nav><section style="background:#0f172a;color:#fff;padding:80px 5%;text-align:center;"><p style="font-size:.8rem;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px;">Desde 2001</p><h1 style="font-size:2.4rem;font-weight:800;margin:0 0 16px;line-height:1.2;">Construyendo futuro juntos</h1><p style="color:#94a3b8;max-width:560px;margin:0 auto;font-size:1rem;line-height:1.7;">Somos una cooperativa de ahorro y crédito comprometida con el bienestar financiero de nuestros socios y sus familias.</p></section><section style="padding:64px 5%;background:#fff;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;max-width:1100px;margin:0 auto;"><div><h2 style="font-size:1.8rem;font-weight:800;color:#0f172a;margin:0 0 16px;">Nuestra historia</h2><p style="color:#64748b;line-height:1.8;margin:0 0 14px;">Fundada por un grupo de 50 socios visionarios, nuestra cooperativa nació con el propósito de democratizar el acceso al sistema financiero.</p><p style="color:#64748b;line-height:1.8;margin:0 0 24px;">Hoy, con más de 12,000 socios y 8 sucursales, seguimos fiel a esa misión original: crecer juntos.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div style="background:#f8fafc;border-radius:10px;padding:16px;text-align:center;"><div style="font-size:.7rem;font-weight:700;color:#3b82f6;text-transform:uppercase;margin-bottom:4px;">Misión</div><p style="font-size:.85rem;color:#475569;margin:0;">Facilitar el acceso a servicios financieros justos y seguros.</p></div><div style="background:#f8fafc;border-radius:10px;padding:16px;text-align:center;"><div style="font-size:.7rem;font-weight:700;color:#10b981;text-transform:uppercase;margin-bottom:4px;">Visión</div><p style="font-size:.85rem;color:#475569;margin:0;">Ser la mayor cooperativa de Centroamérica para 2030.</p></div></div></div><div style="text-align:center;"><img src="https://placehold.co/480x360/e2e8f0/94a3b8?text=Nuestro+equipo" style="width:100%;border-radius:16px;box-shadow:0 16px 36px rgba(0,0,0,.1);" alt="Equipo"></div></div></section><section style="padding:48px 5%;background:#0f172a;color:#fff;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:24px;max-width:900px;margin:0 auto;text-align:center;"><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">12,000+</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">Socios</div></div><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">25 años</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">De trayectoria</div></div><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">8</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">Sucursales</div></div><div><div style="font-size:2.4rem;font-weight:800;color:#3b82f6;">98%</div><div style="color:#94a3b8;font-size:.85rem;margin-top:4px;">Satisfacción</div></div></div></section><section style="padding:64px 5%;background:#f8fafc;"><div style="max-width:760px;margin:0 auto;text-align:center;"><h2 style="font-size:1.7rem;font-weight:800;color:#0f172a;margin:0 0 32px;">Lo que dicen nuestros socios</h2><div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);"><p style="color:#475569;font-style:italic;font-size:1rem;line-height:1.7;margin:0 0 16px;">&ldquo;Gracias a la cooperativa pude comprar mi casa y darle a mi familia una vida mejor. El servicio siempre ha sido excelente.&rdquo;</p><div style="display:flex;align-items:center;justify-content:center;gap:12px;"><div style="width:40px;height:40px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div><div style="text-align:left;"><strong style="font-size:.9rem;color:#0f172a;">María López</strong><br><span style="font-size:.8rem;color:#94a3b8;">Socia desde 2015</span></div></div></div></div></section>'
+    },
+    {
+      id: 'landing-promo', title: 'Landing Promocional', thumb: '🚀',
+      desc: 'Página de aterrizaje de alto impacto para campañas y captación de nuevos socios.',
+      css: 'section,nav{box-sizing:border-box}',
+      html: '<section style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;padding:100px 5%;text-align:center;"><div style="max-width:680px;margin:0 auto;"><p style="font-size:.8rem;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.12em;margin:0 0 14px;">Oferta por tiempo limitado</p><h1 style="font-size:2.8rem;font-weight:800;line-height:1.15;margin:0 0 20px;">Abre tu cuenta hoy y gana el doble de intereses</h1><p style="font-size:1.1rem;color:#94a3b8;max-width:520px;margin:0 auto 32px;line-height:1.7;">Hasta el 31 de marzo: tasa especial del 7% anual en DPF a 6 meses para nuevos socios.</p><div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;"><a href="#" style="display:inline-block;padding:15px 36px;background:#3b82f6;color:#fff;border-radius:9px;font-weight:700;font-size:1rem;text-decoration:none;">Aprovechar ahora</a><a href="#" style="display:inline-block;padding:15px 36px;background:transparent;color:#e2e8f0;border:2px solid rgba(255,255,255,.3);border-radius:9px;font-weight:700;font-size:1rem;text-decoration:none;">Ver condiciones</a></div></div></section><section style="padding:56px 5%;background:#fff;"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;max-width:1000px;margin:0 auto;"><div style="text-align:center;padding:24px;"><div style="font-size:2.5rem;margin-bottom:12px;">⚡</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Apertura en 15 min</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;">Proceso 100% digital. Solo necesitas tu DPI.</p></div><div style="text-align:center;padding:24px;"><div style="font-size:2.5rem;margin-bottom:12px;">🏆</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Tasa premiada</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;">Las mejores tasas del mercado, respaldadas por 25 años de experiencia.</p></div><div style="text-align:center;padding:24px;"><div style="font-size:2.5rem;margin-bottom:12px;">🔒</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Fondos seguros</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;">Supervisado por BANCAS y auditado anualmente.</p></div><div style="text-align:center;padding:24px;"><div style="font-size:2.5rem;margin-bottom:12px;">📱</div><h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 8px;">Todo en tu móvil</h3><p style="color:#64748b;font-size:.9rem;line-height:1.65;">App disponible para iOS y Android sin costo adicional.</p></div></div></section><section style="background:#f8fafc;padding:64px 5%;"><div style="max-width:520px;margin:0 auto;text-align:center;"><h2 style="font-size:1.8rem;font-weight:800;color:#0f172a;margin:0 0 8px;">Regístrate gratis</h2><p style="color:#64748b;margin:0 0 24px;">Un asesor te contactará en menos de 24 horas.</p><form style="display:flex;flex-direction:column;gap:14px;" onsubmit="return false;"><input type="text" placeholder="Nombre completo" style="padding:13px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><input type="tel" placeholder="Teléfono" style="padding:13px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><input type="email" placeholder="Correo electrónico" style="padding:13px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;"><button type="submit" style="padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Quiero mi cuenta →</button></form><p style="font-size:.78rem;color:#94a3b8;margin-top:12px;">Sin compromisos. Cancela cuando quieras.</p></div></section>'
+    }
+  ];
+
+  /* ── Templates modal ── */
+  function renderTplGrid(){
+    var grid = document.getElementById('wb-tpl-grid');
+    if(!grid) return;
+    grid.innerHTML = _TEMPLATES.map(function(t){
+      return '<div class="tpl-card" title="'+t.title+'">'
+        +'<div class="tpl-thumb">'+t.thumb+'</div>'
+        +'<div class="tpl-info"><h3>'+t.title+'</h3><p>'+t.desc+'</p>'
+        +'<button onclick="applyTemplate(\''+t.id+'\')"  >Usar plantilla</button></div></div>';
+    }).join('');
+  }
+  window.openTplModal  = function(){ renderTplGrid(); document.getElementById('wb-tpl-modal-overlay').classList.add('open'); };
+  window.closeTplModal = function(){ document.getElementById('wb-tpl-modal-overlay').classList.remove('open'); };
+  window.applyTemplate = function(id){
+    var tpl = _TEMPLATES.find(function(t){ return t.id===id; });
+    if(!tpl) return;
+    if(!confirm('¿Aplicar la plantilla "'+tpl.title+'"? El contenido actual del canvas será reemplazado.')) return;
+    if(_editor){
+      _editor.setComponents(tpl.html);
+      _editor.setStyle(tpl.css||'');
+    }
+    window.closeTplModal();
+    toast('Plantilla aplicada ✓');
+  };
+  document.getElementById('wb-tpl-btn').addEventListener('click', window.openTplModal);
+  document.getElementById('wb-tpl-modal-overlay').addEventListener('click', function(e){ if(e.target===this) window.closeTplModal(); });
+
+  /* ── Export / Import modal ── */
+  window.openIOModal  = function(){ document.getElementById('wb-io-modal-overlay').classList.add('open'); };
+  window.closeIOModal = function(){ document.getElementById('wb-io-modal-overlay').classList.remove('open'); };
+  window.exportPage = function(){
+    var page = currentPage(); if(!page) return;
+    if(_editor){ page.gjs_html = _editor.getHtml(); page.gjs_css = _editor.getCss(); }
+    var json = JSON.stringify({
+      title: page.title, slug: page.slug, status: page.status,
+      meta: page.meta||{}, gjs_html: page.gjs_html||'', gjs_css: page.gjs_css||''
+    }, null, 2);
+    var ta = document.getElementById('wb-io-json');
+    ta.value = json;
+    ta.removeAttribute('readonly');
+    toast('JSON generado');
+  };
+  window.copyJSON = function(){
+    var ta = document.getElementById('wb-io-json');
+    if(!ta.value){ toast('Primero exporta la página', false); return; }
+    try{ navigator.clipboard.writeText(ta.value).then(function(){ toast('Copiado al portapapeles'); }); }
+    catch(e){ ta.select(); document.execCommand('copy'); toast('Copiado'); }
+  };
+  window.importPage = function(){
+    var ta = document.getElementById('wb-io-json');
+    var raw = (ta.value||'').trim();
+    if(!raw){ toast('Pega un JSON válido en el área de texto', false); return; }
+    var data;
+    try{ data = JSON.parse(raw); } catch(e){ toast('JSON inválido: '+e.message, false); return; }
+    if(!_currentPageId){ toast('Selecciona una página destino primero', false); return; }
+    var page = currentPage(); if(!page) return;
+    if(!confirm('¿Importar a la página "'+page.title+'"? El contenido actual será reemplazado.')) return;
+    if(data.gjs_html !== undefined) page.gjs_html = data.gjs_html;
+    if(data.gjs_css  !== undefined) page.gjs_css  = data.gjs_css;
+    if(data.meta)  page.meta   = data.meta;
+    if(_editor){
+      _editor.setComponents(page.gjs_html||'');
+      _editor.setStyle(page.gjs_css||'');
+    }
+    window.saveCurrentPage().then(function(){ toast('Importado y guardado ✓'); });
+    window.closeIOModal();
+  };
+  document.getElementById('wb-io-btn').addEventListener('click', window.openIOModal);
+  document.getElementById('wb-io-modal-overlay').addEventListener('click', function(e){ if(e.target===this) window.closeIOModal(); });
+
+  /* ── Fase 7: Preview, Publicar, Versiones ──────────────────── */
+
+  /* ── Preview en iframe con franja admin ── */
+  window.openPreviewModal = function(){
+    var page = currentPage();
+    if(!page){ toast('Selecciona una página primero', false); return; }
+    var url = '/p-preview/' + page.slug;
+    var ovl = document.getElementById('wb-preview-overlay');
+    document.getElementById('wb-preview-label').textContent =
+      '👁 Previsualización: ' + page.title + ' (' + (page.status === 'published' ? '🌐 Publicado' : '📝 Borrador') + ')';
+    document.getElementById('wb-preview-link').href = url;
+    document.getElementById('wb-preview-iframe').src = url;
+    ovl.classList.add('open');
+  };
+  window.closePreviewModal = function(){
+    document.getElementById('wb-preview-overlay').classList.remove('open');
+    document.getElementById('wb-preview-iframe').src = '';
+  };
+  document.getElementById('wb-preview-btn').addEventListener('click', window.openPreviewModal);
+
+  /* ── Publicar ── */
+  window.publishCurrentPage = function(){
+    var page = currentPage();
+    if(!page){ toast('Selecciona una página primero', false); return; }
+    if(!confirm('¿Publicar "' + page.title + '"? Estará disponible en /p/' + page.slug)) return;
+    fetch('/api/frontend/pages/' + page.id + '/publish', {method:'POST'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j.success){
+          page.status = 'published';
+          var sel = document.getElementById('wb-status-sel');
+          if(sel) sel.value = 'published';
+          renderPageSelect(); renderPagesModal();
+          toast('Página publicada 🌐');
+        } else { toast('Error: '+(j.error||'desconocido'), false); }
+      })
+      .catch(function(){ toast('Error de red', false); });
+  };
+  document.getElementById('wb-publish-btn').addEventListener('click', window.publishCurrentPage);
+
+  /* Ver publicado — abre /p/{slug} en nueva pestaña */
+  document.getElementById('wb-view-published-btn').addEventListener('click', function(){
+    var page = currentPage();
+    if(!page){ toast('Selecciona una página primero', false); return; }
+    if(page.status !== 'published'){
+      toast('⚠ La página aún no está publicada. Usa “Publicar” primero.', false);
+      return;
+    }
+    window.open('/p/' + page.slug, '_blank');
+  });
+
+  /* ── Historial de versiones ── */
+  window.openVerModal = function(){
+    if(!_currentPageId){ toast('Selecciona una página primero', false); return; }
+    document.getElementById('wb-ver-modal-overlay').classList.add('open');
+    loadVersions();
+  };
+  window.closeVerModal = function(){
+    document.getElementById('wb-ver-modal-overlay').classList.remove('open');
+  };
+  window.loadVersions = function(){
+    var list = document.getElementById('wb-ver-list');
+    list.innerHTML = '<p style="color:#64748b;padding:20px;text-align:center;">Cargando…</p>';
+    fetch('/api/frontend/versions/'+_currentPageId)
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var snaps = j.data||[];
+        if(!snaps.length){
+          list.innerHTML = '<p style="color:#64748b;padding:24px;text-align:center;">No hay versiones guardadas aún.<br><small>Se crean automáticamente al guardar.</small></p>';
+          return;
+        }
+        list.innerHTML = snaps.map(function(s, i){
+          return '<div class="ver-item">'
+            +'<div class="ver-meta"><strong>'+(s.title||'Sin título')+'</strong>'
+            +'<span>'+s.saved_at+' &nbsp;·&nbsp; '+(s.status==='published'?'🌐 Publicado':'📝 Borrador')+'</span></div>'
+            +(i===0
+              ? '<span style="font-size:11px;color:#10b981;font-weight:700;">actual</span>'
+              : '<button onclick="restoreVersion('+i+')">Restaurar</button>')
+            +'</div>';
+        }).join('');
+      })
+      .catch(function(){ list.innerHTML = '<p style="color:#ef4444;padding:20px;text-align:center;">Error al cargar versiones.</p>'; });
+  };
+  window.restoreVersion = function(idx){
+    if(!confirm('¿Restaurar esta versión? El contenido actual del canvas se reemplazará.')) return;
+    fetch('/api/frontend/versions/'+_currentPageId+'/restore/'+idx, {method:'POST'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(j.success){
+          var p = j.page;
+          if(_editor){ _editor.setComponents(p.gjs_html||''); _editor.setStyle(p.gjs_css||''); }
+          var page = currentPage();
+          if(page){ page.gjs_html=p.gjs_html; page.gjs_css=p.gjs_css; page.meta=p.meta; }
+          window.closeVerModal();
+          toast('Versión restaurada ✓');
+        } else { toast('Error: '+(j.error||'desconocido'), false); }
+      })
+      .catch(function(){ toast('Error de red', false); });
+  };
+  document.getElementById('wb-ver-btn').addEventListener('click', window.openVerModal);
+  document.getElementById('wb-ver-modal-overlay').addEventListener('click', function(e){ if(e.target===this) window.closeVerModal(); });
+
+  /* Boot */
+  initEditor();
+
+  /* ── Componentes dinámicos Fase 5 ───────────────────────────────── */
+  (function registerDynamicTypes(){
+    var dc = _editor.DomComponents;
+    var bm = _editor.BlockManager;
+
+    /* ── 1. TASAS — fetch desde /api/frontend/tasas ─────────────── */
+    dc.addType('sipet-tasas', {
+      isComponent: function(el){ return el.dataset && el.dataset.sipetBlock === 'tasas'; },
+      model: { defaults: {
+        tagName: 'section',
+        attributes: { 'data-sipet-block':'tasas', style:'padding:64px 5%;background:#fff;' },
+        droppable: false,
+        script: function(){
+          var el = this;
+          var grid = el.querySelector('[data-sipet-grid]');
+          if(!grid) return;
+          fetch('/api/frontend/tasas')
+            .then(function(r){ return r.json(); })
+            .then(function(j){
+              if(!j.success||!j.data) return;
+              grid.innerHTML = j.data.map(function(t){
+                return '<div style="background:#f8fafc;border-radius:12px;padding:24px;border-left:4px solid '+t.color+';">'
+                  +'<div style="font-size:.75rem;font-weight:700;color:'+t.color+';text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">'+t.label+'</div>'
+                  +'<div style="font-size:2.4rem;font-weight:800;color:#0f172a;line-height:1;">'+t.rate+'<span style="font-size:1rem;font-weight:600;">%</span></div>'
+                  +'<div style="font-size:.85rem;color:#64748b;margin-top:4px;">'+t.unit+'</div>'
+                  +'</div>';
+              }).join('');
+            })
+            .catch(function(){ grid.innerHTML='<p style="color:#ef4444;padding:20px;">Error al cargar tasas.</p>'; });
+        },
+        components: '<div style="max-width:900px;margin:0 auto;">'
+          +'<div style="text-align:center;margin-bottom:36px;">'
+          +'<h2 style="font-size:1.9rem;font-weight:800;color:#0f172a;margin:0 0 10px;">Tasas de interés vigentes</h2>'
+          +'<p style="color:#64748b;font-size:.9rem;">Datos en tiempo real desde SIPET</p></div>'
+          +'<div data-sipet-grid style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">'
+          +'<div style="padding:24px;text-align:center;color:#94a3b8;">Cargando tasas…</div></div>'
+          +'<p style="text-align:center;font-size:.78rem;color:#94a3b8;margin-top:20px;">Las tasas son referenciales. Consulta en sucursal para más información.</p>'
+          +'</div>',
+      }},
+      view: {}
+    });
+    try{ bm.remove('section-tasas'); }catch(e){}
+    bm.add('section-tasas', {
+      label:'Tasas (API SIPET)', category:'Cooperativa', media:'📈',
+      content: { type:'sipet-tasas' }
+    });
+
+    /* ── 2. CONTACTO — POST a /api/frontend/contact ─────────────── */
+    dc.addType('sipet-contact', {
+      isComponent: function(el){ return el.dataset && el.dataset.sipetBlock === 'contact'; },
+      model: { defaults: {
+        tagName: 'section',
+        attributes: { 'data-sipet-block':'contact', style:'padding:64px 5%;background:#fff;' },
+        droppable: false,
+        script: function(){
+          var el = this;
+          var form = el.querySelector('form[data-sipet-form]');
+          var msg  = el.querySelector('[data-sipet-msg]');
+          if(!form) return;
+          form.addEventListener('submit', function(ev){
+            ev.preventDefault();
+            var btn  = form.querySelector('button[type="submit"]');
+            var name    = (form.querySelector('[name="name"]').value    || '').trim();
+            var email   = (form.querySelector('[name="email"]').value   || '').trim();
+            var message = (form.querySelector('[name="message"]').value || '').trim();
+            if(!name||!email||!message){
+              if(msg){ msg.textContent='Completa todos los campos.'; msg.style.color='#ef4444'; msg.style.display='block'; }
+              return;
+            }
+            if(btn){ btn.disabled=true; btn.textContent='Enviando…'; }
+            fetch('/api/frontend/contact',{
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({name:name,email:email,message:message})
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(j){
+              form.reset();
+              if(msg){
+                msg.textContent = j.success ? '¡Mensaje enviado! Nos contactaremos pronto.' : (j.error||'Error al enviar.');
+                msg.style.color = j.success ? '#10b981' : '#ef4444';
+                msg.style.display = 'block';
+              }
+            })
+            .catch(function(){ if(msg){ msg.textContent='Error de red.'; msg.style.color='#ef4444'; msg.style.display='block'; } })
+            .finally(function(){ if(btn){ btn.disabled=false; btn.textContent='Enviar mensaje'; } });
+          });
+        },
+        components: '<div style="max-width:520px;margin:0 auto;text-align:center;">'
+          +'<h2 style="font-size:2rem;font-weight:800;color:#0f172a;margin:0 0 12px;">¿Cómo podemos ayudarte?</h2>'
+          +'<p style="color:#64748b;margin:0 0 24px;">Escríbenos y nos pondremos en contacto contigo.</p>'
+          +'<p data-sipet-msg style="display:none;padding:10px 16px;border-radius:8px;margin-bottom:16px;font-size:.9rem;font-weight:600;background:#f0fdf4;"></p>'
+          +'<form data-sipet-form style="display:flex;flex-direction:column;gap:14px;text-align:left;" onsubmit="return false;">'
+          +'<input type="text" name="name" placeholder="Nombre completo" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;width:100%;">'
+          +'<input type="email" name="email" placeholder="Correo electrónico" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;width:100%;">'
+          +'<textarea name="message" placeholder="Tu mensaje…" rows="4" style="padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;resize:vertical;"></textarea>'
+          +'<button type="submit" style="padding:13px;background:#0f172a;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Enviar mensaje</button>'
+          +'</form></div>',
+      }},
+      view: {}
+    });
+    try{ bm.remove('section-contact'); }catch(e){}
+    bm.add('section-contact', {
+      label:'Formulario contacto', category:'Secciones', media:'📬',
+      content: { type:'sipet-contact' }
+    });
+
+    /* ── 3. GALERÍA — fetch + upload /api/frontend/gallery ───────── */
+    dc.addType('sipet-gallery', {
+      isComponent: function(el){ return el.dataset && el.dataset.sipetBlock === 'gallery'; },
+      model: { defaults: {
+        tagName: 'section',
+        attributes: { 'data-sipet-block':'gallery', style:'padding:64px 5%;background:#f8fafc;' },
+        droppable: false,
+        script: function(){
+          var el      = this;
+          var grid    = el.querySelector('[data-sipet-gallery-grid]');
+          var upBtn   = el.querySelector('[data-sipet-upload]');
+          var fileInp = el.querySelector('[data-sipet-file]');
+          if(!grid) return;
+          function loadGallery(){
+            fetch('/api/frontend/gallery')
+              .then(function(r){ return r.json(); })
+              .then(function(j){
+                if(!j.success) return;
+                if(!j.data.length){
+                  grid.innerHTML='<p style="color:#94a3b8;text-align:center;padding:32px;grid-column:1/-1;">Galería vacía. Usa el botón para subir imágenes.</p>';
+                  return;
+                }
+                grid.innerHTML = j.data.map(function(img){
+                  return '<div style="border-radius:10px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;background:#e2e8f0;">'
+                    +'<img src="'+img.url+'" alt="'+img.filename+'" '
+                    +'style="width:100%;height:100%;object-fit:cover;" '
+                    +'onclick="window.open(this.src,\'_blank\')" loading="lazy"></div>';
+                }).join('');
+              })
+              .catch(function(){ grid.innerHTML='<p style="color:#ef4444;grid-column:1/-1;">Error cargando galería.</p>'; });
+          }
+          loadGallery();
+          if(upBtn && fileInp){
+            upBtn.addEventListener('click', function(){ fileInp.click(); });
+            fileInp.addEventListener('change', function(){
+              if(!fileInp.files||!fileInp.files.length) return;
+              var fd = new FormData(); fd.append('file', fileInp.files[0]);
+              upBtn.textContent='Subiendo…'; upBtn.disabled=true;
+              fetch('/api/frontend/gallery/upload',{method:'POST',body:fd})
+                .then(function(r){ return r.json(); })
+                .then(function(j){ if(j.success){ loadGallery(); } else { alert(j.error||'Error al subir'); } })
+                .catch(function(){ alert('Error de red'); })
+                .finally(function(){ upBtn.textContent='+ Subir imagen'; upBtn.disabled=false; fileInp.value=''; });
+            });
+          }
+        },
+        components: '<div style="max-width:1100px;margin:0 auto;">'
+          +'<div style="text-align:center;margin-bottom:36px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">'
+          +'<h2 style="font-size:1.9rem;font-weight:800;color:#0f172a;margin:0;">Galería</h2>'
+          +'<button data-sipet-upload style="padding:8px 18px;background:#3b82f6;color:#fff;border:none;border-radius:7px;font-size:.85rem;font-weight:700;cursor:pointer;">+ Subir imagen</button>'
+          +'<input data-sipet-file type="file" accept="image/*" style="display:none;"></div>'
+          +'<div data-sipet-gallery-grid style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">'
+          +'<div style="padding:32px;text-align:center;color:#94a3b8;grid-column:1/-1;">Cargando galería…</div></div>'
+          +'</div>',
+      }},
+      view: {}
+    });
+    bm.add('section-gallery', {
+      label:'Galería + upload', category:'Cooperativa', media:'🖼',
+      content: { type:'sipet-gallery' }
+    });
+
+    /* ── 4. MAPA configurable — trait para embed URL ─────────────── */
+    dc.addType('sipet-mapa', {
+      isComponent: function(el){ return el.dataset && el.dataset.sipetBlock === 'mapa'; },
+      model: {
+        defaults: {
+          tagName: 'section',
+          attributes: { 'data-sipet-block':'mapa', style:'padding:64px 5%;background:#f8fafc;', 'data-embed-url':'' },
+          droppable: false,
+          traits: [
+            { type:'text',  name:'data-embed-url', label:'Google Maps Embed URL', placeholder:'https://www.google.com/maps/embed?pb=...' },
+          ],
+          script: function(){
+            var el = this;
+            var src = el.getAttribute('data-embed-url');
+            if(!src) return;
+            var iframe = el.querySelector('iframe[data-map-embed]');
+            if(iframe) iframe.src = src;
+          },
+          components: '<div style="max-width:1100px;margin:0 auto;">'
+            +'<div style="text-align:center;margin-bottom:36px;">'
+            +'<h2 style="font-size:1.9rem;font-weight:800;color:#0f172a;margin:0 0 10px;">¿Dónde encontrarnos?</h2>'
+            +'<p style="color:#64748b;">Visita cualquiera de nuestras sucursales.</p></div>'
+            +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">'
+            +'<div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);">'
+            +'<h3 style="font-size:1rem;font-weight:700;color:#0f172a;margin:0 0 16px;">Sucursal Central</h3>'
+            +'<div style="display:flex;flex-direction:column;gap:12px;font-size:.9rem;color:#475569;">'
+            +'<div style="display:flex;gap:10px;"><span>📍</span><span>4a Avenida 12-34, Zona 1, Guatemala</span></div>'
+            +'<div style="display:flex;gap:10px;"><span>📞</span><span>(502) 2222-3333</span></div>'
+            +'<div style="display:flex;gap:10px;"><span>🕐</span><span>Lun–Vie: 8:00–17:00 hrs</span></div>'
+            +'<div style="display:flex;gap:10px;"><span>✉</span><span>info@cooperativa.com</span></div>'
+            +'</div></div>'
+            +'<div style="border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.1);background:#e2e8f0;">'
+            +'<iframe data-map-embed width="100%" height="280" style="border:none;display:block;" allowfullscreen loading="lazy" '
+            +'src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3860.3!2d-90.5069!3d14.6349!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTTCsDM4JzA1LjYiTiA5MMKwMzAnMjQuOCJX!5e0!3m2!1ses!2sgt!4v1000000000000"></iframe>'
+            +'</div></div></div>',
+        },
+        init: function(){
+          this.on('change:attributes:data-embed-url', function(){
+            var src = this.getAttributes()['data-embed-url'] || '';
+            var el  = this.getEl();
+            if(el && src){ var iframe = el.querySelector('iframe[data-map-embed]'); if(iframe) iframe.src = src; }
+          });
+        }
+      },
+      view: {}
+    });
+    try{ bm.remove('section-mapa'); }catch(e){}
+    bm.add('section-mapa', {
+      label:'Mapa (configurable)', category:'Cooperativa', media:'📍',
+      content: { type:'sipet-mapa' }
+    });
+
+    /* ── sipet-form: formulario dinámico del backend ─────────────── */
+    dc.addType('sipet-form', {
+      isComponent: function(el){
+        return el.tagName === 'DIV' && el.classList && el.classList.contains('sipet-form-widget');
+      },
+      model: {
+        defaults: {
+          tagName: 'div',
+          attributes: { 'class':'sipet-form-widget', 'data-slug':'' },
+          droppable: false,
+          resizable: false,
+          traits: [
+            {
+              type: 'select',
+              name: 'data-slug',
+              label: 'Formulario',
+              options: [{ value:'', name:'⏳ Cargando formularios…' }],
+            },
+          ],
+        },
+        init: function(){
+          var self = this;
+          /* Re-render the canvas placeholder whenever the slug trait changes */
+          self.listenTo(self, 'change:attributes', function(){
+            if(self.view) self.view._updatePlaceholder();
+          });
+          /* Populate select options from the backend */
+          fetch('/api/frontend/forms', {credentials:'include'})
+            .then(function(r){ return r.json(); })
+            .then(function(j){
+              var opts = [{ value:'', name:'— Seleccionar formulario —' }];
+              if(j.success && j.data && j.data.length){
+                j.data.forEach(function(f){ opts.push({ value:f.slug, name:f.name + ' (' + f.slug + ')' }); });
+              } else {
+                opts.push({ value:'', name:'(No hay formularios activos)' });
+              }
+              var trait = self.getTrait('data-slug');
+              if(trait){ trait.set('options', opts); }
+            })
+            .catch(function(){});
+        },
+      },
+      view: {
+        _updatePlaceholder: function(){
+          var slug = this.model.getAttributes()['data-slug'] || '';
+          this.el.innerHTML =
+            '<div style="font-family:system-ui,sans-serif;padding:24px 20px;border:2px dashed #3b82f6;'
+            + 'border-radius:12px;background:#eff6ff;text-align:center;min-height:90px;'
+            + 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none;">'
+            + '<div style="font-size:1.6rem;">📋</div>'
+            + '<div style="font-size:13px;font-weight:700;color:#1e40af;">'
+            + (slug ? 'Formulario: <code style="background:#dbeafe;padding:2px 6px;border-radius:4px;">' + slug + '</code>'
+                    : 'Formulario dinámico — configura el slug en <strong>⚙ Propiedades</strong>')
+            + '</div>'
+            + '<div style="font-size:11px;color:#64748b;">Se renderizará con todos sus campos en la página publicada</div>'
+            + '</div>';
+        },
+        onRender: function(){ this._updatePlaceholder(); },
+      },
+    });
+
+    bm.add('formulario', {
+      label: 'Formulario', category: 'Cooperativa', media: '📋',
+      content: { type:'sipet-form' },
+    });
+
+  })();
+
+  /* Inyectar paleta después de que el canvas esté listo */
+  _editor.on('load', function(){
+    loadBrandColors();
+    /* Panel de paleta corporativa: se inserta al final del contenedor de vistas */
+    var container = document.getElementById('wb-sidebar-content');
+    if(container && !document.getElementById('_wb_brand_palette')){
+      var wrap = document.createElement('div');
+      wrap.id = '_wb_brand_palette_wrap';
+      wrap.innerHTML = '<div style="border-top:1px solid #1e293b;padding:0;">'
+        + '<div style="font-size:10px;font-weight:700;color:#475569;letter-spacing:.08em;text-transform:uppercase;padding:8px 12px 4px;">Paleta corporativa</div>'
+        + '<div id="_wb_brand_palette"></div>'
+        + '</div>';
+      container.appendChild(wrap);
+      renderBrandSwatches();
+    }
+  });
+
+  /* Re-inyectar CSS vars al cargar cada página */
+  _editor.on('component:add',    function(){ injectBrandCSSVars(); });
+
+  /* ── Fase 8: dirty-tracking ─────────────────────────────────── */
+  _editor.on('component:update', function(){ _setDirty(true); });
+  _editor.on('component:remove', function(){ _setDirty(true); });
+  _editor.on('style:update',     function(){ _setDirty(true); });
+  _editor.on('canvas:drop',      function(){ _setDirty(true); });
+
+  apiPages().then(function(pages){
+    _pages=pages;
+    renderPageSelect(); renderPagesModal();
+    if(_pages.length) loadPageIntoEditor(_pages[0].id);
+    else window.createNewPage(false);
+  });
+
+  })();
+  </script>
+</body>
+</html>

@@ -1,59 +1,660 @@
-<section class="notificaciones-page">
+<section class="wa-page">
   <article class="content-section">
     <header class="content-section-head">
-      <h2 class="content-section-title">Notificaciones</h2>
+      <h2 class="content-section-title">Conversaciones</h2>
     </header>
-    <div class="content-section-body">
-      <div class="tabla-oficial-wrap">
-        <table class="tabla-oficial" id="notificaciones-table">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Título</th>
-              <th>Mensaje</th>
-              <th>Fecha</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="5">Cargando notificaciones...</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="content-section-body wa-shell">
+
+      <!-- ===================== SIDEBAR ===================== -->
+      <aside class="wa-sidebar">
+        <div class="wa-sidebar-head">
+          <div class="wa-profile">
+            <img src="/templates/imagenes/lobo.jpg" alt="AVAN">
+            <div>
+              <strong id="wa-me-name">Yo</strong>
+              <small id="wa-me-role">conectado</small>
+            </div>
+          </div>
+          <div class="wa-head-actions">
+            <button id="wa-new-btn" class="wa-icon-btn" title="Nueva conversación">+</button>
+            <button id="wa-index-btn" class="wa-icon-btn" title="Indexar documentos para AVAN">↻</button>
+          </div>
+        </div>
+
+        <div class="wa-index-status" id="wa-index-status" style="display:none">Cargando índice...</div>
+
+        <div class="wa-tabs">
+          <button type="button" class="wa-tab active" data-tab="avan">AVAN</button>
+          <button type="button" class="wa-tab" data-tab="users">Usuarios</button>
+        </div>
+
+        <div class="wa-search-wrap">
+          <input type="text" id="wa-search" placeholder="Buscar conversación…">
+        </div>
+
+        <div class="wa-list" id="wa-list">
+          <div class="wa-empty">Cargando…</div>
+        </div>
+      </aside>
+
+      <!-- ===================== CHAT PANEL ===================== -->
+      <section class="wa-chat">
+        <header class="wa-chat-head">
+          <div class="wa-chat-contact">
+            <div class="wa-chat-avatar" id="wa-chat-avatar-el">AV</div>
+            <div>
+              <strong id="wa-chat-title">Selecciona una conversación</strong>
+              <small id="wa-chat-subtitle">—</small>
+            </div>
+          </div>
+          <div class="wa-chat-tools" id="wa-topk-wrap">
+            <label for="wa-topk">Fuentes</label>
+            <select id="wa-topk">
+              <option value="4">4</option>
+              <option value="6" selected>6</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+          <button id="wa-del-conv" class="wa-icon-btn" title="Eliminar conversación" style="display:none">🗑</button>
+        </header>
+
+        <div class="wa-messages" id="wa-messages">
+          <div class="wa-msg wa-msg--in">
+            <div class="wa-msg-body">Bienvenido a Conversaciones. Selecciona un chat o inicia uno nuevo.</div>
+            <div class="wa-msg-meta">Sistema</div>
+          </div>
+        </div>
+
+        <form id="wa-form" class="wa-input">
+          <input id="wa-input" type="text" placeholder="Escribe un mensaje…" autocomplete="off" required>
+          <button type="submit" class="wa-send-btn" id="wa-send-btn">Enviar</button>
+        </form>
+      </section>
     </div>
   </article>
 
+  <!-- ===================== MODAL: elegir usuario ===================== -->
+  <div id="wa-modal" class="wa-modal-backdrop" style="display:none" role="dialog" aria-modal="true">
+    <div class="wa-modal">
+      <header class="wa-modal-head">
+        <span>Nueva conversación con usuario</span>
+        <button id="wa-modal-close" class="wa-icon-btn" type="button">✕</button>
+      </header>
+      <div class="wa-modal-search-wrap">
+        <input type="text" id="wa-modal-search" placeholder="Buscar usuario…">
+      </div>
+      <ul class="wa-modal-list" id="wa-modal-list">
+        <li class="wa-empty">Cargando usuarios…</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- =================== STYLES =================== -->
+  <style>
+    .wa-shell {
+      display: grid; grid-template-columns: 360px 1fr;
+      min-height: 700px; background: #e5ddd5;
+      border: 1px solid rgba(15,23,42,.14); border-radius: 14px; overflow: hidden;
+    }
+    .wa-sidebar {
+      background: #fff; border-right: 1px solid rgba(15,23,42,.14);
+      display: flex; flex-direction: column; min-height: 700px;
+    }
+    .wa-sidebar-head {
+      height: 72px; padding: 10px 12px; background: #f0f2f5;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(15,23,42,.1);
+    }
+    .wa-profile { display:flex; align-items:center; gap:10px; }
+    .wa-profile img { width:42px; height:42px; border-radius:50%; object-fit:cover; }
+    .wa-profile strong { display:block; font-size:14px; color:#111b21; }
+    .wa-profile small  { color:#667781; font-size:11px; }
+    .wa-head-actions { display:flex; gap:8px; }
+    .wa-icon-btn {
+      width:32px; height:32px; border:1px solid rgba(15,23,42,.16);
+      background:#fff; border-radius:50%; cursor:pointer; font-size:16px; color:#111b21; line-height:1;
+    }
+    .wa-icon-btn:hover { background:#f5f6f6; }
+    .wa-index-status {
+      margin:8px 12px 0; padding:7px 10px; border-radius:8px;
+      border:1px solid rgba(15,23,42,.12); background:#f8fafb; color:#54656f; font-size:11px;
+    }
+    .wa-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:10px 12px 8px; }
+    .wa-tab {
+      border:1px solid rgba(15,23,42,.16); background:#fff; color:#41525d;
+      border-radius:999px; padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer;
+    }
+    .wa-tab.active { background:#d9fdd3; color:#0a5c36; border-color:#b6e6ae; }
+    .wa-search-wrap { padding:0 12px 10px; }
+    .wa-search-wrap input {
+      width:100%; border:1px solid rgba(15,23,42,.14); border-radius:8px;
+      padding:9px 11px; font-size:13px; color:#111b21; background:#f0f2f5; box-sizing:border-box;
+    }
+    .wa-list { overflow:auto; border-top:1px solid rgba(15,23,42,.08); flex:1; }
+    .wa-empty { padding:12px; color:#667781; font-size:12px; }
+    .wa-item {
+      width:100%; border:0; border-bottom:1px solid rgba(15,23,42,.06);
+      background:#fff; text-align:left; padding:10px 12px;
+      display:grid; grid-template-columns:42px 1fr; gap:10px; cursor:pointer; align-items:center;
+    }
+    .wa-item:hover { background:#f5f6f6; }
+    .wa-item.active { background:#f0f2f5; }
+    .wa-item-avatar {
+      width:42px; height:42px; border-radius:50%; background:#dfe5e7; color:#44525b;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700; text-transform:uppercase; overflow:hidden; flex-shrink:0;
+    }
+    .wa-item-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .wa-item-main { min-width:0; }
+    .wa-item-top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+    .wa-item-name { font-size:14px; font-weight:600; color:#111b21; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wa-item-time { font-size:11px; color:#667781; white-space:nowrap; }
+    .wa-item-msg  { margin-top:4px; font-size:12px; color:#667781; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wa-unread-badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:18px; height:18px; padding:0 5px;
+      background:#25d366; color:#fff; border-radius:999px; font-size:10px; font-weight:700;
+    }
+    .wa-chat {
+      display:grid; grid-template-rows:72px 1fr 66px;
+      background:#efeae2; min-height:700px;
+      background-image:
+        radial-gradient(rgba(0,0,0,.02) 1px, transparent 1px),
+        radial-gradient(rgba(0,0,0,.01) 1px, transparent 1px);
+      background-size:12px 12px, 16px 16px;
+      background-position:0 0, 8px 8px;
+    }
+    .wa-chat-head {
+      background:#f0f2f5; border-bottom:1px solid rgba(15,23,42,.12);
+      display:flex; align-items:center; justify-content:space-between; padding:10px 14px;
+    }
+    .wa-chat-contact { display:flex; gap:10px; align-items:center; min-width:0; flex:1; }
+    .wa-chat-avatar {
+      width:42px; height:42px; border-radius:50%; background:#dfe5e7; color:#44525b; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700; overflow:hidden;
+    }
+    .wa-chat-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .wa-chat-contact strong {
+      display:block; color:#111b21; font-size:15px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:420px;
+    }
+    .wa-chat-contact small { color:#667781; font-size:12px; }
+    .wa-chat-tools { display:flex; align-items:center; gap:6px; color:#54656f; font-size:12px; flex-shrink:0; }
+    .wa-chat-tools select { border:1px solid rgba(15,23,42,.18); border-radius:8px; height:32px; padding:0 6px; background:#fff; }
+    .wa-messages { overflow:auto; padding:14px 20px; display:flex; flex-direction:column; gap:8px; }
+    .wa-msg { max-width:78%; border-radius:8px; padding:7px 10px 6px; box-shadow:0 1px 0 rgba(0,0,0,.08); word-wrap:break-word; }
+    .wa-msg--in  { align-self:flex-start; background:#fff; color:#111b21; }
+    .wa-msg--out { align-self:flex-end; background:#d9fdd3; color:#111b21; }
+    .wa-msg-body { font-size:13px; line-height:1.4; white-space:pre-wrap; }
+    .wa-msg-meta { margin-top:4px; font-size:10px; color:#667781; text-align:right; }
+    .wa-citations { margin-top:6px; padding-top:6px; border-top:1px dashed rgba(15,23,42,.22); display:grid; gap:4px; font-size:11px; color:#41525d; }
+    .wa-citation { background:rgba(255,255,255,.66); border:1px solid rgba(15,23,42,.16); border-radius:6px; padding:4px 6px; }
+    .wa-msg--typing .wa-msg-body { color:#667781; font-style:italic; }
+    .wa-input {
+      background:#f0f2f5; border-top:1px solid rgba(15,23,42,.1);
+      display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:10px 14px;
+    }
+    .wa-input input {
+      width:100%; height:42px; border:1px solid rgba(15,23,42,.14);
+      border-radius:999px; padding:0 14px; font-size:13px;
+      background:#fff; color:#111b21; box-sizing:border-box;
+    }
+    .wa-send-btn {
+      height:42px; border-radius:999px; border:1px solid #0a5c36;
+      background:#0a5c36; color:#fff; font-size:13px; font-weight:700; padding:0 16px; cursor:pointer;
+    }
+    .wa-send-btn:disabled { opacity:.55; cursor:not-allowed; }
+    .wa-send-btn:hover:not(:disabled) { filter:brightness(1.05); }
+    /* Modal */
+    .wa-modal-backdrop {
+      position:fixed; inset:0; background:rgba(0,0,0,.44);
+      display:flex; align-items:center; justify-content:center; z-index:9999;
+    }
+    .wa-modal {
+      background:#fff; border-radius:14px; width:380px; max-height:540px;
+      display:flex; flex-direction:column; overflow:hidden;
+      box-shadow:0 8px 32px rgba(0,0,0,.22);
+    }
+    .wa-modal-head {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:1px solid rgba(15,23,42,.1);
+      font-weight:700; color:#111b21; font-size:15px;
+    }
+    .wa-modal-search-wrap { padding:10px 14px; }
+    .wa-modal-search-wrap input {
+      width:100%; border:1px solid rgba(15,23,42,.14); border-radius:8px;
+      padding:9px 11px; font-size:13px; box-sizing:border-box; background:#f0f2f5;
+    }
+    .wa-modal-list { list-style:none; margin:0; padding:0; overflow:auto; flex:1; }
+    .wa-modal-user { display:flex; align-items:center; gap:12px; padding:10px 16px; cursor:pointer; border-bottom:1px solid rgba(15,23,42,.06); }
+    .wa-modal-user:hover { background:#f5f6f6; }
+    .wa-modal-avatar {
+      width:40px; height:40px; border-radius:50%; background:#dfe5e7; color:#44525b; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:700; overflow:hidden;
+    }
+    .wa-modal-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .wa-modal-info strong { display:block; font-size:14px; color:#111b21; }
+    .wa-modal-info small  { font-size:12px; color:#667781; }
+    @media (max-width:1100px) {
+      .wa-shell { grid-template-columns:1fr; min-height:auto; }
+      .wa-sidebar { min-height:300px; }
+      .wa-chat { min-height:520px; }
+    }
+  </style>
+
+  <!-- =================== SCRIPT =================== -->
   <script>
-    (async () => {
-      const tbody = document.querySelector('#notificaciones-table tbody');
-      if (!tbody) return;
+  (() => {
+    "use strict";
+    const $  = (s) => document.querySelector(s);
+    const listEl         = $("#wa-list");
+    const searchEl       = $("#wa-search");
+    const messagesEl     = $("#wa-messages");
+    const formEl         = $("#wa-form");
+    const inputEl        = $("#wa-input");
+    const topkEl         = $("#wa-topk");
+    const topkWrap       = $("#wa-topk-wrap");
+    const chatTitleEl    = $("#wa-chat-title");
+    const chatSubtitleEl = $("#wa-chat-subtitle");
+    const chatAvatarEl   = $("#wa-chat-avatar-el");
+    const indexBtn       = $("#wa-index-btn");
+    const newBtn         = $("#wa-new-btn");
+    const indexStatusEl  = $("#wa-index-status");
+    const delBtn         = $("#wa-del-conv");
+    const modal          = $("#wa-modal");
+    const modalClose     = $("#wa-modal-close");
+    const modalSearch    = $("#wa-modal-search");
+    const modalList      = $("#wa-modal-list");
+    const sendBtn        = $("#wa-send-btn");
+
+    let activeTab        = "avan";
+    let currentConvId    = "";
+    let currentConvType  = "";
+    let avanConvs        = [];
+    let dmConvs          = [];
+    let allUsers         = [];
+    let sending          = false;
+
+    const esc = (s) => String(s ?? "")
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+
+    const initials = (s) => {
+      const t = String(s ?? "").trim();
+      if (!t) return "??";
+      const p = t.split(/\s+/).filter(Boolean);
+      return p.length === 1 ? p[0].slice(0,2).toUpperCase() : (p[0][0]+p[1][0]).toUpperCase();
+    };
+
+    const avatarHtml = (label, imgUrl) => imgUrl
+      ? `<img src="${esc(imgUrl)}" alt="${esc(label)}" loading="lazy" onerror="this.style.display='none'">`
+      : esc(initials(label));
+
+    const fmtTime = (iso) => {
+      if (!iso) return "";
       try {
-        const res = await fetch('/api/notificaciones/resumen', { headers: { 'Accept': 'application/json' } });
-        const payload = await res.json();
-        const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
-        if (!items.length) {
-          tbody.innerHTML = '<tr><td colspan="5">Sin notificaciones pendientes.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = items.map((item) => {
-          const title = item?.titulo || item?.type || 'Notificación';
-          const msg = item?.mensaje || item?.description || '';
-          const date = item?.created_at || item?.fecha || '';
-          const state = item?.status || (item?.is_read ? 'leída' : 'pendiente');
-          const type = item?.type || 'sistema';
-          return `
-            <tr>
-              <td>${type}</td>
-              <td>${title}</td>
-              <td>${msg}</td>
-              <td>${date}</td>
-              <td>${state}</td>
-            </tr>
-          `;
-        }).join('');
-      } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="5">No se pudieron cargar las notificaciones.</td></tr>';
+        const d = new Date(iso);
+        const now = new Date();
+        if (d.toDateString() === now.toDateString())
+          return d.toLocaleTimeString("es", {hour:"2-digit", minute:"2-digit"});
+        return d.toLocaleDateString("es", {day:"2-digit", month:"2-digit"});
+      } catch { return String(iso).slice(0,10); }
+    };
+
+    const showIndexStatus = (text, isErr = false) => {
+      if (!indexStatusEl) return;
+      indexStatusEl.style.display = "block";
+      indexStatusEl.textContent = String(text ?? "");
+      indexStatusEl.style.color = isErr ? "#b42318" : "#54656f";
+    };
+
+    // ── Render sidebar ──────────────────────────────────────────────────
+    const renderList = () => {
+      const term = (searchEl?.value ?? "").trim().toLowerCase();
+      const source = activeTab === "avan" ? avanConvs : dmConvs;
+      const filtered = source.filter((c) => {
+        if (!term) return true;
+        return `${c.label??""} ${c.last_message??""} ${c.conv_id??""}`.toLowerCase().includes(term);
+      });
+      if (!filtered.length) {
+        listEl.innerHTML = `<div class="wa-empty">${activeTab==="avan" ? "Sin conversaciones con AVAN." : "Sin conversaciones. Presiona + para iniciar una."}</div>`;
+        return;
       }
+      listEl.innerHTML = filtered.map((c) => {
+        const active = currentConvId === c.conv_id ? "active" : "";
+        const badge  = c.unread > 0 ? `<span class="wa-unread-badge">${c.unread}</span>` : "";
+        return `
+          <button type="button" class="wa-item ${active}" data-id="${esc(c.conv_id)}" data-type="${esc(c.type)}">
+            <div class="wa-item-avatar">${avatarHtml(c.label, c.img)}</div>
+            <div class="wa-item-main">
+              <div class="wa-item-top">
+                <div class="wa-item-name">${esc(c.label)}</div>
+                <div class="wa-item-time">${esc(fmtTime(c.last_at))} ${badge}</div>
+              </div>
+              <div class="wa-item-msg">${esc(c.last_message || "Sin mensajes")}</div>
+            </div>
+          </button>`;
+      }).join("");
+      listEl.querySelectorAll(".wa-item").forEach((btn) => {
+        btn.addEventListener("click", () => openConv(btn.getAttribute("data-id"), btn.getAttribute("data-type")));
+      });
+    };
+
+    // ── Load conversations ──────────────────────────────────────────────
+    const loadAvanConvs = async () => {
+      try {
+        const res = await fetch("/api/v1/ia/rag/conversations?limit=80");
+        const d = await res.json();
+        if (!d?.success) { avanConvs = []; return; }
+        avanConvs = (d.data ?? []).map((c) => ({
+          conv_id: c.conversation_id, type: "avan", label: "AVAN",
+          img: "/templates/imagenes/lobo.jpg",
+          last_at: c.last_at, last_message: c.last_answer || c.last_question || "", unread: 0,
+        }));
+      } catch { avanConvs = []; }
+    };
+
+    const loadDmConvs = async () => {
+      try {
+        const res = await fetch("/api/v1/conversaciones/direct");
+        const d = await res.json();
+        if (!d?.success) { dmConvs = []; return; }
+        dmConvs = (d.data ?? []).map((c) => {
+          const user = allUsers.find((u) => u.username === c.other_user);
+          return {
+            conv_id: c.conversation_id, type: "dm",
+            label: user?.full_name || c.other_user || "Usuario",
+            img: user?.imagen || "",
+            last_at: c.last_at, last_message: c.last_message || "", unread: c.unread || 0,
+          };
+        });
+      } catch { dmConvs = []; }
+    };
+
+    const loadAll = async () => {
+      await Promise.all([loadAvanConvs(), loadDmConvs()]);
+      renderList();
+    };
+
+    // ── Render messages ─────────────────────────────────────────────────
+    const renderMessages = (rows, type) => {
+      if (!rows?.length) {
+        messagesEl.innerHTML = '<div class="wa-empty">No hay mensajes aún. Escribe el primero.</div>';
+        return;
+      }
+      messagesEl.innerHTML = rows.map((m) => {
+        const isMine = type === "avan"
+          ? String(m.message_type ?? "").toLowerCase() === "user"
+          : m.is_mine === true;
+        const css  = isMine ? "wa-msg wa-msg--out" : "wa-msg wa-msg--in";
+        const meta = isMine
+          ? (fmtTime(m.created_at) || "Tú")
+          : (type === "avan" ? "AVAN" : esc(m.from_username || ""));
+        const citations = Array.isArray(m.citations) ? m.citations : [];
+        const citHtml = (!isMine && citations.length) ? `
+          <div class="wa-citations">
+            ${citations.map((c) => `<div class="wa-citation">[${esc(c.source_tag??"")}] · ${esc(c.title??"")}</div>`).join("")}
+          </div>` : "";
+        return `
+          <div class="${css}">
+            <div class="wa-msg-body">${esc(m.message_text ?? m.message ?? "")}</div>
+            ${citHtml}
+            <div class="wa-msg-meta">${meta}</div>
+          </div>`;
+      }).join("");
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    };
+
+    // ── Open conversation ───────────────────────────────────────────────
+    const openConv = async (convId, type) => {
+      currentConvId = convId; currentConvType = type;
+      renderList();
+      let label = convId, img = "";
+      if (type === "avan") { label = "AVAN"; img = "/templates/imagenes/lobo.jpg"; }
+      else {
+        const c = dmConvs.find((x) => x.conv_id === convId);
+        if (c) { label = c.label; img = c.img; }
+        else {
+          const parts = convId.replace("dm-","").split("_");
+          label = parts.find(Boolean) || convId;
+        }
+      }
+      chatTitleEl.textContent    = label;
+      chatSubtitleEl.textContent = type === "avan" ? "Agente IA AVAN" : "Mensaje directo";
+      chatAvatarEl.innerHTML     = avatarHtml(label, img);
+      topkWrap.style.display     = type === "avan" ? "flex" : "none";
+      delBtn.style.display       = type === "dm"   ? "inline-flex" : "none";
+      try {
+        const url = type === "avan"
+          ? `/api/v1/ia/rag/conversations/${encodeURIComponent(convId)}`
+          : `/api/v1/conversaciones/direct/${encodeURIComponent(convId)}`;
+        const res = await fetch(url);
+        const d   = await res.json();
+        if (!d?.success) throw new Error(d?.error || "Error");
+        renderMessages(d.data ?? [], type);
+      } catch (err) {
+        renderMessages([{message_text: err?.message || "No se pudo cargar.", is_mine:false, created_at:""}], type);
+      }
+      await loadAll();
+    };
+
+    // ── Send message ────────────────────────────────────────────────────
+    const sendMsg = async (ev) => {
+      ev.preventDefault();
+      const txt = (inputEl?.value ?? "").trim();
+      if (!txt || sending) return;
+      if (!currentConvId) { alert("Selecciona una conversación primero."); return; }
+      sending = true; sendBtn.disabled = true;
+      inputEl.value = "";
+      const prevHtml = messagesEl.innerHTML;
+      messagesEl.insertAdjacentHTML("beforeend", `
+        <div class="wa-msg wa-msg--out">
+          <div class="wa-msg-body">${esc(txt)}</div>
+          <div class="wa-msg-meta">Enviando…</div>
+        </div>`);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      try {
+        if (currentConvType === "avan") {
+          const res = await fetch("/api/v1/ia/rag/chat", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ conversation_id: currentConvId, message: txt, top_k: Number(topkEl?.value ?? 6) }),
+          });
+          const d = await res.json();
+          if (!d?.success) throw new Error(d?.error || "Error");
+          currentConvId = d.data?.conversation_id || currentConvId;
+        } else {
+          const res = await fetch("/api/v1/conversaciones/direct/send", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ conversation_id: currentConvId, message: txt }),
+          });
+          const d = await res.json();
+          if (!d?.success) throw new Error(d?.error || "Error");
+        }
+        await openConv(currentConvId, currentConvType);
+      } catch (err) {
+        messagesEl.innerHTML = prevHtml;
+        messagesEl.insertAdjacentHTML("beforeend", `
+          <div class="wa-msg wa-msg--in wa-msg--typing">
+            <div class="wa-msg-body">Error: ${esc(err?.message || "No se pudo enviar")}</div>
+            <div class="wa-msg-meta">Sistema</div>
+          </div>`);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        inputEl.value = txt;
+      } finally {
+        sending = false; sendBtn.disabled = false; inputEl.focus();
+      }
+    };
+
+    // ── New conversation ────────────────────────────────────────────────
+    const startNew = () => {
+      if (activeTab === "avan") {
+        currentConvId = `conv-${Date.now()}`; currentConvType = "avan";
+        chatTitleEl.textContent = "AVAN"; chatSubtitleEl.textContent = "Nueva conversación con AVAN";
+        chatAvatarEl.innerHTML = `<img src="/templates/imagenes/lobo.jpg" alt="AVAN">`;
+        topkWrap.style.display = "flex"; delBtn.style.display = "none";
+        renderMessages([{message_text:"Conversación iniciada. Escribe tu mensaje.", is_mine:false, created_at:""}], "avan");
+        renderList();
+      } else {
+        openUserModal();
+      }
+    };
+
+    // ── Delete conversation ─────────────────────────────────────────────
+    const deleteConv = async () => {
+      if (!currentConvId || currentConvType !== "dm") return;
+      if (!confirm("¿Eliminar esta conversación?")) return;
+      try {
+        await fetch(`/api/v1/conversaciones/direct/${encodeURIComponent(currentConvId)}`, { method:"DELETE" });
+        currentConvId = ""; currentConvType = "";
+        chatTitleEl.textContent = "Selecciona una conversación";
+        chatSubtitleEl.textContent = "—";
+        chatAvatarEl.innerHTML = "AV"; delBtn.style.display = "none";
+        messagesEl.innerHTML = '<div class="wa-empty">Conversación eliminada.</div>';
+        await loadAll();
+      } catch (err) { alert("No se pudo eliminar: " + (err?.message || "Error")); }
+    };
+
+    // ── User modal ──────────────────────────────────────────────────────
+    const openUserModal = async () => {
+      modal.style.display = "flex";
+      modalSearch.value = "";
+      modalList.innerHTML = '<li class="wa-empty">Cargando usuarios…</li>';
+      if (!allUsers.length) {
+        try {
+          const res = await fetch("/api/v1/conversaciones/users");
+          const d = await res.json();
+          if (d?.success) allUsers = d.data ?? [];
+        } catch { allUsers = []; }
+      }
+      renderModalList();
+      modalSearch.focus();
+    };
+
+    const renderModalList = () => {
+      const term = (modalSearch?.value ?? "").trim().toLowerCase();
+      const filtered = allUsers.filter((u) =>
+        !term || `${u.full_name} ${u.username}`.toLowerCase().includes(term)
+      );
+      if (!filtered.length) { modalList.innerHTML = '<li class="wa-empty">Sin usuarios encontrados.</li>'; return; }
+      modalList.innerHTML = filtered.map((u) => `
+        <li class="wa-modal-user" data-username="${esc(u.username)}">
+          <div class="wa-modal-avatar">${avatarHtml(u.full_name || u.username, u.imagen)}</div>
+          <div class="wa-modal-info">
+            <strong>${esc(u.full_name || u.username)}</strong>
+            <small>${esc(u.role || u.username)}</small>
+          </div>
+        </li>`).join("");
+      modalList.querySelectorAll(".wa-modal-user").forEach((li) => {
+        li.addEventListener("click", () => {
+          const username = li.getAttribute("data-username");
+          if (!username) return;
+          modal.style.display = "none";
+          const user = allUsers.find((u) => u.username === username);
+          // Build a temporary conv_id; server will compute canonical on first send
+          const convId = `dm-${username}`;
+          if (!dmConvs.find((c) => c.conv_id === convId)) {
+            dmConvs.unshift({ conv_id:convId, type:"dm",
+              label: user?.full_name || username, img: user?.imagen || "",
+              last_at:"", last_message:"", unread:0 });
+          }
+          currentConvId = convId; currentConvType = "dm";
+          chatTitleEl.textContent    = user?.full_name || username;
+          chatSubtitleEl.textContent = "Mensaje directo";
+          chatAvatarEl.innerHTML     = avatarHtml(user?.full_name || username, user?.imagen || "");
+          topkWrap.style.display     = "none";
+          delBtn.style.display       = "inline-flex";
+          renderMessages([], "dm");
+          renderList();
+        });
+      });
+    };
+
+    // ── Index ───────────────────────────────────────────────────────────
+    const refreshIndexStatus = async () => {
+      try {
+        const res = await fetch("/api/v1/ia/rag/index-status");
+        const d = await res.json();
+        if (!d?.success) { if (res.status===403) indexBtn.disabled=true; return; }
+        const x = d.data ?? {};
+        showIndexStatus(`Índice: ${x.documents??0} docs · ${x.chunks??0} chunks`);
+      } catch (err) { showIndexStatus(err?.message||"Error índice", true); }
+    };
+
+    const runIndex = async () => {
+      indexBtn.disabled = true;
+      showIndexStatus("Indexando documentos…");
+      try {
+        const res = await fetch("/api/v1/ia/rag/index-documents", {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({limit:500}),
+        });
+        const d = await res.json();
+        if (!d?.success) throw new Error(d?.error||"Error");
+        const x = d.data ?? {};
+        showIndexStatus(`Indexación lista: ${x.indexed_documents??0} docs, ${x.indexed_chunks??0} chunks`);
+        await loadAll();
+      } catch (err) { showIndexStatus(err?.message||"Error", true); }
+      finally { indexBtn.disabled=false; refreshIndexStatus(); }
+    };
+
+    // ── Unread counter in tab ───────────────────────────────────────────
+    const refreshUnread = async () => {
+      try {
+        const res = await fetch("/api/v1/conversaciones/unread-count");
+        const d = await res.json();
+        const n = d?.data?.count ?? 0;
+        const tab = document.querySelector('.wa-tab[data-tab="users"]');
+        if (tab) tab.textContent = n > 0 ? `Usuarios (${n})` : "Usuarios";
+      } catch { /* ignore */ }
+    };
+
+    // ── Auto-poll DM ────────────────────────────────────────────────────
+    const pollDm = async () => {
+      if (!currentConvId || currentConvType !== "dm") return;
+      try {
+        const res = await fetch(`/api/v1/conversaciones/direct/${encodeURIComponent(currentConvId)}`);
+        const d = await res.json();
+        if (d?.success) renderMessages(d.data ?? [], "dm");
+      } catch { /* ignore */ }
+    };
+
+    // ── Events ──────────────────────────────────────────────────────────
+    document.querySelectorAll(".wa-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".wa-tab").forEach((x) => x.classList.remove("active"));
+        btn.classList.add("active");
+        activeTab = btn.getAttribute("data-tab") || "avan";
+        indexStatusEl.style.display = activeTab === "avan" ? "block" : "none";
+        renderList();
+      });
+    });
+    searchEl?.addEventListener("input", renderList);
+    formEl?.addEventListener("submit", sendMsg);
+    indexBtn?.addEventListener("click", runIndex);
+    newBtn?.addEventListener("click", startNew);
+    delBtn?.addEventListener("click", deleteConv);
+    modalClose?.addEventListener("click", () => { modal.style.display = "none"; });
+    modal?.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
+    modalSearch?.addEventListener("input", renderModalList);
+
+    // ── Boot ────────────────────────────────────────────────────────────
+    (async () => {
+      try {
+        const res = await fetch("/api/v1/conversaciones/users");
+        const d = await res.json();
+        if (d?.success) allUsers = d.data ?? [];
+      } catch { /* ok */ }
+      await loadAll();
+      refreshIndexStatus();
+      refreshUnread();
+      setInterval(loadAll, 12000);
+      setInterval(refreshUnread, 15000);
+      setInterval(refreshIndexStatus, 30000);
+      setInterval(pollDm, 8000);
     })();
+  })();
   </script>
 </section>
+

@@ -10,6 +10,7 @@
     "tailwindcss": "^4.2.1"
   },
   "dependencies": {
-    "daisyui": "^5.5.19"
+    "daisyui": "^5.5.19",
+    "grapesjs": "^0.22.14"
   }
 }

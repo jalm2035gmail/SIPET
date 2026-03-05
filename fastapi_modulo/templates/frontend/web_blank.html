@@ -259,5 +259,29 @@
         </div>
     </section>
     <p class="footer-credit">Desarrollado por AVANCOOP</p>
+
+    <!-- ── Admin bar (superadmin / editor / designer only) ── -->
+    <div id="sipet-admin-bar" style="display:none;position:fixed;top:0;left:0;right:0;height:44px;background:#0f172a;color:#e2e8f0;z-index:99999;display:none;align-items:center;gap:0;font-family:system-ui,sans-serif;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.35);">
+      <a id="sab-home" href="/avan/inicio" title="Ir al panel" style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;color:#94a3b8;text-decoration:none;font-size:20px;transition:background .15s;flex-shrink:0;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">&#9776;</a>
+      <span style="flex:1;padding:0 10px;font-size:12px;font-weight:600;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">SIPET &rsaquo; <span id="sab-role"></span></span>
+      <a id="sab-edit" href="/frontend/builder" title="Abrir constructor" style="display:inline-flex;align-items:center;gap:6px;padding:0 18px;height:44px;color:#e2e8f0;text-decoration:none;font-weight:700;font-size:13px;background:#2563eb;transition:background .15s;flex-shrink:0;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">&#9998; Editar p&aacute;gina</a>
+    </div>
+    <script>
+    (function(){
+      fetch('/api/web/me',{credentials:'include'})
+        .then(function(r){return r.ok?r.json():null;})
+        .then(function(d){
+          if(!d||!d.authenticated) return;
+          var bar=document.getElementById('sipet-admin-bar');
+          if(!bar) return;
+          bar.style.background=d.bar_color||'#0f172a';
+          bar.style.display='flex';
+          var rl=document.getElementById('sab-role');
+          if(rl) rl.textContent=d.is_superadmin?'Superadministrador':(d.web_roles||[]).join(' · ');
+          document.body.style.paddingTop='44px';
+        })
+        .catch(function(){});
+    })();
+    </script>
 </body>
 </html>

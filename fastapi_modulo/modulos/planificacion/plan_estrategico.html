@@ -7,6 +7,24 @@
 </head>
 <body>
     <h1>Plan Estratégico</h1>
-    <!-- Estructura de la interfaz para el plan estratégico -->
+    <form id="objetivo-form" method="post" action="/api/ia/suggest/objective-text">
+        <label for="objetivo-texto">Objetivo estratégico</label><br>
+        <textarea id="objetivo-texto" name="objetivo_texto" rows="4" cols="60" placeholder="Describe el objetivo..."></textarea><br><br>
+        <button type="button" id="btn-sugerir-ia">Sugerir con IA</button>
+    </form>
+    <div id="sugerencia-ia" style="margin-top:20px;"></div>
+    <script>
+    document.getElementById('btn-sugerir-ia').onclick = async function() {
+        const texto = document.getElementById('objetivo-texto').value;
+        const resp = await fetch('/api/ia/suggest/objective-text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texto })
+        });
+        const data = await resp.json();
+        document.getElementById('sugerencia-ia').innerHTML =
+            '<b>Sugerencia IA:</b><br>' + (data.sugerencia || data.error || 'Sin respuesta');
+    };
+    </script>
 </body>
 </html>

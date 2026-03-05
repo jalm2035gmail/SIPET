@@ -111,18 +111,38 @@ HOST="${HOST:-0.0.0.0}"
 LOG_FILE="${LOG_FILE:-uvicorn.log}"
 
 # Detener procesos previos
-PID=$(lsof -ti:"$PORT")
-if [ ! -z "$PID" ]; then
-    echo "Matando proceso en el puerto $PORT (PID: $PID)"
-    kill -9 $PID
+PIDS_EN_PUERTO=$(lsof -ti:"$PORT" 2>/dev/null)
+if [ -n "$PIDS_EN_PUERTO" ]; then
+    echo "Deteniendo procesos en el puerto $PORT: $PIDS_EN_PUERTO"
+    for PID in $PIDS_EN_PUERTO; do
+        kill "$PID" 2>/dev/null || true
+    done
+    sleep 1
+
+    PIDS_RESTANTES=$(lsof -ti:"$PORT" 2>/dev/null)
+    if [ -n "$PIDS_RESTANTES" ]; then
+        echo "Forzando cierre de procesos restantes: $PIDS_RESTANTES"
+        for PID in $PIDS_RESTANTES; do
+            kill -9 "$PID" 2>/dev/null || true
+        done
+        sleep 1
+    fi
+
+    PIDS_BLOQUEANDO=$(lsof -ti:"$PORT" 2>/dev/null)
+    if [ -n "$PIDS_BLOQUEANDO" ]; then
+        echo "Error: No se pudo liberar el puerto $PORT. Procesos bloqueando: $PIDS_BLOQUEANDO"
+        echo "Tip: intenta con permisos elevados, por ejemplo: sudo lsof -i :$PORT"
+        exit 1
+    fi
 fi
 
 # Iniciar el servidor y guardar logs reales
 echo "Iniciando servidor FastAPI en ${HOST}:${PORT}..."
 uvicorn fastapi_modulo.main:app --host "$HOST" --port "$PORT" > "$LOG_FILE" 2>&1 &
+UVICORN_PID=$!
 sleep 3
-lsof -i:"$PORT" > /dev/null
-if [ $? -eq 0 ]; then
+
+if kill -0 "$UVICORN_PID" 2>/dev/null && lsof -ti:"$PORT" 2>/dev/null | grep -qx "$UVICORN_PID"; then
     echo "Servidor iniciado correctamente en ${HOST}:${PORT}."
 else
     echo "Error: El servidor no se inició. Revisa $LOG_FILE para detalles."

@@ -1,0 +1,6 @@
+[
+  {"id": "ahorro_vista", "label": "Ahorro a la vista",   "rate": "3.50",  "color": "#3b82f6", "unit": "% anual"},
+  {"id": "dpf_6m",       "label": "DPF 6 meses",         "rate": "6.25",  "color": "#10b981", "unit": "% anual"},
+  {"id": "credito_per",  "label": "Crédito personal",    "rate": "14.00", "color": "#f59e0b", "unit": "% anual"},
+  {"id": "credito_hip",  "label": "Crédito hipotecario", "rate": "10.00", "color": "#8b5cf6", "unit": "% anual"}
+]

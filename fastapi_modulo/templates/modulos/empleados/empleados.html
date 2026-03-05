@@ -21,8 +21,10 @@
         }
         .emp-table-wrap {
             width: 100%;
-            max-height: 62vh;
-            overflow: auto;
+            min-height: 240px;
+            max-height: calc(100vh - 280px);
+            overflow-y: auto;
+            overflow-x: auto;
             border-radius: 12px;
         }
         .emp-table { 
@@ -83,23 +85,6 @@
         }
         .emp-empty { 
             color: #64748b; 
-        }
-        .view-buttons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        .view-pill {
-            padding: 6px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 20px;
-            background: #fff;
-            cursor: pointer;
-        }
-        .view-pill.active {
-            background: #0f172a;
-            color: #fff;
-            border-color: #0f172a;
         }
         .field {
             display: grid;
@@ -197,6 +182,39 @@
             background: var(--field-color, #ffffff);
             font-size: 0.95rem;
         }
+        .emp-password-wrap {
+            position: relative;
+        }
+        .emp-password-wrap input {
+            padding-right: 44px;
+        }
+        .emp-password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            border: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 24%, #ffffff 76%);
+            border-radius: 8px;
+            background: #ffffff;
+            color: #0f172a;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            cursor: pointer;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emp-password-toggle img {
+            width: 16px;
+            height: 16px;
+            display: block;
+        }
+        .emp-password-toggle[data-visible="true"] {
+            background: #0f172a;
+            color: #ffffff;
+        }
         @media (max-width: 900px) {
             .emp-form-header {
                 grid-template-columns: 1fr;
@@ -204,23 +222,6 @@
             .emp-form-grid {
                 grid-template-columns: 1fr;
             }
-        }
-        .actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        .btn {
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            background: #fff;
-            cursor: pointer;
-        }
-        .btn.primary {
-            background: #0f172a;
-            color: #fff;
-            border-color: #0f172a;
         }
         .emp-notebook {
             margin-top: 8px;
@@ -233,14 +234,31 @@
             display: flex;
             align-items: center;
             gap: 2px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
             border-bottom: 1px solid color-mix(in srgb, var(--sidebar-bottom, #0f172a) 28%, #ffffff 72%);
             background: #ffffff;
+            scrollbar-width: thin;
+            scrollbar-color: color-mix(in srgb, var(--sidebar-bottom, #0f172a) 30%, transparent) transparent;
+            -webkit-overflow-scrolling: touch;
+        }
+        .emp-notebook-tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+        .emp-notebook-tabs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .emp-notebook-tabs::-webkit-scrollbar-thumb {
+            background: color-mix(in srgb, var(--sidebar-bottom, #0f172a) 30%, transparent);
+            border-radius: 2px;
         }
         .emp-notebook-tab {
             position: relative;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            flex: 0 0 auto;
             border: 0;
             background: transparent;
             color: #1f2937;
@@ -248,6 +266,7 @@
             font-size: 1rem;
             padding: 12px 16px 14px;
             cursor: pointer;
+            white-space: nowrap;
         }
         .emp-notebook-tab::after {
             content: "";
@@ -272,6 +291,58 @@
             display: inline-block;
             flex: 0 0 auto;
         }
+        .emp-notebook-tab .tab-label {
+            display: inline;
+        }
+        .emp-notebook-tab.collapsed .tab-label {
+            display: none;
+        }
+        .tab-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            line-height: 1;
+            color: inherit;
+            opacity: 0.45;
+            margin-left: 4px;
+            flex: 0 0 auto;
+            transition: opacity 0.15s;
+        }
+        .emp-notebook-tab:hover .tab-toggle {
+            opacity: 0.9;
+        }
+        /* Tooltip de pestaña */
+        .emp-notebook-tab[data-tooltip] {
+            overflow: visible;
+        }
+        .emp-notebook-tab[data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #f1f5f9;
+            font-size: 0.74rem;
+            font-weight: 500;
+            white-space: nowrap;
+            padding: 4px 9px;
+            border-radius: 6px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            transform: translateX(-50%) translateY(4px);
+            z-index: 999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        .emp-notebook-tab[data-tooltip]:hover::before {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
         .emp-notebook-panel {
             min-height: 180px;
             padding: 14px 16px 16px;
@@ -281,6 +352,197 @@
             color: #64748b;
             text-align: center;
         }
+        /* Acordeón CV */
+        .cv-accordion {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        .cv-block {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(15,23,42,.05);
+            transition: box-shadow 0.15s;
+        }
+        .cv-block[open] {
+            box-shadow: 0 3px 10px rgba(15,23,42,.09);
+        }
+        .cv-block > summary {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: #1e293b;
+            user-select: none;
+            gap: 8px;
+        }
+        .cv-block > summary::-webkit-details-marker { display: none; }
+        .cv-block > summary::after {
+            content: '+';
+            font-size: 1rem;
+            font-weight: 700;
+            color: #94a3b8;
+            transition: transform 0.2s, color 0.15s;
+            flex: 0 0 auto;
+        }
+        .cv-block[open] > summary::after {
+            content: '\2212';
+            color: #475569;
+        }
+        .cv-block > summary:hover {
+            background: #f8fafc;
+        }
+        .cv-block-body {
+            padding: 10px 16px 14px;
+            border-top: 1px solid #f1f5f9;
+            color: #64748b;
+            font-size: 0.88rem;
+            min-height: 36px;
+        }
+        /* Campos de formulario dentro del acordeón CV */
+        .cv-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 16px;
+        }
+        .cv-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .cv-field label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .cv-field input {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 0.88rem;
+            color: #1e293b;
+            background: #f8fafc;
+            outline: none;
+            transition: border-color 0.15s, background 0.15s;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .cv-field input:focus {
+            border-color: #94a3b8;
+            background: #fff;
+        }
+        @media (max-width: 620px) {
+            .cv-fields { grid-template-columns: 1fr; }
+        }
+        /* Editor de texto enriquecido (perfil profesional) */
+        .cv-rte-toolbar {
+            display: flex;
+            gap: 3px;
+            padding: 0 0 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .cv-rte-btn {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 5px;
+            padding: 3px 9px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: #475569;
+            transition: background 0.12s, border-color 0.12s;
+            line-height: 1.4;
+            font-family: inherit;
+        }
+        .cv-rte-btn:hover { background: #e2e8f0; border-color: #cbd5e1; }
+        .cv-rte-sep { width: 1px; height: 18px; background: #e2e8f0; margin: 0 3px; display: inline-block; }
+        .cv-rte-editor {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            min-height: 130px;
+            font-size: 0.88rem;
+            color: #1e293b;
+            background: #f8fafc;
+            outline: none;
+            line-height: 1.7;
+            cursor: text;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .cv-rte-editor:focus { border-color: #94a3b8; background: #fff; }
+        .cv-rte-editor:empty::before {
+            content: attr(data-placeholder);
+            color: #94a3b8;
+            font-style: italic;
+            pointer-events: none;
+        }
+        /* Experiencia Laboral */
+        .cv-exp-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+        .cv-exp-entry { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; }
+        .cv-exp-entry-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+        .cv-exp-entry-label { font-weight: 700; font-size: 0.82rem; color: #475569; }
+        .cv-exp-del-btn { border: none; background: none; cursor: pointer; color: #94a3b8; font-size: 1rem; padding: 0 4px; transition: color 0.15s; line-height: 1; }
+        .cv-exp-del-btn:hover { color: #ef4444; }
+        .cv-exp-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+        .cv-exp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+        .cv-date-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .cv-date-row select { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 0.85rem; color: #1e293b; background: #f8fafc; outline: none; font-family: inherit; }
+        .cv-date-row input[type="number"] { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 0.85rem; color: #1e293b; background: #f8fafc; outline: none; font-family: inherit; width: 78px; }
+        .cv-date-row select:focus, .cv-date-row input:focus { border-color: #94a3b8; background: #fff; }
+        .cv-actual-label { font-size: 0.8rem; color: #475569; display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
+        .cv-exp-logros { min-height: 80px; }
+        .cv-exp-add-btn { border: 2px dashed #cbd5e1; border-radius: 8px; background: transparent; color: #64748b; font-size: 0.86rem; font-weight: 600; padding: 8px 0; cursor: pointer; width: 100%; transition: border-color 0.15s, color 0.15s; font-family: inherit; }
+        .cv-exp-add-btn:hover { border-color: #94a3b8; color: #334155; }
+        @media (max-width: 620px) { .cv-exp-grid { grid-template-columns: 1fr; } }
+        /* Habilidades - skills tags */
+        .cv-skills-section { margin-bottom: 14px; }
+        .cv-skills-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .cv-skills-section-title span { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+        .cv-skills-hard-dot { background: #3b82f6; }
+        .cv-skills-soft-dot { background: #10b981; }
+        .cv-skills-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; margin-bottom: 8px; }
+        .cv-skill-tag { display: inline-flex; align-items: center; gap: 5px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 3px 10px 3px 12px; font-size: 0.8rem; color: #1e293b; font-weight: 500; }
+        .cv-skill-tag .cv-skill-level { font-size: 0.7rem; color: #64748b; font-weight: 400; }
+        .cv-skill-tag .cv-skill-del { border: none; background: none; cursor: pointer; color: #94a3b8; font-size: 0.72rem; padding: 0; line-height: 1; margin-left: 2px; transition: color 0.12s; }
+        .cv-skill-tag .cv-skill-del:hover { color: #ef4444; }
+        .cv-skill-input-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .cv-skill-input-row input { flex: 1; min-width: 120px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; color: #1e293b; background: #f8fafc; outline: none; font-family: inherit; }
+        .cv-skill-input-row input:focus { border-color: #94a3b8; background: #fff; }
+        .cv-skill-input-row select { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; font-size: 0.85rem; color: #1e293b; background: #f8fafc; outline: none; font-family: inherit; }
+        .cv-skill-input-row select:focus { border-color: #94a3b8; background: #fff; }
+        .cv-skill-add-btn { border: none; border-radius: 6px; background: #e2e8f0; color: #334155; font-size: 0.82rem; font-weight: 700; padding: 6px 12px; cursor: pointer; white-space: nowrap; transition: background 0.12s; font-family: inherit; }
+        .cv-skill-add-btn:hover { background: #cbd5e1; }
+        /* Idiomas - lang tags */
+        .cv-lang-tag { display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 4px 10px 4px 12px; font-size: 0.82rem; color: #1e293b; font-weight: 500; }
+        .cv-lang-badge { font-size: 0.68rem; font-weight: 700; border-radius: 10px; padding: 2px 7px; }
+        .cv-lang-badge.cefr-a { background: #dbeafe; color: #1d4ed8; }
+        .cv-lang-badge.cefr-b { background: #fef3c7; color: #92400e; }
+        .cv-lang-badge.cefr-c { background: #dcfce7; color: #166534; }
+        .cv-lang-badge.cefr-n { background: #f3e8ff; color: #6b21a8; }
+        .cv-lang-tag .cv-lang-del { border: none; background: none; cursor: pointer; color: #94a3b8; font-size: 0.72rem; padding: 0; line-height: 1; margin-left: 2px; transition: color 0.12s; }
+        .cv-lang-tag .cv-lang-del:hover { color: #ef4444; }
+        /* Información Adicional */
+        .cv-field textarea { border: 1px solid #e2e8f0; border-radius: 6px; padding: 7px 10px; font-size: 0.88rem; color: #1e293b; background: #f8fafc; outline: none; resize: vertical; min-height: 72px; width: 100%; box-sizing: border-box; font-family: inherit; transition: border-color 0.15s, background 0.15s; }
+        .cv-field textarea:focus { border-color: #94a3b8; background: #fff; }
+        .cv-field select { border: 1px solid #e2e8f0; border-radius: 6px; padding: 7px 10px; font-size: 0.88rem; color: #1e293b; background: #f8fafc; outline: none; width: 100%; box-sizing: border-box; font-family: inherit; transition: border-color 0.15s, background 0.15s; }
+        .cv-field select:focus { border-color: #94a3b8; background: #fff; }
+        .cv-check-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc; cursor: pointer; font-size: 0.88rem; color: #1e293b; font-family: inherit; }
+        .cv-check-row input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #3b82f6; flex: 0 0 auto; }
+        .cv-adicional-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+        .cv-adicional-full { grid-column: 1 / -1; }
+        @media (max-width: 620px) { .cv-adicional-grid { grid-template-columns: 1fr; } .cv-adicional-full { grid-column: 1; } }
         .emp-kanban-board {
             display: grid;
             gap: 12px;
@@ -665,7 +927,27 @@
         var viewerCanViewAll = false;
         var viewerCanManageAccess = false;
         var viewerAssignableRoles = [];
-        var currentAccessState = { rol: 'usuario', menu_blocks: [], poa_access_level: 'mis_tareas' };
+        var currentAccessState = { rol: 'usuario', menu_blocks: [], poa_access_level: 'mis_tareas', app_access: [], web_roles: [] };
+        var lastSelectedColabId = 0;
+        var currentCvContacto = {};
+        var currentCvPerfil = '';
+        var currentCvExperiencia = [];
+        var currentCvEducacion = [];
+        var currentCvHabilidades = { tecnicas: [], blandas: [] };
+        var currentCvIdiomas = [];
+        var currentCvFormacion = [];
+        var currentCvLogros = [];
+        var currentCvPublicaciones = [];
+        var currentCvVoluntariado = [];
+        var currentCvInfoAdicional = {};
+        var currentIdentidadMision = '';
+        var currentIdentidadVision = '';
+        var _cvExpCounter = 0;
+        var _cvEduCounter = 0;
+        var _cvFormaCounter = 0;
+        var _cvLogrosCounter = 0;
+        var _cvPubCounter = 0;
+        var _cvVolCounter = 0;
         
         // Función para escapar caracteres HTML
         function esc(v) {
@@ -719,10 +1001,709 @@
             if (normalized === 'departamento') return 'Departamento';
             return 'Usuario';
         }
+        function _expMonthOptions(sel) {
+            var months = [null,'Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            var h = '<option value="">Mes</option>';
+            for (var mi = 1; mi <= 12; mi++) {
+                h += '<option value="' + mi + '"' + (String(sel) === String(mi) ? ' selected' : '') + '>' + months[mi] + '</option>';
+            }
+            return h;
+        }
+        function _renderSkillTag(nombre, nivel, type, listEl) {
+            var tag = document.createElement('span');
+            tag.className = 'cv-skill-tag';
+            tag.innerHTML = esc(nombre) + (nivel ? ' <span class="cv-skill-level">(' + esc(nivel) + ')</span>' : '') + '<button type="button" class="cv-skill-del" title="Eliminar">&#x2715;</button>';
+            tag.querySelector('.cv-skill-del').addEventListener('click', function() { tag.remove(); });
+            tag.dataset.nombre = nombre;
+            tag.dataset.nivel  = nivel;
+            tag.dataset.type   = type;
+            listEl.appendChild(tag);
+        }
+        function _initCvHabilidades() {
+            ['hard','soft'].forEach(function(type) {
+                var listEl  = document.getElementById('cv-skills-' + type + '-list');
+                var nameIn  = document.getElementById('cv-skills-' + type + '-name');
+                var levelIn = document.getElementById('cv-skills-' + type + '-level');
+                var addBtn  = document.getElementById('cv-skills-' + type + '-add');
+                if (!listEl || !addBtn) return;
+                var arr = type === 'hard' ? (currentCvHabilidades.tecnicas || []) : (currentCvHabilidades.blandas || []);
+                for (var si = 0; si < arr.length; si++) {
+                    _renderSkillTag(arr[si].nombre || '', arr[si].nivel || '', type, listEl);
+                }
+                addBtn.addEventListener('click', function() {
+                    var nm = (nameIn.value || '').trim();
+                    if (!nm) { nameIn.focus(); return; }
+                    _renderSkillTag(nm, levelIn.value, type, listEl);
+                    nameIn.value = '';
+                    levelIn.value = '';
+                    nameIn.focus();
+                });
+                nameIn.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+                });
+            });
+        }
+        function _getCvHabilidadesData() {
+            var result = { tecnicas: [], blandas: [] };
+            ['hard','soft'].forEach(function(type) {
+                var listEl = document.getElementById('cv-skills-' + type + '-list');
+                if (!listEl) return;
+                listEl.querySelectorAll('.cv-skill-tag').forEach(function(tag) {
+                    var key = type === 'hard' ? 'tecnicas' : 'blandas';
+                    result[key].push({ nombre: tag.dataset.nombre || '', nivel: tag.dataset.nivel || '' });
+                });
+            });
+            return result;
+        }
+        function _cefrClass(nivel) {
+            var n = String(nivel || '').toUpperCase();
+            if (n.indexOf('NATIVO') !== -1 || n.indexOf('BILING') !== -1) return 'cefr-n';
+            if (n.charAt(0) === 'C') return 'cefr-c';
+            if (n.charAt(0) === 'B') return 'cefr-b';
+            return 'cefr-a';
+        }
+        function _renderLangTag(nombre, nivel, listEl) {
+            var tag = document.createElement('span');
+            tag.className = 'cv-lang-tag';
+            var badge = nivel ? '<span class="cv-lang-badge ' + _cefrClass(nivel) + '">' + esc(nivel) + '</span>' : '';
+            tag.innerHTML = esc(nombre) + badge + '<button type="button" class="cv-lang-del" title="Eliminar">&#x2715;</button>';
+            tag.querySelector('.cv-lang-del').addEventListener('click', function() { tag.remove(); });
+            tag.dataset.nombre = nombre;
+            tag.dataset.nivel  = nivel || '';
+            listEl.appendChild(tag);
+        }
+        function _initCvIdiomas() {
+            var listEl  = document.getElementById('cv-lang-list');
+            var nameIn  = document.getElementById('cv-lang-name');
+            var levelIn = document.getElementById('cv-lang-level');
+            var addBtn  = document.getElementById('cv-lang-add');
+            if (!listEl || !addBtn) return;
+            for (var li = 0; li < currentCvIdiomas.length; li++) {
+                _renderLangTag(currentCvIdiomas[li].nombre || '', currentCvIdiomas[li].nivel || '', listEl);
+            }
+            addBtn.addEventListener('click', function() {
+                var nm = (nameIn.value || '').trim();
+                if (!nm) { nameIn.focus(); return; }
+                _renderLangTag(nm, levelIn.value, listEl);
+                nameIn.value = '';
+                levelIn.selectedIndex = 0;
+                nameIn.focus();
+            });
+            nameIn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); addBtn.click(); }
+            });
+        }
+        function _getCvIdiomasData() {
+            var result = [];
+            var listEl = document.getElementById('cv-lang-list');
+            if (!listEl) return result;
+            listEl.querySelectorAll('.cv-lang-tag').forEach(function(tag) {
+                result.push({ nombre: tag.dataset.nombre || '', nivel: tag.dataset.nivel || '' });
+            });
+            return result;
+        }
+        function _addCvFormaEntry(d, container) {
+            if (!container) return;
+            _cvFormaCounter++;
+            var idx = _cvFormaCounter;
+            var data = d || {};
+            var el = document.createElement('div');
+            el.className = 'cv-exp-entry';
+            el.innerHTML =
+                '<div class="cv-exp-entry-header">' +
+                '<span class="cv-exp-entry-label">Curso / Certificaci\u00f3n #' + idx + '</span>' +
+                '<button type="button" class="cv-exp-del-btn" title="Eliminar">&#x2715;</button>' +
+                '</div>' +
+                '<div class="cv-exp-body">' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Nombre del curso / certificaci\u00f3n</label><input class="cv-forma-nombre" type="text" placeholder="Ej. Certificaci\u00f3n PMP, Curso de Python..." value="' + esc(data.nombre||'') + '" autocomplete="off"></div>' +
+                '<div class="cv-field"><label>Entidad / Institución que lo imparti\u00f3</label><input class="cv-forma-entidad" type="text" placeholder="Ej. Coursera, PMI, UNAM..." value="' + esc(data.entidad||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Fecha de obtenci\u00f3n</label><div class="cv-date-row"><select class="cv-forma-mes">' + _expMonthOptions(data.mes||'') + '</select><input class="cv-forma-anio" type="number" placeholder="A\u00f1o" min="1950" max="2099" value="' + esc(data.anio||'') + '"></div></div>' +
+                '<div class="cv-field"><label>Descripci\u00f3n breve <span style="font-weight:400;color:#94a3b8">(opcional)</span></label><input class="cv-forma-desc" type="text" placeholder="Tema principal, horas, modalidad..." value="' + esc(data.descripcion||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '</div>';
+            el.querySelector('.cv-exp-del-btn').addEventListener('click', function() { el.remove(); });
+            container.appendChild(el);
+        }
+        function _getCvFormacionData() {
+            var result = [];
+            var container = document.getElementById('cv-forma-list');
+            if (!container) return result;
+            container.querySelectorAll('.cv-exp-entry').forEach(function(el) {
+                result.push({
+                    nombre:      (el.querySelector('.cv-forma-nombre')  ? el.querySelector('.cv-forma-nombre').value  : '').trim(),
+                    entidad:     (el.querySelector('.cv-forma-entidad') ? el.querySelector('.cv-forma-entidad').value : '').trim(),
+                    mes:         (el.querySelector('.cv-forma-mes')     ? el.querySelector('.cv-forma-mes').value     : '').trim(),
+                    anio:        (el.querySelector('.cv-forma-anio')    ? el.querySelector('.cv-forma-anio').value    : '').trim(),
+                    descripcion: (el.querySelector('.cv-forma-desc')    ? el.querySelector('.cv-forma-desc').value    : '').trim(),
+                });
+            });
+            return result;
+        }
+        function _initCvFormacion() {
+            _cvFormaCounter = 0;
+            var container = document.getElementById('cv-forma-list');
+            var addBtn    = document.getElementById('cv-forma-add');
+            if (!container || !addBtn) return;
+            for (var fi = 0; fi < currentCvFormacion.length; fi++) {
+                _addCvFormaEntry(currentCvFormacion[fi], container);
+            }
+            addBtn.addEventListener('click', function() { _addCvFormaEntry({}, container); });
+        }
+        function _addCvLogroEntry(d, container) {
+            if (!container) return;
+            _cvLogrosCounter++;
+            var idx = _cvLogrosCounter;
+            var data = d || {};
+            var el = document.createElement('div');
+            el.className = 'cv-exp-entry';
+            el.innerHTML =
+                '<div class="cv-exp-entry-header">' +
+                '<span class="cv-exp-entry-label">Logro / Reconocimiento #' + idx + '</span>' +
+                '<button type="button" class="cv-exp-del-btn" title="Eliminar">&#x2715;</button>' +
+                '</div>' +
+                '<div class="cv-exp-body">' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>T\u00edtulo / Premio / Reconocimiento</label><input class="cv-logro-titulo" type="text" placeholder="Ej. Empleado del A\u00f1o, Premio de Innovaci\u00f3n..." value="' + esc(data.titulo||'') + '" autocomplete="off"></div>' +
+                '<div class="cv-field"><label>Org. / Entidad que lo otorg\u00f3</label><input class="cv-logro-entidad" type="text" placeholder="Ej. Empresa XYZ, Asociaci\u00f3n ABC..." value="' + esc(data.entidad||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Fecha</label><div class="cv-date-row"><select class="cv-logro-mes">' + _expMonthOptions(data.mes||'') + '</select><input class="cv-logro-anio" type="number" placeholder="A\u00f1o" min="1950" max="2099" value="' + esc(data.anio||'') + '"></div></div>' +
+                '<div class="cv-field"><label>Descripci\u00f3n <span style="font-weight:400;color:#94a3b8">(opcional)</span></label><input class="cv-logro-desc" type="text" placeholder="Breve descripci\u00f3n o contexto del logro..." value="' + esc(data.descripcion||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '</div>';
+            el.querySelector('.cv-exp-del-btn').addEventListener('click', function() { el.remove(); });
+            container.appendChild(el);
+        }
+        function _getCvLogrosData() {
+            var result = [];
+            var container = document.getElementById('cv-logros-list');
+            if (!container) return result;
+            container.querySelectorAll('.cv-exp-entry').forEach(function(el) {
+                result.push({
+                    titulo:      (el.querySelector('.cv-logro-titulo')  ? el.querySelector('.cv-logro-titulo').value  : '').trim(),
+                    entidad:     (el.querySelector('.cv-logro-entidad') ? el.querySelector('.cv-logro-entidad').value : '').trim(),
+                    mes:         (el.querySelector('.cv-logro-mes')     ? el.querySelector('.cv-logro-mes').value     : '').trim(),
+                    anio:        (el.querySelector('.cv-logro-anio')    ? el.querySelector('.cv-logro-anio').value    : '').trim(),
+                    descripcion: (el.querySelector('.cv-logro-desc')    ? el.querySelector('.cv-logro-desc').value    : '').trim(),
+                });
+            });
+            return result;
+        }
+        function _initCvLogros() {
+            _cvLogrosCounter = 0;
+            var container = document.getElementById('cv-logros-list');
+            var addBtn    = document.getElementById('cv-logros-add');
+            if (!container || !addBtn) return;
+            for (var gi = 0; gi < currentCvLogros.length; gi++) {
+                _addCvLogroEntry(currentCvLogros[gi], container);
+            }
+            addBtn.addEventListener('click', function() { _addCvLogroEntry({}, container); });
+        }
+        function _addCvPubEntry(d, container) {
+            if (!container) return;
+            _cvPubCounter++;
+            var idx = _cvPubCounter;
+            var data = d || {};
+            var _tipoOpts = '<option value="">Tipo</option>' +
+                '<option' + (data.tipo==='Artículo'?' selected':'') + '>Art\u00edculo</option>' +
+                '<option' + (data.tipo==='Libro'?' selected':'') + '>Libro</option>' +
+                '<option' + (data.tipo==='Cap\u00edtulo de libro'?' selected':'') + '>Cap\u00edtulo de libro</option>' +
+                '<option' + (data.tipo==='Patente'?' selected':'') + '>Patente</option>' +
+                '<option' + (data.tipo==='Tesis'?' selected':'') + '>Tesis</option>' +
+                '<option' + (data.tipo==='Ponencia'?' selected':'') + '>Ponencia</option>' +
+                '<option' + (data.tipo==='Otro'?' selected':'') + '>Otro</option>';
+            var el = document.createElement('div');
+            el.className = 'cv-exp-entry';
+            el.innerHTML =
+                '<div class="cv-exp-entry-header">' +
+                '<span class="cv-exp-entry-label">Publicaci\u00f3n / Patente #' + idx + '</span>' +
+                '<button type="button" class="cv-exp-del-btn" title="Eliminar">&#x2715;</button>' +
+                '</div>' +
+                '<div class="cv-exp-body">' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>T\u00edtulo</label><input class="cv-pub-titulo" type="text" placeholder="T\u00edtulo de la publicaci\u00f3n o nombre de la patente" value="' + esc(data.titulo||'') + '" autocomplete="off"></div>' +
+                '<div class="cv-field"><label>Tipo</label><select class="cv-pub-tipo">' + _tipoOpts + '</select></div>' +
+                '</div>' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Autores / Co-autores</label><input class="cv-pub-autores" type="text" placeholder="Ej. P\u00e9rez J., Garc\u00eda M., ..." value="' + esc(data.autores||'') + '" autocomplete="off"></div>' +
+                '<div class="cv-field"><label>Publicado en / Editorial / N\u00ba patente</label><input class="cv-pub-publicado" type="text" placeholder="Revista, editorial o n\u00famero de patente" value="' + esc(data.publicado_en||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Fecha</label><div class="cv-date-row"><select class="cv-pub-mes">' + _expMonthOptions(data.mes||'') + '</select><input class="cv-pub-anio" type="number" placeholder="A\u00f1o" min="1900" max="2099" value="' + esc(data.anio||'') + '"></div></div>' +
+                '<div class="cv-field"><label>URL / DOI <span style="font-weight:400;color:#94a3b8">(opcional)</span></label><input class="cv-pub-url" type="text" placeholder="https://doi.org/... o enlace" value="' + esc(data.url||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '</div>';
+            el.querySelector('.cv-exp-del-btn').addEventListener('click', function() { el.remove(); });
+            container.appendChild(el);
+        }
+        function _getCvPublicacionesData() {
+            var result = [];
+            var container = document.getElementById('cv-pub-list');
+            if (!container) return result;
+            container.querySelectorAll('.cv-exp-entry').forEach(function(el) {
+                result.push({
+                    titulo:       (el.querySelector('.cv-pub-titulo')    ? el.querySelector('.cv-pub-titulo').value    : '').trim(),
+                    tipo:         (el.querySelector('.cv-pub-tipo')      ? el.querySelector('.cv-pub-tipo').value      : '').trim(),
+                    autores:      (el.querySelector('.cv-pub-autores')   ? el.querySelector('.cv-pub-autores').value   : '').trim(),
+                    publicado_en: (el.querySelector('.cv-pub-publicado') ? el.querySelector('.cv-pub-publicado').value : '').trim(),
+                    mes:          (el.querySelector('.cv-pub-mes')       ? el.querySelector('.cv-pub-mes').value       : '').trim(),
+                    anio:         (el.querySelector('.cv-pub-anio')      ? el.querySelector('.cv-pub-anio').value      : '').trim(),
+                    url:          (el.querySelector('.cv-pub-url')       ? el.querySelector('.cv-pub-url').value       : '').trim(),
+                });
+            });
+            return result;
+        }
+        function _initCvPublicaciones() {
+            _cvPubCounter = 0;
+            var container = document.getElementById('cv-pub-list');
+            var addBtn    = document.getElementById('cv-pub-add');
+            if (!container || !addBtn) return;
+            for (var pi = 0; pi < currentCvPublicaciones.length; pi++) {
+                _addCvPubEntry(currentCvPublicaciones[pi], container);
+            }
+            addBtn.addEventListener('click', function() { _addCvPubEntry({}, container); });
+        }
+        function _addCvVolEntry(d, container) {
+            if (!container) return;
+            _cvVolCounter++;
+            var idx = _cvVolCounter;
+            var data = d || {};
+            var el = document.createElement('div');
+            el.className = 'cv-exp-entry';
+            el.innerHTML =
+                '<div class="cv-exp-entry-header"><span class="cv-exp-entry-label">Voluntariado #' + idx + '</span><button type="button" class="cv-exp-del-btn" title="Eliminar">&#x2715;</button></div>' +
+                '<div class="cv-exp-body">' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Organizaci\u00f3n</label><input class="cv-vol-org" type="text" placeholder="ONG, fundaci\u00f3n o instituci\u00f3n" value="' + esc(data.organizacion||'') + '" autocomplete="off"></div>' +
+                '<div class="cv-field"><label>Rol / Actividad</label><input class="cv-vol-rol" type="text" placeholder="Ej. Tutor, Coordinador de proyectos..." value="' + esc(data.rol||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Fecha de inicio</label><div class="cv-date-row"><select class="cv-vol-inicio-mes">' + _expMonthOptions(data.inicio_mes||'') + '</select><input class="cv-vol-inicio-anio" type="number" placeholder="A\u00f1o" min="1950" max="2099" value="' + esc(data.inicio_anio||'') + '"></div></div>' +
+                '<div class="cv-field"><label>Fecha de fin</label><div class="cv-date-row"><select class="cv-vol-fin-mes"' + (data.actual ? ' disabled' : '') + '>' + _expMonthOptions(data.fin_mes||'') + '</select><input class="cv-vol-fin-anio" type="number" placeholder="A\u00f1o" min="1950" max="2099" value="' + esc(data.fin_anio||'') + '"' + (data.actual ? ' disabled' : '') + '><label class="cv-actual-label"><input type="checkbox" class="cv-vol-actual"' + (data.actual ? ' checked' : '') + '> Actual</label></div></div>' +
+                '</div>' +
+                '<div class="cv-field" style="margin-top:6px"><label>Descripci\u00f3n <span style="font-weight:400;color:#94a3b8">(opcional)</span></label><input class="cv-vol-desc" type="text" placeholder="Tareas, impacto o habilidades desarrolladas..." value="' + esc(data.descripcion||'') + '" autocomplete="off"></div>' +
+                '</div>';
+            el.querySelector('.cv-exp-del-btn').addEventListener('click', function() { el.remove(); });
+            var actualCb = el.querySelector('.cv-vol-actual');
+            var finMes = el.querySelector('.cv-vol-fin-mes');
+            var finAnio = el.querySelector('.cv-vol-fin-anio');
+            actualCb.addEventListener('change', function() { finMes.disabled = this.checked; finAnio.disabled = this.checked; });
+            container.appendChild(el);
+        }
+        function _getCvVoluntariadoData() {
+            var result = [];
+            var container = document.getElementById('cv-vol-list');
+            if (!container) return result;
+            container.querySelectorAll('.cv-exp-entry').forEach(function(el) {
+                result.push({
+                    organizacion: (el.querySelector('.cv-vol-org')         ? el.querySelector('.cv-vol-org').value         : '').trim(),
+                    rol:          (el.querySelector('.cv-vol-rol')         ? el.querySelector('.cv-vol-rol').value         : '').trim(),
+                    inicio_mes:   (el.querySelector('.cv-vol-inicio-mes')  ? el.querySelector('.cv-vol-inicio-mes').value  : '').trim(),
+                    inicio_anio:  (el.querySelector('.cv-vol-inicio-anio') ? el.querySelector('.cv-vol-inicio-anio').value : '').trim(),
+                    fin_mes:      (el.querySelector('.cv-vol-fin-mes')     ? el.querySelector('.cv-vol-fin-mes').value     : '').trim(),
+                    fin_anio:     (el.querySelector('.cv-vol-fin-anio')    ? el.querySelector('.cv-vol-fin-anio').value    : '').trim(),
+                    actual:       !!(el.querySelector('.cv-vol-actual') && el.querySelector('.cv-vol-actual').checked),
+                    descripcion:  (el.querySelector('.cv-vol-desc')        ? el.querySelector('.cv-vol-desc').value        : '').trim()
+                });
+            });
+            return result;
+        }
+        function _initCvVoluntariado() {
+            _cvVolCounter = 0;
+            var container = document.getElementById('cv-vol-list');
+            var addBtn    = document.getElementById('cv-vol-add');
+            if (!container || !addBtn) return;
+            for (var vi = 0; vi < currentCvVoluntariado.length; vi++) { _addCvVolEntry(currentCvVoluntariado[vi], container); }
+            addBtn.addEventListener('click', function() { _addCvVolEntry({}, container); });
+        }
+        function _initCvInfoAdicional() {
+            var d = currentCvInfoAdicional || {};
+            var el;
+            el = document.getElementById('cv-adic-carnet-cb');       if (el) el.checked = !!d.carnet_conducir;
+            el = document.getElementById('cv-adic-carnet-tipo');     if (el) el.value = d.tipo_carnet || '';
+            el = document.getElementById('cv-adic-vehiculo-cb');     if (el) el.checked = !!d.vehiculo_propio;
+            el = document.getElementById('cv-adic-viaje');           if (el) el.value = d.disponibilidad_viaje || '';
+            el = document.getElementById('cv-adic-traslado');        if (el) el.value = d.disponibilidad_traslado || '';
+            el = document.getElementById('cv-adic-notas');           if (el) el.value = d.notas || '';
+        }
+        function _getCvInfoAdicionalData() {
+            var get = function(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
+            var chk = function(id) { var e = document.getElementById(id); return !!(e && e.checked); };
+            return {
+                carnet_conducir:          chk('cv-adic-carnet-cb'),
+                tipo_carnet:             get('cv-adic-carnet-tipo'),
+                vehiculo_propio:          chk('cv-adic-vehiculo-cb'),
+                disponibilidad_viaje:     get('cv-adic-viaje'),
+                disponibilidad_traslado:  get('cv-adic-traslado'),
+                notas:                    get('cv-adic-notas')
+            };
+        }
+        function _addCvEduEntry(d, container) {
+            if (!container) return;
+            _cvEduCounter++;
+            var idx = _cvEduCounter;
+            var data = d || {};
+            var el = document.createElement('div');
+            el.className = 'cv-exp-entry';
+            el.innerHTML =
+                '<div class="cv-exp-entry-header">' +
+                '<span class="cv-exp-entry-label">Educación #' + idx + '</span>' +
+                '<button type="button" class="cv-exp-del-btn" title="Eliminar">&#x2715;</button>' +
+                '</div>' +
+                '<div class="cv-exp-body">' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Título obtenido</label><input class="cv-edu-titulo" type="text" placeholder="Ej. Grado en Administración de Empresas" value="' + esc(data.titulo||'') + '" autocomplete="off"></div>' +
+                '<div class="cv-field"><label>Institución</label><input class="cv-edu-institucion" type="text" placeholder="Nombre de la universidad o centro" value="' + esc(data.institucion||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Fecha de inicio</label><div class="cv-date-row"><select class="cv-edu-inicio-mes">' + _expMonthOptions(data.inicio_mes||'') + '</select><input class="cv-edu-inicio-anio" type="number" placeholder="Año" min="1950" max="2099" value="' + esc(data.inicio_anio||'') + '"></div></div>' +
+                '<div class="cv-field"><label>Fecha de fin / Graduación</label><div class="cv-date-row"><select class="cv-edu-fin-mes"' + (data.actual?' disabled':'') + '>' + _expMonthOptions(data.fin_mes||'') + '</select><input class="cv-edu-fin-anio" type="number" placeholder="Año" min="1950" max="2099" value="' + esc(data.fin_anio||'') + '"' + (data.actual?' disabled':'') + '><label class="cv-actual-label"><input type="checkbox" class="cv-edu-actual"' + (data.actual?' checked':'') + '> En curso</label></div></div>' +
+                '</div>' +
+                '</div>';
+            el.querySelector('.cv-exp-del-btn').addEventListener('click', function() { el.remove(); });
+            var actualCb = el.querySelector('.cv-edu-actual');
+            var finMes   = el.querySelector('.cv-edu-fin-mes');
+            var finAnio  = el.querySelector('.cv-edu-fin-anio');
+            actualCb.addEventListener('change', function() { finMes.disabled = this.checked; finAnio.disabled = this.checked; });
+            container.appendChild(el);
+        }
+        function _getCvEduData() {
+            var container = document.getElementById('cv-edu-list');
+            if (!container) return currentCvEducacion;
+            var entries = container.querySelectorAll('.cv-exp-entry');
+            var result = [];
+            for (var ei = 0; ei < entries.length; ei++) {
+                var ent = entries[ei];
+                result.push({
+                    titulo:       (ent.querySelector('.cv-edu-titulo')?.value       || '').trim(),
+                    institucion:  (ent.querySelector('.cv-edu-institucion')?.value  || '').trim(),
+                    inicio_mes:   (ent.querySelector('.cv-edu-inicio-mes')?.value   || '').trim(),
+                    inicio_anio:  (ent.querySelector('.cv-edu-inicio-anio')?.value  || '').trim(),
+                    fin_mes:      (ent.querySelector('.cv-edu-fin-mes')?.value      || '').trim(),
+                    fin_anio:     (ent.querySelector('.cv-edu-fin-anio')?.value     || '').trim(),
+                    actual:       !!(ent.querySelector('.cv-edu-actual')?.checked)
+                });
+            }
+            return result;
+        }
+        function _initCvEducacion() {
+            _cvEduCounter = 0;
+            var container = document.getElementById('cv-edu-list');
+            var addBtn    = document.getElementById('cv-edu-add');
+            if (!container || !addBtn) return;
+            for (var xi = 0; xi < currentCvEducacion.length; xi++) {
+                _addCvEduEntry(currentCvEducacion[xi], container);
+            }
+            addBtn.addEventListener('click', function() { _addCvEduEntry({}, container); });
+        }
+        function _addCvExpEntry(d, container) {
+            if (!container) return;
+            _cvExpCounter++;
+            var idx = _cvExpCounter;
+            var data = d || {};
+            var el = document.createElement('div');
+            el.className = 'cv-exp-entry';
+            el.innerHTML =
+                '<div class="cv-exp-entry-header">' +
+                '<span class="cv-exp-entry-label">Experiencia #' + idx + '</span>' +
+                '<button type="button" class="cv-exp-del-btn" title="Eliminar">&#x2715;</button>' +
+                '</div>' +
+                '<div class="cv-exp-body">' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Cargo / Puesto</label><input class="cv-exp-cargo" type="text" placeholder="Ej. Gerente de Operaciones" value="' + esc(data.cargo||'') + '" autocomplete="off"></div>' +
+                '<div class="cv-field"><label>Empresa</label><input class="cv-exp-empresa" type="text" placeholder="Nombre de la empresa" value="' + esc(data.empresa||'') + '" autocomplete="off"></div>' +
+                '</div>' +
+                '<div class="cv-exp-grid">' +
+                '<div class="cv-field"><label>Fecha de inicio</label><div class="cv-date-row"><select class="cv-exp-inicio-mes">' + _expMonthOptions(data.inicio_mes||'') + '</select><input class="cv-exp-inicio-anio" type="number" placeholder="A\u00f1o" min="1950" max="2099" value="' + esc(data.inicio_anio||'') + '"></div></div>' +
+                '<div class="cv-field"><label>Fecha de fin</label><div class="cv-date-row"><select class="cv-exp-fin-mes"' + (data.actual?' disabled':'')+'>'+_expMonthOptions(data.fin_mes||'')+'</select><input class="cv-exp-fin-anio" type="number" placeholder="A\u00f1o" min="1950" max="2099" value="'+esc(data.fin_anio||'')+'"'+(data.actual?' disabled':'')+' ><label class="cv-actual-label"><input type="checkbox" class="cv-exp-actual"'+(data.actual?' checked':'')+' > Actual</label></div></div>' +
+                '</div>' +
+                '<div class="cv-field"><label>Logros y responsabilidades</label>' +
+                '<div class="cv-rte-toolbar cv-exp-toolbar">' +
+                '<button type="button" class="cv-rte-btn" data-cmd="bold"><b>B</b></button>' +
+                '<button type="button" class="cv-rte-btn" data-cmd="italic"><i>I</i></button>' +
+                '<button type="button" class="cv-rte-btn" data-cmd="underline"><u>U</u></button>' +
+                '<span class="cv-rte-sep"></span>' +
+                '<button type="button" class="cv-rte-btn" data-cmd="insertUnorderedList">&#8226; Lista</button>' +
+                '</div>' +
+                '<div class="cv-rte-editor cv-exp-logros" contenteditable="true" data-placeholder="Describe logros y responsabilidades...">' + (data.logros||'') + '</div>' +
+                '</div>' +
+                '</div>';
+            el.querySelector('.cv-exp-del-btn').addEventListener('click', function() { el.remove(); });
+            var actualCb = el.querySelector('.cv-exp-actual');
+            var finMes  = el.querySelector('.cv-exp-fin-mes');
+            var finAnio = el.querySelector('.cv-exp-fin-anio');
+            actualCb.addEventListener('change', function() { finMes.disabled = this.checked; finAnio.disabled = this.checked; });
+            el.querySelector('.cv-exp-toolbar').addEventListener('mousedown', function(e) {
+                var btn = e.target.closest ? e.target.closest('[data-cmd]') : null;
+                if (!btn) return;
+                e.preventDefault();
+                var logrosEl = el.querySelector('.cv-exp-logros');
+                if (logrosEl) { logrosEl.focus(); document.execCommand(btn.getAttribute('data-cmd'), false, null); }
+            });
+            container.appendChild(el);
+        }
+        function _getCvExperienciaData() {
+            var container = document.getElementById('cv-exp-list');
+            if (!container) return currentCvExperiencia;
+            var entries = container.querySelectorAll('.cv-exp-entry');
+            var result = [];
+            for (var ei = 0; ei < entries.length; ei++) {
+                var ent = entries[ei];
+                result.push({
+                    cargo:       (ent.querySelector('.cv-exp-cargo')?.value       || '').trim(),
+                    empresa:     (ent.querySelector('.cv-exp-empresa')?.value     || '').trim(),
+                    inicio_mes:  (ent.querySelector('.cv-exp-inicio-mes')?.value  || '').trim(),
+                    inicio_anio: (ent.querySelector('.cv-exp-inicio-anio')?.value || '').trim(),
+                    fin_mes:     (ent.querySelector('.cv-exp-fin-mes')?.value     || '').trim(),
+                    fin_anio:    (ent.querySelector('.cv-exp-fin-anio')?.value    || '').trim(),
+                    actual:      !!(ent.querySelector('.cv-exp-actual')?.checked),
+                    logros:      (ent.querySelector('.cv-exp-logros')?.innerHTML  || '').trim()
+                });
+            }
+            return result;
+        }
+        function _captureCvDataFromDom() {
+            var _pe = document.getElementById('cv-perfil-editor');
+            if (_pe) currentCvPerfil = (_pe.innerHTML || '').trim();
+            if (document.getElementById('cv-exp-list')) currentCvExperiencia = _getCvExperienciaData();
+            if (document.getElementById('cv-edu-list')) currentCvEducacion = _getCvEduData();
+            if (document.getElementById('cv-skills-hard-list')) currentCvHabilidades = _getCvHabilidadesData();
+            if (document.getElementById('cv-lang-list')) currentCvIdiomas = _getCvIdiomasData();
+            if (document.getElementById('cv-forma-list')) currentCvFormacion = _getCvFormacionData();
+            if (document.getElementById('cv-logros-list')) currentCvLogros = _getCvLogrosData();
+            if (document.getElementById('cv-pub-list')) currentCvPublicaciones = _getCvPublicacionesData();
+            if (document.getElementById('cv-vol-list')) currentCvVoluntariado = _getCvVoluntariadoData();
+            if (document.getElementById('cv-adic-carnet-cb')) currentCvInfoAdicional = _getCvInfoAdicionalData();
+            var _ime = document.getElementById('identidad-mision-editor'); if (_ime) currentIdentidadMision = (_ime.innerHTML || '').trim();
+            var _ive = document.getElementById('identidad-vision-editor'); if (_ive) currentIdentidadVision = (_ive.innerHTML || '').trim();
+            var _cmap = { 'cv-nombre-completo':'nombre_completo','cv-telefono':'telefono','cv-correo-electronico':'correo_electronico','cv-direccion':'direccion','cv-linkedin':'linkedin','cv-portfolio':'portfolio' };
+            Object.keys(_cmap).forEach(function(fid) { var el = document.getElementById(fid); if (el) currentCvContacto[_cmap[fid]] = el.value.trim(); });
+        }
+        function _initCvExperiencia() {
+            _cvExpCounter = 0;
+            var container = document.getElementById('cv-exp-list');
+            var addBtn    = document.getElementById('cv-exp-add');
+            if (!container || !addBtn) return;
+            for (var xi = 0; xi < currentCvExperiencia.length; xi++) {
+                _addCvExpEntry(currentCvExperiencia[xi], container);
+            }
+            addBtn.addEventListener('click', function() { _addCvExpEntry({}, container); });
+        }
+        function _initCvPerfilRte() {
+            var toolbar = document.querySelector('.cv-rte-toolbar');
+            var editor = document.getElementById('cv-perfil-editor');
+            if (!toolbar || !editor) return;
+            toolbar.addEventListener('mousedown', function(e) {
+                var btn = e.target.closest ? e.target.closest('[data-cmd]') : null;
+                if (!btn) return;
+                e.preventDefault();
+                editor.focus();
+                document.execCommand(btn.getAttribute('data-cmd'), false, null);
+            });
+        }
+        function _initIdentidadRte() {
+            ['identidad-mision-editor', 'identidad-vision-editor'].forEach(function(editorId) {
+                var editor = document.getElementById(editorId);
+                var toolbar = editor ? editor.previousElementSibling : null;
+                if (!toolbar || !editor) return;
+                toolbar.addEventListener('mousedown', function(e) {
+                    var btn = e.target.closest ? e.target.closest('[data-cmd]') : null;
+                    if (!btn) return;
+                    e.preventDefault();
+                    editor.focus();
+                    document.execCommand(btn.getAttribute('data-cmd'), false, null);
+                });
+            });
+        }
+        function _fillCvContactoFields(c) {
+            var map = {
+                'cv-nombre-completo': (c && c.nombre_completo) || '',
+                'cv-telefono': (c && c.telefono) || '',
+                'cv-correo-electronico': (c && c.correo_electronico) || '',
+                'cv-direccion': (c && c.direccion) || '',
+                'cv-linkedin': (c && c.linkedin) || '',
+                'cv-portfolio': (c && c.portfolio) || ''
+            };
+            Object.keys(map).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.value = map[id];
+            });
+            var pefilEl = document.getElementById('cv-perfil-editor');
+            if (pefilEl) pefilEl.innerHTML = currentCvPerfil || '';
+        }
         function renderNotebookPanel(tabName, panel) {
             if (!panel) return;
-            if (tabName === 'cv' || tabName === 'habilidades') {
+            if (tabName === 'cv') {
+                var cvContactoBody =
+                    '<div class="cv-fields">' +
+                    '<div class="cv-field"><label>Nombre completo</label><input id="cv-nombre-completo" type="text" placeholder="Ej. Juan P\u00e9rez Garc\u00eda" autocomplete="off"></div>' +
+                    '<div class="cv-field"><label>Tel\u00e9fono</label><input id="cv-telefono" type="tel" placeholder="+52 555 000 0000" autocomplete="off"></div>' +
+                    '<div class="cv-field"><label>Correo electr\u00f3nico</label><input id="cv-correo-electronico" type="email" placeholder="correo@ejemplo.com" autocomplete="off"></div>' +
+                    '<div class="cv-field"><label>Direcci\u00f3n personal</label><input id="cv-direccion" type="text" placeholder="Calle, ciudad, estado" autocomplete="off"></div>' +
+                    '<div class="cv-field"><label>Perfil de LinkedIn</label><input id="cv-linkedin" type="url" placeholder="https://linkedin.com/in/..." autocomplete="off"></div>' +
+                    '<div class="cv-field"><label>Portfolio o sitio web</label><input id="cv-portfolio" type="url" placeholder="https://..." autocomplete="off"></div>' +
+                    '</div>';
+                var cvPerfilBody =
+                    '<div class="cv-rte-toolbar">' +
+                    '<button type="button" class="cv-rte-btn" data-cmd="bold" title="Negrita"><b>B</b></button>' +
+                    '<button type="button" class="cv-rte-btn" data-cmd="italic" title="Cursiva"><i>I</i></button>' +
+                    '<button type="button" class="cv-rte-btn" data-cmd="underline" title="Subrayado"><u>U</u></button>' +
+                    '<span class="cv-rte-sep"></span>' +
+                    '<button type="button" class="cv-rte-btn" data-cmd="insertUnorderedList" title="Lista">&#8226; Lista</button>' +
+                    '<button type="button" class="cv-rte-btn" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>' +
+                    '<span class="cv-rte-sep"></span>' +
+                    '<button type="button" class="cv-rte-btn" data-cmd="removeFormat" title="Quitar formato">&#10005; Formato</button>' +
+                    '</div>' +
+                    '<div id="cv-perfil-editor" class="cv-rte-editor" contenteditable="true" data-placeholder="Escribe aqu\u00ed tu perfil profesional..."></div>';
+                var cvExperienciaBody =
+                    '<div class="cv-exp-list" id="cv-exp-list"></div>' +
+                    '<button type="button" class="cv-exp-add-btn" id="cv-exp-add">+ Agregar experiencia</button>';
+                var cvEducacionBody =
+                    '<div class="cv-exp-list" id="cv-edu-list"></div>' +
+                    '<button type="button" class="cv-exp-add-btn" id="cv-edu-add">+ Agregar educación</button>';
+                var _lvlOpts = '<option value="">Nivel</option><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Experto</option>';
+                var _cefrOpts = '<option value="">Nivel / MCER</option><option value="A1 \u2013 Principiante">A1 \u2013 Principiante</option><option value="A2 \u2013 Elemental">A2 \u2013 Elemental</option><option value="B1 \u2013 Intermedio">B1 \u2013 Intermedio</option><option value="B2 \u2013 Intermedio Alto">B2 \u2013 Intermedio Alto</option><option value="C1 \u2013 Avanzado">C1 \u2013 Avanzado</option><option value="C2 \u2013 Dominio">C2 \u2013 Dominio</option><option value="Nativo / Biling\u00fce">Nativo / Biling\u00fce</option>';
+                var cvIdiomasBody =
+                    '<p style="font-size:0.78rem;color:#64748b;margin:0 0 10px;">Indica el idioma y tu nivel seg\u00fan el Marco Com\u00fan Europeo de Referencia (MCER).</p>' +
+                    '<div class="cv-skills-tags" id="cv-lang-list"></div>' +
+                    '<div class="cv-skill-input-row"><input id="cv-lang-name" type="text" placeholder="Ej. Ingl\u00e9s, Franc\u00e9s, Mandar\u00edn..."><select id="cv-lang-level">' + _cefrOpts + '</select><button type="button" class="cv-skill-add-btn" id="cv-lang-add">+ Agregar</button></div>';
+                var cvFormacionBody =
+                    '<p style="font-size:0.78rem;color:#64748b;margin:0 0 10px;">Cursos, seminarios, talleres o certificaciones relevantes. Incluye el nombre y la entidad que lo imparti\u00f3.</p>' +
+                    '<div class="cv-exp-list" id="cv-forma-list"></div>' +
+                    '<button type="button" class="cv-exp-add-btn" id="cv-forma-add">+ Agregar curso / certificaci\u00f3n</button>';
+                var cvLogrosBody =
+                    '<p style="font-size:0.78rem;color:#64748b;margin:0 0 10px;">Premios, menciones de honor o reconocimientos profesionales que desees destacar.</p>' +
+                    '<div class="cv-exp-list" id="cv-logros-list"></div>' +
+                    '<button type="button" class="cv-exp-add-btn" id="cv-logros-add">+ Agregar logro / reconocimiento</button>';
+                var cvPublicacionesBody =
+                    '<p style="font-size:0.78rem;color:#64748b;margin:0 0 10px;">Art\u00edculos, libros, patentes, tesis u otras publicaciones de car\u00e1cter acad\u00e9mico o profesional.</p>' +
+                    '<div class="cv-exp-list" id="cv-pub-list"></div>' +
+                    '<button type="button" class="cv-exp-add-btn" id="cv-pub-add">+ Agregar publicaci\u00f3n / patente</button>';
+                var cvVoluntariadoBody =
+                    '<p style="font-size:0.78rem;color:#64748b;margin:0 0 10px;">Actividades de compromiso social que demuestran valores y habilidades profesionales.</p>' +
+                    '<div class="cv-exp-list" id="cv-vol-list"></div>' +
+                    '<button type="button" class="cv-exp-add-btn" id="cv-vol-add">+ Agregar experiencia de voluntariado</button>';
+                var _viajeOpts = '<option value="">Seleccionar...</option><option value="No">No</option><option value="Ocasionalmente">Ocasionalmente</option><option value="Frecuentemente">Frecuentemente</option><option value="Sí, sin restricciones">Sí, sin restricciones</option>';
+                var _trasladoOpts = '<option value="">Seleccionar...</option><option value="No">No</option><option value="Sí, nacional">Sí, nacional</option><option value="Sí, internacional">Sí, internacional</option>';
+                var cvInfoAdicionalBody =
+                    '<div class="cv-adicional-grid">' +
+                    '<div class="cv-field"><label>Carnet de conducir</label><label class="cv-check-row"><input type="checkbox" id="cv-adic-carnet-cb"> Poseo carnet de conducir</label></div>' +
+                    '<div class="cv-field"><label>Tipo(s) de carnet</label><input id="cv-adic-carnet-tipo" type="text" placeholder="Ej. B, A1, C..." autocomplete="off"></div>' +
+                    '<div class="cv-field"><label>Vehículo propio</label><label class="cv-check-row"><input type="checkbox" id="cv-adic-vehiculo-cb"> Cuento con vehículo propio</label></div>' +
+                    '<div class="cv-field"><label>Disponibilidad para viajar</label><select id="cv-adic-viaje">' + _viajeOpts + '</select></div>' +
+                    '<div class="cv-field cv-adicional-full"><label>Disponibilidad para cambio de residencia</label><select id="cv-adic-traslado">' + _trasladoOpts + '</select></div>' +
+                    '<div class="cv-field cv-adicional-full"><label>Notas adicionales <span style="font-weight:400;color:#94a3b8">(opcional)</span></label><textarea id="cv-adic-notas" placeholder="Cualquier información relevante que no encaje en los apartados anteriores..."></textarea></div>' +
+                    '</div>';
+                var cvHabilidadesBody =
+                    '<div class="cv-skills-section">' +
+                    '<div class="cv-skills-section-title"><span class="cv-skills-hard-dot"></span>Técnicas (Hard Skills)</div>' +
+                    '<div class="cv-skills-tags" id="cv-skills-hard-list"></div>' +
+                    '<div class="cv-skill-input-row"><input id="cv-skills-hard-name" type="text" placeholder="Ej. Python, Excel, AutoCAD..."><select id="cv-skills-hard-level">' + _lvlOpts + '</select><button type="button" class="cv-skill-add-btn" id="cv-skills-hard-add">+ Agregar</button></div>' +
+                    '</div>' +
+                    '<div class="cv-skills-section">' +
+                    '<div class="cv-skills-section-title"><span class="cv-skills-soft-dot"></span>Blandas (Soft Skills)</div>' +
+                    '<div class="cv-skills-tags" id="cv-skills-soft-list"></div>' +
+                    '<div class="cv-skill-input-row"><input id="cv-skills-soft-name" type="text" placeholder="Ej. Liderazgo, Trabajo en equipo..."><select id="cv-skills-soft-level">' + _lvlOpts + '</select><button type="button" class="cv-skill-add-btn" id="cv-skills-soft-add">+ Agregar</button></div>' +
+                    '</div>';
+                var cvBlockDefs = [
+                    { key: 'informacion_de_contacto', label: 'Informaci\u00f3n de Contacto', body: cvContactoBody, open: true },
+                    { key: 'perfil_profesional',        label: 'Perfil Profesional', body: cvPerfilBody, open: true },
+                    { key: 'experiencia_laboral',       label: 'Experiencia Laboral', body: cvExperienciaBody },
+                    { key: 'educacion',                 label: 'Educaci\u00f3n', body: cvEducacionBody },
+                    { key: 'habilidades',               label: 'Habilidades', body: cvHabilidadesBody },
+                    { key: 'idiomas',                   label: 'Idiomas', body: cvIdiomasBody },
+                    { key: 'formacion_complementaria',  label: 'Formaci\u00f3n Complementaria', body: cvFormacionBody },
+                    { key: 'logros_y_reconocimientos',  label: 'Logros y Reconocimientos', body: cvLogrosBody },
+                    { key: 'publicaciones_o_patentes',  label: 'Publicaciones o Patentes', body: cvPublicacionesBody },
+                    { key: 'voluntariado',              label: 'Voluntariado', body: cvVoluntariadoBody },
+                    { key: 'informacion_adicional',     label: 'Informaci\u00f3n Adicional', body: cvInfoAdicionalBody }
+                ];
+                var cvHtml = '<div class="cv-accordion">';
+                for (var bi = 0; bi < cvBlockDefs.length; bi++) {
+                    var bd = cvBlockDefs[bi];
+                    cvHtml += '<details class="cv-block" id="cv-block-' + bd.key + '"' + (bd.open ? ' open' : '') + '>';
+                    cvHtml += '<summary>' + bd.label + '</summary>';
+                    cvHtml += '<div class="cv-block-body">' + (bd.body || '') + '</div>';
+                    cvHtml += '</details>';
+                }
+                cvHtml += '</div>';
+                panel.style.alignItems = 'flex-start';
+                panel.style.justifyContent = 'flex-start';
+                panel.innerHTML = cvHtml;
+                _initCvPerfilRte();
+                _initCvExperiencia();
+                _initCvEducacion();
+                _initCvHabilidades();
+                _initCvIdiomas();
+                _initCvFormacion();
+                _initCvLogros();
+                _initCvPublicaciones();
+                _initCvVoluntariado();
+                _initCvInfoAdicional();
+                return;
+            }
+            if (tabName === 'habilidades') {
                 panel.textContent = 'Sin acceso';
+                return;
+            }
+            if (tabName === 'cumplimiento') {
+                panel.innerHTML = '<p style="color:var(--text-muted,#888);font-style:italic;padding:8px 0;">Sin acceso, contacte al administrador</p>';
+                return;
+            }
+            if (tabName === 'identidad') {
+                var _rteBar = function(editorId) {
+                    return '<div class="cv-rte-toolbar" data-for="' + editorId + '">' +
+                        '<button type="button" class="cv-rte-btn" data-cmd="bold" title="Negrita"><b>B</b></button>' +
+                        '<button type="button" class="cv-rte-btn" data-cmd="italic" title="Cursiva"><i>I</i></button>' +
+                        '<button type="button" class="cv-rte-btn" data-cmd="underline" title="Subrayado"><u>U</u></button>' +
+                        '<span class="cv-rte-sep"></span>' +
+                        '<button type="button" class="cv-rte-btn" data-cmd="insertUnorderedList" title="Lista">&#8226; Lista</button>' +
+                        '<button type="button" class="cv-rte-btn" data-cmd="insertOrderedList" title="Lista numerada">1. Lista</button>' +
+                        '<span class="cv-rte-sep"></span>' +
+                        '<button type="button" class="cv-rte-btn" data-cmd="removeFormat" title="Quitar formato">&#10005; Formato</button>' +
+                        '</div>';
+                };
+                panel.innerHTML =
+                    '<div style="display:flex;flex-direction:column;gap:22px;">' +
+                    '<div>' +
+                    '<label style="display:block;font-size:0.8rem;font-weight:600;color:#64748b;margin-bottom:6px;">Misión del puesto</label>' +
+                    _rteBar('identidad-mision-editor') +
+                    '<div id="identidad-mision-editor" class="cv-rte-editor" contenteditable="true" data-placeholder="Describe la misión del puesto..."></div>' +
+                    '</div>' +
+                    '<div>' +
+                    '<label style="display:block;font-size:0.8rem;font-weight:600;color:#64748b;margin-bottom:6px;">Visión del puesto</label>' +
+                    _rteBar('identidad-vision-editor') +
+                    '<div id="identidad-vision-editor" class="cv-rte-editor" contenteditable="true" data-placeholder="Describe la visión del puesto..."></div>' +
+                    '</div>' +
+                    '</div>';
+                var _ime = document.getElementById('identidad-mision-editor');
+                var _ive = document.getElementById('identidad-vision-editor');
+                if (_ime) _ime.innerHTML = currentIdentidadMision || '';
+                if (_ive) _ive.innerHTML = currentIdentidadVision || '';
+                _initIdentidadRte();
+                return;
+            }
+            if (tabName === 'funciones') {
+                panel.innerHTML = '<p style="color:var(--text-muted,#888);font-style:italic;padding:8px 0;">Sin acceso, contacte al administrador</p>';
+                return;
+            }
+            if (tabName === 'kpis') {
+                panel.innerHTML = '<p style="color:var(--text-muted,#888);font-style:italic;padding:8px 0;">Sin acceso, contacte al administrador</p>';
+                return;
+            }
+            if (tabName === 'notas') {
+                panel.innerHTML = '<p style="color:var(--text-muted,#888);font-style:italic;padding:8px 0;">Sin acceso, contacte al administrador</p>';
+                return;
+            }
+            if (tabName === 'capacitacion') {
+                panel.innerHTML = '<p style="color:var(--text-muted,#888);font-style:italic;padding:8px 0;">Sin acceso, contacte al administrador</p>';
+                return;
+            }
+            if (tabName === 'activo_fijo') {
+                panel.innerHTML = '<p style="color:var(--text-muted,#888);font-style:italic;padding:8px 0;">Sin acceso, contacte al administrador</p>';
                 return;
             }
             if (!viewerCanManageAccess) {
@@ -742,6 +1723,7 @@
             if (!roleChoices.length) {
                 roleChoices.push('<span class="emp-empty">Sin roles asignables</span>');
             }
+            var appItems = ['BSC','Organización','Estrategia y táctica','Datos financieros','Control y seguimiento','KPIs','Reportes','Empresa'];
             panel.innerHTML =
                 '<div style="width:100%;display:grid;gap:14px;align-items:start;">' +
                     '<div style="display:grid;gap:8px;">' +
@@ -770,6 +1752,31 @@
                                     esc(block) +
                                 '</label>';
                             }).join('') +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:grid;gap:8px;">' +
+                        '<strong>Apps</strong>' +
+                        '<div style="display:grid;gap:6px;">' +
+                            appItems.map(function(app) {
+                                return '<label style="display:inline-flex;align-items:center;gap:8px;font-weight:500;">' +
+                                    '<input type="checkbox" name="colab-app-access" value="' + esc(app) + '">' +
+                                    esc(app) +
+                                '</label>';
+                            }).join('') +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:grid;gap:8px;">' +
+                        '<strong>Página web</strong>' +
+                        '<div style="font-size:0.8rem;color:#64748b;margin-bottom:4px;">Constructor: <a href="' + window.location.origin + '/frontend/builder" target="_blank" style="color:#3b82f6;">' + window.location.origin + '/frontend/builder</a></div>' +
+                        '<div style="display:grid;gap:6px;">' +
+                            '<label style="display:inline-flex;align-items:center;gap:8px;font-weight:500;">' +
+                                '<input type="checkbox" name="colab-web-role" value="editor">' +
+                                'Editor (puede cambiar contenido)' +
+                            '</label>' +
+                            '<label style="display:inline-flex;align-items:center;gap:8px;font-weight:500;">' +
+                                '<input type="checkbox" name="colab-web-role" value="designer">' +
+                                'Diseñador (puede cambiar estructura)' +
+                            '</label>' +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -805,14 +1812,45 @@
                     if (this.checked) currentAccessState.poa_access_level = this.value === 'todas_tareas' ? 'todas_tareas' : 'mis_tareas';
                 });
             }
+            var appInputs = panel.querySelectorAll('input[name="colab-app-access"]');
+            for (var a = 0; a < appInputs.length; a++) {
+                if ((currentAccessState.app_access || []).indexOf(appInputs[a].value) !== -1) {
+                    appInputs[a].checked = true;
+                }
+                appInputs[a].addEventListener('change', function() {
+                    var val = this.value;
+                    var list = Array.isArray(currentAccessState.app_access) ? currentAccessState.app_access : [];
+                    var idx = list.indexOf(val);
+                    if (this.checked && idx === -1) list.push(val);
+                    if (!this.checked && idx !== -1) list.splice(idx, 1);
+                    currentAccessState.app_access = list;
+                });
+            }
+            var webRoleInputs = panel.querySelectorAll('input[name="colab-web-role"]');
+            for (var w = 0; w < webRoleInputs.length; w++) {
+                if ((currentAccessState.web_roles || []).indexOf(webRoleInputs[w].value) !== -1) {
+                    webRoleInputs[w].checked = true;
+                }
+                webRoleInputs[w].addEventListener('change', function() {
+                    var val = this.value;
+                    var list = Array.isArray(currentAccessState.web_roles) ? currentAccessState.web_roles : [];
+                    var idx = list.indexOf(val);
+                    if (this.checked && idx === -1) list.push(val);
+                    if (!this.checked && idx !== -1) list.splice(idx, 1);
+                    currentAccessState.web_roles = list;
+                });
+            }
         }
         function fillFormWithColaborador(user) {
             if (!user) return;
+            lastSelectedColabId = Number(user.id || 0) || 0;
             var nombre = document.getElementById('colab-nombre');
             var puesto = document.getElementById('colab-puesto');
+            var eficiencia = document.getElementById('colab-eficiencia');
             var celular = document.getElementById('colab-celular');
             var usuario = document.getElementById('colab-usuario');
             var correo = document.getElementById('colab-correo');
+            var contrasena = document.getElementById('colab-contrasena');
             var nivel = document.getElementById('colab-nivel');
             var dept = document.getElementById('departamento-select');
             var jefeInmediato = document.getElementById('colab-jefe-inmediato');
@@ -823,9 +1861,14 @@
             var notebookPanel = document.getElementById('colaborador-notebook-panel');
             if (nombre) nombre.value = user.nombre || '';
             if (puesto) puesto.value = user.puesto || '';
+            if (eficiencia) eficiencia.value = (user.eficiencia !== undefined && user.eficiencia !== null) ? user.eficiencia : '';
             if (celular) celular.value = user.celular || '';
             if (usuario) usuario.value = user.usuario || '';
             if (correo) correo.value = user.correo || '';
+            if (contrasena) {
+                contrasena.value = '';
+                setPasswordToggleState(false);
+            }
             if (colabId) colabId.value = user.id || '';
             if (jefeInmediato) {
                 renderJefeOptions(jefeInmediato, user.jefe_inmediato_id || '', user.id || '');
@@ -833,11 +1876,13 @@
             if (nivel) nivel.value = user.nivel_organizacional || '';
             if (colaboradorCheck) colaboradorCheck.checked = !!user.colaborador;
             if (fotoUrl) fotoUrl.value = user.imagen || '';
-            if (foto) foto.src = user.imagen || '/icon/usuario.png';
+            if (foto) foto.src = user.imagen || '/templates/icon/usuario.png';
             currentAccessState = {
                 rol: String(user.rol || 'usuario').trim().toLowerCase() || 'usuario',
                 menu_blocks: Array.isArray(user.menu_blocks) ? user.menu_blocks.slice() : [],
                 poa_access_level: (String(user.poa_access_level || 'mis_tareas').trim().toLowerCase() === 'todas_tareas' ? 'todas_tareas' : 'mis_tareas'),
+                app_access: Array.isArray(user.app_access) ? user.app_access.slice() : [],
+                web_roles: Array.isArray(user.web_roles) ? user.web_roles.slice() : [],
             };
             if (dept) {
                 var deptValue = user.departamento || '';
@@ -849,8 +1894,23 @@
                 }
                 dept.value = deptValue;
             }
+            currentCvContacto = user.cv_contacto || {};
+            currentCvPerfil = user.cv_perfil_profesional || '';
+            currentCvExperiencia = Array.isArray(user.cv_experiencia) ? user.cv_experiencia : [];
+            currentCvEducacion   = Array.isArray(user.cv_educacion)   ? user.cv_educacion   : [];
+            var _hab = user.cv_habilidades || {};
+            currentCvHabilidades = { tecnicas: Array.isArray(_hab.tecnicas) ? _hab.tecnicas : [], blandas: Array.isArray(_hab.blandas) ? _hab.blandas : [] };
+            currentCvIdiomas = Array.isArray(user.cv_idiomas) ? user.cv_idiomas : [];
+            currentCvFormacion = Array.isArray(user.cv_formacion) ? user.cv_formacion : [];
+            currentCvLogros = Array.isArray(user.cv_logros) ? user.cv_logros : [];
+            currentCvPublicaciones = Array.isArray(user.cv_publicaciones) ? user.cv_publicaciones : [];
+            currentCvVoluntariado = Array.isArray(user.cv_voluntariado) ? user.cv_voluntariado : [];
+            currentCvInfoAdicional = (user.cv_info_adicional && typeof user.cv_info_adicional === 'object') ? user.cv_info_adicional : {};
+            currentIdentidadMision = user.identidad_mision || '';
+            currentIdentidadVision = user.identidad_vision || '';
             var activeTab = document.querySelector('.emp-notebook-tab.active');
             renderNotebookPanel(activeTab ? activeTab.getAttribute('data-tab') : 'cv', notebookPanel);
+            _fillCvContactoFields(currentCvContacto);
         }
         function openColaboradorFromKanban(index) {
             var pos = Number(index);
@@ -982,7 +2042,7 @@
                     usuario: '',
                     puesto: '',
                     departamento: '',
-                    imagen: '/icon/usuario.png',
+                    imagen: '/templates/icon/usuario.png',
                     estado: 'Activo'
                 });
             }
@@ -1047,11 +2107,11 @@
                     '<td>' +
                         '<div class="emp-list-actions">' +
                             '<button type="button" class="emp-list-btn" data-list-action="edit" data-index="' + i + '" title="Editar">' +
-                                '<img src="/icon/editar.svg" alt="Editar">' +
+                                '<img src="/icon/boton/editar.svg" alt="Editar">' +
                             '</button>' +
                             (viewerCanViewAll
                                 ? '<button type="button" class="emp-list-btn delete" data-list-action="delete" data-index="' + i + '" title="Eliminar">' +
-                                    '<img src="/icon/eliminar.svg" alt="Eliminar">' +
+                                    '<img src="/icon/boton/eliminar.svg" alt="Eliminar">' +
                                   '</button>'
                                 : ''
                             ) +
@@ -1064,6 +2124,7 @@
                 btn.addEventListener('click', function() {
                     var idx = Number(btn.getAttribute('data-index'));
                     if (Number.isNaN(idx) || idx < 0 || idx >= empleadosData.length) return;
+                    lastSelectedColabId = Number(empleadosData[idx] && empleadosData[idx].id || 0) || 0;
                     setView('form');
                     setTimeout(function() { fillFormWithColaborador(empleadosData[idx]); }, 80);
                 });
@@ -1104,17 +2165,24 @@
                                 <input id="colab-puesto" type="text" name="puesto">
                             </div>
                             <div class="emp-field">
+                                <label for="colab-eficiencia">Eficiencia</label>
+                                <div style="display:inline-flex;align-items:center;gap:4px;">
+                                    <input id="colab-eficiencia" type="number" name="eficiencia" min="0" max="100" step="1" placeholder="0" style="width:72px;">
+                                    <span style="font-weight:600;">%</span>
+                                </div>
+                            </div>
+                            <div class="emp-field">
                                 <label for="colab-celular">Celular</label>
                                 <input id="colab-celular" type="text" name="celular">
                             </div>
                         </div>
                         <div class="emp-photo-box" aria-label="Foto del colaborador">
-                            <img id="colab-photo-preview" src="/icon/usuario.png" alt="Foto colaborador">
+                            <img id="colab-photo-preview" src="/templates/icon/usuario.png" alt="Foto colaborador">
                             <button type="button" class="emp-photo-action edit" id="colab-photo-edit-btn" title="Editar foto">
-                                <img src="/icon/editar.svg" alt="Editar">
+                                <img src="/icon/boton/editar.svg" alt="Editar">
                             </button>
                             <button type="button" class="emp-photo-action delete" id="colab-photo-delete-btn" title="Eliminar foto">
-                                <img src="/icon/eliminar.svg" alt="Eliminar">
+                                <img src="/icon/boton/eliminar.svg" alt="Eliminar">
                             </button>
                             <input type="file" id="colab-photo-input" accept="image/*" style="display:none;">
                             <input type="hidden" id="colab-imagen-url" name="imagen" value="">
@@ -1129,6 +2197,15 @@
                         <div class="emp-field">
                             <label for="colab-correo">Correo electrónico</label>
                             <input id="colab-correo" type="text" name="correo">
+                        </div>
+                        <div class="emp-field">
+                            <label for="colab-contrasena">Contraseña</label>
+                            <div class="emp-password-wrap">
+                                <input id="colab-contrasena" type="password" name="contrasena" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                                <button type="button" id="colab-contrasena-toggle" class="emp-password-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-visible="false">
+                                    <img src="/templates/icon/ojot.svg" alt="" aria-hidden="true">
+                                </button>
+                            </div>
                         </div>
                         <div class="emp-field">
                             <label for="departamento-select">Área organizacional</label>
@@ -1159,17 +2236,36 @@
                     </section>
                     <div class="emp-notebook" id="colaborador-notebook">
                         <div class="emp-notebook-tabs">
-                            <button type="button" class="emp-notebook-tab active" data-tab="cv"><img src="/templates/icon/cv.svg" alt="" class="tab-icon">CV</button>
-                            <button type="button" class="emp-notebook-tab" data-tab="habilidades"><img src="/templates/icon/habilidades.svg" alt="" class="tab-icon">Habilidades</button>
-                            ${viewerCanManageAccess ? '<button type="button" class="emp-notebook-tab" data-tab="acceso"><img src="/templates/icon/acceso.svg" alt="" class="tab-icon">Acceso</button>' : ''}
+                            <button type="button" class="emp-notebook-tab active" data-tab="cv"><img src="/templates/icon/cv.svg" alt="" class="tab-icon"><span class="tab-label">CV</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="habilidades"><img src="/templates/icon/habilidades.svg" alt="" class="tab-icon"><span class="tab-label">Habilidades</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="cumplimiento"><img src="/templates/icon/kpi.svg" alt="" class="tab-icon"><span class="tab-label">Cumplimiento</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="identidad"><img src="/templates/icon/empresa.svg" alt="" class="tab-icon"><span class="tab-label">Identidad</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="funciones"><img src="/templates/icon/cv.svg" alt="" class="tab-icon"><span class="tab-label">Funciones del puesto</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="kpis"><img src="/templates/icon/kpi.svg" alt="" class="tab-icon"><span class="tab-label">KPIs</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="notas"><img src="/templates/icon/cv.svg" alt="" class="tab-icon"><span class="tab-label">Notas</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="capacitacion"><img src="/templates/icon/habilidades.svg" alt="" class="tab-icon"><span class="tab-label">Capacitación</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            <button type="button" class="emp-notebook-tab" data-tab="activo_fijo"><img src="/templates/icon/activo_fijo.svg" alt="" class="tab-icon"><span class="tab-label">Activo fijo</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                            ${viewerCanManageAccess ? '<button type="button" class="emp-notebook-tab" data-tab="acceso"><img src="/templates/icon/acceso.svg" alt="" class="tab-icon"><span class="tab-label">Acceso</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>' : ''}
                         </div>
                         <div class="emp-notebook-panel" id="colaborador-notebook-panel">Sin acceso</div>
                     </div>
-                    <div class="actions">
-                        <button type="button" class="btn" onclick="window.nuevoColaborador()">Nuevo</button>
-                        <button type="button" class="btn" onclick="window.editarColaborador()">Editar</button>
-                        <button type="button" class="btn" onclick="window.eliminarColaborador()">Eliminar</button>
-                        <button type="submit" class="btn primary">Guardar</button>
+                    <div class="action-buttons-group">
+                        <button type="button" class="action-button" onclick="window.nuevoColaborador()" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
+                            <img src="/icon/boton/nuevo.svg" alt="Nuevo">
+                            <span class="action-label">Nuevo</span>
+                        </button>
+                        <button type="button" class="action-button" onclick="window.editarColaborador()" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                            <img src="/icon/boton/editar.svg" alt="Editar">
+                            <span class="action-label">Editar</span>
+                        </button>
+                        <button type="button" class="action-button" onclick="window.eliminarColaborador()" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                            <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                            <span class="action-label">Eliminar</span>
+                        </button>
+                        <button type="submit" class="action-button" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                            <img src="/icon/boton/guardar.svg" alt="Guardar">
+                            <span class="action-label">Guardar</span>
+                        </button>
                         <span id="colaborador-form-msg" class="emp-empty"></span>
                     </div>
                 </form>
@@ -1184,21 +2280,79 @@
             var photoDeleteBtn = document.getElementById('colab-photo-delete-btn');
             var photoInput = document.getElementById('colab-photo-input');
             var imagenInput = document.getElementById('colab-imagen-url');
+            var passInput = document.getElementById('colab-contrasena');
+            var passToggleBtn = document.getElementById('colab-contrasena-toggle');
+            var passToggleIcon = passToggleBtn ? passToggleBtn.querySelector('img') : null;
             var notebookTabs = empCard.querySelectorAll('.emp-notebook-tab');
             var notebookPanel = document.getElementById('colaborador-notebook-panel');
-            currentAccessState = { rol: 'usuario', menu_blocks: [], poa_access_level: 'mis_tareas' };
+            function setPasswordToggleState(showing) {
+                if (!passInput || !passToggleBtn) return;
+                passInput.type = showing ? 'text' : 'password';
+                passToggleBtn.setAttribute('aria-pressed', showing ? 'true' : 'false');
+                passToggleBtn.setAttribute('aria-label', showing ? 'Ocultar contraseña' : 'Mostrar contraseña');
+                passToggleBtn.setAttribute('data-visible', showing ? 'true' : 'false');
+                if (passToggleIcon) {
+                    passToggleIcon.src = showing ? '/templates/icon/ojo.svg' : '/templates/icon/ojot.svg';
+                }
+            }
+            currentAccessState = { rol: 'usuario', menu_blocks: [], poa_access_level: 'mis_tareas', app_access: [], web_roles: [] };
             if (notebookTabs.length && notebookPanel) {
                 for (var t = 0; t < notebookTabs.length; t++) {
                     notebookTabs[t].addEventListener('click', function() {
+                        _captureCvDataFromDom();
                         for (var j = 0; j < notebookTabs.length; j++) {
                             notebookTabs[j].classList.remove('active');
                         }
                         this.classList.add('active');
                         renderNotebookPanel(this.getAttribute('data-tab'), notebookPanel);
+                        _fillCvContactoFields(currentCvContacto);
                     });
                 }
                 renderNotebookPanel('cv', notebookPanel);
             }
+            // Inicializar toggles de pestañas (+/-)
+            (function() {
+                var STORAGE_KEY = 'sipet_colab_tabs_collapsed';
+                function getCollapsed() {
+                    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+                }
+                function saveCollapsed(arr) {
+                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); } catch(e) {} 
+                }
+                var collapsed = getCollapsed();
+                // Tooltip: asignar data-tooltip con el nombre de la pestaña
+                empCard.querySelectorAll('.emp-notebook-tab').forEach(function(btn) {
+                    var labelEl = btn.querySelector('.tab-label');
+                    if (labelEl) btn.setAttribute('data-tooltip', labelEl.textContent.trim());
+                });
+                var toggles = empCard.querySelectorAll('.tab-toggle');
+                for (var i = 0; i < toggles.length; i++) {
+                    var toggle = toggles[i];
+                    var tab = toggle.closest ? toggle.closest('.emp-notebook-tab') : toggle.parentElement;
+                    if (!tab) continue;
+                    var tabName = tab.getAttribute('data-tab');
+                    if (collapsed.indexOf(tabName) !== -1) {
+                        tab.classList.add('collapsed');
+                        toggle.innerHTML = '+';
+                    }
+                    toggle.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var t = this.closest ? this.closest('.emp-notebook-tab') : this.parentElement;
+                        var name = t.getAttribute('data-tab');
+                        var arr = getCollapsed();
+                        if (t.classList.contains('collapsed')) {
+                            t.classList.remove('collapsed');
+                            this.innerHTML = '&#x2212;';
+                            arr = arr.filter(function(x) { return x !== name; });
+                        } else {
+                            t.classList.add('collapsed');
+                            this.innerHTML = '+';
+                            if (arr.indexOf(name) === -1) arr.push(name);
+                        }
+                        saveCollapsed(arr);
+                    });
+                }
+            })();
             // Cargar departamentos y llenar el select
             if (deptSelect) {
                 fetch('/api/inicio/departamentos').then(r => r.json()).then(json => {
@@ -1224,7 +2378,7 @@
             }
             if (photoDeleteBtn && photoPreview && imagenInput) {
                 photoDeleteBtn.addEventListener('click', function() {
-                    photoPreview.src = '/icon/usuario.png';
+                    photoPreview.src = '/templates/icon/usuario.png';
                     imagenInput.value = '';
                     if (formMsg) formMsg.textContent = 'Foto eliminada.';
                 });
@@ -1250,16 +2404,30 @@
                     }
                 });
             }
+            if (passToggleBtn && passInput) {
+                passToggleBtn.addEventListener('click', function() {
+                    var showing = passInput.type !== 'text';
+                    setPasswordToggleState(showing);
+                });
+                setPasswordToggleState(false);
+            }
             if (form) {
                 form.onsubmit = async function(e) {
                     e.preventDefault();
+                    _captureCvDataFromDom();
+                    var rawId = (document.getElementById('colab-id')?.value || '').trim();
+                    // Fallback: if the hidden ID was wiped by a form re-render, recover from the
+                    // module-level lastSelectedColabId so edits are never treated as creates.
+                    if (!rawId && lastSelectedColabId) rawId = String(lastSelectedColabId);
                     var payload = {
-                        id: (document.getElementById('colab-id')?.value || '').trim(),
+                        id: rawId,
                         nombre: (document.getElementById('colab-nombre')?.value || '').trim(),
                         puesto: (document.getElementById('colab-puesto')?.value || '').trim(),
+                        eficiencia: (document.getElementById('colab-eficiencia')?.value || '').trim(),
                         celular: (document.getElementById('colab-celular')?.value || '').trim(),
                         usuario: (document.getElementById('colab-usuario')?.value || '').trim(),
                         correo: (document.getElementById('colab-correo')?.value || '').trim(),
+                        contrasena: (document.getElementById('colab-contrasena')?.value || ''),
                         departamento: (document.getElementById('departamento-select')?.value || '').trim(),
                         jefe_inmediato_id: (document.getElementById('colab-jefe-inmediato')?.value || '').trim(),
                         nivel_organizacional: (document.getElementById('colab-nivel')?.value || '').trim(),
@@ -1267,10 +2435,33 @@
                         colaborador: !!document.getElementById('colab-colaborador-check')?.checked,
                         rol: (currentAccessState.rol || 'usuario'),
                         menu_blocks: Array.isArray(currentAccessState.menu_blocks) ? currentAccessState.menu_blocks : [],
-                        poa_access_level: (currentAccessState.poa_access_level === 'todas_tareas' ? 'todas_tareas' : 'mis_tareas')
+                        poa_access_level: (currentAccessState.poa_access_level === 'todas_tareas' ? 'todas_tareas' : 'mis_tareas'),
+                        app_access: Array.isArray(currentAccessState.app_access) ? currentAccessState.app_access : [],
+                        web_roles: Array.isArray(currentAccessState.web_roles) ? currentAccessState.web_roles : [],
+                        cv_contacto: currentCvContacto,
+                        cv_perfil_profesional: currentCvPerfil,
+                        cv_experiencia: currentCvExperiencia,
+                        cv_educacion: currentCvEducacion,
+                        cv_habilidades: currentCvHabilidades,
+                        cv_idiomas: currentCvIdiomas,
+                        cv_formacion: currentCvFormacion,
+                        cv_logros: currentCvLogros,
+                        cv_publicaciones: currentCvPublicaciones,
+                        cv_voluntariado: currentCvVoluntariado,
+                        cv_info_adicional: currentCvInfoAdicional,
+                        identidad_mision: currentIdentidadMision,
+                        identidad_vision: currentIdentidadVision
                     };
                     if (!payload.nombre || !payload.usuario) {
                         if (formMsg) formMsg.textContent = 'Nombre y usuario son obligatorios.';
+                        return;
+                    }
+                    if (!payload.id && !payload.contrasena) {
+                        if (formMsg) formMsg.textContent = 'La contraseña es obligatoria para crear colaborador.';
+                        return;
+                    }
+                    if (payload.contrasena && payload.contrasena.length < 8) {
+                        if (formMsg) formMsg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
                         return;
                     }
                     if (formMsg) formMsg.textContent = 'Guardando...';
@@ -1293,7 +2484,7 @@
                                     correo: payload.correo,
                                     imagen: payload.imagen,
                                     rol: 'usuario',
-                                    contrasena: 'Temp1234!'
+                                    contrasena: payload.contrasena
                                 })
                             });
                             json = await res.json().catch(function() { return {}; });
@@ -1533,11 +2724,12 @@
             var foto = document.getElementById('colab-photo-preview');
             var fotoUrl = document.getElementById('colab-imagen-url');
             if (idInput) idInput.value = '';
+            lastSelectedColabId = 0;
             var jefeInmediato = document.getElementById('colab-jefe-inmediato');
             if (jefeInmediato) renderJefeOptions(jefeInmediato, '', '');
             if (fotoUrl) fotoUrl.value = '';
-            if (foto) foto.src = '/icon/usuario.png';
-            currentAccessState = { rol: 'usuario', menu_blocks: [], poa_access_level: 'mis_tareas' };
+            if (foto) foto.src = '/templates/icon/usuario.png';
+            currentAccessState = { rol: 'usuario', menu_blocks: [], poa_access_level: 'mis_tareas', app_access: [], web_roles: [] };
             var panel = document.getElementById('colaborador-notebook-panel');
             var activeTab = document.querySelector('.emp-notebook-tab.active');
             renderNotebookPanel(activeTab ? activeTab.getAttribute('data-tab') : 'cv', panel);
@@ -1545,7 +2737,24 @@
         };
         
         window.editarColaborador = function() {
-            alert('Funcionalidad de edición no implementada.');
+            var idInput = document.getElementById('colab-id');
+            var msg = document.getElementById('colaborador-form-msg');
+            var currentId = Number((idInput && idInput.value) ? idInput.value : 0) || 0;
+            if (currentId) {
+                var nameInput = document.getElementById('colab-nombre');
+                if (nameInput) nameInput.focus();
+                if (msg) msg.textContent = 'Modo edición activo.';
+                return;
+            }
+            if (lastSelectedColabId) {
+                openColaboradorFromId(lastSelectedColabId);
+                return;
+            }
+            if (empleadosData.length === 1) {
+                openColaboradorFromId(empleadosData[0].id);
+                return;
+            }
+            setView('list');
         };
 
         window.eliminarColaborador = async function() {
@@ -1571,7 +2780,7 @@
                     var form = document.getElementById('colaborador-form');
                     if (form) form.reset();
                     var photo = document.getElementById('colab-photo-preview');
-                    if (photo) photo.src = '/icon/usuario.png';
+                    if (photo) photo.src = '/templates/icon/usuario.png';
                     var idEl = document.getElementById('colab-id');
                     if (idEl) idEl.value = '';
                 }, 80);

@@ -175,6 +175,39 @@
     gap: 10px;
     margin-bottom: 14px;
   }
+  .reportes-filtros {
+    display: grid;
+    grid-template-columns: 170px minmax(220px, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+    margin: 0 0 12px;
+  }
+  .reportes-filtros label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #334155;
+    font-weight: 700;
+  }
+  .reportes-filtros select {
+    height: 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0 10px;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  .reportes-filtros-note {
+    margin: 0 0 10px;
+    font-size: 0.82rem;
+    color: #64748b;
+    font-style: italic;
+  }
+  .reportes-filtros-note.warn {
+    color: #b45309;
+  }
   .reporte-card {
     border: 1px solid rgba(15, 23, 42, 0.14);
     border-radius: 12px;
@@ -747,6 +780,9 @@
     .reportes-grid {
       grid-template-columns: 1fr;
     }
+    .reportes-filtros {
+      grid-template-columns: 1fr;
+    }
   }
   @media (max-width: 640px) {
     .cp-cards { grid-template-columns: 1fr; }
@@ -829,6 +865,22 @@
             <button type="button" id="reportes-fullscreen-btn" class="color-btn color-btn--ghost">Ver en pantalla completa</button>
           </div>
           <div class="reportes-fullscreen-hint">Esc para volver</div>
+          <div class="reportes-filtros">
+            <label for="reportes-filtro-nivel">Nivel
+              <select id="reportes-filtro-nivel">
+                <option value="consolidado">Consolidado</option>
+                <option value="region">Región</option>
+                <option value="departamento">Departamento</option>
+                <option value="sucursal">Sucursal</option>
+                <option value="colaborador">Colaborador</option>
+              </select>
+            </label>
+            <label for="reportes-filtro-elemento">Elementos del nivel
+              <select id="reportes-filtro-elemento"></select>
+            </label>
+            <button type="button" id="reportes-filtro-aplicar" class="color-btn color-btn--ghost">Aplicar filtro</button>
+          </div>
+          <p id="reportes-filtro-note" class="reportes-filtros-note"></p>
           <section class="cp-dashboard">
             <header class="cp-head">Dashboard de Control Presupuestal</header>
             <div class="cp-grid">
@@ -1145,6 +1197,10 @@
     const saveStatusEl = document.querySelector(".dg-save-status");
     const reportesPanel = document.querySelector('.tab-panel[data-panel="reportes"]');
     const reportesFullscreenBtn = document.getElementById("reportes-fullscreen-btn");
+    const reportesFiltroNivelEl = document.getElementById("reportes-filtro-nivel");
+    const reportesFiltroElementoEl = document.getElementById("reportes-filtro-elemento");
+    const reportesFiltroAplicarBtn = document.getElementById("reportes-filtro-aplicar");
+    const reportesFiltroNoteEl = document.getElementById("reportes-filtro-note");
     const controlMensualAccBtn = document.getElementById("control-mensual-acc-btn");
     const controlMensualAccModal = document.getElementById("control-mensual-acc-modal");
     const controlMensualAccClose = document.getElementById("control-mensual-acc-close");
@@ -1183,6 +1239,8 @@
     const controlMensualTable = document.getElementById("control-mensual-table");
     const presupuestoTable = document.getElementById("presupuesto-table");
     const months = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+    const reportScopeState = { level: "consolidado", element: "global", departments: [] };
+    let reportScopeItemsByValue = new Map();
     const setImportStatus = (message, isError = false) => {
       if (!importStatusEl) return;
       importStatusEl.textContent = String(message || "");
@@ -1220,6 +1278,172 @@
       return `${numeric.toFixed(1)}%`;
     };
     const formatCurrency = (value) => `$${formatIntegerValue(value)}`;
+    const setReportFilterNote = (message, warn = false) => {
+      if (!reportesFiltroNoteEl) return;
+      reportesFiltroNoteEl.textContent = String(message || "");
+      reportesFiltroNoteEl.classList.toggle("warn", !!warn);
+    };
+    const inferDepartmentFromRubro = (rubro) => {
+      const text = String(rubro || "").toLowerCase();
+      if (text.includes("interes") || text.includes("moratorio") || text.includes("normal")) return "Crédito";
+      if (text.includes("comisiones") || text.includes("productos")) return "Comercial";
+      if (text.includes("salarios") || text.includes("aguinaldo") || text.includes("prestaciones") || text.includes("honorarios")) return "Administración";
+      if (text.includes("tecnologia")) return "Tecnología";
+      if (text.includes("impuestos") || text.includes("derechos")) return "Cumplimiento";
+      if (text.includes("promocion") || text.includes("publicidad")) return "Marketing";
+      if (text.includes("depreciaciones") || text.includes("amortizaciones") || text.includes("costo neto")) return "Finanzas";
+      return "Sucursal Centro";
+    };
+    const normalizeScopeKey = (value) => (
+      String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim()
+    );
+    const canonicalDepartmentKey = (value) => {
+      const key = normalizeScopeKey(value);
+      if (["ti", "it", "tecnologia", "tecnologia de la informacion", "sistemas"].includes(key)) return "tecnologia";
+      if (["administracion", "administrativo"].includes(key)) return "administracion";
+      if (["credito", "credito y cobranza"].includes(key)) return "credito";
+      if (["comercial", "ventas"].includes(key)) return "comercial";
+      if (["marketing", "mercadotecnia"].includes(key)) return "marketing";
+      if (["finanzas", "financiero"].includes(key)) return "finanzas";
+      if (["cumplimiento", "juridico", "legal"].includes(key)) return "cumplimiento";
+      return key;
+    };
+    const allControlDetailRows = () => {
+      if (!controlMensualTable) return [];
+      return Array.from(controlMensualTable.querySelectorAll("tbody tr.control-mensual-detail-row"));
+    };
+    const matchesScopeDepartments = (areaName, departments) => {
+      const areaKey = canonicalDepartmentKey(areaName);
+      const depKeys = (departments || []).map((item) => canonicalDepartmentKey(item)).filter(Boolean);
+      if (!depKeys.length) return true;
+      return depKeys.some((dep) => areaKey === dep || areaKey.includes(dep) || dep.includes(areaKey));
+    };
+    const getScopedDetailRows = () => {
+      const rows = allControlDetailRows();
+      if (reportScopeState.level === "consolidado") return rows;
+      return rows.filter((row) => {
+        const rubro = (row.querySelector("td:first-child")?.textContent || "").trim();
+        const area = inferDepartmentFromRubro(rubro);
+        return matchesScopeDepartments(area, reportScopeState.departments);
+      });
+    };
+    const getScopedMonthTotals = (month) => {
+      const detailRows = getScopedDetailRows();
+      let ingresosProjected = 0;
+      let ingresosRealized = 0;
+      let egresosProjected = 0;
+      let egresosRealized = 0;
+      detailRows.forEach((row) => {
+        const tipo = (row.getAttribute("data-tipo") || "").toLowerCase();
+        const projectedInput = row.querySelector(`input[name*="_${month}_proyectado"]`);
+        const realizedInput = row.querySelector(`input[name*="_${month}_realizado"]`);
+        const projected = parseIntegerValue(projectedInput?.value || "0");
+        const realized = parseIntegerValue(realizedInput?.value || "0");
+        if (tipo === "ingreso") {
+          ingresosProjected += projected;
+          ingresosRealized += realized;
+        } else if (tipo === "egreso") {
+          egresosProjected += projected;
+          egresosRealized += realized;
+        }
+      });
+      return {
+        ingresosProjected,
+        ingresosRealized,
+        egresosProjected,
+        egresosRealized,
+        resultadoProjected: ingresosProjected - egresosProjected,
+        resultadoRealized: ingresosRealized - egresosRealized,
+      };
+    };
+    const getScopedSummaryValue = (rowClass, month, kind) => {
+      const totals = getScopedMonthTotals(month);
+      if (rowClass === "control-mensual-total-ingresos") {
+        if (kind === "proyectado") return totals.ingresosProjected;
+        if (kind === "realizado") return totals.ingresosRealized;
+      }
+      if (rowClass === "control-mensual-total-egresos") {
+        if (kind === "proyectado") return totals.egresosProjected;
+        if (kind === "realizado") return totals.egresosRealized;
+      }
+      if (rowClass === "control-mensual-resultado") {
+        if (kind === "proyectado") return totals.resultadoProjected;
+        if (kind === "realizado") return totals.resultadoRealized;
+      }
+      return 0;
+    };
+    const getScopedYearValue = (rowClass, kind) => months.reduce((acc, month) => (
+      acc + getScopedSummaryValue(rowClass, month, kind)
+    ), 0);
+    const refreshReportesByScope = () => {
+      updateReporteEjecutivo();
+      updateReporteDesviaciones();
+      updateReporteTendencia();
+      updateReporteEjecucionArea();
+      updateReporteComposicionGasto();
+      updateReporteKpisSipet();
+      updateReporteMapaCalor();
+      updateAlertasInteligentes();
+      updateControlDashboard();
+    };
+    const setScopeFromSelectedElement = () => {
+      const level = String(reportesFiltroNivelEl?.value || "consolidado");
+      const value = String(reportesFiltroElementoEl?.value || "");
+      const selected = reportScopeItemsByValue.get(value) || null;
+      const departments = Array.isArray(selected?.departments)
+        ? selected.departments.filter((item) => String(item || "").trim())
+        : [];
+      reportScopeState.level = level;
+      reportScopeState.element = value;
+      reportScopeState.departments = departments;
+      if (level === "consolidado") {
+        setReportFilterNote("Vista consolidada del presupuesto.");
+      } else if (!departments.length) {
+        setReportFilterNote("El elemento seleccionado no tiene departamentos relacionados; se mantiene consolidado.", true);
+      } else {
+        setReportFilterNote(`Filtro aplicado: ${level} (${selected?.label || value}).`);
+      }
+      refreshReportesByScope();
+    };
+    const loadReportFilterElements = async (level, preserveSelection = false) => {
+      if (!reportesFiltroElementoEl) return;
+      reportesFiltroElementoEl.innerHTML = `<option value="">Cargando...</option>`;
+      try {
+        const response = await fetch(`/proyectando/presupuesto-reportes-filtros?nivel=${encodeURIComponent(level)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload?.success) {
+          throw new Error(payload?.error || "No se pudieron cargar filtros");
+        }
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        reportScopeItemsByValue = new Map();
+        const options = items.map((item) => {
+          const value = String(item?.value || "").trim();
+          const label = String(item?.label || value || "").trim();
+          if (!value) return "";
+          reportScopeItemsByValue.set(value, {
+            value,
+            label,
+            departments: Array.isArray(item?.departments) ? item.departments : [],
+          });
+          return `<option value="${value}">${label}</option>`;
+        }).join("");
+        reportesFiltroElementoEl.innerHTML = options || `<option value="">Sin elementos</option>`;
+        if (preserveSelection && reportScopeState.element && reportScopeItemsByValue.has(reportScopeState.element)) {
+          reportesFiltroElementoEl.value = reportScopeState.element;
+        }
+        if (!reportesFiltroElementoEl.value && reportesFiltroElementoEl.options.length) {
+          reportesFiltroElementoEl.selectedIndex = 0;
+        }
+      } catch (error) {
+        reportesFiltroElementoEl.innerHTML = `<option value="">Sin datos</option>`;
+        setReportFilterNote(String(error?.message || error || "No se pudieron cargar filtros"), true);
+      }
+    };
     const getSummaryValue = (rowClass, month, kind) => {
       const row = controlMensualTable?.querySelector(`tbody tr.${rowClass}`);
       if (!row) return 0;
@@ -1289,7 +1513,7 @@
     };
     const recalcControlMensualTotals = () => {
       if (!controlMensualTable) return;
-      const detailRows = Array.from(controlMensualTable.querySelectorAll("tbody tr.control-mensual-detail-row"));
+      const detailRows = getScopedDetailRows();
       const totalIngresosRow = controlMensualTable.querySelector("tbody tr.control-mensual-total-ingresos");
       const totalEgresosRow = controlMensualTable.querySelector("tbody tr.control-mensual-total-egresos");
       const resultadoRow = controlMensualTable.querySelector("tbody tr.control-mensual-resultado");
@@ -1337,14 +1561,7 @@
         setSummary(resultadoRow, "percent", computePercentValue(resultadoProjected, resultadoRealized));
       });
       updateReporteEjecutivo();
-      updateReporteDesviaciones();
-      updateReporteTendencia();
-      updateReporteEjecucionArea();
-      updateReporteComposicionGasto();
-      updateReporteKpisSipet();
-      updateReporteMapaCalor();
-      updateAlertasInteligentes();
-      updateControlDashboard();
+      refreshReportesByScope();
     };
     const updateControlDashboard = () => {
       if (!controlMensualTable) return;
@@ -1355,12 +1572,12 @@
         const input = row.querySelector(`input[data-summary-month="${month}"][data-summary-kind="${kind}"]`);
         return parseIntegerValue(input?.value || "0");
       };
-      const ingP = getSummaryYearValue("control-mensual-total-ingresos", "proyectado");
-      const ingR = getSummaryYearValue("control-mensual-total-ingresos", "realizado");
-      const egrP = getSummaryYearValue("control-mensual-total-egresos", "proyectado");
-      const egrR = getSummaryYearValue("control-mensual-total-egresos", "realizado");
-      const resP = getSummaryYearValue("control-mensual-resultado", "proyectado");
-      const resR = getSummaryYearValue("control-mensual-resultado", "realizado");
+      const ingP = getScopedYearValue("control-mensual-total-ingresos", "proyectado");
+      const ingR = getScopedYearValue("control-mensual-total-ingresos", "realizado");
+      const egrP = getScopedYearValue("control-mensual-total-egresos", "proyectado");
+      const egrR = getScopedYearValue("control-mensual-total-egresos", "realizado");
+      const resP = getScopedYearValue("control-mensual-resultado", "proyectado");
+      const resR = getScopedYearValue("control-mensual-resultado", "realizado");
       const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
       setText("cp-kpi-ingresos", formatCurrency(ingR));
       setText("cp-kpi-ingresos-pct", formatPercentOneDecimal(ingP > 0 ? (ingR / ingP) * 100 : 0));
@@ -1368,7 +1585,7 @@
       setText("cp-kpi-egresos-pct", formatPercentOneDecimal(egrP > 0 ? (egrR / egrP) * 100 : 0));
       setText("cp-kpi-resultado", formatCurrency(resR));
       setText("cp-kpi-resultado-delta", `${resR - resP >= 0 ? "+" : ""}${formatCurrency(resR - resP)}`);
-      const detailRows = Array.from(controlMensualTable.querySelectorAll("tbody tr.control-mensual-detail-row"));
+      const detailRows = getScopedDetailRows();
       const avgDesv = detailRows.length ? detailRows.reduce((acc, row) => {
         const p = getRowYearValue(row, "proyectado");
         const r = getRowYearValue(row, "realizado");
@@ -1381,8 +1598,8 @@
 
       const monthly = months.map((m, i) => ({
         label: monthNames[i],
-        proy: getSummaryValue("control-mensual-total-ingresos", m, "proyectado"),
-        real: getSummaryValue("control-mensual-total-ingresos", m, "realizado"),
+        proy: getScopedSummaryValue("control-mensual-total-ingresos", m, "proyectado"),
+        real: getScopedSummaryValue("control-mensual-total-ingresos", m, "realizado"),
       }));
       const barsRoot = document.getElementById("cp-monthly-bars");
       if (barsRoot && window.Plotly) {
@@ -1409,8 +1626,8 @@
       let proyAccum = 0;
       let realAccum = 0;
       months.forEach((m, i) => {
-        proyAccum += getSummaryValue("control-mensual-total-ingresos", m, "proyectado");
-        realAccum += getSummaryValue("control-mensual-total-ingresos", m, "realizado");
+        proyAccum += getScopedSummaryValue("control-mensual-total-ingresos", m, "proyectado");
+        realAccum += getScopedSummaryValue("control-mensual-total-ingresos", m, "realizado");
         trend.push({ label: monthNames[i], p: proyAccum, r: realAccum });
       });
       const trendRoot = document.getElementById("cp-tendencia-chart");
@@ -1582,12 +1799,12 @@
         if (cell("cumplimiento")) cell("cumplimiento").textContent = formatPercentOneDecimal(cumplimiento);
       };
 
-      const ingresoProjected = getSummaryYearValue("control-mensual-total-ingresos", "proyectado");
-      const ingresoRealized = getSummaryYearValue("control-mensual-total-ingresos", "realizado");
-      const egresoProjected = getSummaryYearValue("control-mensual-total-egresos", "proyectado");
-      const egresoRealized = getSummaryYearValue("control-mensual-total-egresos", "realizado");
-      const resultadoProjected = getSummaryYearValue("control-mensual-resultado", "proyectado");
-      const resultadoRealized = getSummaryYearValue("control-mensual-resultado", "realizado");
+      const ingresoProjected = getScopedYearValue("control-mensual-total-ingresos", "proyectado");
+      const ingresoRealized = getScopedYearValue("control-mensual-total-ingresos", "realizado");
+      const egresoProjected = getScopedYearValue("control-mensual-total-egresos", "proyectado");
+      const egresoRealized = getScopedYearValue("control-mensual-total-egresos", "realizado");
+      const resultadoProjected = getScopedYearValue("control-mensual-resultado", "proyectado");
+      const resultadoRealized = getScopedYearValue("control-mensual-resultado", "realizado");
 
       updateConceptRow("ingresos", ingresoProjected, ingresoRealized);
       updateConceptRow("egresos", egresoProjected, egresoRealized);
@@ -1608,8 +1825,8 @@
       const monthNames = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
       const monthly = months.map((m, index) => ({
         label: monthNames[index],
-        proy: getSummaryValue("control-mensual-resultado", m, "proyectado"),
-        real: getSummaryValue("control-mensual-resultado", m, "realizado"),
+        proy: getScopedSummaryValue("control-mensual-resultado", m, "proyectado"),
+        real: getScopedSummaryValue("control-mensual-resultado", m, "realizado"),
       }));
       const maxVal = Math.max(1, ...monthly.flatMap((x) => [Math.abs(x.proy), Math.abs(x.real)]));
       barsRoot.innerHTML = monthly.map((item) => {
@@ -1631,7 +1848,7 @@
     };
     const updateReporteDesviaciones = () => {
       if (!controlMensualTable) return;
-      const detailRows = Array.from(controlMensualTable.querySelectorAll("tbody tr.control-mensual-detail-row"));
+      const detailRows = getScopedDetailRows();
       const tableBody = document.querySelector("#reporte-desviaciones-table tbody");
       const barsRoot = document.getElementById("reporte-desviaciones-bars");
       if (!tableBody || !barsRoot) return;
@@ -1675,8 +1892,8 @@
       let proyAccum = 0;
       let realAccum = 0;
       months.forEach((month, idx) => {
-        proyAccum += getSummaryValue("control-mensual-resultado", month, "proyectado");
-        const realMonth = getSummaryValue("control-mensual-resultado", month, "realizado");
+        proyAccum += getScopedSummaryValue("control-mensual-resultado", month, "proyectado");
+        const realMonth = getScopedSummaryValue("control-mensual-resultado", month, "realizado");
         realAccum += realMonth;
         trend.push({ label: monthNames[idx], proy: proyAccum, real: realAccum });
       });
@@ -1719,19 +1936,11 @@
       `;
     };
     const resolveAreaSucursal = (rubro) => {
-      const text = String(rubro || "").toLowerCase();
-      if (text.includes("interes") || text.includes("moratorio") || text.includes("normal")) return "Crédito";
-      if (text.includes("comisiones") || text.includes("productos")) return "Comercial";
-      if (text.includes("salarios") || text.includes("aguinaldo") || text.includes("prestaciones") || text.includes("honorarios")) return "Administración";
-      if (text.includes("tecnologia")) return "Tecnología";
-      if (text.includes("impuestos") || text.includes("derechos")) return "Cumplimiento";
-      if (text.includes("promocion") || text.includes("publicidad")) return "Marketing";
-      if (text.includes("depreciaciones") || text.includes("amortizaciones") || text.includes("costo neto")) return "Finanzas";
-      return "Sucursal Centro";
+      return inferDepartmentFromRubro(rubro);
     };
     const updateReporteEjecucionArea = () => {
       if (!controlMensualTable) return;
-      const detailRows = Array.from(controlMensualTable.querySelectorAll("tbody tr.control-mensual-detail-row"));
+      const detailRows = getScopedDetailRows();
       const grouped = new Map();
       detailRows.forEach((row) => {
         const rubro = (row.querySelector("td:first-child")?.textContent || "").trim();
@@ -1841,18 +2050,18 @@
         const el = document.getElementById(id);
         if (el) el.textContent = value;
       };
-      const ingresosP = getSummaryYearValue("control-mensual-total-ingresos", "proyectado");
-      const ingresosR = getSummaryYearValue("control-mensual-total-ingresos", "realizado");
-      const egresosP = getSummaryYearValue("control-mensual-total-egresos", "proyectado");
-      const egresosR = getSummaryYearValue("control-mensual-total-egresos", "realizado");
-      const resultadoP = getSummaryYearValue("control-mensual-resultado", "proyectado");
-      const resultadoR = getSummaryYearValue("control-mensual-resultado", "realizado");
+      const ingresosP = getScopedYearValue("control-mensual-total-ingresos", "proyectado");
+      const ingresosR = getScopedYearValue("control-mensual-total-ingresos", "realizado");
+      const egresosP = getScopedYearValue("control-mensual-total-egresos", "proyectado");
+      const egresosR = getScopedYearValue("control-mensual-total-egresos", "realizado");
+      const resultadoP = getScopedYearValue("control-mensual-resultado", "proyectado");
+      const resultadoR = getScopedYearValue("control-mensual-resultado", "realizado");
 
       const ejecBaseP = ingresosP + egresosP;
       const ejecBaseR = ingresosR + egresosR;
       const indiceEjec = ejecBaseP > 0 ? (ejecBaseR / ejecBaseP) * 100 : 0;
 
-      const detailRows = Array.from(controlMensualTable.querySelectorAll("tbody tr.control-mensual-detail-row"));
+      const detailRows = getScopedDetailRows();
       const desviaciones = detailRows.map((row) => {
         const p = getRowYearValue(row, "proyectado");
         const r = getRowYearValue(row, "realizado");
@@ -1863,8 +2072,8 @@
       const ratioGastoIngreso = ingresosR > 0 ? (egresosR / ingresosR) * 100 : 0;
 
       const cumplimientosMensuales = months.map((m) => {
-        const p = getSummaryValue("control-mensual-resultado", m, "proyectado");
-        const r = getSummaryValue("control-mensual-resultado", m, "realizado");
+        const p = getScopedSummaryValue("control-mensual-resultado", m, "proyectado");
+        const r = getScopedSummaryValue("control-mensual-resultado", m, "realizado");
         return p !== 0 ? (r / p) * 100 : 0;
       });
       const cumplimientoProm = cumplimientosMensuales.length ? (cumplimientosMensuales.reduce((a, b) => a + b, 0) / cumplimientosMensuales.length) : 0;
@@ -1898,12 +2107,12 @@
       const tbody = document.querySelector("#reporte-mapa-calor-table tbody");
       if (!tbody) return;
       tbody.innerHTML = months.map((m, idx) => {
-        const ingP = getSummaryValue("control-mensual-total-ingresos", m, "proyectado");
-        const ingR = getSummaryValue("control-mensual-total-ingresos", m, "realizado");
-        const egrP = getSummaryValue("control-mensual-total-egresos", m, "proyectado");
-        const egrR = getSummaryValue("control-mensual-total-egresos", m, "realizado");
-        const resP = getSummaryValue("control-mensual-resultado", m, "proyectado");
-        const resR = getSummaryValue("control-mensual-resultado", m, "realizado");
+        const ingP = getScopedSummaryValue("control-mensual-total-ingresos", m, "proyectado");
+        const ingR = getScopedSummaryValue("control-mensual-total-ingresos", m, "realizado");
+        const egrP = getScopedSummaryValue("control-mensual-total-egresos", m, "proyectado");
+        const egrR = getScopedSummaryValue("control-mensual-total-egresos", m, "realizado");
+        const resP = getScopedSummaryValue("control-mensual-resultado", m, "proyectado");
+        const resR = getScopedSummaryValue("control-mensual-resultado", m, "realizado");
         const sIng = heatSemaforo(ingP, ingR);
         const sEgr = heatSemaforo(egrP, egrR);
         const sRes = heatSemaforo(resP, resR);
@@ -1927,22 +2136,22 @@
       const alerts = [];
 
       months.forEach((m, idx) => {
-        const egP = getSummaryValue("control-mensual-total-egresos", m, "proyectado");
-        const egR = getSummaryValue("control-mensual-total-egresos", m, "realizado");
+        const egP = getScopedSummaryValue("control-mensual-total-egresos", m, "proyectado");
+        const egR = getScopedSummaryValue("control-mensual-total-egresos", m, "realizado");
         if (egP > 0 && egR > egP * 1.1) {
           alerts.push({ level: "danger", text: `Riesgo ${monthNames[idx]}: gasto en ${formatPercentOneDecimal((egR / egP) * 100)} del presupuesto (>110%).` });
         }
       });
 
       months.forEach((m, idx) => {
-        const inP = getSummaryValue("control-mensual-total-ingresos", m, "proyectado");
-        const inR = getSummaryValue("control-mensual-total-ingresos", m, "realizado");
+        const inP = getScopedSummaryValue("control-mensual-total-ingresos", m, "proyectado");
+        const inR = getScopedSummaryValue("control-mensual-total-ingresos", m, "realizado");
         if (inP > 0 && inR < inP * 0.9) {
           alerts.push({ level: "warn", text: `Atención ${monthNames[idx]}: ingreso en ${formatPercentOneDecimal((inR / inP) * 100)} del esperado (<90%).` });
         }
       });
 
-      const resultadoSerie = months.map((m) => getSummaryValue("control-mensual-resultado", m, "realizado"));
+      const resultadoSerie = months.map((m) => getScopedSummaryValue("control-mensual-resultado", m, "realizado"));
       for (let i = 2; i < resultadoSerie.length; i += 1) {
         if (resultadoSerie[i] < resultadoSerie[i - 1] && resultadoSerie[i - 1] < resultadoSerie[i - 2]) {
           alerts.push({ level: "danger", text: `Tendencia negativa detectada: 3 meses consecutivos a la baja hasta ${monthNames[i]}.` });
@@ -2030,14 +2239,7 @@
       controlBody.innerHTML = `${detailRowsHtml}${summaryRowsHtml}`;
       bindControlMensualFormula();
       recalcControlMensualTotals();
-      updateReporteDesviaciones();
-      updateReporteTendencia();
-      updateReporteEjecucionArea();
-      updateReporteComposicionGasto();
-      updateReporteKpisSipet();
-      updateReporteMapaCalor();
-      updateAlertasInteligentes();
-      updateControlDashboard();
+      refreshReportesByScope();
     };
     syncControlMensualRubrosFromAnual();
 
@@ -2125,6 +2327,12 @@
       return map;
     };
     loadControlMensual();
+    const initializeReportFilters = async () => {
+      if (!reportesFiltroNivelEl || !reportesFiltroElementoEl) return;
+      const level = String(reportesFiltroNivelEl.value || "consolidado");
+      await loadReportFilterElements(level);
+      setScopeFromSelectedElement();
+    };
 
     const applyControlMensualImport = (entries) => {
       if (!controlMensualTable) return { applied: 0, missing: 0, overwritten: 0 };
@@ -2220,6 +2428,23 @@
         }
       });
     }
+    if (reportesFiltroNivelEl) {
+      reportesFiltroNivelEl.addEventListener("change", async () => {
+        const level = String(reportesFiltroNivelEl.value || "consolidado");
+        await loadReportFilterElements(level);
+        setScopeFromSelectedElement();
+      });
+    }
+    if (reportesFiltroAplicarBtn) {
+      reportesFiltroAplicarBtn.addEventListener("click", () => {
+        setScopeFromSelectedElement();
+      });
+    }
+    if (reportesFiltroElementoEl) {
+      reportesFiltroElementoEl.addEventListener("change", () => {
+        setScopeFromSelectedElement();
+      });
+    }
     if (controlMensualAccBtn) {
       controlMensualAccBtn.addEventListener("click", openControlMensualAccumulatedModal);
     }
@@ -2272,6 +2497,7 @@
     });
 
     const monthToggleButtons = Array.from(document.querySelectorAll("[data-month-toggle]"));
+    initializeReportFilters();
     const setMonthVisibility = (month, visible) => {
       document.querySelectorAll(`.month-col.month-${month}`).forEach((cell) => {
         cell.style.display = visible ? "table-cell" : "none";

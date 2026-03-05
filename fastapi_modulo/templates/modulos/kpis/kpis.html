@@ -12,30 +12,154 @@
               <th class="tabla-oficial-num">Valor actual</th>
               <th class="tabla-oficial-num">Meta</th>
               <th>Estado</th>
+              <th>IA</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Cumplimiento POA</td>
-              <td class="tabla-oficial-num">78%</td>
-              <td class="tabla-oficial-num">85%</td>
-              <td>En seguimiento</td>
-            </tr>
-            <tr>
-              <td>Ejecución presupuestaria</td>
-              <td class="tabla-oficial-num">81%</td>
-              <td class="tabla-oficial-num">85%</td>
-              <td>En rango</td>
-            </tr>
-            <tr>
-              <td>Satisfacción de clientes</td>
-              <td class="tabla-oficial-num">88%</td>
-              <td class="tabla-oficial-num">90%</td>
-              <td>En seguimiento</td>
+              <td><input type="text" id="kpi-nombre" placeholder="Nombre del KPI"></td>
+              <td class="tabla-oficial-num"><input type="text" id="kpi-valor" placeholder="Valor"></td>
+              <td class="tabla-oficial-num"><input type="text" id="kpi-meta" placeholder="Meta"></td>
+              <td><input type="text" id="kpi-estado" placeholder="Estado"></td>
+              <td><button type="button" id="btn-sugerir-kpi-ia">Sugerir con IA</button></td>
             </tr>
           </tbody>
         </table>
+        <div id="sugerencia-kpi-ia" style="margin-top:20px;"></div>
       </div>
+      <script>
+      const openKpiIaEditor = ({ title = 'Sugerencia IA', suggestion = '' } = {}) => new Promise((resolve) => {
+        let overlay = document.getElementById('kpi-ia-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'kpi-ia-overlay';
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:center;justify-content:center;z-index:2600;';
+          overlay.innerHTML = `
+            <div style="width:min(760px,92vw);max-height:86vh;overflow:auto;background:#fff;border-radius:14px;padding:16px;border:1px solid rgba(148,163,184,.4);box-shadow:0 24px 40px rgba(15,23,42,.28);">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+                <h4 id="kpi-ia-title" style="margin:0;font-size:18px;color:#0f172a;">Sugerencia IA</h4>
+                <button type="button" id="kpi-ia-close" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;">Cerrar</button>
+              </div>
+              <p style="margin:0 0 8px;color:#64748b;font-size:13px;">Edita el texto antes de aplicarlo.</p>
+              <textarea id="kpi-ia-text" style="width:100%;min-height:220px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;color:#0f172a;font-size:14px;line-height:1.45;"></textarea>
+              <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" id="kpi-ia-discard" style="border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:10px;padding:8px 12px;cursor:pointer;">Descartar</button>
+                <button type="button" id="kpi-ia-apply" style="border:1px solid #0f3d2e;background:#0f3d2e;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;">Aplicar</button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        }
+        const titleEl = document.getElementById('kpi-ia-title');
+        const textEl = document.getElementById('kpi-ia-text');
+        const closeEl = document.getElementById('kpi-ia-close');
+        const discardEl = document.getElementById('kpi-ia-discard');
+        const applyEl = document.getElementById('kpi-ia-apply');
+        if (titleEl) titleEl.textContent = title;
+        if (textEl) textEl.value = String(suggestion || '');
+        const finish = (result) => {
+          overlay.style.display = 'none';
+          document.body.style.overflow = '';
+          resolve(result);
+        };
+        if (closeEl) closeEl.onclick = () => finish({ action: 'close', text: textEl ? textEl.value : '' });
+        if (discardEl) discardEl.onclick = () => finish({ action: 'discard', text: textEl ? textEl.value : '' });
+        if (applyEl) applyEl.onclick = () => finish({ action: 'apply', text: textEl ? textEl.value : '' });
+        overlay.onclick = (event) => { if (event.target === overlay) finish({ action: 'close', text: textEl ? textEl.value : '' }); };
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        if (textEl) textEl.focus();
+      });
+
+      const isIaEnabledForKpi = async () => {
+        try {
+          const res = await fetch('/api/ia/flags?module=kpis&feature_key=suggest_objective_text', {
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+          });
+          const data = await res.json().catch(() => ({}));
+          return !!(res.ok && data?.success === true && data?.data?.enabled);
+        } catch (_err) {
+          return false;
+        }
+      };
+
+      const iaBtn = document.getElementById('btn-sugerir-kpi-ia');
+      isIaEnabledForKpi().then((enabled) => {
+        if (!iaBtn) return;
+        iaBtn.disabled = !enabled;
+        iaBtn.style.opacity = enabled ? '1' : '0.55';
+        iaBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+        if (!enabled) iaBtn.title = 'IA deshabilitada para tu rol/módulo';
+      });
+
+      iaBtn.onclick = async function() {
+        const enabled = await isIaEnabledForKpi();
+        if (!enabled) {
+          document.getElementById('sugerencia-kpi-ia').innerHTML = '<b>IA:</b> deshabilitada para tu rol/módulo.';
+          return;
+        }
+        const nombre = document.getElementById('kpi-nombre').value;
+        const valor = document.getElementById('kpi-valor').value;
+        const meta = document.getElementById('kpi-meta').value;
+        const estado = document.getElementById('kpi-estado').value;
+        const infoEl = document.getElementById('sugerencia-kpi-ia');
+        const prompt = `Sugiere un KPI estratégico para: ${nombre}, valor actual: ${valor}, meta: ${meta}, estado: ${estado}. Responde con propuesta breve y accionable en español.`;
+        infoEl.innerHTML = '<b>IA:</b> generando sugerencia...';
+        try {
+          const draftResp = await fetch('/api/ia/suggestions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt,
+              original_text: `Indicador:${nombre}; Valor:${valor}; Meta:${meta}; Estado:${estado}`,
+              target_module: 'kpis',
+              target_entity: 'kpi',
+              target_entity_id: '',
+              target_field: 'estado',
+            })
+          });
+          const draftData = await draftResp.json().catch(() => ({}));
+          if (!draftResp.ok || draftData.success === false) {
+            throw new Error(draftData.error || 'No se pudo generar sugerencia.');
+          }
+          const draft = draftData.data || {};
+          const decision = await openKpiIaEditor({
+            title: 'Sugerencia IA para KPI',
+            suggestion: String(draft.suggested_text || '')
+          });
+          if (decision.action === 'apply') {
+            const applyResp = await fetch(`/api/ia/suggestions/${draft.id}/apply`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ edited_text: String(decision.text || '').trim() })
+            });
+            const applyData = await applyResp.json().catch(() => ({}));
+            if (!applyResp.ok || applyData.success === false) {
+              throw new Error(applyData.error || 'No se pudo aplicar la sugerencia.');
+            }
+            const appliedText = String(applyData?.data?.applied_text || decision.text || '').trim();
+            document.getElementById('kpi-estado').value = appliedText;
+            infoEl.innerHTML = '<b>Sugerencia IA aplicada:</b><br>' + appliedText;
+          } else if (decision.action === 'discard') {
+            const discardResp = await fetch(`/api/ia/suggestions/${draft.id}/discard`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason: 'Descartada por usuario', edited_text: String(decision.text || '').trim() })
+            });
+            const discardData = await discardResp.json().catch(() => ({}));
+            if (!discardResp.ok || discardData.success === false) {
+              throw new Error(discardData.error || 'No se pudo descartar la sugerencia.');
+            }
+            infoEl.innerHTML = '<b>Sugerencia IA descartada.</b>';
+          } else {
+            infoEl.innerHTML = '<b>Sugerencia IA generada.</b> Puedes volver a abrirla para aplicar o descartar.';
+          }
+        } catch (err) {
+          infoEl.innerHTML = '<b>Error IA:</b> ' + (err.message || 'Sin respuesta');
+        }
+      };
+      </script>
     </div>
   </article>
 </section>

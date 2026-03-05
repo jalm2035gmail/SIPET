@@ -7,6 +7,80 @@
 </head>
 <body>
     <h1>POA</h1>
-    <!-- Estructura de la interfaz para el POA -->
+    <div style="margin-bottom: 1em;">
+        <label for="actividad-input">Actividad/Eje:</label>
+        <input id="actividad-input" type="text" style="width: 350px;">
+        <button id="sugerir-ia-btn" type="button">Sugerir con IA</button>
+    </div>
+    <div id="sugerencia-ia" style="margin-top: 1em; color: #0a0; font-weight: bold;"></div>
+    <div id="acciones-ia" style="margin-top: 0.5em; display: none;">
+        <button id="aplicar-ia-btn" type="button">Aplicar</button>
+        <button id="editar-ia-btn" type="button">Editar</button>
+        <button id="descartar-ia-btn" type="button">Descartar</button>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('sugerir-ia-btn');
+        const input = document.getElementById('actividad-input');
+        const sugerenciaDiv = document.getElementById('sugerencia-ia');
+        const accionesDiv = document.getElementById('acciones-ia');
+        const aplicarBtn = document.getElementById('aplicar-ia-btn');
+        const editarBtn = document.getElementById('editar-ia-btn');
+        const descartarBtn = document.getElementById('descartar-ia-btn');
+        let sugerenciaActual = '';
+        if (btn) {
+            btn.addEventListener('click', async function() {
+                btn.disabled = true;
+                btn.textContent = 'Sugiriendo...';
+                sugerenciaDiv.textContent = '';
+                accionesDiv.style.display = 'none';
+                try {
+                    const resp = await fetch('/api/ia/suggest/objective-text', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: input.value || 'Sugerir actividad o eje para el POA' })
+                    });
+                    const data = await resp.json();
+                    if (data && data.suggestion) {
+                        sugerenciaActual = data.suggestion;
+                        sugerenciaDiv.textContent = sugerenciaActual;
+                        accionesDiv.style.display = 'inline-block';
+                    } else {
+                        sugerenciaDiv.textContent = 'No se recibió sugerencia.';
+                    }
+                } catch (e) {
+                    sugerenciaDiv.textContent = 'Error al obtener sugerencia.';
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Sugerir con IA';
+                }
+            });
+        }
+        if (aplicarBtn) {
+            aplicarBtn.addEventListener('click', function() {
+                if (sugerenciaActual) {
+                    input.value = sugerenciaActual;
+                    sugerenciaDiv.textContent = 'Sugerencia aplicada.';
+                    accionesDiv.style.display = 'none';
+                }
+            });
+        }
+        if (editarBtn) {
+            editarBtn.addEventListener('click', function() {
+                if (sugerenciaActual) {
+                    input.value = sugerenciaActual;
+                    sugerenciaDiv.textContent = 'Puedes editar la sugerencia en el campo.';
+                    accionesDiv.style.display = 'none';
+                }
+            });
+        }
+        if (descartarBtn) {
+            descartarBtn.addEventListener('click', function() {
+                sugerenciaDiv.textContent = 'Sugerencia descartada.';
+                accionesDiv.style.display = 'none';
+            });
+        }
+    });
+    </script>
 </body>
 </html>

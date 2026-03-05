@@ -1,0 +1,80 @@
+🧠 Nivel 1: Asistencia y Automatización Inteligente
+Estas funcionalidades son las más accesibles y de alto retorno inmediato.
+
+Generación y Refinamiento de OKRs/KPIs
+
+Qué hace: El usuario escribe un objetivo (ej. "Mejorar la satisfacción del socio") y la IA sugiere resultados clave (KRs) medibles e indicadores (KPIs) alineados con las mejores prácticas y el contexto de la cooperativa.
+
+Prompt de ejemplo: "Sugiere 3 resultados clave para el objetivo 'Incrementar la participación en asambleas', considerando que somos una cooperativa de ahorro."
+
+Análisis de Sentimiento de Socios y Empleados
+
+Qué hace: Si SIPET integra encuestas, buzones de quejas o comentarios en foros, la IA puede analizar el texto y clasificar el sentimiento (positivo, negativo, neutral) y detectar temas recurrentes (ej. "quejas sobre la app móvil", "sugerencias de nuevos créditos").
+
+Tecnología: Procesamiento de Lenguaje Natural (NLP) con librerías como transformers o spacy.
+
+Resumen Automático de Actas y Documentos
+
+Qué hace: Subes un PDF con el acta de la asamblea o un informe largo, y la IA genera un resumen ejecutivo con los acuerdos clave, puntos de discusión y tareas asignadas.
+
+Valor: Ahorra horas de lectura a directivos y consejos.
+
+📈 Nivel 2: Análisis Predictivo y Prescriptivo
+Estas funcionalidades aprovechan los datos históricos que ya tienes en tu base de datos SQLite para hacer proyecciones.
+
+Predicción de Morosidad (Riesgo Crediticio)
+
+Qué hace: Analiza el comportamiento histórico de pago de los socios (del Eje 4) y otros datos (antigüedad, productos contratados) para generar un score de probabilidad de impago para cada solicitud de crédito nueva o para la cartera existente.
+
+Tecnología: Modelos de Machine Learning con scikit-learn o XGBoost.
+
+Recomendador de Productos Financieros (Next Best Product)
+
+Qué hace: Basado en el perfil del socio (edad, ingresos, productos actuales, comportamiento de ahorro), la IA sugiere el siguiente producto más adecuado (ej. "Ofrécele el fondo de ahorro para vivienda a este socio que cumple 30 años").
+
+Valor: Aumenta la venta cruzada y la satisfacción del socio (Eje 1 y 3).
+
+Detección de Patrones de Fuga de Socios (Churn Prediction)
+
+Qué hace: Identifica qué socios tienen alta probabilidad de dejar de operar con la cooperativa o de no renovar su membresía. Permite activar campañas de retención preventivas.
+
+Valor: Fortalece la base social (Eje 1).
+
+🗣️ Nivel 3: Interacción y Experiencia del Usuario
+Para mejorar el frontend y la interacción con los usuarios (socios y empleados).
+
+Asistente Virtual / Chatbot Cooperativo
+
+Qué hace: Un chatbot integrado en la app/portal que responda preguntas frecuentes de los socios (horarios, requisitos de créditos, estado de cuenta) y también pueda ayudar a los gestores internos a consultar el plan estratégico ("¿Cuáles son los objetivos del Eje 3?").
+
+Tecnología: LangChain, RAG (Retrieval-Augmented Generation) con OpenAI o un modelo local.
+
+Clasificador Automático de Proyectos por Eje Estratégico
+
+Qué hace: Cuando un área propone un nuevo proyecto o actividad, la IA lo lee y sugiere a qué eje estratégico (1 al 7) y objetivo pertenece, e incluso si está alineado con la visión.
+
+Valor: Asegura la coherencia estratégica y facilita la gestión del plan.
+
+🛠️ Nivel 4: Automatización de Procesos Internos
+Para hacer más eficiente la operación de SIPET como herramienta.
+
+Generación de Reportes Estratégicos en Lenguaje Natural
+
+Qué hace: El usuario escribe "Genera un reporte ejecutivo del avance del Eje 2 en el segundo trimestre" y la IA consulta la BD, extrae los KPIs, los analiza y redacta un informe con texto, gráficos y conclusiones.
+
+Mapeo Automático de la Competencia y el Entorno (para Eje 6)
+
+Qué hace: Un scraper automatizado (controlado) que lea noticias, sitios de fintechs y otras cooperativas, y la IA resuma las tendencias, nuevos competidores o cambios regulatorios relevantes.
+
+💡 Arquitectura Sugerida para Empezar
+Fase 1 (Inmediata): Implementa las funcionalidades de Asistencia (Nivel 1) usando la API de OpenAI (GPT) o Claude. Son las más fáciles de integrar y demostrar valor rápidamente.
+
+Fase 2 (Corto Plazo): Comienza con el Análisis Predictivo (Nivel 2) . Ya tienes los datos en SQLite. Puedes empezar con un modelo simple para Predicción de Morosidad.
+
+Infraestructura:
+
+Crea una nueva carpeta /ia_services en tu fastapi_modulo.
+
+Define endpoints en FastAPI que reciban datos y llamen a tus modelos o a APIs externas.
+
+Para modelos complejos, considera usar Celery para tareas asíncronas (ej. generar un reporte pesado).

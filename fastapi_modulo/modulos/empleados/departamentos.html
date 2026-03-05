@@ -4,16 +4,19 @@
 
   <div class="view-buttons">
     <button type="button" class="view-pill active" data-view="form">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/form.svg')"></span><span class="view-pill-label">Form</span>
+      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span><span class="view-pill-label">Form</span>
     </button>
     <button type="button" class="view-pill" data-view="list">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/list.svg')"></span><span class="view-pill-label">Lista</span>
+      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span><span class="view-pill-label">Lista</span>
     </button>
     <button type="button" class="view-pill" data-view="kanban">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/kanban.svg')"></span><span class="view-pill-label">Kanban</span>
+      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span><span class="view-pill-label">Kanban</span>
     </button>
     <button type="button" class="view-pill" data-view="organigrama">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/organigrama.svg')"></span><span class="view-pill-label">Organigrama</span>
+      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span><span class="view-pill-label">Organigrama</span>
+    </button>
+    <button type="button" class="view-pill" data-view="puestos">
+      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span><span class="view-pill-label">Puestos laborales</span>
     </button>
   </div>
 
@@ -68,27 +71,6 @@
       border: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 22%, #ffffff 78%);
       background: #1d4ed8;
       flex: 0 0 40px;
-    }
-    .departamentos-page .actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .departamentos-page .btn {
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      background: #fff;
-      color: #0f172a;
-      padding: 9px 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .departamentos-page .btn.primary {
-      background: #0f172a;
-      color: #fff;
-      border-color: #0f172a;
     }
     .departamentos-page .btn-icon {
       width: 34px;
@@ -209,9 +191,12 @@
     }
     .departamentos-page .emp-note-tabs {
       display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
       border-bottom: 1px solid #e2e8f0;
       background: #f8fafc;
     }
+    .departamentos-page .emp-note-tabs::-webkit-scrollbar { display: none; }
     .departamentos-page .emp-note-tab {
       border: 0;
       background: transparent;
@@ -222,6 +207,8 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .departamentos-page .emp-note-tab .tab-icon {
       width: 16px;
@@ -233,6 +220,24 @@
       background: #ffffff;
       border-bottom: 2px solid #0f172a;
     }
+    .departamentos-page .emp-note-tab .tab-label { display: inline; }
+    .departamentos-page .emp-note-tab.collapsed .tab-label { display: none; }
+    .departamentos-page .emp-note-tab .tab-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      line-height: 1;
+      color: inherit;
+      opacity: 0.45;
+      margin-left: 2px;
+      flex: 0 0 auto;
+      transition: opacity 0.15s;
+    }
+    .departamentos-page .emp-note-tab:hover .tab-toggle { opacity: 0.9; }
     .departamentos-page .emp-note-panel {
       padding: 10px 12px 12px;
     }
@@ -364,6 +369,34 @@
         grid-template-columns: 1fr;
       }
     }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    /* Puestos notebook drawer */
+    .dept-pl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.18); z-index: 2000; display: none; }
+    .dept-pl-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(500px,95vw); background: #fff; z-index: 2001; box-shadow: -4px 0 28px rgba(0,0,0,.12); display: flex; flex-direction: column; transform: translateX(100%); transition: transform .28s cubic-bezier(.4,0,.2,1); }
+    .dept-pl-drawer.open { transform: translateX(0); }
+    .dept-pl-head { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px; }
+    .dept-pl-titulo { font-size: 1rem; font-weight: 700; color: #0f172a; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dept-pl-head-sub { font-size: .72rem; color: #64748b; }
+    .dept-pl-close { border: none; background: none; cursor: pointer; font-size: 1.4rem; line-height: 1; color: #94a3b8; padding: 2px 6px; border-radius: 6px; transition: background .12s; }
+    .dept-pl-close:hover { background: #f1f5f9; }
+    .dept-pl-tabs { display: flex; padding: 12px 20px 0; gap: 2px; border-bottom: 1px solid #e2e8f0; }
+    .dept-pl-tab { border: none; background: none; cursor: pointer; padding: 9px 16px; font-size: .84rem; font-weight: 600; color: #94a3b8; border-bottom: 2.5px solid transparent; margin-bottom: -1px; border-radius: 6px 6px 0 0; transition: color .14s, border-color .14s; }
+    .dept-pl-tab.active { color: #0f172a; border-bottom-color: var(--button-bg,#0f172a); }
+    .dept-pl-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+    .dept-pl-panel { display: none; }
+    .dept-pl-panel.active { display: block; }
+    .dept-pl-loading { color: #94a3b8; font-size: .85rem; }
+    .dept-pl-hab-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; margin-bottom: 6px; }
+    .dept-pl-hab-nombre { flex: 1; font-size: .875rem; font-weight: 600; color: #0f172a; }
+    .dept-pl-hab-badge { flex-shrink: 0; font-size: .78rem; font-weight: 700; background: color-mix(in srgb,var(--button-bg,#0f172a) 10%,#fff 90%); color: #0f172a; padding: 2px 8px; border-radius: 20px; }
+    .dept-pl-save-bar { padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; align-items: center; }
+    .dept-pl-btn-save { border: none; border-radius: 10px; padding: 9px 22px; background: var(--button-bg,#0f172a); color: #fff; font-size: .9rem; font-weight: 600; cursor: pointer; }
+    .dept-pl-saved { font-size: .82rem; color: #22c55e; display: none; }
+    .dept-pl-nb-btn { border: none; background: transparent; cursor: pointer; font-size: .82rem; color: #94a3b8; padding: 3px 7px; border-radius: 6px; transition: background .12s, color .12s; flex-shrink: 0; }
+    .dept-pl-nb-btn:hover { background: color-mix(in srgb,var(--button-bg,#0f172a) 8%,#fff 92%); color: var(--button-bg,#0f172a); }
   </style>
 
   <script>
@@ -525,6 +558,331 @@
           }
           return '<p>Sin acceso, consulte al administrdor</p>';
         };
+        const _sinAcceso = '<div style="max-width:380px;margin:40px auto;background:#fff;border:1px solid #dbe3ef;border-radius:14px;padding:28px;text-align:center;"><p style="font-size:1.4rem;margin-bottom:10px;">&#128274;</p><h2 style="font-size:1rem;color:#0f172a;margin:0 0 8px;">Sin acceso</h2><p style="color:#64748b;margin:0;font-size:.875rem;">No tiene acceso, com&#250;niquese con el administrador.</p></div>';
+        const renderNotebookPanel2 = (tabName) => {
+          if (tabName === 'puestos') return '<div id="puestos-tab-root"></div>';
+          if (tabName === 'funciones') return '<div id="funciones-tab-root"></div>';
+          if (tabName === 'ejes') {
+            return `<div id="area-ejes-tree-root" style="padding:6px 0;">
+              <div style="display:flex;align-items:center;gap:8px;color:#64748b;font-size:13px;padding:10px 4px;">
+                <span style="display:inline-block;width:18px;height:18px;border:2px solid #0f3d2e;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex:0 0 auto;"></span>
+                Cargando ejes estratégicos&hellip;
+              </div>
+            </div>`;
+          }
+          return renderNotebookPanel(tabName);
+        };
+
+        /* ---- Puestos laborales tab ---- */
+        const _renderPuestosTab = async (container) => {
+          const root = container.querySelector('#puestos-tab-root');
+          if (!root) return;
+          root.innerHTML = '<p style="color:#64748b;font-size:.875rem;padding:8px 2px;">Cargando puestos&hellip;</p>';
+          try {
+            const res = await fetch('/api/puestos-laborales');
+            const json = await res.json();
+            const todos = json.data || [];
+            const areaName = String(selectedArea.name || '').trim().toLowerCase();
+            const list = todos.filter((p) => String(p.area || '').trim().toLowerCase() === areaName);
+            if (!list.length) {
+              root.innerHTML = '<p style="color:#94a3b8;font-size:.875rem;padding:8px 2px;">No hay puestos laborales asignados a este departamento.</p>';
+              return;
+            }
+            root.innerHTML = `
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                ${list.map((p) => {
+                  const habCount = (p.habilidades_requeridas || []).length;
+                  const colCount = (p.colaboradores_asignados || []).length;
+                  return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:${p.descripcion ? '6px' : '0'};">
+                      <span style="font-weight:700;font-size:.9rem;color:#0f172a;flex:1;">${escapeHtml(p.nombre)}</span>
+                      ${p.nivel ? `<span style="font-size:.72rem;font-weight:600;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:20px;flex-shrink:0;">${escapeHtml(p.nivel)}</span>` : ''}
+                      ${habCount ? `<span style="font-size:.72rem;font-weight:600;background:color-mix(in srgb,#0f172a 10%,#fff 90%);color:#0f172a;padding:2px 8px;border-radius:20px;flex-shrink:0;" title="Habilidades requeridas">${habCount} hab.</span>` : ''}
+                      ${colCount ? `<span style="font-size:.72rem;font-weight:600;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:20px;flex-shrink:0;" title="Colaboradores asignados">${colCount} col.</span>` : ''}
+                      <button class="dept-pl-nb-btn" data-puesto-id="${escapeHtml(p.id)}" title="Notebook del puesto">&#128203;</button>
+                    </div>
+                    ${p.descripcion ? `<p style="margin:0;font-size:.82rem;color:#64748b;line-height:1.45;">${escapeHtml(p.descripcion)}</p>` : ''}
+                  </div>`;
+                }).join('')}
+              </div>`;
+            root.querySelectorAll('.dept-pl-nb-btn').forEach((btn) => {
+              btn.addEventListener('click', () => openPuestoNb(btn.getAttribute('data-puesto-id'), todos));
+            });
+          } catch (e) {
+            root.innerHTML = '<p style="color:#ef4444;font-size:.875rem;padding:8px 2px;">Error al cargar puestos.</p>';
+          }
+        };
+
+        /* ---- Funciones tab (Misionales / Apoyo / Proyectos específicos) ---- */
+        const _normFuncItem = (raw) => {
+          if (raw && typeof raw === 'object') {
+            return {
+              nombre:        String(raw.nombre || '').trim(),
+              periodicidad:  String(raw.periodicidad || '').trim(),
+              descripcion:   String(raw.descripcion || '').trim(),
+            };
+          }
+          // legacy plain-string migration
+          return { nombre: String(raw || '').trim(), periodicidad: '', descripcion: '' };
+        };
+        const PERIODICIDAD_OPTIONS = ['Diaria','Semanal','Quincenal','Mensual','Trimestral','Semestral','Anual','Permanente','Según demanda'];
+        const _renderFuncionesTab = (container) => {
+          const areaCode = String(selectedArea.code || '').trim();
+          const target = areasData.find((a) => String(a.code || '').trim() === areaCode) || selectedArea;
+          const BLOCKS = [
+            { key: 'funciones_misionales',  label: 'Misionales',            icon: '🎯' },
+            { key: 'funciones_apoyo',        label: 'Apoyo',                 icon: '🤝' },
+            { key: 'funciones_proyectos',    label: 'Proyectos específicos', icon: '🚀' },
+          ];
+          const periodBadge = (p) => p
+            ? `<span style="flex:0 0 auto;font-size:10px;font-weight:700;color:#0f3d2e;background:rgba(15,61,46,.10);border:1px solid rgba(15,61,46,.22);border-radius:999px;padding:2px 8px;white-space:nowrap;">${escapeHtml(p)}</span>`
+            : '';
+          const buildBlock = (block) => {
+            const rawItems = Array.isArray(target[block.key]) ? target[block.key] : [];
+            const items = rawItems.map(_normFuncItem);
+            const rows = items.map((item, idx) => `
+              <li style="border:1px solid rgba(148,163,184,.22);border-radius:9px;background:#f8fafc;padding:8px 10px;display:grid;gap:3px;">
+                <div style="display:flex;align-items:flex-start;gap:8px;">
+                  <span style="flex:1;font-size:13px;color:#0f172a;font-weight:600;line-height:1.4;">${escapeHtml(item.nombre || '—')}</span>
+                  ${periodBadge(item.periodicidad)}
+                  <button type="button" data-func-remove="${idx}" data-func-block="${block.key}"
+                    style="flex:0 0 auto;border:1px solid rgba(239,68,68,.28);background:#fff5f5;color:#b91c1c;border-radius:7px;padding:3px 8px;font-size:12px;cursor:pointer;line-height:1;" title="Eliminar">✕</button>
+                </div>
+                ${item.descripcion ? `<div style="font-size:11px;color:#64748b;line-height:1.4;padding-left:1px;">${escapeHtml(item.descripcion)}</div>` : ''}
+              </li>`);
+            const periodOptions = PERIODICIDAD_OPTIONS.map(
+              (o) => `<option value="${o}">${o}</option>`
+            ).join('');
+            return `
+              <div style="border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#fff;margin-bottom:10px;overflow:hidden;">
+                <div style="padding:10px 12px;background:rgba(15,61,46,.07);border-bottom:1px solid rgba(148,163,184,.18);display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:15px;">${block.icon}</span>
+                  <strong style="font-size:13px;color:#0f172a;">${block.label}</strong>
+                  <span style="margin-left:auto;font-size:11px;color:#64748b;">${items.length} función(es)</span>
+                </div>
+                <div style="padding:10px 12px;">
+                  <ul style="margin:0 0 10px;padding:0;list-style:none;display:grid;gap:5px;">
+                    ${rows.length ? rows.join('') : '<li style="font-size:12px;color:#94a3b8;font-style:italic;padding:4px 2px;">Sin funciones registradas.</li>'}
+                  </ul>
+                  <div style="border:1px dashed rgba(148,163,184,.40);border-radius:10px;padding:10px;display:grid;gap:7px;background:rgba(248,250,252,.7);">
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:7px;align-items:end;">
+                      <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.02em;">NOMBRE</label>
+                        <input type="text" id="func-nombre-${block.key}" placeholder="Nombre de la función…" autocomplete="off"
+                          style="border:1px solid rgba(148,163,184,.38);border-radius:8px;padding:7px 10px;font-size:13px;background:#fff;width:100%;">
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:4px;">
+                        <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.02em;">PERIODICIDAD</label>
+                        <select id="func-period-${block.key}"
+                          style="border:1px solid rgba(148,163,184,.38);border-radius:8px;padding:7px 10px;font-size:13px;background:#fff;min-width:140px;">
+                          <option value="">— Selecciona —</option>
+                          ${periodOptions}
+                        </select>
+                      </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                      <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.02em;">DESCRIPCIÓN <span style="font-weight:400;color:#94a3b8;">(opcional)</span></label>
+                      <input type="text" id="func-desc-${block.key}" placeholder="Describe brevemente la función…" autocomplete="off"
+                        style="border:1px solid rgba(148,163,184,.38);border-radius:8px;padding:7px 10px;font-size:13px;background:#fff;width:100%;">
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;">
+                      <button type="button" data-func-add="${block.key}"
+                        style="border:1px solid rgba(15,61,46,.35);background:rgba(15,61,46,.08);color:#0f3d2e;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">+ Agregar función</button>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+          };
+          const root = container.querySelector('#funciones-tab-root');
+          if (!root) return;
+          root.innerHTML = `
+            <div style="padding:2px 0;">
+              ${BLOCKS.map(buildBlock).join('')}
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+                <button type="button" id="func-save-btn"
+                  style="border:1px solid rgba(15,61,46,.4);background:#0f3d2e;color:#fff;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;">Guardar funciones</button>
+                <span id="func-save-msg" style="font-size:12px;color:#0f3d2e;min-height:1em;"></span>
+              </div>
+            </div>`;
+          const _addItem = (blockKey) => {
+            const nombreEl  = root.querySelector(`#func-nombre-${blockKey}`);
+            const periodEl  = root.querySelector(`#func-period-${blockKey}`);
+            const descEl    = root.querySelector(`#func-desc-${blockKey}`);
+            const nombre = String(nombreEl?.value || '').trim();
+            if (!nombre) { nombreEl && nombreEl.focus(); return; }
+            if (!Array.isArray(target[blockKey])) target[blockKey] = [];
+            target[blockKey].push({
+              nombre,
+              periodicidad: String(periodEl?.value || '').trim(),
+              descripcion:  String(descEl?.value || '').trim(),
+            });
+            _renderFuncionesTab(container);
+          };
+          // Remove / Add buttons
+          root.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('[data-func-remove]');
+            if (removeBtn) {
+              const blockKey = removeBtn.getAttribute('data-func-block');
+              const idx = Number(removeBtn.getAttribute('data-func-remove'));
+              if (!Array.isArray(target[blockKey])) return;
+              target[blockKey].splice(idx, 1);
+              _renderFuncionesTab(container);
+              return;
+            }
+            const addBtn = e.target.closest('[data-func-add]');
+            if (addBtn) { _addItem(addBtn.getAttribute('data-func-add')); }
+          });
+          // Enter on Nombre field triggers add
+          BLOCKS.forEach((block) => {
+            const nombreEl = root.querySelector(`#func-nombre-${block.key}`);
+            nombreEl && nombreEl.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') { e.preventDefault(); _addItem(block.key); }
+            });
+          });
+          // Save button
+          const saveBtn = root.querySelector('#func-save-btn');
+          const saveMsg = root.querySelector('#func-save-msg');
+          saveBtn && saveBtn.addEventListener('click', async () => {
+            saveBtn.disabled = true;
+            if (saveMsg) { saveMsg.textContent = 'Guardando…'; saveMsg.style.color = '#64748b'; }
+            try {
+              await persistAreasData();
+              if (saveMsg) { saveMsg.textContent = 'Guardado correctamente.'; saveMsg.style.color = '#16a34a'; }
+            } catch (err) {
+              if (saveMsg) { saveMsg.textContent = err?.message || 'Error al guardar.'; saveMsg.style.color = '#b91c1c'; }
+            } finally {
+              saveBtn.disabled = false;
+            }
+          });
+        };
+
+        /* ---- Ejes Estratégicos tree for the notebook tab ---- */
+        const _statusFromProgress = (p) => {
+          const n = Number(p || 0);
+          if (n >= 85) return 'ok';
+          if (n >= 60) return 'warning';
+          return 'danger';
+        };
+        const _statusColor = (s) => s === 'ok' ? '#16a34a' : (s === 'warning' ? '#f59e0b' : '#ef4444');
+        const _statusLabel = (s) => s === 'ok' ? 'OK' : (s === 'warning' ? 'En riesgo' : 'Atrasado');
+
+        const _renderAreaEjesTree = async (container, area) => {
+          const root = container.querySelector('#area-ejes-tree-root');
+          if (!root) return;
+          const areaName = String(area.name || '').trim().toLowerCase();
+          try {
+            const [axesPayload, boardPayload] = await Promise.all([
+              fetch('/api/strategic-axes', { credentials: 'same-origin' }).then((r) => r.json()),
+              fetch('/api/poa/board-data', { credentials: 'same-origin' }).then((r) => r.json()),
+            ]);
+            const allAxes = Array.isArray(axesPayload.data) ? axesPayload.data : [];
+            const allActivities = Array.isArray(boardPayload.activities) ? boardPayload.activities : [];
+
+            // Build map: objective_id → activities[]
+            const actsByObj = {};
+            allActivities.forEach((act) => {
+              const key = Number(act.objective_id || 0);
+              if (!key) return;
+              if (!actsByObj[key]) actsByObj[key] = [];
+              actsByObj[key].push(act);
+            });
+
+            // Filter axes that belong to this area (leader dept match)
+            const filtered = allAxes.filter((ax) =>
+              String(ax.lider_departamento || '').trim().toLowerCase() === areaName
+            );
+
+            if (!filtered.length) {
+              root.innerHTML = `<div style="padding:18px 4px;color:#64748b;font-size:13px;">
+                Sin ejes estratégicos asignados a <strong>${escapeHtml(area.name || 'esta área')}</strong>.
+              </div>`;
+              return;
+            }
+
+            const buildBar = (pct, status) => {
+              const color = _statusColor(status);
+              return `<div style="height:6px;border-radius:999px;background:rgba(148,163,184,.22);margin-top:5px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:${color};border-radius:inherit;transition:width .4s;"></div>
+              </div>`;
+            };
+
+            const buildActivityRows = (acts) => {
+              if (!acts || !acts.length) return `<div style="font-size:12px;color:#94a3b8;padding:3px 0 3px 18px;font-style:italic;">Sin actividades POA registradas.</div>`;
+              return acts.map((act) => {
+                const pct = Number(act.avance || 0);
+                const st = _statusFromProgress(pct);
+                const col = _statusColor(st);
+                return `<div style="padding:4px 0 4px 18px;border-left:2px solid rgba(148,163,184,.30);margin:3px 0 3px 8px;">
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:${col};flex:0 0 auto;"></span>
+                    <span style="font-size:12px;color:#334155;font-weight:600;flex:1;min-width:0;">${escapeHtml(act.nombre || 'Actividad')}</span>
+                    <span style="font-size:11px;font-weight:800;color:${col};white-space:nowrap;">${pct}%</span>
+                  </div>
+                  ${act.responsable ? `<div style="font-size:11px;color:#94a3b8;padding-left:14px;margin-top:1px;">👤 ${escapeHtml(act.responsable)}</div>` : ''}
+                  ${buildBar(pct, st)}
+                </div>`;
+              }).join('');
+            };
+
+            const buildObjectiveBlocks = (objs, axisId) => {
+              if (!objs || !objs.length) return `<div style="font-size:12px;color:#94a3b8;padding:6px 0;font-style:italic;">Sin objetivos estratégicos.</div>`;
+              return objs.map((obj) => {
+                const pct = Number(obj.avance || 0);
+                const st = _statusFromProgress(pct);
+                const col = _statusColor(st);
+                const acts = actsByObj[Number(obj.id || 0)] || [];
+                return `<details style="border:1px solid rgba(148,163,184,.25);border-radius:10px;background:#fff;margin-bottom:6px;overflow:hidden;">
+                  <summary style="cursor:pointer;padding:8px 10px;background:rgba(255,255,255,.96);list-style:none;display:flex;align-items:center;gap:8px;user-select:none;">
+                    <span style="width:9px;height:9px;border-radius:50%;background:${col};flex:0 0 auto;"></span>
+                    <span style="font-size:12px;color:#334155;font-weight:700;flex:1;min-width:0;">${escapeHtml(obj.codigo || '')} ${escapeHtml(obj.nombre || 'Objetivo')}</span>
+                    <span style="font-size:11px;font-weight:800;color:${col};white-space:nowrap;">${pct}%</span>
+                    <span style="font-size:11px;color:#94a3b8;">${acts.length} act.</span>
+                  </summary>
+                  <div style="padding:6px 10px 8px;">
+                    ${buildBar(pct, st)}
+                    ${obj.lider ? `<div style="font-size:11px;color:#64748b;margin-top:4px;">👤 ${escapeHtml(obj.lider)}</div>` : ''}
+                    <div style="margin-top:6px;">${buildActivityRows(acts)}</div>
+                  </div>
+                </details>`;
+              }).join('');
+            };
+
+            const html = filtered.map((ax) => {
+              const pct = Number(ax.avance || 0);
+              const st = _statusFromProgress(pct);
+              const col = _statusColor(st);
+              const objs = Array.isArray(ax.objetivos) ? ax.objetivos : [];
+              return `<details open style="border:1px solid rgba(15,61,46,.22);border-radius:12px;background:rgba(15,61,46,.04);margin-bottom:10px;overflow:hidden;">
+                <summary style="cursor:pointer;padding:10px 12px;background:rgba(15,61,46,.08);list-style:none;display:flex;align-items:center;gap:8px;user-select:none;">
+                  <span style="width:11px;height:11px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,.7);flex:0 0 auto;"></span>
+                  <span style="font-size:13px;color:#0f172a;font-weight:800;flex:1;min-width:0;">${escapeHtml(ax.nombre || 'Eje sin nombre')}</span>
+                  <span style="font-size:11px;font-weight:800;color:${col};white-space:nowrap;">${pct}%</span>
+                  <span style="font-size:11px;color:#64748b;white-space:nowrap;">${objs.length} obj.</span>
+                </summary>
+                <div style="padding:8px 12px 10px;">
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#64748b;margin-bottom:6px;">
+                    ${ax.codigo ? `<span>Código: <strong style="color:#0f172a;">${escapeHtml(ax.codigo)}</strong></span>` : ''}
+                    ${ax.responsabilidad_directa ? `<span>Resp: <strong style="color:#0f172a;">${escapeHtml(ax.responsabilidad_directa)}</strong></span>` : ''}
+                    <span>Estado: <strong style="color:${col};">${_statusLabel(st)}</strong></span>
+                  </div>
+                  ${buildBar(pct, st)}
+                  <div style="margin-top:8px;">${buildObjectiveBlocks(objs, ax.id)}</div>
+                </div>
+              </details>`;
+            }).join('');
+
+            root.innerHTML = `
+              <div style="padding:0 2px;">
+                <div style="font-size:12px;color:#64748b;margin-bottom:8px;">
+                  ${filtered.length} eje(s) asignado(s) a <strong style="color:#0f172a;">${escapeHtml(area.name || '')}</strong>
+                </div>
+                ${html}
+              </div>
+            `;
+          } catch (err) {
+            root.innerHTML = `<div style="color:#b91c1c;font-size:13px;padding:10px 4px;">Error al cargar ejes: ${escapeHtml(String(err.message || err))}</div>`;
+          }
+        };
 
         areaView.innerHTML = `
           <section class="area-card">
@@ -576,19 +934,34 @@
               </div>
               <div class="emp-note">
                 <div class="emp-note-tabs">
-                  <button type="button" class="emp-note-tab active" data-note-tab="empleados"><img src="/templates/icon/organigrama.svg" alt="" class="tab-icon">Empleados</button>
-                  <button type="button" class="emp-note-tab" data-note-tab="ejes"><img src="/templates/icon/biblioteca.svg" alt="" class="tab-icon">Ejes estratégicos asignados</button>
-                  <button type="button" class="emp-note-tab" data-note-tab="kpis"><img src="/templates/icon/kpi.svg" alt="" class="tab-icon">KPI</button>
-                  <button type="button" class="emp-note-tab" data-note-tab="indice"><img src="/templates/icon/habilidades.svg" alt="" class="tab-icon">Indice de bateo</button>
+                  <button type="button" class="emp-note-tab active" data-note-tab="empleados"><img src="/templates/icon/organigrama.svg" alt="" class="tab-icon"><span class="tab-label">Empleados</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                  <button type="button" class="emp-note-tab" data-note-tab="ejes"><img src="/templates/icon/biblioteca.svg" alt="" class="tab-icon"><span class="tab-label">Ejes estratégicos asignados</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                  <button type="button" class="emp-note-tab" data-note-tab="kpis"><img src="/templates/icon/kpi.svg" alt="" class="tab-icon"><span class="tab-label">KPI</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                  <button type="button" class="emp-note-tab" data-note-tab="indice"><img src="/templates/icon/habilidades.svg" alt="" class="tab-icon"><span class="tab-label">Indice de bateo</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                  <button type="button" class="emp-note-tab" data-note-tab="puestos"><img src="/templates/icon/formulario.svg" alt="" class="tab-icon"><span class="tab-label">Puestos laborales</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
+                  <button type="button" class="emp-note-tab" data-note-tab="funciones"><img src="/templates/icon/biblioteca.svg" alt="" class="tab-icon"><span class="tab-label">Funciones</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
                 </div>
                 <div class="emp-note-panel" id="area-emp-note-panel">
                   ${renderNotebookPanel('empleados')}
                 </div>
               </div>
-              <div class="actions">
-                <button type="button" id="area-form-new-btn" class="btn">Nuevo</button>
-                <button type="button" id="area-form-cancel-btn" class="btn">Cancelar</button>
-                <button type="submit" id="area-form-save-btn" class="btn primary">Guardar</button>
+              <div class="action-buttons-group">
+                <button type="button" id="area-form-new-btn" class="action-button" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
+                  <img src="/icon/boton/nuevo.svg" alt="Nuevo">
+                  <span class="action-label">Nuevo</span>
+                </button>
+                <button type="button" id="area-form-edit-btn" class="action-button" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                  <img src="/icon/boton/editar.svg" alt="Editar">
+                  <span class="action-label">Editar</span>
+                </button>
+                <button type="submit" id="area-form-save-btn" class="action-button" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                  <img src="/icon/boton/guardar.svg" alt="Guardar">
+                  <span class="action-label">Guardar</span>
+                </button>
+                <button type="button" id="area-form-delete-btn" class="action-button" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                  <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                  <span class="action-label">Eliminar</span>
+                </button>
                 <span id="area-form-save-status" class="save-status" role="status" aria-live="polite"></span>
               </div>
             </form>
@@ -611,9 +984,24 @@
         const form = areaView.querySelector('#area-form');
         const notebookPanel = areaView.querySelector('#area-emp-note-panel');
         const notebookTabs = areaView.querySelectorAll('.emp-note-tab[data-note-tab]');
+        areaView.querySelectorAll('.emp-note-tab .tab-toggle').forEach(function(toggleSpan) {
+          const tab = toggleSpan.closest('.emp-note-tab');
+          if (!tab) return;
+          toggleSpan.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (tab.classList.contains('collapsed')) {
+              tab.classList.remove('collapsed');
+              this.innerHTML = '&#x2212;';
+            } else {
+              tab.classList.add('collapsed');
+              this.innerHTML = '+';
+            }
+          });
+        });
         const newBtn = areaView.querySelector('#area-form-new-btn');
-        const cancelBtn = areaView.querySelector('#area-form-cancel-btn');
+        const editBtn = areaView.querySelector('#area-form-edit-btn');
         const saveBtn = areaView.querySelector('#area-form-save-btn');
+        const deleteBtn = areaView.querySelector('#area-form-delete-btn');
         const saveStatus = areaView.querySelector('#area-form-save-status');
         const colorInput = areaView.querySelector('#area-color-input');
         const colorSwatch = areaView.querySelector('#area-color-swatch');
@@ -640,7 +1028,17 @@
             tabBtn.addEventListener('click', () => {
               notebookTabs.forEach((btn) => btn.classList.remove('active'));
               tabBtn.classList.add('active');
-              notebookPanel.innerHTML = renderNotebookPanel(tabBtn.getAttribute('data-note-tab'));
+              const tabKey = tabBtn.getAttribute('data-note-tab');
+              notebookPanel.innerHTML = renderNotebookPanel2(tabKey);
+              if (tabKey === 'ejes') {
+                _renderAreaEjesTree(notebookPanel, selectedArea);
+              }
+              if (tabKey === 'funciones') {
+                _renderFuncionesTab(notebookPanel);
+              }
+              if (tabKey === 'puestos') {
+                _renderPuestosTab(notebookPanel);
+              }
             });
           });
         }
@@ -651,9 +1049,53 @@
           renderAreaForm();
         });
 
-        cancelBtn && cancelBtn.addEventListener('click', () => {
+        editBtn && editBtn.addEventListener('click', () => {
+          const code = String(areaView.querySelector('#area-code-input')?.value || '').trim();
+          if (!code) {
+            setSaveStatus('Selecciona un área para editar.', 'error');
+            return;
+          }
+          const found = areasData.find((area) => String(area.code || '').trim() === code);
+          if (!found) {
+            setSaveStatus('El código no existe en el listado.', 'error');
+            return;
+          }
           createAreaMode = false;
-          setAreaView('list');
+          selectedAreaCode = code;
+          setSaveStatus('Área cargada para edición.', 'pending');
+          renderAreaForm();
+        });
+
+        deleteBtn && deleteBtn.addEventListener('click', async () => {
+          const code = String(areaView.querySelector('#area-code-input')?.value || selectedAreaCode || '').trim();
+          if (!code) {
+            setSaveStatus('Selecciona un área para eliminar.', 'error');
+            return;
+          }
+          const target = areasData.find((area) => String(area.code || '').trim() === code);
+          if (!target) {
+            setSaveStatus('No existe el área seleccionada.', 'error');
+            return;
+          }
+          if (!window.confirm(`¿Seguro que deseas eliminar el área "${target.name || code}"?`)) return;
+          try {
+            deleteBtn.disabled = true;
+            setSaveStatus('Eliminando...', 'pending');
+            const res = await fetch('/api/inicio/departamentos/' + encodeURIComponent(code), { method: 'DELETE' });
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || json?.success === false) {
+              throw new Error(String(json?.error || json?.detail || 'No se pudo eliminar.'));
+            }
+            replaceAreasData(json?.data || []);
+            createAreaMode = !areasData.length;
+            selectedAreaCode = areasData[0]?.code || null;
+            setSaveStatus('Área eliminada correctamente.', 'ok');
+            setAreaView('form');
+          } catch (error) {
+            setSaveStatus(error?.message || 'Error al eliminar.', 'error');
+          } finally {
+            deleteBtn.disabled = false;
+          }
         });
 
         form && form.addEventListener('submit', async (event) => {
@@ -1108,6 +1550,176 @@
         }
       };
 
+      const renderAreaPuestos = () => {
+        if (!document.getElementById('_pl2-styles')) {
+          const s = document.createElement('style'); s.id = '_pl2-styles';
+          s.textContent = `
+            .pl-wrap{max-width:860px;display:flex;flex-direction:column;gap:18px;}
+            .pl-card{background:#fff;border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 14%,#ffffff 86%);border-radius:14px;padding:22px;}
+            .pl-card-title{font-size:1rem;font-weight:700;color:var(--sidebar-bottom,#0f172a);margin:0 0 16px;}
+            .pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+            .pl-field{display:flex;flex-direction:column;gap:5px;} .pl-field.full{grid-column:1/-1;}
+            .pl-label{font-size:.8rem;font-weight:600;color:color-mix(in srgb,var(--button-bg,#0f172a) 55%,#ffffff 45%);}
+            .pl-input,.pl-select,.pl-textarea{border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 18%,#ffffff 82%);border-radius:10px;padding:9px 12px;font:inherit;color:var(--navbar-text,#0f172a);background:var(--field-color,#fff);outline:none;transition:border-color .15s;}
+            .pl-input:focus,.pl-select:focus,.pl-textarea:focus{border-color:color-mix(in srgb,var(--button-bg,#0f172a) 40%,#ffffff 60%);}
+            .pl-textarea{min-height:80px;resize:vertical;}
+            .pl-form-actions{display:flex;gap:10px;align-items:center;margin-top:6px;}
+            .pl-btn-save{border:none;border-radius:10px;padding:9px 22px;background:color-mix(in srgb,var(--button-bg,#0f172a) 90%,#ffffff 10%);color:#fff;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
+            .pl-btn-save:hover{opacity:.85;}
+            .pl-btn-cancel{border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 18%,#ffffff 82%);border-radius:10px;padding:9px 18px;background:transparent;color:var(--sidebar-bottom,#0f172a);font-size:.9rem;cursor:pointer;}
+            .pl-msg{font-size:.82rem;color:#22c55e;display:none;}
+            .pl-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 12%,#ffffff 88%);}
+            .pl-table{width:100%;border-collapse:collapse;font-size:.875rem;}
+            .pl-table thead th{padding:11px 14px;text-align:left;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:color-mix(in srgb,var(--button-bg,#0f172a) 50%,#ffffff 50%);background:color-mix(in srgb,var(--button-bg,#0f172a) 5%,#ffffff 95%);border-bottom:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%);}
+            .pl-table tbody tr{border-bottom:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 7%,#ffffff 93%);transition:background .12s;}
+            .pl-table tbody tr:last-child{border-bottom:none;}
+            .pl-table tbody tr:hover{background:color-mix(in srgb,var(--button-bg,#0f172a) 3%,#ffffff 97%);}
+            .pl-table td{padding:11px 14px;color:var(--sidebar-bottom,#0f172a);vertical-align:top;}
+            .pl-act-btn{border:none;background:none;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:.82rem;transition:background .12s;}
+            .pl-act-btn.edit{color:color-mix(in srgb,var(--button-bg,#0f172a) 45%,#ffffff 55%);}
+            .pl-act-btn.edit:hover{background:color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%);}
+            .pl-act-btn.del{color:#ef4444;} .pl-act-btn.del:hover{background:#fee2e2;}
+            .pl-act-btn.nb{color:color-mix(in srgb,var(--button-bg,#0f172a) 45%,#ffffff 55%);}
+            .pl-act-btn.nb:hover{background:color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%);}
+            .pl-empty{text-align:center;padding:32px;color:color-mix(in srgb,var(--button-bg,#0f172a) 35%,#ffffff 65%);font-size:.875rem;}
+            @media(max-width:620px){.pl-grid{grid-template-columns:1fr;}.pl-field.full{grid-column:1;}}
+          `;
+          document.head.appendChild(s);
+        }
+        areaView.innerHTML = `
+          <div class="pl-wrap">
+            <div class="pl-card">
+              <p class="pl-card-title" id="pl2-form-title">Nuevo puesto laboral</p>
+              <input type="hidden" id="pl2-edit-id" value="">
+              <div class="pl-grid">
+                <div class="pl-field">
+                  <label class="pl-label" for="pl2-nombre">Nombre del puesto <span style="color:#ef4444">*</span></label>
+                  <input class="pl-input" id="pl2-nombre" type="text" placeholder="Ej. Gerente de Marketing" autocomplete="off">
+                </div>
+                <div class="pl-field">
+                  <label class="pl-label" for="pl2-area">\u00c1rea a la que pertenece</label>
+                  <select class="pl-select" id="pl2-area"><option value="">\u2014 Sin \u00e1rea asignada \u2014</option></select>
+                </div>
+                <div class="pl-field">
+                  <label class="pl-label" for="pl2-nivel">Nivel organizacional</label>
+                  <select class="pl-select" id="pl2-nivel">
+                    <option value="">\u2014 Seleccionar \u2014</option>
+                    <option>Directivo</option><option>Gerencial</option><option>Jefatura</option>
+                    <option>Coordinaci\u00f3n</option><option>Supervisor</option>
+                    <option>T\u00e9cnico / Especialista</option><option>Operativo</option>
+                    <option>Auxiliar / Asistente</option><option>Pasante / Pr\u00e1cticas</option>
+                  </select>
+                </div>
+                <div class="pl-field full">
+                  <label class="pl-label" for="pl2-desc">Descripci\u00f3n</label>
+                  <textarea class="pl-textarea" id="pl2-desc" placeholder="Responsabilidades principales del puesto..."></textarea>
+                </div>
+              </div>
+              <div class="pl-form-actions">
+                <button class="pl-btn-save" id="pl2-btn-save">Guardar puesto</button>
+                <button class="pl-btn-cancel" id="pl2-btn-cancel" style="display:none;">Cancelar</button>
+                <span class="pl-msg" id="pl2-msg">&#10003; Guardado</span>
+              </div>
+            </div>
+            <div class="pl-card">
+              <p class="pl-card-title">Puestos registrados <span id="pl2-count" style="font-weight:400;font-size:.82rem;"></span></p>
+              <div class="pl-table-wrap">
+                <table class="pl-table">
+                  <thead><tr><th>Nombre</th><th>\u00c1rea</th><th>Nivel</th><th>Descripci\u00f3n</th><th></th></tr></thead>
+                  <tbody id="pl2-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+
+        // populate area select
+        const areasSel = document.getElementById('pl2-area');
+        (areasData || []).forEach((a) => {
+          const o = document.createElement('option');
+          o.value = a.name; o.textContent = a.name;
+          areasSel.appendChild(o);
+        });
+
+        let _pl2Puestos = [];
+        const _pl2Esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+        const _pl2RenderTable = () => {
+          const tbody = document.getElementById('pl2-tbody');
+          const cnt = document.getElementById('pl2-count');
+          if (cnt) cnt.textContent = _pl2Puestos.length ? `(${_pl2Puestos.length})` : '';
+          if (!_pl2Puestos.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="pl-empty">No hay puestos registrados.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = '';
+          _pl2Puestos.forEach((p) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><strong>${_pl2Esc(p.nombre)}</strong></td>
+              <td style="font-size:.82rem;color:color-mix(in srgb,var(--button-bg,#0f172a) 50%,#ffffff 50%)">${_pl2Esc(p.area||'\u2014')}</td>
+              <td style="font-size:.82rem;color:color-mix(in srgb,var(--button-bg,#0f172a) 50%,#ffffff 50%)">${_pl2Esc(p.nivel||'\u2014')}</td>
+              <td style="font-size:.82rem;max-width:220px;color:color-mix(in srgb,var(--button-bg,#0f172a) 45%,#ffffff 55%)">${_pl2Esc(p.descripcion||'\u2014')}</td>
+              <td style="white-space:nowrap">
+                <button class="pl-act-btn nb" title="Notebook">&#128203;</button>
+                <button class="pl-act-btn edit" title="Editar">&#9998;</button>
+                <button class="pl-act-btn del" title="Eliminar">&times;</button>
+              </td>`;
+            tr.querySelector('.nb').addEventListener('click', () => openPuestoNb(p.id, _pl2Puestos));
+            tr.querySelector('.edit').addEventListener('click', () => {
+              document.getElementById('pl2-edit-id').value = p.id;
+              document.getElementById('pl2-nombre').value = p.nombre;
+              document.getElementById('pl2-area').value = p.area || '';
+              document.getElementById('pl2-nivel').value = p.nivel || '';
+              document.getElementById('pl2-desc').value = p.descripcion || '';
+              document.getElementById('pl2-form-title').textContent = 'Editar puesto laboral';
+              document.getElementById('pl2-btn-cancel').style.display = 'inline-block';
+              document.getElementById('pl2-nombre').focus();
+            });
+            tr.querySelector('.del').addEventListener('click', async () => {
+              if (!confirm('\u00bfEliminar este puesto?')) return;
+              const r = await fetch('/api/puestos-laborales', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'delete',id:p.id}) });
+              const j = await r.json();
+              if (j.success) { _pl2Puestos = j.data; _pl2RenderTable(); }
+            });
+            tbody.appendChild(tr);
+          });
+        };
+
+        const _pl2Reset = () => {
+          document.getElementById('pl2-edit-id').value = '';
+          document.getElementById('pl2-nombre').value = '';
+          document.getElementById('pl2-area').value = '';
+          document.getElementById('pl2-nivel').value = '';
+          document.getElementById('pl2-desc').value = '';
+          document.getElementById('pl2-form-title').textContent = 'Nuevo puesto laboral';
+          document.getElementById('pl2-btn-cancel').style.display = 'none';
+          document.getElementById('pl2-msg').style.display = 'none';
+        };
+
+        document.getElementById('pl2-btn-cancel').addEventListener('click', _pl2Reset);
+        document.getElementById('pl2-btn-save').addEventListener('click', async () => {
+          const nombre = document.getElementById('pl2-nombre').value.trim();
+          if (!nombre) { document.getElementById('pl2-nombre').focus(); return; }
+          const payload = {
+            id: document.getElementById('pl2-edit-id').value || undefined,
+            nombre,
+            area: document.getElementById('pl2-area').value,
+            nivel: document.getElementById('pl2-nivel').value,
+            descripcion: document.getElementById('pl2-desc').value.trim(),
+          };
+          const r = await fetch('/api/puestos-laborales', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+          const j = await r.json();
+          if (j.success) {
+            _pl2Puestos = j.data; _pl2RenderTable(); _pl2Reset();
+            const msg = document.getElementById('pl2-msg');
+            msg.style.display = 'inline';
+            setTimeout(() => { msg.style.display = 'none'; }, 2000);
+          }
+        });
+
+        fetch('/api/puestos-laborales').then((r) => r.json()).then((res) => { _pl2Puestos = res.data || []; _pl2RenderTable(); });
+      };
+
       const setAreaView = (view) => {
         areaTabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.view === view));
         switch (view) {
@@ -1119,6 +1731,9 @@
             break;
           case 'organigrama':
             renderAreaOrganigrama();
+            break;
+          case 'puestos':
+            renderAreaPuestos();
             break;
           default:
             renderAreaForm();
@@ -1143,6 +1758,201 @@
       });
 
       Promise.all([loadAreasData(), loadColaboradoresData()]).then(() => setAreaView('form'));
+
+      // ── Puestos notebook drawer (inline, inside departamentos page) ──────────
+      let _deptNbHabCatalog = null;
+      let _deptNbPuestoId = null;
+      let _deptNbAllPuestos = [];
+
+      function openPuestoNb(puestoId, allPuestos) {
+        const p = (allPuestos || _deptNbAllPuestos).find((x) => x.id === puestoId);
+        if (!p) return;
+        _deptNbPuestoId = puestoId;
+        _deptNbAllPuestos = allPuestos || _deptNbAllPuestos;
+        document.getElementById('dept-pl-titulo').textContent = p.nombre;
+        document.querySelectorAll('.dept-pl-tab').forEach((t) => t.classList.remove('active'));
+        document.querySelectorAll('.dept-pl-panel').forEach((t) => t.classList.remove('active'));
+        document.querySelector('.dept-pl-tab[data-tab="hab"]').classList.add('active');
+        document.getElementById('dept-pl-panel-hab').classList.add('active');
+        document.getElementById('dept-pl-overlay').style.display = 'block';
+        document.getElementById('dept-pl-drawer').classList.add('open');
+        document.getElementById('dept-pl-saved').style.display = 'none';
+        _deptNbLoadHab(p);
+      }
+
+      function closePuestoNb() {
+        document.getElementById('dept-pl-drawer').classList.remove('open');
+        document.getElementById('dept-pl-overlay').style.display = 'none';
+        _deptNbPuestoId = null;
+      }
+
+      document.getElementById('dept-pl-close-btn').addEventListener('click', closePuestoNb);
+      document.getElementById('dept-pl-overlay').addEventListener('click', closePuestoNb);
+
+      document.querySelectorAll('.dept-pl-tab').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.dept-pl-tab').forEach((t) => t.classList.remove('active'));
+          document.querySelectorAll('.dept-pl-panel').forEach((t) => t.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('dept-pl-panel-' + btn.getAttribute('data-tab')).classList.add('active');
+        });
+      });
+
+      const _HAB_CAT_LABELS_DEPT = {
+        'comunicacion_interpersonales': 'Comunicaci\u00f3n e interpersonales',
+        'liderazgo_gestion': 'Liderazgo y gesti\u00f3n',
+        'liderazgo_equipos': 'Liderazgo de equipos',
+        'resolucion_pensamiento': 'Resoluci\u00f3n y pensamiento',
+        'organizacion_autogestion': 'Organizaci\u00f3n y autogesti\u00f3n',
+        'informatica_tecnologia_general': 'Inform\u00e1tica y tecnolog\u00eda general',
+        'tecnologias_informacion_it': 'Tecnolog\u00edas de la informaci\u00f3n (IT)',
+        'diseno_multimedia': 'Dise\u00f1o y multimedia',
+        'marketing_ventas_comunicacion': 'Marketing, ventas y comunicaci\u00f3n',
+        'finanzas_contabilidad_administracion': 'Finanzas, contabilidad y administraci\u00f3n',
+        'logistica_produccion_operaciones': 'Log\u00edstica, producci\u00f3n y operaciones',
+        'idiomas_duros': 'Idiomas',
+        'sector_salud': 'Sector salud',
+        'sector_legal': 'Sector legal',
+        'habilidades_manuales_tecnicas': 'Habilidades manuales y t\u00e9cnicas'
+      };
+
+      function _deptNbLoadHab(p) {
+        const panel = document.getElementById('dept-pl-panel-hab');
+        const _normItem = (raw) => raw && typeof raw === 'object'
+          ? { nombre: String(raw.nombre || '').trim(), minimo: parseInt(raw.minimo, 10) || 0 }
+          : { nombre: String(raw || '').trim(), minimo: 0 };
+        let items = (p.habilidades_requeridas || []).map(_normItem);
+
+        const _listHtml = () => !items.length
+          ? '<p class="dept-pl-loading">Sin habilidades agregadas.</p>'
+          : items.map((it, idx) =>
+              `<div class="dept-pl-hab-row" data-idx="${idx}">
+                <span class="dept-pl-hab-nombre">${escapeHtml(it.nombre)}</span>
+                <span class="dept-pl-hab-badge">${it.minimo}%</span>
+                <button class="dept-pl-hab-del" data-idx="${idx}" style="border:0;background:transparent;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:0 2px;" title="Eliminar">&times;</button>
+              </div>`).join('');
+
+        const _buildSelect = (catalog) => {
+          const allSkills = [];
+          Object.keys(catalog).forEach((cat) => {
+            const catLabel = _HAB_CAT_LABELS_DEPT[cat] || cat.replace(/_/g, ' ');
+            (catalog[cat] || []).forEach((skill) => {
+              const s = typeof skill === 'string' ? skill : (skill.nombre || skill.name || String(skill));
+              if (s) allSkills.push({ nombre: s, categoria: catLabel });
+            });
+          });
+          allSkills.sort((a, b) => a.nombre.localeCompare(b.nombre));
+          let opts = '<option value="">— Selecciona una habilidad —</option>';
+          let lastCat = '';
+          allSkills.forEach((sk) => {
+            if (sk.categoria !== lastCat) {
+              if (lastCat) opts += '</optgroup>';
+              opts += `<optgroup label="${escapeHtml(sk.categoria)}">` ;
+              lastCat = sk.categoria;
+            }
+            opts += `<option value="${escapeHtml(sk.nombre)}">${escapeHtml(sk.nombre)}</option>`;
+          });
+          if (lastCat) opts += '</optgroup>';
+          return opts;
+        };
+
+        const _renderUI = (selOpts) => {
+          panel.innerHTML =
+            `<div id="dept-pl-hab-list" style="margin-bottom:14px;">${_listHtml()}</div>
+            <div style="border-top:1px solid #e2e8f0;padding-top:12px;display:flex;flex-direction:column;gap:8px;">
+              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;">Agregar habilidad</label>
+              <select id="dept-pl-hab-sel" style="width:100%;padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem;">${selOpts}</select>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <label style="font-size:.85rem;color:#475569;white-space:nowrap;">M\u00ednimo requerido</label>
+                <input id="dept-pl-hab-pct" type="number" min="0" max="100" value="80" style="width:72px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem;text-align:center;">
+                <span style="font-size:.9rem;color:#64748b;">%</span>
+                <button id="dept-pl-hab-add" style="margin-left:auto;padding:7px 16px;background:var(--button-bg,#0f172a);color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem;">Agregar</button>
+              </div>
+            </div>`;
+
+          const _rebindDel = () => {
+            panel.querySelectorAll('.dept-pl-hab-del').forEach((btn) => {
+              btn.addEventListener('click', () => {
+                items.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
+                document.getElementById('dept-pl-hab-list').innerHTML = _listHtml();
+                _rebindDel();
+              });
+            });
+          };
+          _rebindDel();
+
+          document.getElementById('dept-pl-hab-add').addEventListener('click', () => {
+            const sel = document.getElementById('dept-pl-hab-sel');
+            const pct = document.getElementById('dept-pl-hab-pct');
+            const nombre = sel.value.trim();
+            const minimo = Math.min(100, Math.max(0, parseInt(pct.value, 10) || 0));
+            if (!nombre) { sel.focus(); return; }
+            if (items.find((x) => x.nombre === nombre)) { sel.value = ''; sel.focus(); return; }
+            items.push({ nombre, minimo });
+            sel.value = '';
+            pct.value = 80;
+            document.getElementById('dept-pl-hab-list').innerHTML = _listHtml();
+            _rebindDel();
+          });
+        };
+
+        if (_deptNbHabCatalog) { _renderUI(_buildSelect(_deptNbHabCatalog)); return; }
+        panel.innerHTML = '<p class="dept-pl-loading">Cargando cat\u00e1logo...</p>';
+        fetch('/api/habilidades-catalog')
+          .then((r) => r.json())
+          .then((res) => {
+            _deptNbHabCatalog = res.catalog || res.data || res || {};
+            _renderUI(_buildSelect(_deptNbHabCatalog));
+          })
+          .catch(() => { panel.innerHTML = '<p class="dept-pl-loading">Error al cargar cat\u00e1logo.</p>'; });
+      }
+
+      document.getElementById('dept-pl-btn-save').addEventListener('click', () => {
+        if (!_deptNbPuestoId) return;
+        const habs = [];
+        document.querySelectorAll('#dept-pl-panel-hab .dept-pl-hab-row').forEach((row) => {
+          const nombre = row.querySelector('.dept-pl-hab-nombre')?.textContent.trim();
+          const minimo = parseInt(row.querySelector('.dept-pl-hab-badge')?.textContent || '0', 10) || 0;
+          if (nombre) habs.push({ nombre, minimo });
+        });
+        fetch('/api/puestos-laborales', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_notebook', id: _deptNbPuestoId, habilidades_requeridas: habs, colaboradores_asignados: (_deptNbAllPuestos.find((x) => x.id === _deptNbPuestoId) || {}).colaboradores_asignados || [] })
+        })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res.success) {
+            _deptNbAllPuestos = res.data;
+            const saved = document.getElementById('dept-pl-saved');
+            saved.style.display = 'inline';
+            setTimeout(() => { saved.style.display = 'none'; }, 2000);
+          }
+        });
+      });
+
     })();
   </script>
+
+  <!-- Puestos laborales notebook drawer -->
+  <div class="dept-pl-overlay" id="dept-pl-overlay"></div>
+  <div class="dept-pl-drawer" id="dept-pl-drawer">
+    <div class="dept-pl-head">
+      <div style="flex:1;min-width:0;">
+        <div class="dept-pl-titulo" id="dept-pl-titulo">—</div>
+        <div class="dept-pl-head-sub">Habilidades del puesto</div>
+      </div>
+      <button class="dept-pl-close" id="dept-pl-close-btn" title="Cerrar">&times;</button>
+    </div>
+    <div class="dept-pl-tabs">
+      <button class="dept-pl-tab active" data-tab="hab">Habilidades requeridas para el puesto</button>
+    </div>
+    <div class="dept-pl-body">
+      <div class="dept-pl-panel active" id="dept-pl-panel-hab"><p class="dept-pl-loading">Cargando...</p></div>
+    </div>
+    <div class="dept-pl-save-bar">
+      <button class="dept-pl-btn-save" id="dept-pl-btn-save">Guardar</button>
+      <span class="dept-pl-saved" id="dept-pl-saved">&#10003; Guardado</span>
+    </div>
+  </div>
 </section>

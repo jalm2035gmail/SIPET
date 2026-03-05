@@ -1,6 +1,21 @@
-INFO:     Started server process [2934]
+INFO:     Started server process [931]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:50952 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
-INFO:     127.0.0.1:51428 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0INFO:     127.0.0.1:49737 - "GET /web/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49738 - "POST /web/login HTTP/1.1" 303 See Other
+INFO:     127.0.0.1:49738 - "GET /inicio HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49738 - "GET /dist/output.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50020 - "GET /css/global.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50048 - "GET /icon/tablero.svg HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50050 - "GET /js/bsc_dashboard_analytics.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50048 - "GET /colaboradores/uploads/colab_45b7ab58814a4da8a9480fdd9748b974.png HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50050 - "GET /api/colaboradores HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50050 - "GET /personalizar/estado HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50050 - "GET /api/ia/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50050 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50788 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51556 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52230 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53121 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53577 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54137 - "GET /api/notificaciones/resumen HTTP/1.1" 200 OK

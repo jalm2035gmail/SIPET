@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajustes de IA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --line: #dbe3ef;
+            --text: #0f172a;
+            --muted: #64748b;
+            --brand: #0f3d2e;
+        }
+        body {
+            margin: 0;
+            font-family: "Nunito Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .ia-wrap {
+            max-width: 900px;
+            margin: 28px auto;
+            padding: 0 16px 24px;
+        }
+        .ia-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: 0 10px 26px rgba(15, 23, 42, .07);
+            padding: 20px;
+        }
+        .ia-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .ia-head-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--brand) 14%, #ffffff 86%);
+            border: 1px solid color-mix(in srgb, var(--brand) 25%, #ffffff 75%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .ia-head-icon img {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+        }
+        .ia-head h1 {
+            margin: 0;
+            font-size: 24px;
+            line-height: 1.2;
+        }
+        .ia-head p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .ia-form {
+            display: grid;
+            gap: 12px;
+        }
+        .ia-field {
+            display: grid;
+            gap: 6px;
+        }
+        .ia-field label {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text);
+        }
+        .ia-field input {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #fff;
+            color: var(--text);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .ia-actions {
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .ia-btn {
+            border: 1px solid var(--brand);
+            background: var(--brand);
+            color: #fff;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 10px 14px;
+            cursor: pointer;
+        }
+        .ia-help {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <main class="ia-wrap">
+        <section class="ia-card">
+            <header class="ia-head">
+                <span class="ia-head-icon" aria-hidden="true">
+                    <img src="/templates/icon/ia.svg" alt="">
+                </span>
+                <div>
+                    <h1>Ajustes de Inteligencia Artificial (IA)</h1>
+                    <p>Configura proveedor, modelo y parámetros de conexión.</p>
+                </div>
+            </header>
+
+            <form method="post" class="ia-form">
+                <div class="ia-field">
+                    <label for="ai_provider">Proveedor IA</label>
+                    <input type="text" id="ai_provider" name="ai_provider" placeholder="chatgpt, deepseek, etc." value="{{ ai_provider | default('') }}">
+                </div>
+                <div class="ia-field">
+                    <label for="ai_api_key">API Key</label>
+                    <input type="password" id="ai_api_key" name="ai_api_key" value="{{ ai_api_key | default('') }}">
+                </div>
+                <div class="ia-field">
+                    <label for="ai_base_url">Base URL</label>
+                    <input type="text" id="ai_base_url" name="ai_base_url" value="{{ ai_base_url | default('') }}">
+                </div>
+                <div class="ia-field">
+                    <label for="ai_model">Modelo</label>
+                    <input type="text" id="ai_model" name="ai_model" value="{{ ai_model | default('') }}">
+                </div>
+                <div class="ia-field">
+                    <label for="ai_timeout">Timeout (segundos)</label>
+                    <input type="number" id="ai_timeout" name="ai_timeout" min="1" max="120" value="{{ ai_timeout | default(30) }}">
+                </div>
+
+                <div class="ia-actions">
+                    <button type="submit" class="ia-btn">Guardar</button>
+                    <p class="ia-help">Estos datos permiten conectar SIPET con el proveedor de IA seleccionado.</p>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

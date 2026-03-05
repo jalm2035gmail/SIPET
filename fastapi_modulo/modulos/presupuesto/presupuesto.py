@@ -1,13 +1,21 @@
+from __future__ import annotations
+
+from datetime import datetime, timedelta
 from html import escape
 from io import StringIO
 from pathlib import Path
+from typing import Any, Dict
+import sqlite3
+import threading
 import unicodedata
 import re
 import json
 
 import pandas as pd
 from fastapi import APIRouter, Request, UploadFile, File, Body
-from fastapi.responses import HTMLResponse, Response, JSONResponse
+from fastapi.responses import HTMLResponse, Response, JSONResponse, RedirectResponse
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from fastapi_modulo.login_utils import get_login_identity_context
 
@@ -30,6 +38,14 @@ def _normalize_import_col(value: str) -> str:
     text = "".join(ch for ch in text if not unicodedata.combining(ch))
     text = text.lower()
     text = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+    return text
+
+
+def _normalize_key(value: str) -> str:
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = text.strip().lower()
+    text = re.sub(r"\s+", " ", text)
     return text
 
 
@@ -228,10 +244,152 @@ def _save_control_mensual_store(payload: dict) -> None:
     CONTROL_MENSUAL_STORE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _load_report_filter_catalog() -> dict:
+    # Import diferido para evitar ciclos de importación con main.py.
+    from fastapi_modulo.main import SessionLocal as CoreSessionLocal, Usuario, _decrypt_sensitive
+    from fastapi_modulo.db import DepartamentoOrganizacional, RegionOrganizacional
+
+    db = CoreSessionLocal()
+    try:
+        departamentos = []
+        for dep in db.query(DepartamentoOrganizacional).all():
+            nombre = str(getattr(dep, "nombre", "") or "").strip()
+            codigo = str(getattr(dep, "codigo", "") or "").strip()
+            padre = str(getattr(dep, "padre", "") or "").strip()
+            if not nombre:
+                continue
+            departamentos.append(
+                {
+                    "nombre": nombre,
+                    "codigo": codigo,
+                    "padre": padre,
+                }
+            )
+
+        regiones = []
+        for reg in db.query(RegionOrganizacional).all():
+            nombre = str(getattr(reg, "nombre", "") or "").strip()
+            codigo = str(getattr(reg, "codigo", "") or "").strip()
+            if not nombre:
+                continue
+            regiones.append({"nombre": nombre, "codigo": codigo})
+
+        colaboradores = []
+        for user in db.query(Usuario).all():
+            nombre = str(getattr(user, "nombre", "") or "").strip()
+            username = str(_decrypt_sensitive(getattr(user, "usuario", "")) or "").strip()
+            departamento = str(getattr(user, "departamento", "") or "").strip()
+            label = nombre or username
+            if not label:
+                continue
+            colaboradores.append(
+                {
+                    "label": label,
+                    "value": username or label,
+                    "departments": [departamento] if departamento else [],
+                }
+            )
+    finally:
+        db.close()
+
+    sucursales_store = load_sucursales_store()
+    sucursales = []
+    for item in sucursales_store:
+        nombre = str(item.get("nombre") or "").strip()
+        codigo = str(item.get("codigo") or "").strip()
+        region = str(item.get("region") or "").strip()
+        if not nombre:
+            continue
+        sucursales.append({"nombre": nombre, "codigo": codigo, "region": region})
+
+    # Mapa rápido por región para derivar departamentos/sucursales.
+    deps = [{"nombre": d["nombre"], "codigo": d["codigo"], "padre": d["padre"]} for d in departamentos]
+    dep_names = {d["nombre"] for d in deps}
+
+    def _unique_payload(items):
+        seen = set()
+        result = []
+        for item in items:
+            value = str(item.get("value") or "").strip()
+            if not value:
+                continue
+            key = _normalize_key(value)
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append(item)
+        return sorted(result, key=lambda x: str(x.get("label") or "").lower())
+
+    by_level = {
+        "consolidado": [{"label": "Consolidado general", "value": "global", "departments": []}],
+        "departamento": _unique_payload(
+            [
+                {
+                    "label": d["nombre"],
+                    "value": d["codigo"] or d["nombre"],
+                    "departments": [d["nombre"]],
+                }
+                for d in deps
+            ]
+        ),
+        "sucursal": _unique_payload(
+            [
+                {
+                    "label": s["nombre"],
+                    "value": s["codigo"] or s["nombre"],
+                    "departments": [s["nombre"]] if s["nombre"] in dep_names else [],
+                }
+                for s in sucursales
+            ]
+        ),
+        "region": _unique_payload(
+            [
+                {
+                    "label": r["nombre"],
+                    "value": r["codigo"] or r["nombre"],
+                    "departments": sorted(
+                        {
+                            d["nombre"]
+                            for d in deps
+                            if _normalize_key(d.get("padre", "")) in {_normalize_key(r["nombre"]), _normalize_key(r.get("codigo", ""))}
+                        }
+                    ),
+                }
+                for r in regiones
+            ]
+        ),
+        "colaborador": _unique_payload(colaboradores),
+    }
+    return by_level
+
+
 @router.get("/descargar-csv-presupuesto", tags=["presupuesto"])
 async def descargar_csv_presupuesto():
     """Descargar CSV del presupuesto anual actual."""
     return _build_presupuesto_csv_response()
+
+
+@router.get("/presupuesto-reportes-filtros", tags=["presupuesto"])
+async def obtener_presupuesto_reportes_filtros(nivel: str = "consolidado"):
+    requested = str(nivel or "consolidado").strip().lower()
+    catalog = _load_report_filter_catalog()
+    allowed = {"consolidado", "region", "departamento", "sucursal", "colaborador"}
+    if requested not in allowed:
+        requested = "consolidado"
+    return JSONResponse(
+        {
+            "success": True,
+            "nivel": requested,
+            "niveles": [
+                {"value": "consolidado", "label": "Consolidado"},
+                {"value": "region", "label": "Región"},
+                {"value": "departamento", "label": "Departamento"},
+                {"value": "sucursal", "label": "Sucursal"},
+                {"value": "colaborador", "label": "Colaborador"},
+            ],
+            "items": catalog.get(requested, []),
+        }
+    )
 
 
 @router.get("/descargar-plantilla-presupuesto", tags=["presupuesto"])
@@ -501,3 +659,518 @@ def proyectando_presupuesto_page(request: Request):
             "colores": _get_colores_context(),
         },
     )
+
+
+# ─────────────────────────────────────────────
+# Presupuesto · Base IA
+# ─────────────────────────────────────────────
+_PRESUPUESTO_BASE_IA_EXTRA_BLOCK = "presupuesto_base_ia_extra"
+_PRESUPUESTO_BASE_IA_WEEKLY_META_BLOCK = "presupuesto_base_ia_weekly_meta"
+_PRESUPUESTO_BASE_IA_WEEKLY_INTERVAL_DAYS = 7
+_presupuesto_base_ia_cron_lock = threading.Lock()
+
+MESES_NOMBRES = {
+    "01": "Enero", "02": "Febrero", "03": "Marzo", "04": "Abril",
+    "05": "Mayo", "06": "Junio", "07": "Julio", "08": "Agosto",
+    "09": "Septiembre", "10": "Octubre", "11": "Noviembre", "12": "Diciembre",
+}
+
+
+def _get_core_imports():
+    """Importaciones diferidas para evitar ciclos."""
+    from fastapi_modulo.main import SessionLocal as CoreSessionLocal, is_superadmin, render_backend_page
+    from fastapi_modulo.modulos.planificacion.ejes_poa import _ensure_strategic_identity_table
+    return CoreSessionLocal, is_superadmin, render_backend_page, _ensure_strategic_identity_table
+
+
+def _upsert_presupuesto_ia_block(db, bloque: str, payload: Any) -> None:
+    encoded = json.dumps(payload, ensure_ascii=False) if not isinstance(payload, str) else payload
+    db.execute(
+        text(
+            "INSERT INTO strategic_identity_config (bloque, payload, updated_at) "
+            "VALUES (:b, :p, CURRENT_TIMESTAMP) "
+            "ON CONFLICT (bloque) DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP"
+        ),
+        {"b": bloque, "p": encoded},
+    )
+
+
+def _build_presupuesto_ia_payload() -> Dict[str, Any]:
+    """Consolida datos de presupuesto anual + control mensual para la IA."""
+    _, _, _, _ensure_strategic_identity_table = _get_core_imports()
+    from fastapi_modulo.main import SessionLocal as CoreSessionLocal
+    db = CoreSessionLocal()
+    try:
+        _ensure_strategic_identity_table(db)
+        db.commit()
+        meta_rows = db.execute(
+            text("SELECT bloque, payload FROM strategic_identity_config WHERE bloque IN (:extra, :meta)"),
+            {"extra": _PRESUPUESTO_BASE_IA_EXTRA_BLOCK, "meta": _PRESUPUESTO_BASE_IA_WEEKLY_META_BLOCK},
+        ).fetchall()
+        payload_map = {str(r[0]).strip(): str(r[1] or "") for r in meta_rows}
+        try:
+            extra = json.loads(payload_map.get(_PRESUPUESTO_BASE_IA_EXTRA_BLOCK, "{}") or "{}")
+        except Exception:
+            extra = {}
+        try:
+            weekly_meta = json.loads(payload_map.get(_PRESUPUESTO_BASE_IA_WEEKLY_META_BLOCK, "{}") or "{}")
+        except Exception:
+            weekly_meta = {}
+        contenido_adicional = str((extra if isinstance(extra, dict) else {}).get("texto") or "").strip()
+        weekly_meta = weekly_meta if isinstance(weekly_meta, dict) else {}
+    finally:
+        db.close()
+
+    # Presupuesto anual
+    df = _load_presupuesto_dataframe()
+    rubros = []
+    total_ingresos = 0
+    total_egresos = 0
+    for row in df.itertuples(index=False):
+        rubro_name = str(getattr(row, "rubro", "") or "").strip()
+        tipo = str(getattr(row, "tipo", "") or "").strip()
+        monto_str = str(getattr(row, "monto", "") or "").replace(",", "")
+        try:
+            monto_num = int(float(monto_str)) if monto_str else 0
+        except Exception:
+            monto_num = 0
+        mensual_str = str(getattr(row, "mensual", "") or "").replace(",", "")
+        try:
+            mensual_num = int(float(mensual_str)) if mensual_str else 0
+        except Exception:
+            mensual_num = 0
+        if not rubro_name:
+            continue
+        rubros.append({
+            "cod": str(getattr(row, "cod", "") or ""),
+            "rubro": rubro_name,
+            "tipo": tipo,
+            "monto_anual": monto_num,
+            "mensual_promedio": mensual_num,
+        })
+        if tipo == "Ingreso":
+            total_ingresos += monto_num
+        elif tipo == "Egreso":
+            total_egresos += monto_num
+
+    # Control mensual (proyectado vs realizado)
+    store = _load_control_mensual_store()
+    control_rows = store.get("rows", [])
+    control_updated_at = store.get("updated_at", "")
+    meses_con_datos = []
+    for mes_num in range(1, 13):
+        mes_key = f"{mes_num:02d}"
+        proyectado_total = 0
+        realizado_total = 0
+        tiene_datos = False
+        for row in control_rows:
+            months = row.get("months") or {}
+            mes_data = months.get(mes_key) or {}
+            p = int(mes_data.get("proyectado") or 0)
+            r = int(mes_data.get("realizado") or 0)
+            if p or r:
+                tiene_datos = True
+            proyectado_total += p
+            realizado_total += r
+        if tiene_datos:
+            pct = round((realizado_total / proyectado_total * 100) if proyectado_total else 0, 2)
+            meses_con_datos.append({
+                "mes": mes_key,
+                "nombre": MESES_NOMBRES.get(mes_key, mes_key),
+                "proyectado_total": proyectado_total,
+                "realizado_total": realizado_total,
+                "ejecucion_pct": pct,
+            })
+
+    presupuesto_str = f"{total_ingresos:,}" if total_ingresos else "N/D"
+    egresos_str = f"{total_egresos:,}" if total_egresos else "N/D"
+    utilidad = total_ingresos - total_egresos
+
+    return {
+        "contenido_adicional": {"texto": contenido_adicional},
+        "cron_semanal": {
+            "activo": True,
+            "intervalo_dias": int(weekly_meta.get("interval_days") or _PRESUPUESTO_BASE_IA_WEEKLY_INTERVAL_DAYS),
+            "ultima_actualizacion": str(weekly_meta.get("last_refresh_at") or ""),
+            "proxima_actualizacion": str(weekly_meta.get("next_refresh_at") or ""),
+            "estado": str(weekly_meta.get("last_status") or ""),
+        },
+        "presupuesto_anual": {
+            "rubros": rubros,
+            "total_rubros": len(rubros),
+            "total_ingresos": total_ingresos,
+            "total_egresos": total_egresos,
+            "utilidad_estimada": utilidad,
+            "resumen": f"Ingresos: {presupuesto_str} · Egresos: {egresos_str} · Resultado: {utilidad:,}",
+        },
+        "control_mensual": {
+            "meses": meses_con_datos,
+            "updated_at": control_updated_at,
+            "total_meses_con_datos": len(meses_con_datos),
+        },
+    }
+
+
+def _build_presupuesto_ia_html(payload: Dict[str, Any]) -> str:
+    anual = payload.get("presupuesto_anual", {})
+    control = payload.get("control_mensual", {})
+    cron = payload.get("cron_semanal", {})
+    rubros = anual.get("rubros", [])
+    meses = control.get("meses", [])
+    contenido_adicional_texto = str((payload.get("contenido_adicional") or {}).get("texto") or "")
+    payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
+
+    # Tabla de rubros
+    rubros_rows = "".join(
+        "<tr>"
+        f"<td style='padding:4px 8px;'>{escape(r.get('cod', ''))}</td>"
+        f"<td style='padding:4px 8px;'>{escape(r.get('rubro', ''))}</td>"
+        f"<td style='padding:4px 8px;'><span style='color:{'#166534' if r.get('tipo') == 'Ingreso' else '#991b1b' if r.get('tipo') == 'Egreso' else '#334155'};font-weight:600;'>{escape(r.get('tipo', ''))}</span></td>"
+        f"<td style='padding:4px 8px;text-align:right;'>{r.get('monto_anual', 0):,}</td>"
+        f"<td style='padding:4px 8px;text-align:right;'>{r.get('mensual_promedio', 0):,}</td>"
+        "</tr>"
+        for r in rubros
+    ) or "<tr><td colspan='5' style='padding:4px 8px;color:#64748b;'>Sin datos cargados</td></tr>"
+
+    # Tabla de control mensual
+    meses_rows = "".join(
+        "<tr>"
+        f"<td style='padding:4px 8px;'><b>{escape(m.get('nombre', ''))}</b></td>"
+        f"<td style='padding:4px 8px;text-align:right;'>{m.get('proyectado_total', 0):,}</td>"
+        f"<td style='padding:4px 8px;text-align:right;'>{m.get('realizado_total', 0):,}</td>"
+        f"<td style='padding:4px 8px;text-align:right;'>{m.get('ejecucion_pct', 0):.1f}%</td>"
+        "</tr>"
+        for m in meses
+    ) or "<tr><td colspan='4' style='padding:4px 8px;color:#64748b;'>Sin control mensual cargado</td></tr>"
+
+    return (
+        "<section style='display:grid;gap:12px;'>"
+        # Header
+        "<section style='border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px;'>"
+        "<h3 style='margin:0 0 8px;'>Base IA · Presupuesto</h3>"
+        "<p style='margin:0;color:#334155;'>Fuente consolidada para consulta de IA: presupuesto anual y control mensual.</p>"
+        "</section>"
+        # Resumen financiero
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#f8fafc;'>"
+        "<h4 style='margin:0 0 8px;'>Resumen financiero anual</h4>"
+        f"<p style='margin:0;color:#334155;'>"
+        f"Rubros: <b>{int(anual.get('total_rubros') or 0)}</b> · "
+        f"Ingresos: <b>{int(anual.get('total_ingresos') or 0):,}</b> · "
+        f"Egresos: <b>{int(anual.get('total_egresos') or 0):,}</b> · "
+        f"Resultado estimado: <b>{int(anual.get('utilidad_estimada') or 0):,}</b>"
+        "</p>"
+        "</section>"
+        # Tabla rubros
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Tabla de rubros (presupuesto anual)</h4>"
+        "<div style='overflow-x:auto;'>"
+        "<table style='width:100%;border-collapse:collapse;font-size:12px;'>"
+        "<thead><tr style='background:#f1f5f9;'>"
+        "<th style='padding:4px 8px;text-align:left;'>Código</th>"
+        "<th style='padding:4px 8px;text-align:left;'>Rubro</th>"
+        "<th style='padding:4px 8px;text-align:left;'>Tipo</th>"
+        "<th style='padding:4px 8px;text-align:right;'>Monto anual</th>"
+        "<th style='padding:4px 8px;text-align:right;'>Mensual prom.</th>"
+        "</tr></thead>"
+        f"<tbody>{rubros_rows}</tbody>"
+        "</table>"
+        "</div>"
+        "</section>"
+        # Control mensual
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        f"<h4 style='margin:0 0 8px;'>Control mensual</h4>"
+        f"<p style='margin:0 0 8px;font-size:12px;color:#64748b;'>Última actualización: {escape(str(control.get('updated_at') or 'N/D'))} · {int(control.get('total_meses_con_datos') or 0)} mes(es) con datos</p>"
+        "<div style='overflow-x:auto;'>"
+        "<table style='width:100%;border-collapse:collapse;font-size:12px;'>"
+        "<thead><tr style='background:#f1f5f9;'>"
+        "<th style='padding:4px 8px;text-align:left;'>Mes</th>"
+        "<th style='padding:4px 8px;text-align:right;'>Proyectado</th>"
+        "<th style='padding:4px 8px;text-align:right;'>Realizado</th>"
+        "<th style='padding:4px 8px;text-align:right;'>% Ejecución</th>"
+        "</tr></thead>"
+        f"<tbody>{meses_rows}</tbody>"
+        "</table>"
+        "</div>"
+        "</section>"
+        # Cron semanal
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Cron semanal (renovación automática)</h4>"
+        f"<p style='margin:0 0 6px;color:#334155;'>Intervalo: <b>{int((cron or {}).get('intervalo_dias') or _PRESUPUESTO_BASE_IA_WEEKLY_INTERVAL_DAYS)} días</b> · "
+        f"Última actualización: <b>{escape(str((cron or {}).get('ultima_actualizacion') or 'N/D'))}</b> · "
+        f"Próxima: <b>{escape(str((cron or {}).get('proxima_actualizacion') or 'N/D'))}</b></p>"
+        f"<p style='margin:0 0 10px;color:#64748b;font-size:12px;'>Estado: {escape(str((cron or {}).get('estado') or 'sin_ejecucion'))}</p>"
+        "<button type='button' id='pres-base-ia-refresh' style='background:#14532d;color:#fff;border:1px solid #14532d;border-radius:10px;padding:8px 14px;cursor:pointer;'>Actualizar ahora (reemplaza contenido previo)</button>"
+        "<span id='pres-base-ia-refresh-status' style='margin-left:10px;font-size:12px;color:#475569;'></span>"
+        "<script>(function(){"
+        "const btn=document.getElementById('pres-base-ia-refresh');"
+        "const st=document.getElementById('pres-base-ia-refresh-status');"
+        "if(!btn||!st)return;"
+        "btn.addEventListener('click',async function(){"
+        "  btn.disabled=true;st.textContent='Actualizando...';"
+        "  try{"
+        "    const res=await fetch('/proyectando/presupuesto/base-ia/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({force:true})});"
+        "    const data=await res.json();"
+        "    if(!res.ok||!data||data.success!==true)throw new Error((data&&data.error)||'Error');"
+        "    st.textContent='Actualizado. Recarga para ver cambios.';"
+        "  }catch(err){st.textContent=err.message||'Error';}"
+        "  finally{btn.disabled=false;}"
+        "});})();</script>"
+        "</section>"
+        # Contenido adicional editable
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Contenido adicional para IA (editable)</h4>"
+        "<p style='margin:0 0 8px;color:#475569;'>Contexto adicional que la IA usará en conversaciones sobre presupuesto.</p>"
+        f"<textarea id='pres-base-ia-extra' style='width:100%;min-height:180px;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;'>{escape(contenido_adicional_texto)}</textarea>"
+        "<div style='margin-top:10px;display:flex;gap:10px;align-items:center;'>"
+        "<button type='button' id='pres-base-ia-save' style='background:#0f172a;color:#fff;border:1px solid #0f172a;border-radius:10px;padding:8px 14px;cursor:pointer;'>Guardar contenido adicional</button>"
+        "<span id='pres-base-ia-save-status' style='font-size:12px;color:#475569;'></span>"
+        "</div>"
+        "<script>(function(){"
+        "const btn=document.getElementById('pres-base-ia-save');"
+        "const txt=document.getElementById('pres-base-ia-extra');"
+        "const st=document.getElementById('pres-base-ia-save-status');"
+        "if(!btn||!txt||!st)return;"
+        "btn.addEventListener('click',async function(){"
+        "  btn.disabled=true;st.textContent='Guardando...';"
+        "  try{"
+        "    const res=await fetch('/proyectando/presupuesto/base-ia/contenido',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({texto:String(txt.value||'')})});"
+        "    const data=await res.json();"
+        "    if(!res.ok||!data||data.success!==true)throw new Error((data&&data.error)||'Error');"
+        "    st.textContent='Guardado correctamente';"
+        "  }catch(err){st.textContent=err.message||'Error al guardar';}"
+        "  finally{btn.disabled=false;}"
+        "});})();</script>"
+        "</section>"
+        # Payload JSON
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Payload estructurado (JSON)</h4>"
+        f"<pre style='margin:0;white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;font-size:12px;'>{escape(payload_json)}</pre>"
+        "</section>"
+        "</section>"
+    )
+
+
+def _refresh_weekly_presupuesto_base_ia_if_due(force: bool = False) -> dict:
+    """Actualiza el resumen semanal del presupuesto, reemplazando el contenido anterior."""
+    _, _, _, _ensure_strategic_identity_table = _get_core_imports()
+    from fastapi_modulo.main import SessionLocal as CoreSessionLocal
+    with _presupuesto_base_ia_cron_lock:
+        db = CoreSessionLocal()
+        try:
+            _ensure_strategic_identity_table(db)
+            meta_row = db.execute(
+                text("SELECT payload FROM strategic_identity_config WHERE bloque = :b LIMIT 1"),
+                {"b": _PRESUPUESTO_BASE_IA_WEEKLY_META_BLOCK},
+            ).fetchone()
+            try:
+                meta = json.loads(str(meta_row[0] or "{}")) if meta_row else {}
+            except Exception:
+                meta = {}
+            last_refresh_raw = str(meta.get("last_refresh_at") or "").strip()
+            now = datetime.utcnow()
+            last_dt = None
+            if last_refresh_raw:
+                try:
+                    last_dt = datetime.fromisoformat(last_refresh_raw)
+                except Exception:
+                    pass
+            due = force or (last_dt is None) or ((now - last_dt) >= timedelta(days=_PRESUPUESTO_BASE_IA_WEEKLY_INTERVAL_DAYS))
+            if not due:
+                next_at = (last_dt + timedelta(days=_PRESUPUESTO_BASE_IA_WEEKLY_INTERVAL_DAYS)).isoformat() if last_dt else ""
+                return {"updated": False, "reason": "not_due", "last_refresh_at": last_refresh_raw, "next_refresh_at": next_at}
+
+            # Genera snapshot de texto con datos actuales
+            df = _load_presupuesto_dataframe()
+            store = _load_control_mensual_store()
+            ingresos, egresos = 0, 0
+            lineas = [
+                f"=== Snapshot semanal Presupuesto === Corte: {now.isoformat()}",
+                f"Control mensual actualizado: {store.get('updated_at', 'N/D')}",
+            ]
+            # ── Sección 1: Catálogo de rubros con tipo y monto ──────────────
+            lineas.append("\n--- RUBROS PRESUPUESTARIOS ---")
+            rubro_index: dict = {}  # rubro_lower → {"tipo", "monto", "cod"}
+            for row in df.itertuples(index=False):
+                rubro = str(getattr(row, "rubro", "") or "").strip()
+                tipo = str(getattr(row, "tipo", "") or "").strip()
+                cod = str(getattr(row, "cod", "") or getattr(row, "codigo", "") or "").strip()
+                monto_str = str(getattr(row, "monto", "") or "").replace(",", "")
+                try:
+                    monto_num = int(float(monto_str)) if monto_str else 0
+                except Exception:
+                    monto_num = 0
+                if not rubro:
+                    continue
+                rubro_index[rubro.lower()] = {"tipo": tipo, "monto": monto_num, "cod": cod, "rubro": rubro}
+                lineas.append(f"  [{cod}] {tipo or '---'} | {rubro}: {monto_num:,}")
+                if tipo == "Ingreso":
+                    ingresos += monto_num
+                elif tipo == "Egreso":
+                    egresos += monto_num
+            lineas.append(
+                f"\nTOTALES: Ingresos {ingresos:,} · Egresos {egresos:,} · "
+                f"Resultado {ingresos - egresos:,} ({'superávit' if ingresos >= egresos else 'déficit'})"
+            )
+
+            # ── Sección 2: Control mensual consolidado ──────────────────────
+            lineas.append("\n--- CONTROL MENSUAL CONSOLIDADO ---")
+            proy_anual_total, real_anual_total = 0, 0
+            for mes_num in range(1, 13):
+                mes_key = f"{mes_num:02d}"
+                proy, real = 0, 0
+                for row in store.get("rows", []):
+                    mes_data = (row.get("months") or {}).get(mes_key) or {}
+                    proy += int(mes_data.get("proyectado") or 0)
+                    real += int(mes_data.get("realizado") or 0)
+                if proy or real:
+                    pct = round(real / proy * 100, 1) if proy else 0.0
+                    estado = "✓ ejecutado" if pct >= 90 else ("⚠ bajo" if pct < 50 else "→ parcial")
+                    lineas.append(
+                        f"  {MESES_NOMBRES.get(mes_key, mes_key)}: Proyectado {proy:,} · "
+                        f"Realizado {real:,} · {pct}% {estado}"
+                    )
+                    proy_anual_total += proy
+                    real_anual_total += real
+            pct_anual = round(real_anual_total / proy_anual_total * 100, 1) if proy_anual_total else 0.0
+            lineas.append(
+                f"\nEjecución anual acumulada: Proyectado {proy_anual_total:,} · "
+                f"Realizado {real_anual_total:,} · {pct_anual}%"
+            )
+
+            # ── Sección 3: Control mensual por RUBRO ────────────────────────
+            lineas.append("\n--- CONTROL MENSUAL POR RUBRO ---")
+            for row in store.get("rows", []):
+                rubro_r = str(row.get("rubro") or row.get("nombre") or "").strip()
+                if not rubro_r:
+                    continue
+                tipo_r = rubro_index.get(rubro_r.lower(), {}).get("tipo", "---")
+                proy_r, real_r = 0, 0
+                mes_detalle = []
+                for mes_num in range(1, 13):
+                    mes_key = f"{mes_num:02d}"
+                    md = (row.get("months") or {}).get(mes_key) or {}
+                    p = int(md.get("proyectado") or 0)
+                    r = int(md.get("realizado") or 0)
+                    proy_r += p
+                    real_r += r
+                    if p or r:
+                        mes_detalle.append(
+                            f"{MESES_NOMBRES.get(mes_key, mes_key)}: P {p:,}/R {r:,}"
+                        )
+                if proy_r or real_r:
+                    pct_r = round(real_r / proy_r * 100, 1) if proy_r else 0.0
+                    lineas.append(
+                        f"  {tipo_r} | {rubro_r}: "
+                        f"Anual proyectado {proy_r:,} · realizado {real_r:,} · {pct_r}%"
+                    )
+                    if mes_detalle:
+                        lineas.append("    " + " | ".join(mes_detalle))
+
+            new_text = "\n".join(lineas)
+            _upsert_presupuesto_ia_block(db, _PRESUPUESTO_BASE_IA_EXTRA_BLOCK, {"texto": new_text})
+            next_at = (now + timedelta(days=_PRESUPUESTO_BASE_IA_WEEKLY_INTERVAL_DAYS)).isoformat()
+            _upsert_presupuesto_ia_block(db, _PRESUPUESTO_BASE_IA_WEEKLY_META_BLOCK, {
+                "last_refresh_at": now.isoformat(),
+                "next_refresh_at": next_at,
+                "interval_days": _PRESUPUESTO_BASE_IA_WEEKLY_INTERVAL_DAYS,
+                "last_status": "ok",
+                "last_error": "",
+                "generated_chars": len(new_text),
+            })
+            db.commit()
+            return {"updated": True, "last_refresh_at": now.isoformat(), "next_refresh_at": next_at, "generated_chars": len(new_text)}
+        except Exception as exc:
+            db.rollback()
+            raise exc
+        finally:
+            db.close()
+
+
+@router.get("/presupuesto/base-ia", response_class=HTMLResponse)
+def presupuesto_base_ia_page(request: Request):
+    _, is_superadmin, render_backend_page, _ = _get_core_imports()
+    if not is_superadmin(request):
+        return RedirectResponse(url="/no-acceso", status_code=302)
+    try:
+        _refresh_weekly_presupuesto_base_ia_if_due(force=False)
+    except Exception:
+        pass
+    payload = _build_presupuesto_ia_payload()
+    return render_backend_page(
+        request,
+        title="Base IA · Presupuesto",
+        description="Concentrado de presupuesto anual y control mensual para consulta de IA.",
+        content=_build_presupuesto_ia_html(payload),
+        hide_floating_actions=True,
+        show_page_header=True,
+    )
+
+
+@router.get("/presupuesto/base-ia/datos", response_class=JSONResponse)
+def presupuesto_base_ia_api(request: Request):
+    _, is_superadmin, _, _ = _get_core_imports()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    try:
+        _refresh_weekly_presupuesto_base_ia_if_due(force=False)
+    except Exception:
+        pass
+    payload = _build_presupuesto_ia_payload()
+    return JSONResponse({"success": True, "data": payload})
+
+
+@router.get("/presupuesto/base-ia/contenido", response_class=JSONResponse)
+def presupuesto_base_ia_contenido_get(request: Request):
+    _, is_superadmin, _, _ensure_strategic_identity_table = _get_core_imports()
+    from fastapi_modulo.main import SessionLocal as CoreSessionLocal
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    db = CoreSessionLocal()
+    try:
+        _ensure_strategic_identity_table(db)
+        db.commit()
+        row = db.execute(
+            text("SELECT payload FROM strategic_identity_config WHERE bloque = :b LIMIT 1"),
+            {"b": _PRESUPUESTO_BASE_IA_EXTRA_BLOCK},
+        ).fetchone()
+        try:
+            pj = json.loads(str(row[0] or "{}")) if row else {}
+        except Exception:
+            pj = {}
+        texto = str((pj if isinstance(pj, dict) else {}).get("texto") or "").strip()
+        return JSONResponse({"success": True, "data": {"texto": texto}})
+    finally:
+        db.close()
+
+
+@router.put("/presupuesto/base-ia/contenido", response_class=JSONResponse)
+def presupuesto_base_ia_contenido_put(request: Request, data: dict = Body(...)):
+    _, is_superadmin, _, _ensure_strategic_identity_table = _get_core_imports()
+    from fastapi_modulo.main import SessionLocal as CoreSessionLocal
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    texto = str(data.get("texto") or "").strip()
+    db = CoreSessionLocal()
+    try:
+        _ensure_strategic_identity_table(db)
+        _upsert_presupuesto_ia_block(db, _PRESUPUESTO_BASE_IA_EXTRA_BLOCK, {"texto": texto})
+        db.commit()
+        return JSONResponse({"success": True, "data": {"texto": texto}})
+    except (sqlite3.OperationalError, SQLAlchemyError):
+        db.rollback()
+        return JSONResponse({"success": False, "error": "No se pudo guardar."}, status_code=500)
+    finally:
+        db.close()
+
+
+@router.post("/presupuesto/base-ia/refresh", response_class=JSONResponse)
+def presupuesto_base_ia_refresh(request: Request, data: dict = Body(default={})):
+    _, is_superadmin, _, _ = _get_core_imports()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    force = bool((data or {}).get("force", True))
+    try:
+        result = _refresh_weekly_presupuesto_base_ia_if_due(force=force)
+        return JSONResponse({"success": True, "data": result})
+    except Exception as exc:
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)

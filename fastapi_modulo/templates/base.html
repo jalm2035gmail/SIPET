@@ -45,6 +45,19 @@
             </div>
         </div>
         <nav>
+            <a class="sidebar-main-link" href="/web" data-menu-name="Frontend" data-route="/web" target="_blank" rel="noopener">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/web.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Frontend</span>
+                </span>
+            </a>
+            <a class="sidebar-main-link" href="/notificaciones" data-menu-name="Conversaciones" data-route="/notificaciones">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/notificaciones.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Conversaciones</span>
+                </span>
+            </a>
+            {% if is_admin_or_superadmin_user or 'BSC' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -57,6 +70,8 @@
                     <a href="/inicio">BSC</a>
                 </div>
             </details>
+            {% endif %}
+            {% if is_admin_or_superadmin_user or 'Organización' in (user_app_access | default([])) %}
             <details class="sidebar-block" open>
                 <summary>
                     <span class="sidebar-main-left">
@@ -66,12 +81,26 @@
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <a href="/inicio/departamentos">Áreas organizacionales</a>
+                    <details class="sidebar-submenu-group">
+                        <summary>Áreas organizacionales</summary>
+                        <div class="sidebar-submenu-level3">
+                            <a href="/inicio/departamentos">Áreas organizacionales</a>
+                            <a href="/inicio/departamentos/puestos-organizacionales">Puestos organizacionales</a>
+                        </div>
+                    </details>
                     <a href="/inicio/regiones">Regiones</a>
                     <a href="/inicio/sucursales">Sucursales</a>
-                    <a href="/inicio/colaboradores">Colaboradores</a>
+                    <details class="sidebar-submenu-group">
+                        <summary>Colaboradores</summary>
+                        <div class="sidebar-submenu-level3">
+                            <a href="/inicio/colaboradores">Lista de colaboradores</a>
+                            <a href="/inicio/colaboradores/habilidades">Habilidades</a>
+                        </div>
+                    </details>
                 </div>
             </details>
+            {% endif %}
+            {% if is_admin_or_superadmin_user or 'Estrategia y táctica' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -92,9 +121,14 @@
                     </details>
                     <a href="/planes">Plan estratégico</a>
                     <a href="/poa">POA</a>
-                    <a href="/estrategia-tactica/tablero-control">Tablero de control</a>
+                    <a href="/planes">Tablero de control</a>
+                    {% if (request.state.user_role | default('')) in ['superadministrador', 'superadmin'] %}
+                    <a href="/estrategia-tactica/base-ia">Base IA estrategia</a>
+                    {% endif %}
                 </div>
             </details>
+            {% endif %}
+            {% if is_admin_or_superadmin_user or 'Datos financieros' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -122,6 +156,8 @@
                     <a href="/proyectando/presupuesto">Presupuesto</a>
                 </div>
             </details>
+            {% endif %}
+            {% if is_admin_or_superadmin_user or 'Control y seguimiento' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -134,6 +170,8 @@
                     <a href="/control-seguimiento">Control y segumiento</a>
                 </div>
             </details>
+            {% endif %}
+            {% if is_admin_or_superadmin_user or 'KPIs' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -146,18 +184,8 @@
                     <a href="/kpis">KPI's</a>
                 </div>
             </details>
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/notificaciones.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Notificaciones</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a href="/notificaciones">Bandeja</a>
-                </div>
-            </details>
+            {% endif %}
+            {% if is_admin_or_superadmin_user or 'Reportes' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -171,6 +199,8 @@
                     <a href="/reportes/documentos">Documentos</a>
                 </div>
             </details>
+            {% endif %}
+            {% if is_admin_or_superadmin_user or 'Empresa' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -186,6 +216,7 @@
                     <a href="/plantillas/constructor">Constructor de formularios</a>
                 </div>
             </details>
+            {% endif %}
             {% if (request.state.user_role | default('')) in ['superadministrador', 'superadmin'] %}
             <details class="sidebar-block">
                 <summary>
@@ -197,6 +228,10 @@
                 </summary>
                 <div class="sidebar-submenu">
                     <a href="/ajustes/configuracion">Configuración</a>
+                    <a href="/ajustes/ia" style="display:inline-flex;align-items:center;gap:8px;">
+                        <img src="/templates/icon/ia.svg" alt="" aria-hidden="true" style="width:15px;height:15px;object-fit:contain;">
+                        IA
+                    </a>
                     <a href="/personalizar">Colores</a>
                     <a href="/roles-permisos">Roles</a>
                     <a href="/membresia">Membresía</a>
@@ -233,6 +268,10 @@
                 </div>
             </div>
             <div class="navbar-user-menu">
+                <button class="navbar-ia-btn" id="navbar-ia-status-btn" aria-label="Estado de IA" title="Estado de IA">
+                    <span class="navbar-ia-icon" aria-hidden="true"></span>
+                    <span class="navbar-ia-x" id="navbar-ia-status-x" aria-hidden="true">X</span>
+                </button>
                 <button class="navbar-notifications-btn" id="navbar-notifications-trigger" aria-label="Notificaciones" aria-expanded="false">
                     <span class="navbar-notifications-icon" aria-hidden="true"></span>
                     <span class="navbar-notifications-badge" id="navbar-notifications-badge">0</span>
@@ -319,6 +358,7 @@
             const sidebarBlocks = document.querySelectorAll('.sidebar-block');
             const sidebarSummaryItems = document.querySelectorAll('.sidebar-block > summary');
             const sidebarSubmenuLinks = document.querySelectorAll('.sidebar-submenu a');
+            const sidebarMainLinks = document.querySelectorAll('.sidebar-main-link');
             const navbarMenuName = document.querySelector('.navbar-menu-name');
             const navbarRoute = document.querySelector('.navbar-route');
             const floatingActions = document.querySelector('.floating-actions');
@@ -448,6 +488,8 @@
             };
             const sidebarNotificationsTrigger = document.getElementById('sidebar-notifications-trigger');
             const sidebarNotificationsBadge = document.getElementById('sidebar-notifications-badge');
+            const navbarIaStatusBtn = document.getElementById('navbar-ia-status-btn');
+            const navbarIaStatusX = document.getElementById('navbar-ia-status-x');
             const navbarNotificationsTrigger = document.getElementById('navbar-notifications-trigger');
             const navbarNotificationsBadge = document.getElementById('navbar-notifications-badge');
             const navbarNotificationsIcon = document.querySelector('.navbar-notifications-icon');
@@ -474,12 +516,26 @@
                     img.replaceWith(iconMask);
                 });
             };
+            const prepareFloatingActionTooltips = () => {
+                document.querySelectorAll('.floating-actions .action-button').forEach((button) => {
+                    const attrLabel = (button.getAttribute('aria-label') || button.getAttribute('title') || '').trim();
+                    const spanLabelEl = button.querySelector('.action-label');
+                    const spanLabel = spanLabelEl ? (spanLabelEl.textContent || '').trim() : '';
+                    const fallbackLabel = (button.textContent || '').trim();
+                    const label = attrLabel || spanLabel || fallbackLabel;
+                    if (!label) return;
+                    button.setAttribute('data-hover-label', label);
+                    button.setAttribute('title', label);
+                    button.setAttribute('aria-label', label);
+                });
+            };
             convertFloatingIconsToMasks();
+            prepareFloatingActionTooltips();
             const shouldSkipThemedButton = (button) => (
                 button.matches(
-                    '.navbar-hamburger, .navbar-avatar, .navbar-notifications-btn, .accordion-header, .sidebar-section-toggle, .floating-toggle, .sipet-section-tab, .Pestana, [data-param-tab], [data-cg-tab], .cg-view-toggle, .view-pill, [data-view], .ar-chip, [data-relacion-help], .fp-row, .fp-btn, .fp-icon, [data-scn], .pe-axis__btn, .pe-btn, .table-delete-btn, .delete-activo-fijo-row'
+                    '.navbar-hamburger, .navbar-avatar, .navbar-ia-btn, .navbar-notifications-btn, .accordion-header, .sidebar-section-toggle, .floating-toggle, .sipet-section-tab, .Pestana, [data-param-tab], [data-cg-tab], .cg-view-toggle, .view-pill, [data-view], .ar-chip, [data-relacion-help], .fp-row, .fp-btn, .fp-icon, [data-scn], .pe-axis__btn, .pe-btn, .table-delete-btn, .delete-activo-fijo-row'
                 ) ||
-                !!button.closest('.fp-shell, .pe-page, #usuario-view, #sucursales-view, .kpi-page, .axm-shell, #plantillas-page')
+                !!button.closest('.fp-shell, .pe-page, #usuario-view, #sucursales-view, .kpi-page, .axm-shell, .axm-wrap, .poa-board-wrap, .poa-modal, #plantillas-page')
             );
             const applyButtonThemeClass = () => {
                 document.querySelectorAll('button').forEach((button) => {
@@ -496,9 +552,72 @@
                 });
             };
             applyButtonThemeClass();
+            let iaStatusSnapshot = {
+                connected: false,
+                provider: '',
+                model: '',
+                base_url: '',
+                health_detail: '',
+            };
+            const applyIaStatus = (connected, provider, model, baseUrl = '', healthDetail = '') => {
+                if (!navbarIaStatusBtn || !navbarIaStatusX) return;
+                const ok = !!connected;
+                iaStatusSnapshot = {
+                    connected: ok,
+                    provider: String(provider || ''),
+                    model: String(model || ''),
+                    base_url: String(baseUrl || ''),
+                    health_detail: String(healthDetail || ''),
+                };
+                navbarIaStatusBtn.classList.toggle('is-disconnected', !ok);
+                navbarIaStatusX.classList.toggle('visible', !ok);
+                const label = ok
+                    ? `IA conectada${provider ? `: ${provider}` : ''}${model ? ` (${model})` : ''}`
+                    : 'IA no conectada';
+                navbarIaStatusBtn.setAttribute('title', label);
+                navbarIaStatusBtn.setAttribute('aria-label', label);
+            };
+            const loadIaStatus = async () => {
+                if (!navbarIaStatusBtn) return;
+                try {
+                    const res = await fetch('/api/ia/status', { headers: { Accept: 'application/json' } });
+                    const json = await res.json().catch(() => ({}));
+                    applyIaStatus(
+                        !!json?.connected,
+                        String(json?.provider || ''),
+                        String(json?.model || ''),
+                        String(json?.base_url || ''),
+                        String(json?.health_detail || '')
+                    );
+                } catch (_e) {
+                    applyIaStatus(false, '', '');
+                }
+            };
+            if (navbarIaStatusBtn) {
+                navbarIaStatusBtn.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    await loadIaStatus();
+                    const ok = !!iaStatusSnapshot.connected;
+                    const lines = [
+                        `Estado IA: ${ok ? 'Conectada' : 'No conectada'}`,
+                        `Confirmación de conexión: ${ok ? 'Sí, conexión activa' : 'No se detectó conexión activa'}`,
+                        `Proveedor: ${iaStatusSnapshot.provider || 'N/D'}`,
+                        `Modelo: ${iaStatusSnapshot.model || 'N/D'}`,
+                        `Base URL: ${iaStatusSnapshot.base_url || 'N/D'}`,
+                    ];
+                    if (iaStatusSnapshot.health_detail) {
+                        lines.push(`Detalle: ${iaStatusSnapshot.health_detail}`);
+                    }
+                    const openSettings = window.confirm(`${lines.join('\n')}\n\n¿Abrir Ajustes IA?`);
+                    if (openSettings) {
+                        window.location.assign('/ajustes/ia');
+                    }
+                });
+            }
             if (document.body) {
                 const themedButtonObserver = new MutationObserver(() => {
                     applyButtonThemeClass();
+                    prepareFloatingActionTooltips();
                 });
                 themedButtonObserver.observe(document.body, { childList: true, subtree: true });
             }
@@ -668,6 +787,17 @@
                     }
                 });
             });
+            sidebarMainLinks.forEach((link) => {
+                link.addEventListener('click', () => {
+                    setMenuInfo(link);
+                    if (!isSidebarOpen) {
+                        sidebarBlocks.forEach((item) => {
+                            item.removeAttribute('open');
+                            item.classList.remove('is-flyout-open');
+                        });
+                    }
+                });
+            });
             document.addEventListener('click', (event) => {
                 if (isSidebarOpen) return;
                 if (sidebarElem && sidebarElem.contains(event.target)) return;
@@ -821,12 +951,21 @@
                 if (href === currentSidebarPath) return true;
                 return href !== '/' && currentSidebarPath.startsWith(`${href}/`);
             });
+            const activeSidebarMainLink = Array.from(sidebarMainLinks).find((link) => {
+                const href = normalizeRoutePath(link.getAttribute('href'));
+                if (href === currentSidebarPath) return true;
+                return href !== '/' && currentSidebarPath.startsWith(`${href}/`);
+            });
             if (activeSidebarLink) {
                 const block = activeSidebarLink.closest('.sidebar-block');
                 if (block) block.open = true;
                 setMenuInfo(activeSidebarLink);
+            } else if (activeSidebarMainLink) {
+                setMenuInfo(activeSidebarMainLink);
             } else if (sidebarSummaryItems.length) {
                 setMenuInfo(sidebarSummaryItems[0]);
+            } else if (sidebarMainLinks.length) {
+                setMenuInfo(sidebarMainLinks[0]);
             } else if (menuLinks.length) {
                 setMenuInfo(menuLinks[0]);
             }
@@ -2364,6 +2503,7 @@
             applyFallback(sidebarUserImg);
             await syncCurrentUserAvatarFromColaborador();
             syncSidebarCompanyLogo();
+            await loadIaStatus();
             syncNavbarNotificationIconColor(
                 (navbar ? getComputedStyle(navbar).color : '')
                 || getComputedStyle(document.documentElement).getPropertyValue('--navbar-text')

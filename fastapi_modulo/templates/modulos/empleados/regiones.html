@@ -41,22 +41,6 @@
                     min-height:82px;
                     resize:vertical;
                 }
-                .reg-actions {
-                    margin-top:12px;
-                    display:flex;
-                    gap:10px;
-                    align-items:center;
-                }
-                .reg-actions button {
-                    height:36px;
-                    padding:0 14px;
-                    border:1px solid #0f172a;
-                    background:#0f172a;
-                    color:#ffffff;
-                    border-radius:10px;
-                    font-weight:600;
-                    cursor:pointer;
-                }
                 .reg-msg {
                     font-size:0.88rem;
                     color:#334155;
@@ -218,14 +202,98 @@
                                         <textarea id="region-descripcion">${escapeHtml(current.descripcion)}</textarea>
                                     </div>
                                 </div>
-                                <div class="reg-actions">
-                                    <button type="submit">${editingIndex >= 0 ? 'Actualizar' : 'Guardar'} región</button>
+                                <div class="action-buttons-group">
+                                    <button type="button" id="reg-btn-nuevo" class="action-button" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
+                                        <img src="/icon/boton/nuevo.svg" alt="Nuevo">
+                                        <span class="action-label">Nuevo</span>
+                                    </button>
+                                    <button type="button" id="reg-btn-editar" class="action-button" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                                        <img src="/icon/boton/editar.svg" alt="Editar">
+                                        <span class="action-label">Editar</span>
+                                    </button>
+                                    <button type="submit" id="reg-btn-guardar" class="action-button" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                                        <img src="/icon/boton/guardar.svg" alt="Guardar">
+                                        <span class="action-label">Guardar</span>
+                                    </button>
+                                    <button type="button" id="reg-btn-eliminar" class="action-button" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                                        <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                                        <span class="action-label">Eliminar</span>
+                                    </button>
                                     <span class="reg-msg">${data.length} registro(s)</span>
                                 </div>
                             </form>
                         </article>
                     `;
                     const form = document.getElementById('regiones-form');
+                    const msgEl = mount.querySelector('.reg-msg');
+                    const setMsg = (message, tone) => {
+                        if (!msgEl) return;
+                        const countLabel = `${data.length} registro(s)`;
+                        if (!message) {
+                            msgEl.textContent = countLabel;
+                            msgEl.style.color = '#334155';
+                            return;
+                        }
+                        msgEl.textContent = `${message} · ${countLabel}`;
+                        if (tone === 'ok') msgEl.style.color = '#166534';
+                        else if (tone === 'error') msgEl.style.color = '#b91c1c';
+                        else msgEl.style.color = '#334155';
+                    };
+
+                    const newBtn = document.getElementById('reg-btn-nuevo');
+                    const editBtn = document.getElementById('reg-btn-editar');
+                    const deleteBtn = document.getElementById('reg-btn-eliminar');
+
+                    newBtn && newBtn.addEventListener('click', () => {
+                        editingIndex = -1;
+                        renderForm();
+                    });
+
+                    editBtn && editBtn.addEventListener('click', () => {
+                        const codigo = (document.getElementById('region-codigo')?.value || '').trim();
+                        if (!codigo) {
+                            setMsg('Ingresa un código para editar', 'error');
+                            return;
+                        }
+                        const idx = data.findIndex((row) => String(row.codigo || '').trim() === codigo);
+                        if (idx < 0) {
+                            setMsg('Código no encontrado', 'error');
+                            return;
+                        }
+                        editingIndex = idx;
+                        setMsg('Registro cargado para edición', 'ok');
+                        renderForm();
+                    });
+
+                    deleteBtn && deleteBtn.addEventListener('click', async () => {
+                        const codigo = (document.getElementById('region-codigo')?.value || '').trim();
+                        if (!codigo) {
+                            setMsg('Ingresa un código para eliminar', 'error');
+                            return;
+                        }
+                        const idx = data.findIndex((row) => String(row.codigo || '').trim() === codigo);
+                        if (idx < 0) {
+                            setMsg('Código no encontrado', 'error');
+                            return;
+                        }
+                        if (!window.confirm(`¿Eliminar la región "${data[idx].nombre || codigo}"?`)) return;
+                        data.splice(idx, 1);
+                        editingIndex = -1;
+                        const ok = await persistRegiones();
+                        if (!ok) {
+                            setMsg('Error al eliminar', 'error');
+                            return;
+                        }
+                        renderForm();
+                        setTimeout(() => {
+                            const msg = mount.querySelector('.reg-msg');
+                            if (msg) {
+                                msg.textContent = `Registro eliminado · ${data.length} registro(s)`;
+                                msg.style.color = '#166534';
+                            }
+                        }, 0);
+                    });
+
                     form && form.addEventListener('submit', async (event) => {
                         event.preventDefault();
                         const nombre = (document.getElementById('region-nombre')?.value || '').trim();
@@ -239,8 +307,19 @@
                             data.push(payload);
                         }
                         editingIndex = -1;
-                        await persistRegiones();
+                        const ok = await persistRegiones();
+                        if (!ok) {
+                            setMsg('Error al guardar', 'error');
+                            return;
+                        }
                         renderForm();
+                        setTimeout(() => {
+                            const msg = mount.querySelector('.reg-msg');
+                            if (msg) {
+                                msg.textContent = `Guardado correctamente · ${data.length} registro(s)`;
+                                msg.style.color = '#166534';
+                            }
+                        }, 0);
                     });
                 };
 

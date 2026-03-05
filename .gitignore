@@ -9,3 +9,6 @@ colores.db
 fastapi_modulo/runtime_store/
 
 .DS_Store
+
+node_modules/
+.env

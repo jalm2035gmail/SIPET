@@ -45,6 +45,9 @@ from fastapi_modulo.modulos.planificacion.ejes_poa import router as ejes_poa_rou
 from fastapi_modulo.modulos.plantillas.plantillas_forms import router as plantillas_forms_router
 from fastapi_modulo.modulos.diagnostico.diagnostico import router as diagnostico_router
 from fastapi_modulo.modulos.kpis.kpis import router as kpis_router
+from fastapi_modulo.modulos.frontend.frontend import router as frontend_router
+from fastapi_modulo.ajustes_ia import router as ajustes_ia_router
+from fastapi_modulo.modulos.ia_router import ia_router
 from fastapi import Response, Form, Body
 from fastapi.responses import JSONResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -273,9 +276,21 @@ def normalize_role_name(role_name: Optional[str]) -> str:
 
 
 def get_current_role(request: Request) -> str:
-    role = getattr(request.state, "user_role", None)
-    if role is None:
-        role = request.cookies.get("user_role") or os.environ.get("DEFAULT_USER_ROLE") or ""
+    role = (
+        getattr(request.state, "user_role", None)
+        or getattr(request.state, "role", None)
+        or request.cookies.get("user_role")
+        or request.cookies.get("role")
+        or request.cookies.get("rol")
+        or ""
+    )
+    if not str(role or "").strip():
+        session_token = request.cookies.get(AUTH_COOKIE_NAME, "")
+        session_data = _read_session_cookie(session_token)
+        if isinstance(session_data, dict):
+            role = session_data.get("role") or ""
+    if not str(role or "").strip():
+        role = os.environ.get("DEFAULT_USER_ROLE") or ""
     return normalize_role_name(role)
 
 
@@ -300,6 +315,64 @@ def get_current_tenant(request: Request) -> str:
 
 def is_superadmin(request: Request) -> bool:
     return get_current_role(request) == "superadministrador"
+
+
+def _get_user_app_access(request: Request) -> list:
+    """Return the app_access list for the current session user (from colab meta JSON)."""
+    try:
+        username = getattr(request.state, "user_name", None) or ""
+        if not username:
+            return []
+        lookup_hash = _sensitive_lookup_hash(username)
+        db = SessionLocal()
+        try:
+            user = db.query(Usuario).filter(Usuario.usuario_hash == lookup_hash).first()
+            if not user:
+                return []
+            user_id = str(user.id)
+        finally:
+            db.close()
+        import json as _json
+        import os as _os
+        _APP_ENV_L = (_os.environ.get("APP_ENV") or _os.environ.get("ENVIRONMENT") or "development").strip().lower()
+        _SIPET_DATA_DIR = (_os.environ.get("SIPET_DATA_DIR") or _os.path.expanduser("~/.sipet/data")).strip()
+        _RT_DIR = (_os.environ.get("RUNTIME_STORE_DIR") or _os.path.join(_SIPET_DATA_DIR, "runtime_store", _APP_ENV_L)).strip()
+        _META_PATH = _os.environ.get("COLAB_META_PATH") or _os.path.join(_RT_DIR, "colaboradores_meta.json")
+        if not _os.path.exists(_META_PATH):
+            return []
+        raw = _json.loads(open(_META_PATH, encoding="utf-8").read())
+        return raw.get(user_id, {}).get("app_access", []) if isinstance(raw, dict) else []
+    except Exception:
+        return []
+
+
+def _get_user_web_roles(request: Request) -> list:
+    """Return the web_roles list for the current session user (from colab meta JSON)."""
+    try:
+        username = getattr(request.state, "user_name", None) or ""
+        if not username:
+            return []
+        lookup_hash = _sensitive_lookup_hash(username)
+        db = SessionLocal()
+        try:
+            user = db.query(Usuario).filter(Usuario.usuario_hash == lookup_hash).first()
+            if not user:
+                return []
+            user_id = str(user.id)
+        finally:
+            db.close()
+        import json as _json
+        import os as _os
+        _APP_ENV_L = (_os.environ.get("APP_ENV") or _os.environ.get("ENVIRONMENT") or "development").strip().lower()
+        _SIPET_DATA_DIR = (_os.environ.get("SIPET_DATA_DIR") or _os.path.expanduser("~/.sipet/data")).strip()
+        _RT_DIR = (_os.environ.get("RUNTIME_STORE_DIR") or _os.path.join(_SIPET_DATA_DIR, "runtime_store", _APP_ENV_L)).strip()
+        _META_PATH = _os.environ.get("COLAB_META_PATH") or _os.path.join(_RT_DIR, "colaboradores_meta.json")
+        if not _os.path.exists(_META_PATH):
+            return []
+        raw = _json.loads(open(_META_PATH, encoding="utf-8").read())
+        return raw.get(user_id, {}).get("web_roles", []) if isinstance(raw, dict) else []
+    except Exception:
+        return []
 
 
 def is_admin(request: Request) -> bool:
@@ -519,10 +592,13 @@ async def _store_login_image(upload: UploadFile, prefix: str) -> Optional[str]:
         raise HTTPException(status_code=413, detail="La imagen supera el tamaño máximo permitido")
     _ensure_login_identity_paths()
     ext = _get_upload_ext(upload)
+    # Optimizar imagen: redimensionar y convertir a WebP según el tipo de asset
+    from fastapi_modulo.image_utils import optimize_image, profile_for_prefix
+    optimized, ext = optimize_image(data, ext, profile=profile_for_prefix(prefix))
     new_filename = f"{prefix}_{secrets.token_hex(6)}{ext}"
     image_path = os.path.join(IDENTIDAD_LOGIN_IMAGE_DIR, new_filename)
     with open(image_path, "wb") as fh:
-        fh.write(data)
+        fh.write(optimized)
     return new_filename
 
 
@@ -765,6 +841,9 @@ def _render_backend_base(
         "app_favicon_url": login_identity.get("login_favicon_url"),
         "login_logo_url": login_identity.get("login_logo_url"),
         "sidebar_logo_url": sidebar_logo_url,
+        "user_app_access": _get_user_app_access(request),
+        "is_superadmin_user": is_superadmin(request),
+        "is_admin_or_superadmin_user": is_admin_or_superadmin(request),
     }
     return templates.TemplateResponse("base.html", context)
 
@@ -830,6 +909,15 @@ def _resolve_database_url() -> str:
     sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or "").strip()
     if sqlite_db_path and os.path.basename(sqlite_db_path).lower() == "strategic_planning.db" and not is_prod_like:
         sqlite_db_path = default_sqlite_name
+    if not sqlite_db_path:
+        # Compatibilidad: prioriza la BD local del proyecto si ya existe.
+        # Evita inconsistencias entre módulos que terminan leyendo ~/.sipet/data.
+        project_candidate = os.path.abspath(default_sqlite_name)
+        legacy_project_candidate = os.path.abspath("strategic_planning.db")
+        if os.path.exists(project_candidate):
+            sqlite_db_path = project_candidate
+        elif os.path.exists(legacy_project_candidate):
+            sqlite_db_path = legacy_project_candidate
     if not sqlite_db_path:
         os.makedirs(DEFAULT_SIPET_DATA_DIR, exist_ok=True)
         sqlite_db_path = os.path.join(DEFAULT_SIPET_DATA_DIR, default_sqlite_name)
@@ -1796,6 +1884,7 @@ app.include_router(presupuesto_router, prefix="/proyectando")
 app.include_router(empleados_router)
 app.include_router(regiones_router)
 app.include_router(departamentos_router)
+app.include_router(frontend_router)
 app.include_router(proyectando_tablero_router)
 app.include_router(proyectando_datos_preliminares_router)
 app.include_router(proyectando_crecimiento_general_router)
@@ -1804,15 +1893,44 @@ app.include_router(proyectando_no_acceso_router)
 app.include_router(ejes_poa_router)
 app.include_router(plantillas_forms_router)
 app.include_router(diagnostico_router)
+
 app.include_router(reportes_router)
+app.include_router(ajustes_ia_router)
+app.include_router(ia_router)
 
 from fastapi_modulo.modulos.notificaciones.notificaciones import router as notificaciones_router
 app.include_router(kpis_router)
 app.include_router(notificaciones_router)
 
 
+def _ensure_ia_config_columns():
+    """Agrega columnas faltantes a ia_config de forma idempotente."""
+    try:
+        from fastapi_modulo.db import engine
+        import sqlalchemy as _sa
+        with engine.connect() as _conn:
+            existing = {
+                row[1]
+                for row in _conn.execute(_sa.text("PRAGMA table_info(ia_config)")).fetchall()
+            }
+            migrations = [
+                ("ai_system_prompt", "ALTER TABLE ia_config ADD COLUMN ai_system_prompt VARCHAR"),
+                ("ai_temperature",   "ALTER TABLE ia_config ADD COLUMN ai_temperature REAL DEFAULT 0.7"),
+                ("ai_top_p",         "ALTER TABLE ia_config ADD COLUMN ai_top_p REAL DEFAULT 0.9"),
+                ("ai_num_predict",   "ALTER TABLE ia_config ADD COLUMN ai_num_predict INTEGER DEFAULT 700"),
+            ]
+            for col, stmt in migrations:
+                if col not in existing:
+                    _conn.execute(_sa.text(stmt))
+                    print(f"[migration] ia_config: columna '{col}' agregada")
+            _conn.commit()
+    except Exception as exc:
+        print(f"[migration] Error aplicando columnas ia_config: {exc}")
+
+
 @app.on_event("startup")
 async def seed_default_users_on_startup():
+    _ensure_ia_config_columns()
     try:
         ensure_default_roles()
         ensure_system_superadmin_user()
@@ -1832,6 +1950,11 @@ def healthcheck():
             }
         )
     return payload
+
+
+@app.get("/healthz")
+def healthcheck_liveness():
+    return {"status": "ok", "service": "avancoop"}
 
 
 def _not_found_context(request: Request, title: str = "Pagina no encontrada") -> Dict[str, str]:
@@ -1893,7 +2016,9 @@ async def enforce_backend_login(request: Request, call_next):
         "/web/login",
         "/logout",
         "/health",
+        "/healthz",
         "/favicon.ico",
+        "/api/web/me",
     }
     if ENABLE_API_DOCS:
         public_paths.update({"/docs", "/redoc", "/openapi.json"})
@@ -1904,6 +2029,9 @@ async def enforce_backend_login(request: Request, call_next):
         or path.startswith("/web/passkey/")
         or path.startswith("/identidad-institucional")
         or path.startswith("/templates/")
+        or path.startswith("/static/")
+        or path.startswith("/icon/")
+        or path.startswith("/imagenes/")
         or path.startswith("/docs/")
         or path.startswith("/redoc/")
     ):
@@ -2216,7 +2344,20 @@ def _is_demo_account(username: str) -> bool:
 
 
 def _current_user_record(request: Request, db) -> Optional[Usuario]:
-    session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
+    session_username = (
+        getattr(request.state, "user_name", None)
+        or getattr(request.state, "username", None)
+        or request.cookies.get("user_name")
+        or request.cookies.get("username")
+        or request.cookies.get("usuario")
+        or request.cookies.get("email")
+        or ""
+    ).strip()
+    if not session_username:
+        session_token = request.cookies.get(AUTH_COOKIE_NAME, "")
+        session_data = _read_session_cookie(session_token)
+        if isinstance(session_data, dict):
+            session_username = str(session_data.get("username") or "").strip()
     if not session_username:
         return None
     lookup_hash = _sensitive_lookup_hash(session_username)
@@ -2560,6 +2701,46 @@ async def obtener_colores():
         return JSONResponse({"success": True, "data": data})
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+@app.get("/api/web/me")
+def api_web_me(request: Request):
+    """Returns the current user's web roles for the admin bar on public pages."""
+    # Read session manually — this endpoint is public so middleware skips auth
+    session_token = request.cookies.get(AUTH_COOKIE_NAME, "")
+    session_data = _read_session_cookie(session_token) if session_token else None
+    if not session_data:
+        return {"authenticated": False, "is_superadmin": False, "web_roles": [], "role": "", "username": ""}
+    role = normalize_role_name(session_data.get("role") or "")
+    username = (session_data.get("username") or "").strip()
+    superadmin = role == "superadministrador"
+    if not superadmin:
+        # build a temporary request-like state to reuse helper
+        request.state.user_name = username
+        request.state.user_role = role
+        web_roles = _get_user_web_roles(request)
+    else:
+        web_roles = ["editor", "designer"]
+    can_use_bar = superadmin or bool(web_roles)
+    # Read sidebar-bottom color from DB (same key used by personalización)
+    bar_color = "#0f172a"
+    try:
+        _cdb = SessionLocal()
+        _col = _cdb.query(Colores).filter(Colores.key == "sidebar-bottom").first()
+        if _col and _col.value:
+            bar_color = _col.value.strip()
+        _cdb.close()
+    except Exception:
+        pass
+    return {
+        "authenticated": can_use_bar,
+        "is_superadmin": superadmin,
+        "web_roles": web_roles,
+        "role": role,
+        "username": username,
+        "builder_url": "/frontend/builder",
+        "bar_color": bar_color,
+    }
+
+
 @app.get("/web", response_class=HTMLResponse)
 def web(request: Request):
     login_identity = _get_login_identity_context()
@@ -5791,6 +5972,30 @@ def inicio_page(request: Request):
           color: #0f172a;
           margin: 0;
         }}
+        .bscA__titleRow {{
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }}
+        .bscA__titleIconWrap {{
+          width: 68px;
+          height: 68px;
+          border-radius: 18px;
+          border: 2px solid #b8c8c4;
+          background: #dbe5e1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+          flex: 0 0 68px;
+        }}
+        .bscA__titleIconWrap img {{
+          width: 36px;
+          height: 36px;
+          object-fit: contain;
+          display: block;
+          opacity: 0.95;
+        }}
         .bscA__header p {{
           margin: 8px 0 0;
           color: #64748b;
@@ -5985,13 +6190,28 @@ def inicio_page(request: Request):
         }}
         @media (max-width: 780px) {{
           .bscA__header {{ align-items:flex-start; flex-direction:column; }}
+          .bscA__titleIconWrap {{
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            flex-basis: 56px;
+          }}
+          .bscA__titleIconWrap img {{
+            width: 30px;
+            height: 30px;
+          }}
           .bscA__kpis {{ grid-template-columns: 1fr; }}
           .bscA__card, .bscA__card--wide {{ grid-column: span 12; }}
         }}
       </style>
       <div class="bscA__header">
         <div class="bscA__headerLeft">
-          <h1>Balanced Scorecard - Analítica</h1>
+          <div class="bscA__titleRow">
+            <span class="bscA__titleIconWrap" aria-hidden="true">
+              <img src="/templates/icon/tablero.svg" alt="">
+            </span>
+            <h1>Balanced Scorecard - Analítica</h1>
+          </div>
           <p>Gráficas, tendencias y control ejecutivo (objetivos + POA + presupuesto + proyectando)</p>
         </div>
         <div class="bscA__filters">

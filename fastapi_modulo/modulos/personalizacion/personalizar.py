@@ -95,9 +95,15 @@ async def _store_asset(field: str, file_obj: UploadFile) -> Optional[str]:
         return None
     _clear_asset(field)
     ext = _safe_ext(file_obj.filename)
+    contents = await file_obj.read()
+    # Optimizar imagen antes de guardar
+    try:
+        from fastapi_modulo.image_utils import optimize_image, profile_for_prefix
+        contents, ext = optimize_image(contents, ext, profile=profile_for_prefix(field))
+    except Exception:
+        pass
     filename = f"{field}{ext}"
     target = UPLOAD_DIR / filename
-    contents = await file_obj.read()
     target.write_bytes(contents)
     _save_default_from_path(field, target)
     return filename

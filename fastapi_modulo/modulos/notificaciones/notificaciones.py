@@ -3,7 +3,10 @@ import os
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
+from fastapi_modulo.modulos.notificaciones.conversaciones import router as conversaciones_router
+
 router = APIRouter()
+router.include_router(conversaciones_router)
 NOTIFICACIONES_TEMPLATE_PATH = os.path.join(
     'fastapi_modulo', 'templates', 'modulos', 'notificaciones', 'notificaciones.html'
 )
@@ -23,9 +26,14 @@ def notificaciones_page(request: Request):
 
     return render_backend_page(
         request,
-        title='Notificaciones',
-        description='Consulta notificaciones del sistema y de flujo de aprobación.',
+        title='Conversaciones',
+        description='Chat IA AVAN con RAG documental y fuentes citadas.',
         content=_load_notificaciones_template(),
         hide_floating_actions=True,
         show_page_header=True,
     )
+
+
+@router.get('/conversaciones', response_class=HTMLResponse)
+def conversaciones_page(request: Request):
+    return notificaciones_page(request)

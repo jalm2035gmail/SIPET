@@ -195,27 +195,6 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     min-height:82px;
                     resize:vertical;
                 }}
-                .suc-actions {{
-                    margin-top:12px;
-                    display:flex;
-                    gap:10px;
-                    align-items:center;
-                }}
-                .suc-actions button {{
-                    height:36px;
-                    padding:0 14px;
-                    border:1px solid #0f172a;
-                    background:#0f172a;
-                    color:#ffffff;
-                    border-radius:10px;
-                    font-weight:600;
-                    cursor:pointer;
-                }}
-                .suc-actions .suc-btn-alt {{
-                    border:1px solid #cbd5e1;
-                    background:#ffffff;
-                    color:#0f172a;
-                }}
                 .suc-msg {{
                     font-size:0.88rem;
                     color:#334155;
@@ -567,11 +546,23 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                                         <textarea id="sucursal-descripcion">${{escapeHtml(current.descripcion)}}</textarea>
                                     </div>
                                 </div>
-                                <div class="suc-actions">
-                                    <button type="button" class="suc-btn-alt" id="suc-btn-new">Nuevo</button>
-                                    <button type="button" class="suc-btn-alt" id="suc-btn-edit">Editar</button>
-                                    <button type="submit" id="suc-btn-save">Guardar</button>
-                                    <button type="button" class="suc-btn-alt" id="suc-btn-delete">Eliminar</button>
+                                <div class="action-buttons-group">
+                                    <button type="button" class="action-button" id="suc-btn-new" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
+                                        <img src="/icon/boton/nuevo.svg" alt="Nuevo">
+                                        <span class="action-label">Nuevo</span>
+                                    </button>
+                                    <button type="button" class="action-button" id="suc-btn-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                                        <img src="/icon/boton/editar.svg" alt="Editar">
+                                        <span class="action-label">Editar</span>
+                                    </button>
+                                    <button type="submit" class="action-button" id="suc-btn-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                                        <img src="/icon/boton/guardar.svg" alt="Guardar">
+                                        <span class="action-label">Guardar</span>
+                                    </button>
+                                    <button type="button" class="action-button" id="suc-btn-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                                        <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                                        <span class="action-label">Eliminar</span>
+                                    </button>
                                     <span class="suc-msg" id="suc-form-msg">${{data.length}} registro(s)</span>
                                 </div>
                             </form>

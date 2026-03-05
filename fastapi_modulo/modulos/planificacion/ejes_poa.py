@@ -7,14 +7,18 @@ import sqlite3
 import csv
 import json
 import os
+import re
+import threading
 from html import escape
-from io import StringIO
+from io import StringIO, BytesIO
 from pathlib import Path
 
 from fastapi import APIRouter, Body, Request, Query, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response, RedirectResponse
 from sqlalchemy import func, text
 from sqlalchemy.exc import SQLAlchemyError
+from openpyxl import Workbook
+from fastapi_modulo.db import IAFeatureFlag
 
 router = APIRouter()
 
@@ -63,8 +67,10 @@ def _bind_core_symbols() -> None:
         # '_get_document_tenant',
             # '_can_authorize_documents',  # commented out: not present in fastapi_modulo.main
         'get_current_tenant',
+        'get_current_role',
         'is_superadmin',
         'normalize_role_name',
+        '_resolve_user_role_name',
     ]
     for name in names:
         globals()[name] = getattr(core, name)
@@ -105,6 +111,482 @@ def _serialize_strategic_axis(axis: StrategicAxisConfig) -> Dict[str, Any]:
     }
 
 
+def _build_planificacion_snapshot_html() -> str:
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        axes = (
+            db.query(StrategicAxisConfig)
+            .filter(StrategicAxisConfig.is_active == True)
+            .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+            .all()
+        )
+        if not axes:
+            axes = (
+                db.query(StrategicAxisConfig)
+                .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+                .all()
+            )
+        objective_ids: List[int] = []
+        axis_rows: List[str] = []
+        for axis in axes[:8]:
+            obj_count = len(getattr(axis, "objetivos", []) or [])
+            objective_ids.extend(int(obj.id) for obj in (axis.objetivos or []) if getattr(obj, "id", None))
+            axis_rows.append(
+                f'<li><strong>{escape(axis.nombre or "Eje sin nombre")}</strong> '
+                f'· {obj_count} objetivos · código {escape(axis.codigo or "N/D")}</li>'
+            )
+        objective_ids = sorted(set(objective_ids))
+        activities_count = (
+            db.query(POAActivity).filter(POAActivity.objective_id.in_(objective_ids)).count()
+            if objective_ids
+            else 0
+        )
+        axis_list_html = (
+            '<ul style="margin:8px 0 0 18px;font-size:12px;">' + "".join(axis_rows) + "</ul>"
+            if axis_rows
+            else ""
+        )
+        return (
+            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #bfdbfe;'
+            'background:#eff6ff;border-radius:10px;color:#0f172a;">'
+            f'<div style="font-weight:700;">Resumen cargado desde servidor</div>'
+            f'<div style="font-size:13px;">Ejes: {len(axes)} · Objetivos: {len(objective_ids)} · Actividades POA: {activities_count}</div>'
+            f'{axis_list_html}'
+            '</section>'
+        )
+    except Exception:
+        return (
+            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #fecaca;'
+            'background:#fef2f2;border-radius:10px;color:#7f1d1d;">'
+            'No se pudo cargar el resumen de estrategia desde servidor.'
+            '</section>'
+        )
+    finally:
+        db.close()
+
+
+def _build_poa_debug_html(request: Request) -> str:
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        detected_role = normalize_role_name(get_current_role(request))
+        admin_like = _is_request_admin_like(request, db)
+        feature_key = "suggest_objective_text"
+        module_key = "poa"
+        ia_enabled = True
+        ia_rule = "*/*"
+        ia_rule_id = 0
+        try:
+            rows = (
+                db.query(IAFeatureFlag)
+                .filter(IAFeatureFlag.feature_key == feature_key)
+                .all()
+            )
+            if rows:
+                candidates = []
+                for row in rows:
+                    row_role = normalize_role_name(str(row.role or "").strip()) if row.role else ""
+                    row_module = str(row.module or "").strip().lower()
+                    role_match = (not row_role) or (row_role == detected_role)
+                    module_match = (not row_module) or (row_module == module_key)
+                    if role_match and module_match:
+                        specificity = (2 if row_role else 0) + (1 if row_module else 0)
+                        updated_rank = row.updated_at.timestamp() if getattr(row, "updated_at", None) else 0
+                        candidates.append((specificity, updated_rank, row))
+                if candidates:
+                    candidates.sort(key=lambda item: (item[0], item[1], int(item[2].id or 0)), reverse=True)
+                    winner = candidates[0][2]
+                    ia_enabled = bool(int(getattr(winner, "enabled", 1) or 0))
+                    ia_rule = f'{str(winner.role or "*")}/{str(winner.module or "*")}'
+                    ia_rule_id = int(getattr(winner, "id", 0) or 0)
+        except Exception:
+            ia_enabled = True
+            ia_rule = "error/*"
+            ia_rule_id = 0
+        session_role = normalize_role_name(
+            str(getattr(request.state, "user_role", None) or request.cookies.get("user_role") or "")
+        )
+        session_user = (
+            str(getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "")
+        ).strip() or "N/D"
+        return (
+            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #fde68a;'
+            'background:#fffbeb;border-radius:10px;color:#78350f;">'
+            '<div style="font-weight:700;">Diagnóstico POA (servidor)</div>'
+            '<div style="font-size:13px;">'
+            'build poa-debug-v3'
+            f' · rol_detectado: {escape(detected_role or "n/d")}'
+            f' · rol_sesion: {escape(session_role or "n/d")}'
+            f' · admin_like: {"si" if admin_like else "no"}'
+            f' · ia_poa_suggest: {"si" if ia_enabled else "no"}'
+            f' · regla_ia: {escape(ia_rule)}'
+            f' · regla_ia_id: {ia_rule_id}'
+            f' · usuario_sesion: {escape(session_user)}'
+            '</div>'
+            '</section>'
+        )
+    except Exception:
+        return (
+            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #fecaca;'
+            'background:#fef2f2;border-radius:10px;color:#7f1d1d;">'
+            'Diagnóstico POA no disponible.'
+            '</section>'
+        )
+    finally:
+        db.close()
+
+
+def _build_initial_axis_list_html() -> str:
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        axes = (
+            db.query(StrategicAxisConfig)
+            .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+            .all()
+        )
+        if not axes:
+            return '<div class="axm-axis-meta">Sin ejes disponibles.</div>'
+        rows: List[str] = []
+        for axis in axes:
+            rows.append(
+                '<button class="axm-axis-btn" type="button">'
+                f'<span><strong>{escape(axis.nombre or "Eje sin nombre")}</strong>'
+                f'<div class="axm-axis-meta">{escape(axis.codigo or "Sin código")} • {escape(axis.lider_departamento or "Sin líder")}</div></span>'
+                f'<span class="axm-count">{len(getattr(axis, "objetivos", []) or [])}</span>'
+                '</button>'
+            )
+        return "".join(rows)
+    except Exception:
+        return '<div class="axm-axis-meta">No se pudo cargar ejes iniciales.</div>'
+    finally:
+        db.close()
+
+
+def _build_initial_poa_grid_html() -> str:
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        objectives = (
+            db.query(StrategicObjectiveConfig)
+            .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+            .all()
+        )
+        if not objectives:
+            return '<div class="poa-obj-card" style="min-width:320px;"><h4>Sin objetivos</h4><div class="meta">No hay objetivos para mostrar.</div></div>'
+        axis_map = {int(axis.id): str(axis.nombre or "Sin eje") for axis in db.query(StrategicAxisConfig).all()}
+        grouped: Dict[str, List[StrategicObjectiveConfig]] = {}
+        for obj in objectives:
+            axis_name = axis_map.get(int(obj.eje_id or 0), "Sin eje")
+            grouped.setdefault(axis_name, []).append(obj)
+        columns: List[str] = []
+        for axis_name in sorted(grouped.keys()):
+            cards = []
+            for obj in grouped[axis_name]:
+                cards.append(
+                    '<article class="poa-obj-card">'
+                    f'<h4>{escape(obj.nombre or "Objetivo sin nombre")}</h4>'
+                    f'<div class="meta">Hito: {escape(obj.hito or "N/D")}</div>'
+                    f'<span class="code">{escape(obj.codigo or "OBJ")}</span>'
+                    '</article>'
+                )
+            columns.append(
+                '<section class="poa-axis-col">'
+                f'<header class="poa-axis-head"><h3 class="poa-axis-title">{escape(axis_name)}</h3></header>'
+                f'<div class="poa-axis-cards">{"".join(cards)}</div>'
+                '</section>'
+            )
+        return "".join(columns)
+    except Exception:
+        return '<div class="poa-obj-card" style="min-width:320px;"><h4>Error</h4><div class="meta">No se pudo cargar POA inicial.</div></div>'
+    finally:
+        db.close()
+
+
+def _build_strategic_progress_summary(db) -> Dict[str, Any]:
+    total_activities = int(db.execute(text("SELECT COUNT(*) FROM poa_activities")).scalar() or 0)
+    # Completadas: entrega_estado = 'aprobada' o 'declarada'
+    completed_activities = int(
+        db.execute(
+            text(
+                """
+                SELECT COUNT(*)
+                FROM poa_activities
+                WHERE lower(COALESCE(entrega_estado, '')) IN ('aprobada', 'declarada')
+                """
+            )
+        ).scalar()
+        or 0
+    )
+    # Atrasadas: fecha_final ya pasó y no están completadas
+    overdue_activities = int(
+        db.execute(
+            text(
+                """
+                SELECT COUNT(*)
+                FROM poa_activities
+                WHERE COALESCE(fecha_final, '') <> ''
+                  AND date(fecha_final) < date('now')
+                  AND lower(COALESCE(entrega_estado, '')) NOT IN ('aprobada', 'declarada')
+                """
+            )
+        ).scalar()
+        or 0
+    )
+    # Avance estimado: completadas=100%, en_revision=50%, resto=0%
+    avg_progress = 0.0
+    if total_activities > 0:
+        en_revision = int(
+            db.execute(
+                text(
+                    "SELECT COUNT(*) FROM poa_activities WHERE lower(COALESCE(entrega_estado, '')) = 'pendiente'"
+                )
+            ).scalar()
+            or 0
+        )
+        avg_progress = round(
+            (completed_activities * 100 + en_revision * 50) / total_activities, 2
+        )
+    return {
+        "activities_total": total_activities,
+        "activities_completed": completed_activities,
+        "activities_overdue": overdue_activities,
+        "progress_avg": avg_progress,
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+
+
+def _build_strategic_ia_payload(db) -> Dict[str, Any]:
+    _ensure_strategic_identity_table(db)
+    db.commit()
+    identity_rows = db.execute(
+        text(
+            "SELECT bloque, payload FROM strategic_identity_config "
+            "WHERE bloque IN ('mision','vision','valores','fundamentacion','base_ia_extra','base_ia_weekly_meta')"
+        )
+    ).fetchall()
+    payload_map = {str(row[0] or "").strip().lower(): str(row[1] or "") for row in identity_rows}
+
+    def _parse_lines(block: str, prefix: str) -> List[Dict[str, str]]:
+        raw = payload_map.get(block, "[]")
+        try:
+            data = json.loads(raw)
+        except Exception:
+            data = []
+        return _normalize_identity_lines(data, prefix)
+
+    mision = _parse_lines("mision", "m")
+    vision = _parse_lines("vision", "v")
+    valores = _parse_lines("valores", "val")
+    try:
+        foundation_payload = json.loads(payload_map.get("fundamentacion", "{}") or "{}")
+    except Exception:
+        foundation_payload = {}
+    try:
+        extra_payload = json.loads(payload_map.get("base_ia_extra", "{}") or "{}")
+    except Exception:
+        extra_payload = {}
+    try:
+        weekly_meta_payload = json.loads(payload_map.get("base_ia_weekly_meta", "{}") or "{}")
+    except Exception:
+        weekly_meta_payload = {}
+    fundamentacion_html = _normalize_foundation_text(foundation_payload.get("texto"))
+    fundamentacion_texto = re.sub(r"<[^>]+>", " ", str(fundamentacion_html or ""))
+    fundamentacion_texto = re.sub(r"\s+", " ", fundamentacion_texto).strip()
+    contenido_adicional = str((extra_payload if isinstance(extra_payload, dict) else {}).get("texto") or "").strip()
+    avance_resumen = _build_strategic_progress_summary(db)
+    weekly_meta = weekly_meta_payload if isinstance(weekly_meta_payload, dict) else {}
+
+    axes = (
+        db.query(StrategicAxisConfig)
+        .filter(StrategicAxisConfig.is_active == True)
+        .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+        .all()
+    )
+    if not axes:
+        axes = (
+            db.query(StrategicAxisConfig)
+            .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+            .all()
+        )
+    axis_data = [_serialize_strategic_axis(axis) for axis in axes]
+    return {
+        "identidad": {
+            "mision": mision,
+            "vision": vision,
+            "valores": valores,
+        },
+        "fundamentacion": {
+            "html": fundamentacion_html,
+            "texto_plano": fundamentacion_texto,
+        },
+        "contenido_adicional": {
+            "texto": contenido_adicional,
+        },
+        "avance": avance_resumen,
+        "cron_semanal": {
+            "activo": True,
+            "intervalo_dias": int(weekly_meta.get("interval_days") or 7),
+            "ultima_actualizacion": str(weekly_meta.get("last_refresh_at") or ""),
+            "proxima_actualizacion": str(weekly_meta.get("next_refresh_at") or ""),
+            "estado": str(weekly_meta.get("last_status") or ""),
+            "error": str(weekly_meta.get("last_error") or ""),
+        },
+        "ejes": axis_data,
+        "resumen": {
+            "total_ejes": len(axis_data),
+            "total_objetivos": sum(len(axis.get("objetivos") or []) for axis in axis_data),
+        },
+    }
+
+
+def _build_strategic_ia_html(payload: Dict[str, Any]) -> str:
+    identidad = payload.get("identidad", {}) if isinstance(payload, dict) else {}
+    mision = identidad.get("mision", []) if isinstance(identidad, dict) else []
+    vision = identidad.get("vision", []) if isinstance(identidad, dict) else []
+    valores = identidad.get("valores", []) if isinstance(identidad, dict) else []
+    fundamentacion = payload.get("fundamentacion", {}) if isinstance(payload, dict) else {}
+    fundamentacion_html = str((fundamentacion or {}).get("html") or "")
+    contenido_adicional = payload.get("contenido_adicional", {}) if isinstance(payload, dict) else {}
+    contenido_adicional_texto = str((contenido_adicional or {}).get("texto") or "")
+    avance = payload.get("avance", {}) if isinstance(payload, dict) else {}
+    cron = payload.get("cron_semanal", {}) if isinstance(payload, dict) else {}
+    ejes = payload.get("ejes", []) if isinstance(payload, dict) else []
+    payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
+    fundamentacion_block = fundamentacion_html or "<p style='color:#64748b;'>Sin fundamentación registrada.</p>"
+
+    def _render_lines(rows: List[Dict[str, str]]) -> str:
+        if not rows:
+            return "<p style='color:#64748b;'>Sin información.</p>"
+        return "<ul>" + "".join(
+            f"<li><strong>{escape(str(item.get('code') or '').upper())}</strong>: {escape(str(item.get('text') or ''))}</li>"
+            for item in rows
+        ) + "</ul>"
+
+    axes_html = []
+    for axis in ejes:
+        axis_name = escape(str(axis.get("nombre") or "Eje sin nombre"))
+        axis_code = escape(str(axis.get("codigo") or ""))
+        objectives = axis.get("objetivos") or []
+        objectives_html = "".join(
+            (
+                "<li>"
+                f"<strong>{escape(str(obj.get('codigo') or 'OBJ'))}</strong> · "
+                f"{escape(str(obj.get('nombre') or 'Objetivo sin nombre'))}"
+                "</li>"
+            )
+            for obj in objectives
+        ) or "<li>Sin objetivos registrados.</li>"
+        axes_html.append(
+            "<article style='border:1px solid #dbe4ea;border-radius:10px;padding:10px;background:#fff;'>"
+            f"<h4 style='margin:0 0 6px;'>{axis_name}</h4>"
+            f"<div style='font-size:12px;color:#475569;margin-bottom:8px;'>Código: {axis_code}</div>"
+            f"<ul style='margin:0 0 0 18px;'>{objectives_html}</ul>"
+            "</article>"
+        )
+    axes_block = "".join(axes_html) if axes_html else "<p style='color:#64748b;'>Sin ejes registrados.</p>"
+
+    return (
+        "<section style='display:grid;gap:12px;'>"
+        "<section style='border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px;'>"
+        "<h3 style='margin:0 0 8px;'>Base IA · Estrategia y táctica</h3>"
+        "<p style='margin:0;color:#334155;'>Fuente consolidada para consulta de IA: identidad, fundamentación, ejes y objetivos.</p>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Identidad</h4>"
+        "<h5 style='margin:8px 0 4px;'>Misión</h5>"
+        f"{_render_lines(mision)}"
+        "<h5 style='margin:8px 0 4px;'>Visión</h5>"
+        f"{_render_lines(vision)}"
+        "<h5 style='margin:8px 0 4px;'>Valores</h5>"
+        f"{_render_lines(valores)}"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Fundamentación</h4>"
+        f"<div>{fundamentacion_block}</div>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Ejes y objetivos</h4>"
+        f"<div style='display:grid;gap:8px;'>{axes_block}</div>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Lógica de avance</h4>"
+        f"<p style='margin:0 0 6px;color:#334155;'>Actividades: <b>{int((avance or {}).get('activities_total') or 0)}</b> · "
+        f"Completadas: <b>{int((avance or {}).get('activities_completed') or 0)}</b> · "
+        f"Vencidas: <b>{int((avance or {}).get('activities_overdue') or 0)}</b> · "
+        f"Avance promedio: <b>{float((avance or {}).get('progress_avg') or 0):.2f}%</b></p>"
+        f"<p style='margin:0;color:#64748b;font-size:12px;'>Corte: {escape(str((avance or {}).get('generated_at') or ''))}</p>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Cron semanal (renovación automática)</h4>"
+        f"<p style='margin:0 0 6px;color:#334155;'>Intervalo: <b>{int((cron or {}).get('intervalo_dias') or 7)} días</b> · "
+        f"Última actualización: <b>{escape(str((cron or {}).get('ultima_actualizacion') or 'N/D'))}</b> · "
+        f"Próxima: <b>{escape(str((cron or {}).get('proxima_actualizacion') or 'N/D'))}</b></p>"
+        f"<p style='margin:0 0 10px;color:#64748b;font-size:12px;'>Estado: {escape(str((cron or {}).get('estado') or 'sin_ejecucion'))}</p>"
+        "<button type='button' id='base-ia-weekly-refresh' style='background:#14532d;color:#fff;border:1px solid #14532d;border-radius:10px;padding:8px 14px;cursor:pointer;'>Actualizar ahora (reemplaza contenido previo)</button>"
+        "<span id='base-ia-weekly-refresh-status' style='margin-left:10px;font-size:12px;color:#475569;'></span>"
+        "<script>"
+        "(function(){"
+        "  const btn=document.getElementById('base-ia-weekly-refresh');"
+        "  const st=document.getElementById('base-ia-weekly-refresh-status');"
+        "  if(!btn||!st){return;}"
+        "  btn.addEventListener('click', async function(){"
+        "    btn.disabled=true;"
+        "    st.textContent='Actualizando...';"
+        "    try{"
+        "      const res=await fetch('/api/v1/ia/strategic/weekly-refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({force:true})});"
+        "      const data=await res.json();"
+        "      if(!res.ok||!data||data.success!==true){throw new Error((data&&data.error)||'No se pudo actualizar');}"
+        "      st.textContent='Actualización semanal ejecutada. Recarga la página para ver nuevos metadatos.';"
+        "    }catch(err){"
+        "      st.textContent=(err&&err.message)?err.message:'Error al actualizar';"
+        "    }finally{btn.disabled=false;}"
+        "  });"
+        "})();"
+        "</script>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Payload estructurado (JSON)</h4>"
+        f"<pre style='margin:0;white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;font-size:12px;'>{escape(payload_json)}</pre>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Contenido adicional para IA (editable)</h4>"
+        "<p style='margin:0 0 8px;color:#475569;'>Este bloque se usa como contexto adicional en Conversaciones IA.</p>"
+        f"<textarea id='base-ia-extra-text' style='width:100%;min-height:180px;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;'>{escape(contenido_adicional_texto)}</textarea>"
+        "<div style='margin-top:10px;display:flex;gap:10px;align-items:center;'>"
+        "<button type='button' id='base-ia-extra-save' style='background:#0f172a;color:#fff;border:1px solid #0f172a;border-radius:10px;padding:8px 14px;cursor:pointer;'>Guardar contenido adicional</button>"
+        "<span id='base-ia-extra-status' style='font-size:12px;color:#475569;'></span>"
+        "</div>"
+        "<script>"
+        "(function(){"
+        "  const btn=document.getElementById('base-ia-extra-save');"
+        "  const txt=document.getElementById('base-ia-extra-text');"
+        "  const st=document.getElementById('base-ia-extra-status');"
+        "  if(!btn||!txt||!st){return;}"
+        "  btn.addEventListener('click', async function(){"
+        "    btn.disabled=true;"
+        "    st.textContent='Guardando...';"
+        "    try{"
+        "      const res=await fetch('/api/estrategia-tactica/base-ia/contenido',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({texto:String(txt.value||'')})});"
+        "      const data=await res.json();"
+        "      if(!res.ok||!data||data.success!==true){"
+        "        throw new Error((data&&data.error)||'No se pudo guardar');"
+        "      }"
+        "      st.textContent='Guardado correctamente';"
+        "    }catch(err){"
+        "      st.textContent=(err&&err.message)?err.message:'Error al guardar';"
+        "    }finally{"
+        "      btn.disabled=false;"
+        "    }"
+        "  });"
+        "})();"
+        "</script>"
+        "</section>"
+        "</section>"
+    )
+
+
 def _load_colab_meta() -> Dict[str, Dict[str, Any]]:
     try:
         if not _COLAB_META_PATH.exists():
@@ -122,7 +604,7 @@ def _normalize_poa_access_level(value: Any) -> str:
 
 def _poa_access_level_for_request(request: Request, db) -> str:
     _bind_core_symbols()
-    if is_admin_or_superadmin(request):
+    if _is_request_admin_like(request, db):
         return "todas_tareas"
     user = _current_user_record(request, db)
     if not user or not getattr(user, "id", None):
@@ -139,6 +621,22 @@ def _compose_axis_code(base_code: str, order_value: int) -> str:
     if safe_order <= 0:
         safe_order = 1
     return f"{safe_prefix}-{safe_order:02d}"
+
+
+def _is_request_admin_like(request: Request, db) -> bool:
+    _bind_core_symbols()
+    if is_admin_or_superadmin(request):
+        return True
+    # Fallback: si la sesión/cookie no trae rol correcto, usamos el rol persistido del usuario.
+    user = _current_user_record(request, db)
+    if not user:
+        return False
+    user_role = ""
+    try:
+        user_role = normalize_role_name(str(_resolve_user_role_name(db, user) or ""))
+    except Exception:
+        user_role = normalize_role_name(str(getattr(user, "role", "") or ""))
+    return user_role in {"administrador", "superadministrador"}
 
 
 def _compose_objective_code(axis_code: str, order_value: int) -> str:
@@ -901,6 +1399,110 @@ def _strategic_poa_template_rows() -> List[Dict[str, str]]:
     ]
 
 
+def _strategic_poa_export_rows(db) -> List[Dict[str, str]]:
+    _bind_core_symbols()
+    rows: List[Dict[str, str]] = []
+    axes = (
+        db.query(StrategicAxisConfig)
+        .filter(StrategicAxisConfig.is_active == True)
+        .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+        .all()
+    )
+    for axis in axes:
+        axis_code = str(axis.codigo or "").strip()
+        rows.append(
+            {
+                "tipo_registro": "eje",
+                "axis_codigo": axis_code,
+                "axis_nombre": str(axis.nombre or "").strip(),
+                "axis_lider_departamento": str(axis.lider_departamento or "").strip(),
+                "axis_responsabilidad_directa": str(axis.responsabilidad_directa or "").strip(),
+                "axis_descripcion": str(axis.descripcion or "").strip(),
+                "axis_orden": str(int(axis.orden or 0)),
+            }
+        )
+
+        objectives = (
+            db.query(StrategicObjectiveConfig)
+            .filter(
+                StrategicObjectiveConfig.is_active == True,
+                StrategicObjectiveConfig.eje_id == axis.id,
+            )
+            .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+            .all()
+        )
+        for objective in objectives:
+            objective_code = str(objective.codigo or "").strip()
+            rows.append(
+                {
+                    "tipo_registro": "objetivo",
+                    "axis_codigo": axis_code,
+                    "objective_codigo": objective_code,
+                    "objective_nombre": str(objective.nombre or "").strip(),
+                    "objective_hito": str(objective.hito or "").strip(),
+                    "objective_lider": str(objective.lider or "").strip(),
+                    "objective_fecha_inicial": str(_date_to_iso(objective.fecha_inicial) or ""),
+                    "objective_fecha_final": str(_date_to_iso(objective.fecha_final) or ""),
+                    "objective_descripcion": str(objective.descripcion or "").strip(),
+                    "objective_orden": str(int(objective.orden or 0)),
+                }
+            )
+
+            activities = (
+                db.query(POAActivity)
+                .filter(POAActivity.objective_id == objective.id)
+                .order_by(POAActivity.id.asc())
+                .all()
+            )
+            for activity in activities:
+                activity_code = str(activity.codigo or "").strip()
+                rows.append(
+                    {
+                        "tipo_registro": "actividad",
+                        "objective_codigo": objective_code,
+                        "activity_codigo": activity_code,
+                        "activity_nombre": str(activity.nombre or "").strip(),
+                        "activity_responsable": str(activity.responsable or "").strip(),
+                        "activity_entregable": str(activity.entregable or "").strip(),
+                        "activity_fecha_inicial": str(_date_to_iso(activity.fecha_inicial) or ""),
+                        "activity_fecha_final": str(_date_to_iso(activity.fecha_final) or ""),
+                        "activity_descripcion": str(activity.descripcion or "").strip(),
+                        "activity_recurrente": "si" if bool(getattr(activity, "recurrente", False)) else "no",
+                        "activity_periodicidad": str(getattr(activity, "periodicidad", "") or "").strip(),
+                        "activity_cada_xx_dias": str(int(getattr(activity, "cada_xx_dias", 0) or 0)),
+                    }
+                )
+
+                subactivities = (
+                    db.query(POASubactivity)
+                    .filter(POASubactivity.activity_id == activity.id)
+                    .order_by(POASubactivity.nivel.asc(), POASubactivity.id.asc())
+                    .all()
+                )
+                sub_code_map = {int(sub.id): str(sub.codigo or "").strip() for sub in subactivities}
+                for sub in subactivities:
+                    parent_code = ""
+                    parent_id = int(getattr(sub, "parent_id", 0) or 0)
+                    if parent_id > 0:
+                        parent_code = sub_code_map.get(parent_id, "")
+                    rows.append(
+                        {
+                            "tipo_registro": "subactividad",
+                            "activity_codigo": activity_code,
+                            "subactivity_codigo": str(sub.codigo or "").strip(),
+                            "subactivity_parent_codigo": parent_code,
+                            "subactivity_nivel": str(int(getattr(sub, "nivel", 1) or 1)),
+                            "subactivity_nombre": str(sub.nombre or "").strip(),
+                            "subactivity_responsable": str(sub.responsable or "").strip(),
+                            "subactivity_entregable": str(sub.entregable or "").strip(),
+                            "subactivity_fecha_inicial": str(_date_to_iso(sub.fecha_inicial) or ""),
+                            "subactivity_fecha_final": str(_date_to_iso(sub.fecha_final) or ""),
+                            "subactivity_descripcion": str(sub.descripcion or "").strip(),
+                        }
+                    )
+    return rows
+
+
 def _csv_value(row: Dict[str, Any], key: str) -> str:
     return str((row.get(key) or "")).strip()
 
@@ -1071,6 +1673,12 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           height: 16px;
           display: inline-block;
           flex: 0 0 auto;
+        }
+        .axm-global-msg{
+          margin: 4px 0 10px;
+          font-size: 13px;
+          color: #0f3d2e;
+          min-height: 18px;
         }
         .axm-tab-panel{
           background: rgba(255,255,255,.92);
@@ -1288,10 +1896,6 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           gap:8px;
           flex-wrap:wrap;
         }
-        .axm-id-actions .axm-btn{
-          padding: 7px 10px;
-          font-size: 12px;
-        }
         .axm-id-msg{
           margin-top: 8px;
           font-size: 12px;
@@ -1457,6 +2061,52 @@ EJES_ESTRATEGICOS_HTML = dedent("""
         }
         .axm-track-hitos-values b{
           color:#0f172a;
+        }
+        .axm-track-missing{
+          margin-top: 10px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+        .axm-track-missing-card{
+          border: 1px solid rgba(148,163,184,.24);
+          border-radius: 10px;
+          background: rgba(248,250,252,.82);
+          padding: 10px;
+        }
+        .axm-track-missing-title{
+          margin: 0;
+          font-size: 12px;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: .03em;
+          font-weight: 700;
+        }
+        .axm-track-missing-sub{
+          margin-top: 4px;
+          font-size: 12px;
+          color: #0f172a;
+          font-weight: 700;
+        }
+        .axm-track-missing-list{
+          margin: 6px 0 0;
+          padding-left: 16px;
+          display: grid;
+          gap: 4px;
+          color: #334155;
+          font-size: 12px;
+        }
+        .axm-track-missing-empty{
+          margin-top: 6px;
+          font-size: 12px;
+          color: #0f766e;
+          font-style: italic;
+        }
+        .axm-track-missing-more{
+          margin-top: 4px;
+          font-size: 11px;
+          color: #64748b;
+          font-style: italic;
         }
         .axm-grid{
           display:grid;
@@ -2496,6 +3146,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           .axm-row{ grid-template-columns: 1fr; }
           .axm-obj-grid{ grid-template-columns: 1fr; }
           .axm-track-grid{ grid-template-columns: 1fr 1fr; }
+          .axm-track-missing{ grid-template-columns: 1fr; }
           .axm-org-roots{ grid-template-columns: 1fr; }
           .axm-tree-roots{ grid-template-columns: 1fr; }
           .axm-axis-main-row{ grid-template-columns: 1fr; }
@@ -2534,11 +3185,12 @@ EJES_ESTRATEGICOS_HTML = dedent("""
       </section>
 
       <div class="axm-tabs">
-        <button type="button" class="axm-tab active" data-axm-tab="fundamentacion"><img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación</button>
+        <button type="button" class="axm-tab" data-axm-tab="fundamentacion"><img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación</button>
         <button type="button" class="axm-tab" data-axm-tab="identidad"><img src="/templates/icon/identidad.svg" alt="" class="tab-icon">Identidad</button>
-        <button type="button" class="axm-tab" data-axm-tab="ejes"><img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos</button>
+        <button type="button" class="axm-tab active" data-axm-tab="ejes"><img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos</button>
         <button type="button" class="axm-tab" data-axm-tab="objetivos"><img src="/templates/icon/objetivos.svg" alt="" class="tab-icon">Objetivos</button>
       </div>
+      <div class="axm-global-msg" id="axm-global-msg" aria-live="polite"></div>
       <section class="axm-foundacion" id="axm-foundacion-panel">
         <h3>Fundamentación</h3>
         <p>Registra aquí la fundamentación del plan estratégico.</p>
@@ -2558,7 +3210,14 @@ EJES_ESTRATEGICOS_HTML = dedent("""
         <div id="axm-foundacion-editor" class="axm-foundacion-editor" contenteditable="true"></div>
         <textarea id="axm-foundacion-source" class="axm-foundacion-source" placeholder="Código HTML..."></textarea>
         <div class="axm-foundacion-actions">
-          <button type="button" class="axm-btn primary" id="axm-foundacion-save">Guardar</button>
+          <button type="button" class="action-button" id="axm-foundacion-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+            <img src="/icon/boton/editar.svg" alt="Editar">
+            <span class="action-label">Editar</span>
+          </button>
+          <button type="button" class="action-button" id="axm-foundacion-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+            <img src="/icon/boton/guardar.svg" alt="Guardar">
+            <span class="action-label">Guardar</span>
+          </button>
         </div>
         <div class="axm-foundacion-msg" id="axm-foundacion-msg" aria-live="polite"></div>
       </section>
@@ -2570,9 +3229,18 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               <div class="axm-id-lines" id="axm-mision-lines"></div>
               <button type="button" class="axm-id-add" id="axm-mision-add">Agregar línea</button>
               <div class="axm-id-actions">
-                <button type="button" class="axm-btn" id="axm-mision-edit">Editar</button>
-                <button type="button" class="axm-btn primary" id="axm-mision-save">Guardar</button>
-                <button type="button" class="axm-btn" id="axm-mision-delete">Eliminar</button>
+                <button type="button" class="action-button" id="axm-mision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                  <img src="/icon/boton/editar.svg" alt="Editar">
+                  <span class="action-label">Editar</span>
+                </button>
+                <button type="button" class="action-button" id="axm-mision-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                  <img src="/icon/boton/guardar.svg" alt="Guardar">
+                  <span class="action-label">Guardar</span>
+                </button>
+                <button type="button" class="action-button" id="axm-mision-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                  <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                  <span class="action-label">Eliminar</span>
+                </button>
               </div>
               <div id="axm-mision-hidden" style="display:none;"></div>
             </div>
@@ -2589,9 +3257,18 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               <div class="axm-id-lines" id="axm-vision-lines"></div>
               <button type="button" class="axm-id-add" id="axm-vision-add">Agregar línea</button>
               <div class="axm-id-actions">
-                <button type="button" class="axm-btn" id="axm-vision-edit">Editar</button>
-                <button type="button" class="axm-btn primary" id="axm-vision-save">Guardar</button>
-                <button type="button" class="axm-btn" id="axm-vision-delete">Eliminar</button>
+                <button type="button" class="action-button" id="axm-vision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                  <img src="/icon/boton/editar.svg" alt="Editar">
+                  <span class="action-label">Editar</span>
+                </button>
+                <button type="button" class="action-button" id="axm-vision-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                  <img src="/icon/boton/guardar.svg" alt="Guardar">
+                  <span class="action-label">Guardar</span>
+                </button>
+                <button type="button" class="action-button" id="axm-vision-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                  <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                  <span class="action-label">Eliminar</span>
+                </button>
               </div>
               <div id="axm-vision-hidden" style="display:none;"></div>
             </div>
@@ -2608,9 +3285,18 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               <div class="axm-id-lines" id="axm-valores-lines"></div>
               <button type="button" class="axm-id-add" id="axm-valores-add">Agregar línea</button>
               <div class="axm-id-actions">
-                <button type="button" class="axm-btn" id="axm-valores-edit">Editar</button>
-                <button type="button" class="axm-btn primary" id="axm-valores-save">Guardar</button>
-                <button type="button" class="axm-btn" id="axm-valores-delete">Eliminar</button>
+                <button type="button" class="action-button" id="axm-valores-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                  <img src="/icon/boton/editar.svg" alt="Editar">
+                  <span class="action-label">Editar</span>
+                </button>
+                <button type="button" class="action-button" id="axm-valores-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                  <img src="/icon/boton/guardar.svg" alt="Guardar">
+                  <span class="action-label">Guardar</span>
+                </button>
+                <button type="button" class="action-button" id="axm-valores-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                  <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                  <span class="action-label">Eliminar</span>
+                </button>
               </div>
               <div id="axm-valores-hidden" style="display:none;"></div>
             </div>
@@ -2667,7 +3353,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           </div>
         </section>
       </div>
-      <section class="axm-tab-panel" id="axm-tab-panel">No tiene acceso, consulte con el administrador</section>
+      <section class="axm-tab-panel" id="axm-tab-panel" style="display:none;">No tiene acceso, consulte con el administrador</section>
       <section class="axm-card" id="axm-objetivos-panel" style="display:none;">
         <h3 style="margin:0;font-size:16px;">Objetivos del eje</h3>
         <div class="axm-obj-layout">
@@ -2770,8 +3456,18 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             <div class="axm-axis-objectives" id="axm-axis-objectives-list"></div>
           </section>
           <div class="axm-actions">
-            <button class="axm-btn primary" id="axm-save-axis" type="button">Guardar eje</button>
-            <button class="axm-btn warn" id="axm-delete-axis" type="button">Eliminar eje</button>
+            <button class="action-button" id="axm-edit-axis" type="button" data-hover-label="Editar" aria-label="Editar" title="Editar">
+              <img src="/icon/boton/editar.svg" alt="Editar">
+              <span class="action-label">Editar</span>
+            </button>
+            <button class="action-button" id="axm-save-axis" type="button" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+              <img src="/icon/boton/guardar.svg" alt="Guardar">
+              <span class="action-label">Guardar</span>
+            </button>
+            <button class="action-button" id="axm-delete-axis" type="button" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+              <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+              <span class="action-label">Eliminar</span>
+            </button>
           </div>
           <div class="axm-msg" id="axm-axis-msg" aria-live="polite"></div>
         </section>
@@ -2823,6 +3519,9 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               <div class="axm-field" style="margin-top:0;">
                 <label for="axm-obj-desc">Descripción</label>
                 <textarea id="axm-obj-desc" class="axm-textarea" placeholder="Descripción del objetivo"></textarea>
+              </div>
+              <div class="axm-kpi-actions">
+                <button class="axm-btn" id="axm-obj-suggest-ia" type="button">Sugerir con IA</button>
               </div>
             </section>
             <section class="axm-obj-panel" data-obj-panel="hitos">
@@ -2882,6 +3581,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                   <input id="axm-kpi-reference" class="axm-input" type="text" placeholder="Ej. 8% o 5%-8%">
                 </div>
                 <div class="axm-kpi-actions">
+                  <button class="axm-btn" id="axm-kpi-suggest-ia" type="button">Sugerir con IA</button>
                   <button class="axm-btn primary" id="axm-kpi-add" type="button">Agregar KPI</button>
                   <button class="axm-btn" id="axm-kpi-cancel" type="button">Cancelar edición</button>
                 </div>
@@ -2893,8 +3593,18 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               <div class="axm-obj-acts" id="axm-obj-acts-list"></div>
             </section>
             <div class="axm-actions">
-              <button class="axm-btn primary" id="axm-save-obj" type="button">Guardar objetivo</button>
-              <button class="axm-btn warn" id="axm-delete-obj" type="button">Eliminar objetivo</button>
+              <button class="action-button" id="axm-edit-obj" type="button" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                <img src="/icon/boton/editar.svg" alt="Editar">
+                <span class="action-label">Editar</span>
+              </button>
+              <button class="action-button" id="axm-save-obj" type="button" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                <img src="/icon/boton/guardar.svg" alt="Guardar">
+                <span class="action-label">Guardar</span>
+              </button>
+              <button class="action-button" id="axm-delete-obj" type="button" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                <span class="action-label">Eliminar</span>
+              </button>
             </div>
             <div class="axm-msg" id="axm-msg" aria-live="polite"></div>
           </div>
@@ -2915,6 +3625,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           const foundationUploadBtn = document.getElementById("axm-foundacion-upload-btn");
           const foundationUploadEl = document.getElementById("axm-foundacion-upload");
           const foundationShowSourceEl = document.getElementById("axm-foundacion-show-source");
+          const foundationEditBtn = document.getElementById("axm-foundacion-edit");
           const foundationSaveBtn = document.getElementById("axm-foundacion-save");
           const foundationMsgEl = document.getElementById("axm-foundacion-msg");
           const identidadPanel = document.getElementById("axm-identidad-panel");
@@ -3092,6 +3803,20 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             foundationMsgEl.textContent = text || "";
             foundationMsgEl.style.color = isError ? "#b91c1c" : "#0f3d2e";
           };
+          let foundationEditable = false;
+          const setFoundationEditable = (enabled) => {
+            foundationEditable = !!enabled;
+            if (foundationEditorEl) {
+              foundationEditorEl.contentEditable = foundationEditable ? "true" : "false";
+            }
+            if (foundationSourceEl) foundationSourceEl.readOnly = !foundationEditable;
+            document.querySelectorAll("[data-found-cmd]").forEach((btn) => {
+              btn.disabled = !foundationEditable;
+            });
+            if (foundationUploadBtn) foundationUploadBtn.disabled = !foundationEditable;
+            if (foundationUploadEl) foundationUploadEl.disabled = !foundationEditable;
+            if (foundationShowSourceEl) foundationShowSourceEl.disabled = !foundationEditable;
+          };
           const getFoundationHtml = () => {
             if (foundationShowSourceEl && foundationShowSourceEl.checked) {
               return foundationSourceEl ? String(foundationSourceEl.value || "") : "";
@@ -3179,9 +3904,15 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           loadFoundationFromDb().catch((err) => {
             setFoundationMsg(err.message || "No se pudo cargar Fundamentación desde BD.", true);
           });
+          setFoundationEditable(false);
+          foundationEditBtn && foundationEditBtn.addEventListener("click", () => {
+            setFoundationEditable(true);
+            setFoundationMsg("Edición habilitada en Fundamentación.");
+          });
           foundationSaveBtn && foundationSaveBtn.addEventListener("click", async () => {
             try {
               await saveFoundationToDb();
+              setFoundationEditable(false);
               setFoundationMsg("Fundamentación guardada correctamente.");
             } catch (err) {
               setFoundationMsg(err.message || "No se pudo guardar Fundamentación.", true);
@@ -3380,7 +4111,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             window.location.href = "/api/strategic-plan/export-doc";
           });
           const activeTab = document.querySelector(".axm-tab.active");
-          applyTabView(activeTab ? activeTab.getAttribute("data-axm-tab") : "fundamentacion");
+          applyTabView(activeTab ? activeTab.getAttribute("data-axm-tab") : "ejes");
 
           const axisListEl = document.getElementById("axm-axis-list");
           const axisModalEl = document.getElementById("axm-axis-modal");
@@ -3410,6 +4141,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           const objStartEl = document.getElementById("axm-obj-start");
           const objEndEl = document.getElementById("axm-obj-end");
           const objDescEl = document.getElementById("axm-obj-desc");
+          const objSuggestIaBtn = document.getElementById("axm-obj-suggest-ia");
           const hitoNameEl = document.getElementById("axm-hito-name");
           const hitoDateEl = document.getElementById("axm-hito-date");
           const hitoDoneEl = document.getElementById("axm-hito-done");
@@ -3423,6 +4155,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           const kpiPeriodicityEl = document.getElementById("axm-kpi-periodicity");
           const kpiStandardEl = document.getElementById("axm-kpi-standard");
           const kpiReferenceEl = document.getElementById("axm-kpi-reference");
+          const kpiSuggestIaBtn = document.getElementById("axm-kpi-suggest-ia");
           const kpiAddBtn = document.getElementById("axm-kpi-add");
           const kpiCancelBtn = document.getElementById("axm-kpi-cancel");
           const kpiListEl = document.getElementById("axm-kpi-list");
@@ -3430,13 +4163,16 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           const objActsListEl = document.getElementById("axm-obj-acts-list");
           const msgEl = document.getElementById("axm-msg");
           const axisMsgEl = document.getElementById("axm-axis-msg");
+          const globalMsgEl = document.getElementById("axm-global-msg");
           const addAxisBtn = document.getElementById("axm-add-axis");
           const downloadTemplateBtn = document.getElementById("axm-download-template");
           const importCsvBtn = document.getElementById("axm-import-csv");
           const importCsvFileEl = document.getElementById("axm-import-csv-file");
+          const editAxisBtn = document.getElementById("axm-edit-axis");
           const saveAxisBtn = document.getElementById("axm-save-axis");
           const deleteAxisBtn = document.getElementById("axm-delete-axis");
           const addObjBtn = document.getElementById("axm-add-obj");
+          const editObjBtn = document.getElementById("axm-edit-obj");
           const saveObjBtn = document.getElementById("axm-save-obj");
           const deleteObjBtn = document.getElementById("axm-delete-obj");
           const setupAxmRichEditor = (textareaEl) => {
@@ -4045,12 +4781,26 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             if (!trackBoardEl) return;
             const axisList = Array.isArray(axes) ? axes : [];
             const objectives = axisList.flatMap((axis) => Array.isArray(axis.objetivos) ? axis.objetivos : []);
+            const objectiveAxisById = {};
+            axisList.forEach((axis) => {
+              (Array.isArray(axis.objetivos) ? axis.objetivos : []).forEach((obj) => {
+                objectiveAxisById[String(obj.id)] = axis;
+              });
+            });
             const axisCount = axisList.length;
             const objectiveCount = objectives.length;
             const globalProgress = axisCount
               ? Math.round(axisList.reduce((sum, axis) => sum + Number(axis.avance || 0), 0) / axisCount)
               : 0;
             const objectiveDone = objectives.filter((obj) => Number(obj.avance || 0) >= 100).length;
+            const axesNoOwner = axisList.filter((axis) => !String(axis?.responsabilidad_directa || "").trim());
+            const objectivesNoOwner = objectives.filter((obj) => !String(obj?.lider || "").trim());
+            const buildMissingList = (items, mapper) => {
+              if (!items.length) return '<div class="axm-track-missing-empty">Sin pendientes.</div>';
+              const preview = items.slice(0, 8).map((item) => `<li>${mapper(item)}</li>`).join("");
+              const extra = items.length > 8 ? `<div class="axm-track-missing-more">+${items.length - 8} más</div>` : "";
+              return `<ul class="axm-track-missing-list">${preview}</ul>${extra}`;
+            };
 
             const missionAxes = axisList.filter((axis) => String(axis.base_code || axis.codigo || "").toLowerCase().startsWith("m"));
             const visionAxes = axisList.filter((axis) => String(axis.base_code || axis.codigo || "").toLowerCase().startsWith("v"));
@@ -4100,6 +4850,24 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                   </div>
                 </div>
               </div>
+              <div class="axm-track-missing">
+                <article class="axm-track-missing-card">
+                  <h5 class="axm-track-missing-title">Ejes sin responsable</h5>
+                  <div class="axm-track-missing-sub">${axesNoOwner.length} pendiente(s)</div>
+                  ${buildMissingList(axesNoOwner, (axis) => `${escapeHtml(axis.codigo || "Sin código")} - ${escapeHtml(axis.nombre || "Sin nombre")}`)}
+                </article>
+                <article class="axm-track-missing-card">
+                  <h5 class="axm-track-missing-title">Objetivos sin responsable</h5>
+                  <div class="axm-track-missing-sub">${objectivesNoOwner.length} pendiente(s)</div>
+                  ${buildMissingList(objectivesNoOwner, (obj) => {
+                    const parentAxis = objectiveAxisById[String(obj.id)] || {};
+                    const axisCode = String(parentAxis.codigo || "").trim();
+                    const code = String(obj.codigo || "").trim();
+                    const left = code || axisCode || "Sin código";
+                    return `${escapeHtml(left)} - ${escapeHtml(obj.nombre || "Sin nombre")}`;
+                  })}
+                </article>
+              </div>
             `;
           };
 
@@ -4112,6 +4880,10 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             if (axisMsgEl) {
               axisMsgEl.style.color = color;
               axisMsgEl.textContent = text || "";
+            }
+            if (globalMsgEl) {
+              globalMsgEl.style.color = color;
+              globalMsgEl.textContent = text || "";
             }
           };
 
@@ -4141,6 +4913,138 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             }
             return payload;
           };
+          const requestIaSuggestion = async (texto) => {
+            const response = await fetch("/api/ia/suggest/objective-text", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              body: JSON.stringify({ texto: String(texto || "").trim() }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload || payload.error) {
+              throw new Error(payload?.error || "No se pudo obtener sugerencia IA.");
+            }
+            return String(payload.sugerencia || "").trim();
+          };
+          const iaFeatureEnabled = async (moduleKey = "plan_estrategico") => {
+            try {
+              const response = await fetch(`/api/ia/flags?module=${encodeURIComponent(moduleKey)}&feature_key=suggest_objective_text`, {
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+              });
+              const payload = await response.json().catch(() => ({}));
+              return !!(response.ok && payload?.success === true && payload?.data?.enabled);
+            } catch (_err) {
+              return false;
+            }
+          };
+          const plainTextFromHtml = (value) => {
+            const html = String(value || "").trim();
+            if (!html) return "";
+            const tmp = document.createElement("div");
+            tmp.innerHTML = html;
+            return String(tmp.textContent || tmp.innerText || "").trim();
+          };
+          const openPoaIaSuggestionEditor = ({ title = "Sugerencia IA", suggestion = "" } = {}) => new Promise((resolve) => {
+            let overlay = document.getElementById("poa-ia-suggest-overlay");
+            if (!overlay) {
+              overlay = document.createElement("div");
+              overlay.id = "poa-ia-suggest-overlay";
+              overlay.style.position = "fixed";
+              overlay.style.inset = "0";
+              overlay.style.background = "rgba(15,23,42,.42)";
+              overlay.style.display = "none";
+              overlay.style.alignItems = "center";
+              overlay.style.justifyContent = "center";
+              overlay.style.zIndex = "2600";
+              overlay.innerHTML = `
+                <div style="width:min(820px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;padding:16px;border:1px solid rgba(148,163,184,.4);box-shadow:0 24px 40px rgba(15,23,42,.28);">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+                    <h4 id="poa-ia-suggest-title" style="margin:0;font-size:18px;color:#0f172a;">Sugerencia IA</h4>
+                    <button type="button" id="poa-ia-close" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;">Cerrar</button>
+                  </div>
+                  <p style="margin:0 0 8px 0;color:#64748b;font-size:13px;">Edita el texto y luego decide si lo aplicas o descartas.</p>
+                  <textarea id="poa-ia-suggest-text" style="width:100%;min-height:240px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;color:#0f172a;font-size:14px;line-height:1.45;"></textarea>
+                  <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+                    <button type="button" id="poa-ia-discard" style="border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:10px;padding:8px 12px;cursor:pointer;">Descartar</button>
+                    <button type="button" id="poa-ia-apply" style="border:1px solid #0f3d2e;background:#0f3d2e;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;">Aplicar</button>
+                  </div>
+                </div>
+              `;
+              document.body.appendChild(overlay);
+            }
+            const titleEl = document.getElementById("poa-ia-suggest-title");
+            const textEl = document.getElementById("poa-ia-suggest-text");
+            const closeEl = document.getElementById("poa-ia-close");
+            const discardEl = document.getElementById("poa-ia-discard");
+            const applyEl = document.getElementById("poa-ia-apply");
+            if (titleEl) titleEl.textContent = title;
+            if (textEl) textEl.value = String(suggestion || "");
+            const finish = (result) => {
+              overlay.style.display = "none";
+              document.body.style.overflow = modalEl && modalEl.classList.contains("open") ? "hidden" : "";
+              resolve(result);
+            };
+            if (closeEl) closeEl.onclick = () => finish({ action: "close", text: textEl ? textEl.value : "" });
+            if (discardEl) discardEl.onclick = () => finish({ action: "discard", text: textEl ? textEl.value : "" });
+            if (applyEl) applyEl.onclick = () => finish({ action: "apply", text: textEl ? textEl.value : "" });
+            overlay.onclick = (event) => {
+              if (event.target === overlay) finish({ action: "close", text: textEl ? textEl.value : "" });
+            };
+            overlay.style.display = "flex";
+            document.body.style.overflow = "hidden";
+            if (textEl) textEl.focus();
+          });
+          const openIaSuggestionEditor = ({ title = "Sugerencia IA", suggestion = "" } = {}) => new Promise((resolve) => {
+            let overlay = document.getElementById("axm-ia-suggest-overlay");
+            if (!overlay) {
+              overlay = document.createElement("div");
+              overlay.id = "axm-ia-suggest-overlay";
+              overlay.style.position = "fixed";
+              overlay.style.inset = "0";
+              overlay.style.background = "rgba(15,23,42,.42)";
+              overlay.style.display = "none";
+              overlay.style.alignItems = "center";
+              overlay.style.justifyContent = "center";
+              overlay.style.zIndex = "2500";
+              overlay.innerHTML = `
+                <div style="width:min(820px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;padding:16px;border:1px solid rgba(148,163,184,.4);box-shadow:0 24px 40px rgba(15,23,42,.28);">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+                    <h4 id="axm-ia-suggest-title" style="margin:0;font-size:18px;color:#0f172a;">Sugerencia IA</h4>
+                    <button type="button" id="axm-ia-close" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;">Cerrar</button>
+                  </div>
+                  <p style="margin:0 0 8px 0;color:#64748b;font-size:13px;">Puedes editar el texto antes de aplicarlo.</p>
+                  <textarea id="axm-ia-suggest-text" style="width:100%;min-height:240px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;color:#0f172a;font-size:14px;line-height:1.45;"></textarea>
+                  <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+                    <button type="button" id="axm-ia-discard" style="border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:10px;padding:8px 12px;cursor:pointer;">Descartar</button>
+                    <button type="button" id="axm-ia-apply" style="border:1px solid #0f3d2e;background:#0f3d2e;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;">Aplicar</button>
+                  </div>
+                </div>
+              `;
+              document.body.appendChild(overlay);
+            }
+            const titleEl = document.getElementById("axm-ia-suggest-title");
+            const textEl = document.getElementById("axm-ia-suggest-text");
+            const closeEl = document.getElementById("axm-ia-close");
+            const discardEl = document.getElementById("axm-ia-discard");
+            const applyEl = document.getElementById("axm-ia-apply");
+            if (titleEl) titleEl.textContent = title;
+            if (textEl) textEl.value = String(suggestion || "");
+            const finish = (result) => {
+              overlay.style.display = "none";
+              document.body.style.overflow = "";
+              resolve(result);
+            };
+            if (closeEl) closeEl.onclick = () => finish({ action: "close", text: textEl ? textEl.value : "" });
+            if (discardEl) discardEl.onclick = () => finish({ action: "discard", text: textEl ? textEl.value : "" });
+            if (applyEl) applyEl.onclick = () => finish({ action: "apply", text: textEl ? textEl.value : "" });
+            overlay.onclick = (event) => {
+              if (event.target === overlay) finish({ action: "close", text: textEl ? textEl.value : "" });
+            };
+            overlay.style.display = "flex";
+            document.body.style.overflow = "hidden";
+            if (textEl) textEl.focus();
+          });
 
           const selectedAxis = () => {
             const targetId = toId(selectedAxisId);
@@ -4710,6 +5614,10 @@ EJES_ESTRATEGICOS_HTML = dedent("""
 
           const renderAxisList = () => {
             if (!axisListEl) return;
+            if (!axes.length) {
+              axisListEl.innerHTML = '<div class="axm-axis-meta">Sin ejes cargados. Verifica sesión/API de estrategia.</div>';
+              return;
+            }
             axisListEl.innerHTML = axes.map((axis) => `
               <button class="axm-axis-btn ${toId(axis.id) === toId(selectedAxisId) ? "active" : ""}" type="button" data-axis-id="${axis.id}">
                 <span>
@@ -4740,6 +5648,10 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           };
           const renderObjectiveAxisList = () => {
             if (!objAxisListEl) return;
+            if (!axes.length) {
+              objAxisListEl.innerHTML = '<div class="axm-axis-meta">Sin ejes disponibles.</div>';
+              return;
+            }
             objAxisListEl.innerHTML = (axes || []).map((axis) => `
               <button class="axm-obj-axis-btn ${toId(axis.id) === toId(selectedAxisId) ? "active" : ""}" type="button" data-obj-axis-id="${axis.id}">
                 <span>
@@ -4966,6 +5878,150 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             clearKpiForm();
             setKpiMsg("Edición de KPI cancelada.");
           });
+          objSuggestIaBtn && objSuggestIaBtn.addEventListener("click", async () => {
+            if (!(await iaFeatureEnabled("plan_estrategico"))) {
+              showMsg("IA deshabilitada para tu rol en este módulo.", true);
+              return;
+            }
+            const objective = selectedObjective();
+            const axis = selectedAxis();
+            if (!objective) {
+              showMsg("Selecciona un objetivo para usar IA.", true);
+              return;
+            }
+            const name = (objNameEl && objNameEl.value ? objNameEl.value : objective.nombre || "").trim();
+            const descHtml = objDescRich ? objDescRich.getHtml() : (objDescEl && objDescEl.value ? objDescEl.value : "");
+            const currentDesc = plainTextFromHtml(descHtml);
+            if (!name && !currentDesc) {
+              showMsg("Captura nombre o descripción para generar sugerencia.", true);
+              return;
+            }
+            objSuggestIaBtn.disabled = true;
+            showMsg("Generando sugerencia con IA...");
+            try {
+              const prompt = [
+                "Mejora la redacción de un objetivo estratégico.",
+                `Eje: ${String(axis?.nombre || "").trim() || "Sin eje"}`,
+                `Objetivo: ${name || "Sin nombre"}`,
+                `Descripción actual: ${currentDesc || "Sin descripción"}`,
+                "Responde solo con el texto final recomendado, en español, claro y conciso.",
+              ].join("\\n");
+              const draftResp = await requestJson("/api/ia/suggestions", {
+                method: "POST",
+                body: JSON.stringify({
+                  prompt,
+                  original_text: currentDesc,
+                  target_module: "plan_estrategico",
+                  target_entity: "objetivo",
+                  target_entity_id: String(objective.id || ""),
+                  target_field: "descripcion",
+                }),
+              });
+              const draft = draftResp.data || {};
+              const decision = await openIaSuggestionEditor({
+                title: "Sugerencia IA para descripción de objetivo",
+                suggestion: String(draft.suggested_text || ""),
+              });
+              if (decision.action === "apply") {
+                const applyResp = await requestJson(`/api/ia/suggestions/${draft.id}/apply`, {
+                  method: "POST",
+                  body: JSON.stringify({ edited_text: String(decision.text || "").trim() }),
+                });
+                const appliedText = String(applyResp?.data?.applied_text || decision.text || "").trim();
+                if (objDescRich) objDescRich.setHtml(appliedText);
+                else if (objDescEl) objDescEl.value = appliedText;
+                showMsg("Sugerencia IA aplicada en la descripción del objetivo.");
+              } else if (decision.action === "discard") {
+                await requestJson(`/api/ia/suggestions/${draft.id}/discard`, {
+                  method: "POST",
+                  body: JSON.stringify({ reason: "Descartada por usuario", edited_text: String(decision.text || "").trim() }),
+                });
+                showMsg("Sugerencia IA descartada.");
+              } else {
+                showMsg("Sugerencia IA generada. Puedes volver a abrir IA para aplicarla o descartarla.");
+              }
+            } catch (error) {
+              showMsg(error.message || "No se pudo generar sugerencia IA.", true);
+            } finally {
+              objSuggestIaBtn.disabled = false;
+            }
+          });
+          kpiSuggestIaBtn && kpiSuggestIaBtn.addEventListener("click", async () => {
+            if (!(await iaFeatureEnabled("plan_estrategico"))) {
+              setKpiMsg("IA deshabilitada para tu rol en este módulo.", true);
+              return;
+            }
+            const objective = selectedObjective();
+            const axis = selectedAxis();
+            if (!objective) {
+              setKpiMsg("Selecciona un objetivo para sugerir KPI.", true);
+              return;
+            }
+            const objectiveName = (objNameEl && objNameEl.value ? objNameEl.value : objective.nombre || "").trim();
+            const axisName = String(axis?.nombre || "").trim();
+            const kpiName = (kpiNameEl && kpiNameEl.value ? kpiNameEl.value : "").trim();
+            const currentPurpose = (kpiPurposeEl && kpiPurposeEl.value ? kpiPurposeEl.value : "").trim();
+            const currentFormula = (kpiFormulaEl && kpiFormulaEl.value ? kpiFormulaEl.value : "").trim();
+            if (!objectiveName && !kpiName) {
+              setKpiMsg("Captura al menos el nombre del objetivo o del KPI para usar IA.", true);
+              return;
+            }
+            kpiSuggestIaBtn.disabled = true;
+            setKpiMsg("Generando sugerencia IA para KPI...");
+            try {
+              const prompt = [
+                "Genera propuesta de KPI para objetivo estratégico.",
+                `Eje: ${axisName || "Sin eje"}`,
+                `Objetivo: ${objectiveName || "Sin nombre"}`,
+                `KPI actual: ${kpiName || "Sin nombre"}`,
+                `Propósito actual: ${currentPurpose || "Sin propósito"}`,
+                `Fórmula actual: ${currentFormula || "Sin fórmula"}`,
+                "Devuelve texto en español con formato:",
+                "Nombre: ...",
+                "Propósito: ...",
+                "Fórmula: ...",
+                "Periodicidad: ...",
+                "Estándar: ...",
+              ].join("\\n");
+              const draftResp = await requestJson("/api/ia/suggestions", {
+                method: "POST",
+                body: JSON.stringify({
+                  prompt,
+                  original_text: `${currentPurpose}\n${currentFormula}`.trim(),
+                  target_module: "plan_estrategico",
+                  target_entity: "kpi",
+                  target_entity_id: String(objective.id || ""),
+                  target_field: "proposito",
+                }),
+              });
+              const draft = draftResp.data || {};
+              const decision = await openIaSuggestionEditor({
+                title: "Sugerencia IA para KPI",
+                suggestion: String(draft.suggested_text || ""),
+              });
+              if (decision.action === "apply") {
+                const applyResp = await requestJson(`/api/ia/suggestions/${draft.id}/apply`, {
+                  method: "POST",
+                  body: JSON.stringify({ edited_text: String(decision.text || "").trim() }),
+                });
+                const appliedText = String(applyResp?.data?.applied_text || decision.text || "").trim();
+                if (kpiPurposeEl) kpiPurposeEl.value = appliedText;
+                setKpiMsg("Sugerencia IA aplicada. Ajusta y guarda el KPI.");
+              } else if (decision.action === "discard") {
+                await requestJson(`/api/ia/suggestions/${draft.id}/discard`, {
+                  method: "POST",
+                  body: JSON.stringify({ reason: "Descartada por usuario", edited_text: String(decision.text || "").trim() }),
+                });
+                setKpiMsg("Sugerencia IA descartada.");
+              } else {
+                setKpiMsg("Sugerencia IA generada. Puedes volver a abrir IA para aplicarla o descartarla.");
+              }
+            } catch (error) {
+              setKpiMsg(error.message || "No se pudo generar sugerencia IA para KPI.", true);
+            } finally {
+              kpiSuggestIaBtn.disabled = false;
+            }
+          });
 
           const loadAxes = async () => {
             const payload = await requestJson("/api/strategic-axes");
@@ -5085,6 +6141,20 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             }
           });
 
+          editAxisBtn && editAxisBtn.addEventListener("click", async () => {
+            const axis = selectedAxis();
+            if (!axis) {
+              showMsg("Selecciona un eje para editar.", true);
+              return;
+            }
+            openAxisModal();
+            if (axisNameEl) {
+              axisNameEl.focus();
+              axisNameEl.select();
+            }
+            showMsg("Edición habilitada para el eje seleccionado.");
+          });
+
           saveAxisBtn && saveAxisBtn.addEventListener("click", async () => {
             const axis = selectedAxis();
             if (!axis) {
@@ -5172,6 +6242,20 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             }
           });
 
+          editObjBtn && editObjBtn.addEventListener("click", () => {
+            const objective = selectedObjective();
+            if (!objective) {
+              showMsg("Selecciona un objetivo para editar.", true);
+              return;
+            }
+            openObjModal();
+            if (objNameEl) {
+              objNameEl.focus();
+              objNameEl.select();
+            }
+            showMsg("Edición habilitada para el objetivo seleccionado.");
+          });
+
           saveObjBtn && saveObjBtn.addEventListener("click", async () => {
             const objective = selectedObjective();
             if (!objective) {
@@ -5240,6 +6324,15 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           Promise.all([loadDepartments(), loadAxes()]).then(loadCollaborators).catch((err) => {
             showMsg(err.message || "No se pudieron cargar los ejes.", true);
           });
+          iaFeatureEnabled("plan_estrategico").then((enabled) => {
+            [objSuggestIaBtn, kpiSuggestIaBtn].forEach((btn) => {
+              if (!btn) return;
+              btn.disabled = !enabled;
+              btn.style.opacity = enabled ? "1" : "0.55";
+              btn.style.cursor = enabled ? "pointer" : "not-allowed";
+              if (!enabled) btn.title = "IA deshabilitada para tu rol/módulo";
+            });
+          });
           loadObjectiveActivities();
         })();
       </script>
@@ -5287,6 +6380,77 @@ POA_LIMPIO_HTML = dedent("""
           margin: 0 2px 10px;
           font-size: 13px;
           color: #0f3d2e;
+        }
+        .poa-owner-chart{
+          border: 1px solid rgba(148,163,184,.30);
+          border-radius: 14px;
+          background: rgba(255,255,255,.95);
+          box-shadow: 0 8px 20px rgba(15,23,42,.06);
+          padding: 12px 14px;
+          margin: 0 0 10px;
+        }
+        .poa-owner-chart-head{
+          display:flex;
+          align-items:baseline;
+          justify-content:space-between;
+          gap:10px;
+          margin-bottom:10px;
+        }
+        .poa-owner-chart-title{
+          margin:0;
+          font-size:16px;
+          line-height:1.2;
+        }
+        .poa-owner-chart-sub{
+          margin:2px 0 0;
+          font-size:12px;
+          color:#64748b;
+        }
+        .poa-owner-chart-total{
+          font-size:12px;
+          color:#334155;
+          white-space:nowrap;
+        }
+        .poa-owner-chart-empty{
+          font-size:13px;
+          color:#64748b;
+          padding:4px 0;
+        }
+        .poa-owner-chart-list{
+          display:flex;
+          flex-direction:column;
+          gap:8px;
+        }
+        .poa-owner-row{
+          display:grid;
+          grid-template-columns: minmax(150px, 220px) 1fr auto;
+          gap:10px;
+          align-items:center;
+        }
+        .poa-owner-name{
+          font-size:13px;
+          color:#0f172a;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+        }
+        .poa-owner-bar{
+          height:10px;
+          border-radius:999px;
+          background:#e2e8f0;
+          overflow:hidden;
+        }
+        .poa-owner-fill{
+          height:100%;
+          min-width:2px;
+          border-radius:999px;
+          background:linear-gradient(90deg,#0f3d2e,#16a34a);
+        }
+        .poa-owner-value{
+          font-size:12px;
+          color:#334155;
+          font-variant-numeric: tabular-nums;
+          white-space:nowrap;
         }
         .poa-board-grid{
           display: flex;
@@ -5619,29 +6783,6 @@ POA_LIMPIO_HTML = dedent("""
           display:flex;
           gap:6px;
           flex-wrap:wrap;
-        }
-        .poa-icon-btn{
-          border:1px solid rgba(148,163,184,.34);
-          border-radius:8px;
-          background:#fff;
-          color:#0f172a;
-          font-size:12px;
-          font-weight:700;
-          padding:5px 8px;
-          cursor:pointer;
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-        }
-        .poa-icon-btn.primary{
-          background:#0f3d2e;
-          border-color:#0f3d2e;
-          color:#fff;
-        }
-        .poa-icon-btn.warn{
-          border-color: rgba(239,68,68,.34);
-          color:#b91c1c;
-          background:#fff5f5;
         }
         .poa-act-list{
           display:grid;
@@ -6058,6 +7199,23 @@ POA_LIMPIO_HTML = dedent("""
           border-radius:10px;
           background:#f8fafc;
           padding:8px;
+          position: relative;
+          overflow: hidden;
+        }
+        .poa-tree-state{
+          position:absolute;
+          top:0;
+          left:0;
+          right:0;
+          height:6px;
+          background: transparent;
+        }
+        .poa-tree-state-yellow{ background:#eab308; }
+        .poa-tree-state-orange{ background:#f97316; }
+        .poa-tree-state-red{ background:#ef4444; }
+        .poa-tree-state-green{ background:#22c55e; }
+        .poa-tree-item.has-state{
+          padding-top: 12px;
         }
         .poa-tree-item-head{
           display:flex;
@@ -6104,14 +7262,26 @@ POA_LIMPIO_HTML = dedent("""
           </div>
           <div class="poa-board-head-actions">
             <button type="button" class="poa-btn" id="poa-download-template">Descargar plantilla CSV</button>
+            <button type="button" class="poa-btn" id="poa-export-xls">Exportar plan + POA XLS</button>
             <button type="button" class="poa-btn" id="poa-import-csv">Importar CSV estratégico + POA</button>
             <input id="poa-import-csv-file" type="file" accept=".csv,text/csv" style="display:none;">
           </div>
         </div>
       </div>
       <div class="poa-board-msg" id="poa-board-msg" aria-live="polite"></div>
-      <div class="poa-board-msg" id="poa-no-owner-msg" aria-live="polite" style="display:none;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px;margin-top:8px;"></div>
-      <div class="poa-board-msg" id="poa-no-subowner-msg" aria-live="polite" style="display:none;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px;margin-top:8px;"></div>
+      <div class="axm-track-missing" id="poa-no-owner-msg" aria-live="polite" style="display:none;margin-top:8px;"></div>
+      <div class="axm-track-missing" id="poa-no-subowner-msg" aria-live="polite" style="display:none;margin-top:8px;"></div>
+      <section class="poa-owner-chart" id="poa-owner-chart">
+        <div class="poa-owner-chart-head">
+          <div>
+            <h3 class="poa-owner-chart-title">Concentración de actividades por usuario</h3>
+            <p class="poa-owner-chart-sub">Distribución de actividades POA asignadas por responsable.</p>
+          </div>
+          <span class="poa-owner-chart-total" id="poa-owner-chart-total">Total: 0</span>
+        </div>
+        <div class="poa-owner-chart-empty" id="poa-owner-chart-empty">Sin actividades con responsable.</div>
+        <div class="poa-owner-chart-list" id="poa-owner-chart-list"></div>
+      </section>
       <div class="poa-board-grid" id="poa-board-grid"></div>
       <div class="poa-modal" id="poa-tree-modal" role="dialog" aria-modal="true" aria-labelledby="poa-tree-title">
         <section class="poa-modal-dialog">
@@ -6201,10 +7371,22 @@ POA_LIMPIO_HTML = dedent("""
             <div class="poa-act-list-head">
               <h4 class="poa-act-list-title">Actividades del objetivo</h4>
               <div class="poa-act-actions">
-                <button type="button" class="poa-icon-btn" id="poa-act-new" title="Nuevo">➕ Nuevo</button>
-                <button type="button" class="poa-icon-btn" id="poa-act-edit" title="Editar">✏️ Editar</button>
-                <button type="button" class="poa-icon-btn primary" id="poa-act-save-top" title="Guardar">💾 Guardar</button>
-                <button type="button" class="poa-icon-btn warn" id="poa-act-delete" title="Eliminar">🗑 Eliminar</button>
+                <button type="button" class="action-button" id="poa-act-new" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
+                  <img src="/icon/boton/nuevo.svg" alt="Nuevo">
+                  <span class="action-label">Nuevo</span>
+                </button>
+                <button type="button" class="action-button" id="poa-act-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                  <img src="/icon/boton/editar.svg" alt="Editar">
+                  <span class="action-label">Editar</span>
+                </button>
+                <button type="button" class="action-button" id="poa-act-save-top" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                  <img src="/icon/boton/guardar.svg" alt="Guardar">
+                  <span class="action-label">Guardar</span>
+                </button>
+                <button type="button" class="action-button" id="poa-act-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                  <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                  <span class="action-label">Eliminar</span>
+                </button>
               </div>
             </div>
             <div class="poa-act-list" id="poa-act-list"></div>
@@ -6281,6 +7463,9 @@ POA_LIMPIO_HTML = dedent("""
             <div class="poa-field" style="margin-top:0;">
               <label for="poa-act-desc">Descripción</label>
               <textarea id="poa-act-desc" class="poa-textarea" placeholder="Descripción de la actividad"></textarea>
+            </div>
+            <div class="poa-actions">
+              <button type="button" class="poa-btn" id="poa-act-suggest-ia">Sugerir con IA</button>
             </div>
           </section>
           <section class="poa-tab-panel" data-poa-panel="sub">
@@ -6378,7 +7563,14 @@ POA_LIMPIO_HTML = dedent("""
           </section>
 
           <div class="poa-actions">
-            <button type="button" class="poa-btn primary" id="poa-act-save">Guardar actividad</button>
+            <button type="button" class="action-button" id="poa-act-edit-bottom" data-hover-label="Editar" aria-label="Editar" title="Editar">
+              <img src="/icon/boton/editar.svg" alt="Editar">
+              <span class="action-label">Editar</span>
+            </button>
+            <button type="button" class="action-button" id="poa-act-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+              <img src="/icon/boton/guardar.svg" alt="Guardar">
+              <span class="action-label">Guardar</span>
+            </button>
             <button type="button" class="poa-btn" id="poa-act-cancel">Cancelar</button>
           </div>
           <div class="poa-modal-msg" id="poa-act-msg" aria-live="polite"></div>
@@ -6465,6 +7657,9 @@ POA_LIMPIO_HTML = dedent("""
           const msgEl = document.getElementById("poa-board-msg");
           const noOwnerMsgEl = document.getElementById("poa-no-owner-msg");
           const noSubOwnerMsgEl = document.getElementById("poa-no-subowner-msg");
+          const ownerChartTotalEl = document.getElementById("poa-owner-chart-total");
+          const ownerChartEmptyEl = document.getElementById("poa-owner-chart-empty");
+          const ownerChartListEl = document.getElementById("poa-owner-chart-list");
           const treeModalEl = document.getElementById("poa-tree-modal");
           const treeCloseBtn = document.getElementById("poa-tree-close");
           const treeHostEl = document.getElementById("poa-tree-host");
@@ -6482,11 +7677,13 @@ POA_LIMPIO_HTML = dedent("""
           const calendarMonthEl = document.getElementById("poa-calendar-month");
           const calendarGridEl = document.getElementById("poa-calendar-grid");
           const downloadTemplateBtn = document.getElementById("poa-download-template");
+          const exportXlsBtn = document.getElementById("poa-export-xls");
           const importCsvBtn = document.getElementById("poa-import-csv");
           const importCsvFileEl = document.getElementById("poa-import-csv-file");
           const modalEl = document.getElementById("poa-activity-modal");
           const closeBtn = document.getElementById("poa-activity-close");
           const cancelBtn = document.getElementById("poa-act-cancel");
+          const editBottomBtn = document.getElementById("poa-act-edit-bottom");
           const saveBtn = document.getElementById("poa-act-save");
           const saveTopBtn = document.getElementById("poa-act-save-top");
           const newActBtn = document.getElementById("poa-act-new");
@@ -6514,6 +7711,7 @@ POA_LIMPIO_HTML = dedent("""
           const actEveryDaysWrapEl = document.getElementById("poa-act-every-days-wrap");
           const actEveryDaysEl = document.getElementById("poa-act-every-days");
           const actDescEl = document.getElementById("poa-act-desc");
+          const actSuggestIaBtn = document.getElementById("poa-act-suggest-ia");
           const actMsgEl = document.getElementById("poa-act-msg");
           const budgetTypeEl = document.getElementById("poa-budget-type");
           const budgetRubroEl = document.getElementById("poa-budget-rubro");
@@ -6629,6 +7827,7 @@ POA_LIMPIO_HTML = dedent("""
             can_manage_content: false,
             can_view_gantt: false,
           };
+          let poaIaEnabled = false;
 
           const escapeHtml = (value) => String(value || "")
             .replaceAll("&", "&amp;")
@@ -6682,10 +7881,104 @@ POA_LIMPIO_HTML = dedent("""
             msgEl.textContent = text || "";
             msgEl.style.color = isError ? "#b91c1c" : "#0f3d2e";
           };
+          window.addEventListener("error", (event) => {
+            const msg = String(event?.message || "Error JavaScript no controlado").trim();
+            showMsg(`Error JS: ${msg}`, true);
+          });
+          window.addEventListener("unhandledrejection", (event) => {
+            const reason = event?.reason;
+            const msg = String(reason?.message || reason || "Promesa rechazada sin control").trim();
+            showMsg(`Error JS: ${msg}`, true);
+          });
+          const renderOwnerActivityChart = (activities) => {
+            if (!ownerChartListEl || !ownerChartEmptyEl || !ownerChartTotalEl) return;
+            const list = Array.isArray(activities) ? activities : [];
+            const counts = {};
+            let assignedTotal = 0;
+            list.forEach((item) => {
+              const owner = String(item?.responsable || "").trim();
+              if (!owner) return;
+              assignedTotal += 1;
+              counts[owner] = (counts[owner] || 0) + 1;
+            });
+            ownerChartTotalEl.textContent = `Total asignadas: ${assignedTotal}`;
+            const entries = Object.entries(counts)
+              .sort((a, b) => {
+                if (b[1] !== a[1]) return b[1] - a[1];
+                return a[0].localeCompare(b[0], "es");
+              });
+            if (!entries.length || assignedTotal <= 0) {
+              ownerChartListEl.innerHTML = "";
+              ownerChartEmptyEl.style.display = "block";
+              ownerChartEmptyEl.textContent = "Sin actividades con responsable.";
+              return;
+            }
+            ownerChartEmptyEl.style.display = "none";
+            const maxRows = 10;
+            const topEntries = entries.slice(0, maxRows);
+            const extraCount = entries.slice(maxRows).reduce((acc, item) => acc + Number(item[1] || 0), 0);
+            const rows = topEntries.map(([name, amount]) => {
+              const pct = assignedTotal > 0 ? (Number(amount || 0) / assignedTotal) * 100 : 0;
+              return `
+                <div class="poa-owner-row">
+                  <div class="poa-owner-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+                  <div class="poa-owner-bar">
+                    <div class="poa-owner-fill" style="width:${pct.toFixed(2)}%;"></div>
+                  </div>
+                  <div class="poa-owner-value">${Number(amount || 0)} (${pct.toFixed(1)}%)</div>
+                </div>
+              `;
+            });
+            if (extraCount > 0) {
+              const pct = assignedTotal > 0 ? (extraCount / assignedTotal) * 100 : 0;
+              rows.push(`
+                <div class="poa-owner-row">
+                  <div class="poa-owner-name" title="Otros usuarios">Otros usuarios</div>
+                  <div class="poa-owner-bar">
+                    <div class="poa-owner-fill" style="width:${pct.toFixed(2)}%;"></div>
+                  </div>
+                  <div class="poa-owner-value">${extraCount} (${pct.toFixed(1)}%)</div>
+                </div>
+              `);
+            }
+            ownerChartListEl.innerHTML = rows.join("");
+          };
           const showModalMsg = (text, isError = false) => {
             if (!actMsgEl) return;
             actMsgEl.textContent = text || "";
             actMsgEl.style.color = isError ? "#b91c1c" : "#0f3d2e";
+          };
+          const requestIaSuggestion = async (texto) => {
+            const response = await fetch("/api/ia/suggest/objective-text", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              body: JSON.stringify({ texto: String(texto || "").trim() }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload || payload.error) {
+              throw new Error(payload?.error || "No se pudo obtener sugerencia IA.");
+            }
+            return String(payload.sugerencia || "").trim();
+          };
+          const iaFeatureEnabled = async (moduleKey = "poa") => {
+            try {
+              const response = await fetch(`/api/ia/flags?module=${encodeURIComponent(moduleKey)}&feature_key=suggest_objective_text`, {
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+              });
+              const payload = await response.json().catch(() => ({}));
+              return !!(response.ok && payload?.success === true && payload?.data?.enabled);
+            } catch (_err) {
+              return false;
+            }
+          };
+          const plainTextFromHtml = (value) => {
+            const html = String(value || "").trim();
+            if (!html) return "";
+            const tmp = document.createElement("div");
+            tmp.innerHTML = html;
+            return String(tmp.textContent || tmp.innerText || "").trim();
           };
           const showActListMsg = (text, isError = false) => {
             if (!actListMsgEl) return;
@@ -6734,6 +8027,13 @@ POA_LIMPIO_HTML = dedent("""
               btn.style.opacity = canManage ? "1" : "0.55";
               btn.style.cursor = canManage ? "pointer" : "not-allowed";
             });
+            if (actSuggestIaBtn) {
+              const allowIa = canManage && poaIaEnabled;
+              actSuggestIaBtn.disabled = !allowIa;
+              actSuggestIaBtn.style.opacity = allowIa ? "1" : "0.55";
+              actSuggestIaBtn.style.cursor = allowIa ? "pointer" : "not-allowed";
+              if (!poaIaEnabled) actSuggestIaBtn.title = "IA deshabilitada para tu rol/módulo";
+            }
             if (delivNameEl) delivNameEl.disabled = !canManage;
             if (importCsvBtn) {
               importCsvBtn.disabled = !canManage;
@@ -6764,6 +8064,31 @@ POA_LIMPIO_HTML = dedent("""
             (Array.isArray(poaGanttActivities) ? poaGanttActivities : [])
               .find((item) => Number(item.id || 0) === Number(activityId)) || null
           );
+          const poaStateTone = ({ status, entregaEstado, fechaInicial, fechaFinal, avance }) => {
+            const st = String(status || "").trim().toLowerCase();
+            const de = String(entregaEstado || "").trim().toLowerCase();
+            const start = String(fechaInicial || "").trim();
+            const end = String(fechaFinal || "").trim();
+            const progress = Number(avance || 0);
+            const today = todayIso();
+            if (de === "pendiente" || st.includes("revisión") || st.includes("revision")) return "orange";
+            if (de === "aprobada" || st.includes("terminad") || st.includes("hecho") || progress >= 100) return "green";
+            if (st.includes("atras")) return "red";
+            if (st.includes("no inici")) return "none";
+            if (end && today > end && progress < 100) return "red";
+            if (st.includes("proceso")) return "yellow";
+            if (start && today >= start && progress < 100) return "yellow";
+            return "none";
+          };
+          const aggregatePoaStateTone = (tones) => {
+            const list = Array.isArray(tones) ? tones : [];
+            if (!list.length) return "none";
+            if (list.includes("red")) return "red";
+            if (list.includes("orange")) return "orange";
+            if (list.includes("yellow")) return "yellow";
+            if (list.includes("green")) return "green";
+            return "none";
+          };
           const renderPoaAdvanceTree = () => {
             if (!treeHostEl) return;
             const objectives = Array.isArray(poaGanttObjectives) ? poaGanttObjectives : [];
@@ -6786,19 +8111,49 @@ POA_LIMPIO_HTML = dedent("""
                 const objId = Number(obj.id || 0);
                 const objOpen = isTreeOpen("obj", objId);
                 const objActs = activities.filter((act) => Number(act.objective_id || 0) === objId);
+                const objectiveTone = aggregatePoaStateTone(
+                  objActs.map((act) => poaStateTone({
+                    status: act?.status,
+                    entregaEstado: act?.entrega_estado,
+                    fechaInicial: act?.fecha_inicial,
+                    fechaFinal: act?.fecha_final,
+                    avance: act?.avance,
+                  }))
+                );
                 const actHtml = objOpen ? objActs.map((act) => {
                   const actId = Number(act.id || 0);
                   const actOpen = isTreeOpen("act", actId);
+                  const actTone = poaStateTone({
+                    status: act?.status,
+                    entregaEstado: act?.entrega_estado,
+                    fechaInicial: act?.fecha_inicial,
+                    fechaFinal: act?.fecha_final,
+                    avance: act?.avance,
+                  });
                   const subList = Array.isArray(act.subactivities) ? act.subactivities : [];
                   const subHtml = actOpen ? subList.map((sub) => `
-                    <div class="poa-tree-item">
+                    <div class="poa-tree-item ${poaStateTone({
+                      status: sub?.status,
+                      entregaEstado: "",
+                      fechaInicial: sub?.fecha_inicial,
+                      fechaFinal: sub?.fecha_final,
+                      avance: sub?.avance,
+                    }) !== "none" ? "has-state" : ""}">
+                      <div class="poa-tree-state poa-tree-state-${poaStateTone({
+                        status: sub?.status,
+                        entregaEstado: "",
+                        fechaInicial: sub?.fecha_inicial,
+                        fechaFinal: sub?.fecha_final,
+                        avance: sub?.avance,
+                      })}"></div>
                       <div class="poa-tree-item-head">
                         <h6 class="poa-tree-item-title poa-tree-click" data-tree-sub="${Number(sub.id || 0)}" data-tree-sub-parent="${actId}" style="margin:0;">${escapeHtml(sub.nombre || "Subtarea")}</h6>
                       </div>
                     </div>
                   `).join("") : "";
                   return `
-                    <div class="poa-tree-item">
+                    <div class="poa-tree-item ${actTone !== "none" ? "has-state" : ""}">
+                      <div class="poa-tree-state poa-tree-state-${actTone}"></div>
                       <div class="poa-tree-item-head">
                         <h6 class="poa-tree-item-title poa-tree-click" data-tree-activity="${actId}" data-tree-objective="${objId}" style="margin:0;">${escapeHtml(act.nombre || "Actividad")}</h6>
                         ${subList.length ? `<button type="button" class="poa-tree-toggle" data-tree-toggle="act" data-tree-id="${actId}">${actOpen ? "Ocultar" : "Mostrar"}</button>` : ""}
@@ -6809,7 +8164,8 @@ POA_LIMPIO_HTML = dedent("""
                   `;
                 }).join("") : "";
                 return `
-                  <div class="poa-tree-item">
+                  <div class="poa-tree-item ${objectiveTone !== "none" ? "has-state" : ""}">
+                    <div class="poa-tree-state poa-tree-state-${objectiveTone}"></div>
                     <div class="poa-tree-item-head">
                       <h5 class="poa-tree-item-title poa-tree-click" data-tree-objective="${objId}">${escapeHtml(obj.codigo || "xx-yy-zz")} - ${escapeHtml(obj.nombre || "Objetivo")}</h5>
                       ${objActs.length ? `<button type="button" class="poa-tree-toggle" data-tree-toggle="obj" data-tree-id="${objId}">${objOpen ? "Ocultar" : "Mostrar"}</button>` : ""}
@@ -7637,8 +8993,16 @@ POA_LIMPIO_HTML = dedent("""
             if (panel) panel.classList.add("active");
           };
           const openActivityForm = async (objectiveId, options = {}) => {
-            const objective = objectivesById[Number(objectiveId)];
-            if (!objective) return;
+            let objective = objectivesById[Number(objectiveId)];
+            if (!objective) {
+              showMsg("Recargando datos POA para abrir el objetivo...");
+              await loadBoard();
+              objective = objectivesById[Number(objectiveId)];
+            }
+            if (!objective) {
+              showMsg("No se encontró el objetivo seleccionado en el tablero POA.", true);
+              return;
+            }
             currentObjective = objective;
             canValidateDeliverables = !!objective.can_validate_deliverables;
             const targetActivityId = Number(options.activityId || 0);
@@ -8253,6 +9617,7 @@ POA_LIMPIO_HTML = dedent("""
           saveTopBtn && saveTopBtn.addEventListener("click", saveActivity);
           newActBtn && newActBtn.addEventListener("click", startNewActivity);
           editActBtn && editActBtn.addEventListener("click", loadSelectedActivityInForm);
+          editBottomBtn && editBottomBtn.addEventListener("click", loadSelectedActivityInForm);
           deleteActBtn && deleteActBtn.addEventListener("click", deleteSelectedActivity);
           delivAddBtn && delivAddBtn.addEventListener("click", addDeliverable);
           delivNameEl && delivNameEl.addEventListener("keydown", (event) => {
@@ -8271,6 +9636,97 @@ POA_LIMPIO_HTML = dedent("""
           actNameEl && actNameEl.addEventListener("input", renderActivityBranch);
           actRecurrenteEl && actRecurrenteEl.addEventListener("change", syncRecurringFields);
           actPeriodicidadEl && actPeriodicidadEl.addEventListener("change", syncRecurringFields);
+          actSuggestIaBtn && actSuggestIaBtn.addEventListener("click", async () => {
+            if (!poaIaEnabled) {
+              poaIaEnabled = await iaFeatureEnabled("poa");
+              applyPoaPermissionsUI();
+            }
+            if (!poaIaEnabled) {
+              showModalMsg("IA deshabilitada para tu rol en este módulo.", true);
+              return;
+            }
+            if (!canManageContent()) {
+              showModalMsg("Solo administrador puede usar sugerencias IA en actividades.", true);
+              return;
+            }
+            const objectiveName = String(currentObjective?.nombre || "").trim();
+            const axisName = String(currentObjective?.axis_name || "").trim();
+            const activityName = (actNameEl && actNameEl.value ? actNameEl.value : "").trim();
+            const descHtml = actDescRich ? actDescRich.getHtml() : (actDescEl && actDescEl.value ? actDescEl.value : "");
+            const currentDesc = plainTextFromHtml(descHtml);
+            if (!objectiveName && !activityName && !currentDesc) {
+              showModalMsg("Captura nombre o descripción antes de pedir sugerencia IA.", true);
+              return;
+            }
+            actSuggestIaBtn.disabled = true;
+            showModalMsg("Generando sugerencia con IA...");
+            try {
+              const prompt = [
+                "Mejora redacción de actividad POA.",
+                `Eje: ${axisName || "Sin eje"}`,
+                `Objetivo: ${objectiveName || "Sin objetivo"}`,
+                `Actividad: ${activityName || "Sin nombre"}`,
+                `Descripción actual: ${currentDesc || "Sin descripción"}`,
+                "Responde solo con una descripción final clara, medible y en español.",
+              ].join("\\n");
+              const draftResp = await fetch("/api/ia/suggestions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                  prompt,
+                  original_text: currentDesc,
+                  target_module: "poa",
+                  target_entity: "actividad",
+                  target_entity_id: String(currentActivityId || ""),
+                  target_field: "descripcion",
+                }),
+              });
+              const draftData = await draftResp.json().catch(() => ({}));
+              if (!draftResp.ok || draftData.success === false) {
+                throw new Error(draftData.error || "No se pudo generar sugerencia IA.");
+              }
+              const draft = draftData.data || {};
+              const decision = await openPoaIaSuggestionEditor({
+                title: "Sugerencia IA para descripción de actividad",
+                suggestion: String(draft.suggested_text || ""),
+              });
+              if (decision.action === "apply") {
+                const applyResp = await fetch(`/api/ia/suggestions/${draft.id}/apply`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "same-origin",
+                  body: JSON.stringify({ edited_text: String(decision.text || "").trim() }),
+                });
+                const applyData = await applyResp.json().catch(() => ({}));
+                if (!applyResp.ok || applyData.success === false) {
+                  throw new Error(applyData.error || "No se pudo aplicar sugerencia IA.");
+                }
+                const appliedText = String(applyData?.data?.applied_text || decision.text || "").trim();
+                if (actDescRich) actDescRich.setHtml(appliedText);
+                else if (actDescEl) actDescEl.value = appliedText;
+                showModalMsg("Sugerencia IA aplicada en la descripción de la actividad.");
+              } else if (decision.action === "discard") {
+                const discardResp = await fetch(`/api/ia/suggestions/${draft.id}/discard`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "same-origin",
+                  body: JSON.stringify({ reason: "Descartada por usuario", edited_text: String(decision.text || "").trim() }),
+                });
+                const discardData = await discardResp.json().catch(() => ({}));
+                if (!discardResp.ok || discardData.success === false) {
+                  throw new Error(discardData.error || "No se pudo descartar sugerencia IA.");
+                }
+                showModalMsg("Sugerencia IA descartada.");
+              } else {
+                showModalMsg("Sugerencia IA generada. Puedes volver a abrir IA para aplicarla o descartarla.");
+              }
+            } catch (error) {
+              showModalMsg(error.message || "No se pudo generar sugerencia IA.", true);
+            } finally {
+              actSuggestIaBtn.disabled = !canManageContent() || !poaIaEnabled;
+            }
+          });
           subNameEl && subNameEl.addEventListener("input", () => {
             const found = currentSubactivities.find((item) => Number(item.id || 0) === Number(editingSubId));
             const targetLevel = found ? Number(found.nivel || 1) : (() => {
@@ -8292,9 +9748,14 @@ POA_LIMPIO_HTML = dedent("""
               can_manage_content: !!payload?.permissions?.can_manage_content,
               can_view_gantt: !!payload?.permissions?.can_view_gantt,
             };
+            const diagnostics = payload?.diagnostics || {};
+            showMsg(
+              `Permisos: ${poaPermissions.can_manage_content ? "edicion" : "solo lectura"} · acceso ${poaPermissions.poa_access_level} · rol ${String(diagnostics.role_detected || diagnostics.role_normalized || diagnostics.role_raw || "n/d")}`
+            );
             applyPoaPermissionsUI();
             const objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
             const activities = Array.isArray(payload.activities) ? payload.activities : [];
+            renderOwnerActivityChart(activities);
             poaGanttObjectives = objectives;
             poaGanttActivities = activities;
             if (treeModalEl && treeModalEl.classList.contains("open")) {
@@ -8330,15 +9791,14 @@ POA_LIMPIO_HTML = dedent("""
             if (noOwnerMsgEl) {
               if (!activitiesNoOwner.length) {
                 noOwnerMsgEl.style.display = "none";
-                noOwnerMsgEl.textContent = "";
+                noOwnerMsgEl.innerHTML = "";
               } else {
-                const preview = activitiesNoOwner
-                  .slice(0, 6)
-                  .map((item) => String(item?.nombre || "Actividad sin nombre"))
-                  .join(", ");
-                const extra = activitiesNoOwner.length > 6 ? ` (+${activitiesNoOwner.length - 6} más)` : "";
+                const listItems = activitiesNoOwner.slice(0, 8)
+                  .map((item) => `<li>${escapeHtml(item.codigo ? item.codigo + " - " + (item.nombre || "Sin nombre") : (item.nombre || "Sin nombre"))}</li>`)
+                  .join("");
+                const extraCount = activitiesNoOwner.length > 8 ? `<div class="axm-track-missing-more">+${activitiesNoOwner.length - 8} más</div>` : "";
                 noOwnerMsgEl.style.display = "block";
-                noOwnerMsgEl.textContent = `Actividades sin responsable: ${activitiesNoOwner.length}. ${preview}${extra}`;
+                noOwnerMsgEl.innerHTML = `<article class="axm-track-missing-card"><h5 class="axm-track-missing-title">Actividades sin responsable</h5><div class="axm-track-missing-sub">${activitiesNoOwner.length} pendiente(s)</div><ul class="axm-track-missing-list">${listItems}</ul>${extraCount}</article>`;
               }
             }
             const subactivitiesNoOwner = activities.flatMap((item) => {
@@ -8353,15 +9813,14 @@ POA_LIMPIO_HTML = dedent("""
             if (noSubOwnerMsgEl) {
               if (!subactivitiesNoOwner.length) {
                 noSubOwnerMsgEl.style.display = "none";
-                noSubOwnerMsgEl.textContent = "";
+                noSubOwnerMsgEl.innerHTML = "";
               } else {
-                const preview = subactivitiesNoOwner
-                  .slice(0, 6)
-                  .map((item) => `${item.nombre} (${item.activity})`)
-                  .join(", ");
-                const extra = subactivitiesNoOwner.length > 6 ? ` (+${subactivitiesNoOwner.length - 6} más)` : "";
+                const listItems = subactivitiesNoOwner.slice(0, 8)
+                  .map((item) => `<li>${escapeHtml(item.nombre)} <span style="opacity:.7;font-size:.85em">(${escapeHtml(item.activity)})</span></li>`)
+                  .join("");
+                const extraCount = subactivitiesNoOwner.length > 8 ? `<div class="axm-track-missing-more">+${subactivitiesNoOwner.length - 8} más</div>` : "";
                 noSubOwnerMsgEl.style.display = "block";
-                noSubOwnerMsgEl.textContent = `Subtareas sin responsable: ${subactivitiesNoOwner.length}. ${preview}${extra}`;
+                noSubOwnerMsgEl.innerHTML = `<article class="axm-track-missing-card"><h5 class="axm-track-missing-title">Subtareas sin responsable</h5><div class="axm-track-missing-sub">${subactivitiesNoOwner.length} pendiente(s)</div><ul class="axm-track-missing-list">${listItems}</ul>${extraCount}</article>`;
               }
             }
             if (currentActivityId && currentObjective) {
@@ -8412,37 +9871,45 @@ POA_LIMPIO_HTML = dedent("""
               `;
             }).join("");
 
-            gridEl.querySelectorAll("[data-axis-toggle]").forEach((button) => {
-              button.addEventListener("click", () => {
-                const col = button.closest("[data-axis-col]");
-                if (!col) return;
-                const collapsed = col.classList.toggle("collapsed");
-                button.textContent = collapsed ? "+" : "−";
-                button.setAttribute("aria-label", collapsed ? "Mostrar columna" : "Colapsar columna");
-              });
-            });
-            gridEl.querySelectorAll("[data-objective-id]").forEach((card) => {
-              card.addEventListener("click", async () => {
-                await openActivityForm(card.getAttribute("data-objective-id"));
-              });
-            });
           };
+          gridEl.addEventListener("click", async (event) => {
+            const target = event.target;
+            const toggleBtn = target && target.closest ? target.closest("[data-axis-toggle]") : null;
+            if (toggleBtn) {
+              const col = toggleBtn.closest("[data-axis-col]");
+              if (!col) return;
+              const collapsed = col.classList.toggle("collapsed");
+              toggleBtn.textContent = collapsed ? "+" : "−";
+              toggleBtn.setAttribute("aria-label", collapsed ? "Mostrar columna" : "Colapsar columna");
+              return;
+            }
+            const card = target && target.closest ? target.closest("[data-objective-id]") : null;
+            if (card && gridEl.contains(card)) {
+              await openActivityForm(card.getAttribute("data-objective-id"));
+            }
+          });
 
           const loadBoard = async () => {
             showMsg("Cargando tablero POA...");
             try {
+              const controller = new AbortController();
+              const timeoutId = window.setTimeout(() => controller.abort(), 20000);
               const response = await fetch("/api/poa/board-data", {
                 headers: { "Content-Type": "application/json" },
                 credentials: "same-origin",
+                signal: controller.signal,
               });
+              window.clearTimeout(timeoutId);
               const payload = await response.json().catch(() => ({}));
               if (!response.ok || payload.success === false) {
                 throw new Error(payload.error || "No se pudo cargar la vista POA.");
               }
               renderBoard(payload);
-              showMsg("");
             } catch (error) {
-              showMsg(error.message || "No se pudo cargar la vista POA.", true);
+              const msg = (error && error.name === "AbortError")
+                ? "Tiempo de espera agotado al cargar POA. Reintenta y valida conexión/servidor."
+                : (error.message || "No se pudo cargar la vista POA.");
+              showMsg(msg, true);
             }
           };
           const importStrategicCsv = async (file) => {
@@ -8473,6 +9940,9 @@ POA_LIMPIO_HTML = dedent("""
           };
           downloadTemplateBtn && downloadTemplateBtn.addEventListener("click", () => {
             window.location.href = "/api/planificacion/plantilla-plan-poa.csv";
+          });
+          exportXlsBtn && exportXlsBtn.addEventListener("click", () => {
+            window.location.href = "/api/planificacion/exportar-plan-poa.xlsx";
           });
           importCsvBtn && importCsvBtn.addEventListener("click", () => {
             if (importCsvFileEl) importCsvFileEl.click();
@@ -8508,6 +9978,10 @@ POA_LIMPIO_HTML = dedent("""
             });
           };
 
+          iaFeatureEnabled("poa").then((enabled) => {
+            poaIaEnabled = !!enabled;
+            applyPoaPermissionsUI();
+          });
           loadBoard().then(openFromQuery).catch(() => {});
         })();
       </script>
@@ -8520,11 +9994,16 @@ POA_LIMPIO_HTML = dedent("""
 @router.get("/ejes-estrategicos", response_class=HTMLResponse)
 def ejes_estrategicos_page(request: Request):
     _bind_core_symbols()
+    axis_seed_html = _build_initial_axis_list_html()
+    base_content = EJES_ESTRATEGICOS_HTML.replace(
+        '<div class="axm-list" id="axm-axis-list"></div>',
+        f'<div class="axm-list" id="axm-axis-list">{axis_seed_html}</div>',
+    )
     return render_backend_page(
         request,
         title="Plan estratégico",
         description="Edición y administración del plan estratégico de la institución",
-        content=EJES_ESTRATEGICOS_HTML,
+        content=base_content,
         hide_floating_actions=True,
         show_page_header=True,
         view_buttons=[
@@ -8539,11 +10018,16 @@ def ejes_estrategicos_page(request: Request):
 @router.get("/poa/crear", response_class=HTMLResponse)
 def poa_page(request: Request):
     _bind_core_symbols()
+    poa_seed_html = _build_initial_poa_grid_html()
+    base_content = POA_LIMPIO_HTML.replace(
+        '<div class="poa-board-grid" id="poa-board-grid"></div>',
+        f'<div class="poa-board-grid" id="poa-board-grid">{poa_seed_html}</div>',
+    )
     return render_backend_page(
         request,
         title="POA",
         description="Pantalla de trabajo POA.",
-        content=POA_LIMPIO_HTML,
+        content=base_content,
         hide_floating_actions=True,
         show_page_header=True,
         view_buttons=[
@@ -8558,22 +10042,621 @@ def poa_page(request: Request):
 @router.get("/estrategia-tactica/tablero-control", response_class=HTMLResponse)
 def estrategia_tactica_tablero_control_page(request: Request):
     _bind_core_symbols()
+    # Esta ruta se usa como entrada del menú "Estrategia y táctica".
+    # Redirigimos al módulo operativo para evitar mostrar una pantalla bloqueada.
+    return RedirectResponse(url="/planes", status_code=302)
+
+
+@router.get("/estrategia-tactica/base-ia", response_class=HTMLResponse)
+def estrategia_tactica_ia_source_page(request: Request):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return RedirectResponse(url="/no-acceso", status_code=302)
+    db = SessionLocal()
+    try:
+        try:
+            from fastsipet_modulo.modulos.ia.ia import _refresh_weekly_strategic_extra_if_due
+            _refresh_weekly_strategic_extra_if_due(db, force=False)
+        except Exception:
+            db.rollback()
+        payload = _build_strategic_ia_payload(db)
+    finally:
+        db.close()
     return render_backend_page(
         request,
-        title="Tablero de control",
-        description="Acceso restringido.",
-        content=(
-            '<section class="axm-tab-panel" '
-            'style="display:flex;min-height:62vh;">'
-            'No tiene acceso, comuníquese con el administrador'
-            '</section>'
-        ),
+        title="Base IA estrategia",
+        description="Concentrado ordenado para consulta IA del módulo de estrategia y táctica.",
+        content=_build_strategic_ia_html(payload),
         hide_floating_actions=True,
         show_page_header=True,
-        view_buttons=[
-            {"label": "Form", "icon": "/templates/icon/formulario.svg", "view": "form", "active": True},
-        ],
     )
+
+
+@router.get("/api/estrategia-tactica/base-ia", response_class=JSONResponse)
+def estrategia_tactica_ia_source_api(request: Request):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    db = SessionLocal()
+    try:
+        try:
+            from fastsipet_modulo.modulos.ia.ia import _refresh_weekly_strategic_extra_if_due
+            _refresh_weekly_strategic_extra_if_due(db, force=False)
+        except Exception:
+            db.rollback()
+        payload = _build_strategic_ia_payload(db)
+        return JSONResponse({"success": True, "data": payload})
+    finally:
+        db.close()
+
+
+@router.get("/api/estrategia-tactica/base-ia/contenido", response_class=JSONResponse)
+def estrategia_tactica_ia_extra_get(request: Request):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    db = SessionLocal()
+    try:
+        _ensure_strategic_identity_table(db)
+        db.commit()
+        row = db.execute(
+            text("SELECT payload FROM strategic_identity_config WHERE bloque = 'base_ia_extra' LIMIT 1")
+        ).fetchone()
+        payload_raw = str(row[0] or "{}") if row else "{}"
+        try:
+            payload_json = json.loads(payload_raw)
+        except Exception:
+            payload_json = {}
+        texto = str((payload_json if isinstance(payload_json, dict) else {}).get("texto") or "").strip()
+        return JSONResponse({"success": True, "data": {"texto": texto}})
+    finally:
+        db.close()
+
+
+@router.put("/api/estrategia-tactica/base-ia/contenido", response_class=JSONResponse)
+def estrategia_tactica_ia_extra_put(request: Request, data: dict = Body(...)):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    texto = str(data.get("texto") or "").strip()
+    encoded = json.dumps({"texto": texto}, ensure_ascii=False)
+    db = SessionLocal()
+    try:
+        _ensure_strategic_identity_table(db)
+        db.execute(
+            text(
+                """
+                INSERT INTO strategic_identity_config (bloque, payload, updated_at)
+                VALUES ('base_ia_extra', :payload, CURRENT_TIMESTAMP)
+                ON CONFLICT (bloque)
+                DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP
+                """
+            ),
+            {"payload": encoded},
+        )
+        db.commit()
+        return JSONResponse({"success": True, "data": {"texto": texto}})
+    except (sqlite3.OperationalError, SQLAlchemyError):
+        db.rollback()
+        return JSONResponse(
+            {"success": False, "error": "No se pudo escribir en la base de datos (modo solo lectura o bloqueo)."},
+            status_code=500,
+        )
+    finally:
+        db.close()
+
+
+# ─────────────────────────────────────────────
+# POA · Base IA
+# ─────────────────────────────────────────────
+_POA_BASE_IA_EXTRA_BLOCK = "poa_base_ia_extra"
+_POA_BASE_IA_WEEKLY_META_BLOCK = "poa_base_ia_weekly_meta"
+_POA_BASE_IA_WEEKLY_INTERVAL_DAYS = 7
+_poa_base_ia_cron_lock = threading.Lock()
+
+
+def _build_poa_ia_payload(db) -> Dict[str, Any]:
+    """Concentra todos los datos de POA relevantes para la IA."""
+    _ensure_strategic_identity_table(db)
+    db.commit()
+    # Contenido adicional editable y meta semanal
+    rows_extra = db.execute(
+        text(
+            "SELECT bloque, payload FROM strategic_identity_config "
+            "WHERE bloque IN (:extra, :meta)"
+        ),
+        {"extra": _POA_BASE_IA_EXTRA_BLOCK, "meta": _POA_BASE_IA_WEEKLY_META_BLOCK},
+    ).fetchall()
+    payload_map = {str(r[0]).strip(): str(r[1] or "") for r in rows_extra}
+    try:
+        extra_payload = json.loads(payload_map.get(_POA_BASE_IA_EXTRA_BLOCK, "{}") or "{}")
+    except Exception:
+        extra_payload = {}
+    try:
+        weekly_meta_payload = json.loads(payload_map.get(_POA_BASE_IA_WEEKLY_META_BLOCK, "{}") or "{}")
+    except Exception:
+        weekly_meta_payload = {}
+    contenido_adicional = str((extra_payload if isinstance(extra_payload, dict) else {}).get("texto") or "").strip()
+    weekly_meta = weekly_meta_payload if isinstance(weekly_meta_payload, dict) else {}
+
+    # Ejes y objetivos con actividades
+    axes = (
+        db.query(StrategicAxisConfig)
+        .filter(StrategicAxisConfig.is_active == True)
+        .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+        .all()
+    ) or db.query(StrategicAxisConfig).order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc()).all()
+
+    today = datetime.utcnow().date()
+    axes_data = []
+    total_objectives = 0
+    total_activities_all = 0
+    for axis in axes:
+        objectives = (
+            db.query(StrategicObjectiveConfig)
+            .filter(StrategicObjectiveConfig.axis_id == axis.id, StrategicObjectiveConfig.is_active == True)
+            .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+            .all()
+        ) or (
+            db.query(StrategicObjectiveConfig)
+            .filter(StrategicObjectiveConfig.axis_id == axis.id)
+            .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+            .all()
+        )
+        objectives_data = []
+        for obj in objectives:
+            activities = (
+                db.query(POAActivity)
+                .filter(POAActivity.objective_id == obj.id)
+                .order_by(POAActivity.id.asc())
+                .all()
+            )
+            total_activities_all += len(activities)
+            acts_data = []
+            for act in activities:
+                estado = _activity_status(act, today)
+                acts_data.append({
+                    "id": int(act.id or 0),
+                    "nombre": str(act.nombre or ""),
+                    "codigo": str(act.codigo or ""),
+                    "responsable": str(act.responsable or ""),
+                    "entregable": str(act.entregable or ""),
+                    "entrega_estado": str(act.entrega_estado or "ninguna"),
+                    "estado_calculado": estado,
+                    "fecha_inicial": _date_to_iso(act.fecha_inicial),
+                    "fecha_final": _date_to_iso(act.fecha_final),
+                    "recurrente": bool(act.recurrente),
+                })
+            objectives_data.append({
+                "id": int(obj.id or 0),
+                "nombre": str(obj.nombre or ""),
+                "codigo": str(obj.codigo or ""),
+                "lider": str(getattr(obj, "lider", "") or ""),
+                "actividades": acts_data,
+                "total_actividades": len(acts_data),
+            })
+        total_objectives += len(objectives_data)
+        axes_data.append({
+            "id": int(axis.id or 0),
+            "nombre": str(axis.nombre or ""),
+            "codigo": str(axis.codigo or ""),
+            "objetivos": objectives_data,
+            "total_objetivos": len(objectives_data),
+        })
+
+    avance_resumen = _build_strategic_progress_summary(db)
+    return {
+        "contenido_adicional": {"texto": contenido_adicional},
+        "avance": avance_resumen,
+        "cron_semanal": {
+            "activo": True,
+            "intervalo_dias": int(weekly_meta.get("interval_days") or _POA_BASE_IA_WEEKLY_INTERVAL_DAYS),
+            "ultima_actualizacion": str(weekly_meta.get("last_refresh_at") or ""),
+            "proxima_actualizacion": str(weekly_meta.get("next_refresh_at") or ""),
+            "estado": str(weekly_meta.get("last_status") or ""),
+            "error": str(weekly_meta.get("last_error") or ""),
+        },
+        "ejes": axes_data,
+        "resumen": {
+            "total_ejes": len(axes_data),
+            "total_objetivos": total_objectives,
+            "total_actividades": total_activities_all,
+        },
+    }
+
+
+def _build_poa_ia_html(payload: Dict[str, Any]) -> str:
+    avance = payload.get("avance", {}) if isinstance(payload, dict) else {}
+    cron = payload.get("cron_semanal", {}) if isinstance(payload, dict) else {}
+    ejes = payload.get("ejes", []) if isinstance(payload, dict) else []
+    resumen = payload.get("resumen", {}) if isinstance(payload, dict) else {}
+    contenido_adicional_texto = str((payload.get("contenido_adicional") or {}).get("texto") or "")
+    payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
+
+    axes_html = []
+    for axis in ejes:
+        axis_name = escape(str(axis.get("nombre") or "Eje sin nombre"))
+        axis_code = escape(str(axis.get("codigo") or ""))
+        objectives = axis.get("objetivos") or []
+        objs_html_parts = []
+        for obj in objectives:
+            lider = escape(str(obj.get("lider") or ""))
+            obj_lider_line = f"<div style='font-size:11px;color:#64748b;'>Líder: {lider}</div>" if lider else ""
+            activities = obj.get("actividades") or []
+            acts_rows = "".join(
+                "<tr>"
+                f"<td style='padding:4px 6px;'>{escape(str(a.get('codigo') or ''))}</td>"
+                f"<td style='padding:4px 6px;'>{escape(str(a.get('nombre') or ''))}</td>"
+                f"<td style='padding:4px 6px;'>{escape(str(a.get('responsable') or ''))}</td>"
+                f"<td style='padding:4px 6px;'>{escape(str(a.get('estado_calculado') or ''))}</td>"
+                f"<td style='padding:4px 6px;'>{escape(str(a.get('fecha_final') or ''))}</td>"
+                "</tr>"
+                for a in activities
+            ) or "<tr><td colspan='5' style='padding:4px 6px;color:#64748b;'>Sin actividades</td></tr>"
+            acts_table = (
+                "<table style='width:100%;border-collapse:collapse;font-size:12px;'>"
+                "<thead><tr style='background:#f1f5f9;'>"
+                "<th style='padding:4px 6px;text-align:left;'>Código</th>"
+                "<th style='padding:4px 6px;text-align:left;'>Actividad</th>"
+                "<th style='padding:4px 6px;text-align:left;'>Responsable</th>"
+                "<th style='padding:4px 6px;text-align:left;'>Estado</th>"
+                "<th style='padding:4px 6px;text-align:left;'>Fecha fin</th>"
+                "</tr></thead>"
+                f"<tbody>{acts_rows}</tbody>"
+                "</table>"
+            )
+            objs_html_parts.append(
+                "<li style='margin-bottom:10px;'>"
+                f"<strong>{escape(str(obj.get('codigo') or 'OBJ'))}</strong> · "
+                f"{escape(str(obj.get('nombre') or 'Objetivo sin nombre'))}"
+                f"{obj_lider_line}"
+                f"<div style='margin-top:6px;overflow-x:auto;'>{acts_table}</div>"
+                "</li>"
+            )
+        objs_block = "<ul style='margin:0 0 0 0;padding:0;list-style:none;'>" + "".join(objs_html_parts) + "</ul>" if objs_html_parts else "<p style='color:#64748b;'>Sin objetivos.</p>"
+        axes_html.append(
+            "<article style='border:1px solid #dbe4ea;border-radius:10px;padding:12px;background:#fff;'>"
+            f"<h4 style='margin:0 0 4px;'>{axis_name}</h4>"
+            f"<div style='font-size:12px;color:#475569;margin-bottom:8px;'>Código: {axis_code} · {int(axis.get('total_objetivos') or 0)} objetivos</div>"
+            f"{objs_block}"
+            "</article>"
+        )
+    axes_block = "".join(axes_html) if axes_html else "<p style='color:#64748b;'>Sin ejes registrados.</p>"
+
+    return (
+        "<section style='display:grid;gap:12px;'>"
+        "<section style='border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px;'>"
+        "<h3 style='margin:0 0 8px;'>Base IA · POA</h3>"
+        "<p style='margin:0;color:#334155;'>Fuente consolidada para consulta de IA: ejes, objetivos, actividades y avance del Plan Operativo Anual.</p>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#f8fafc;'>"
+        "<h4 style='margin:0 0 8px;'>Resumen</h4>"
+        f"<p style='margin:0;color:#334155;'>Ejes: <b>{int(resumen.get('total_ejes') or 0)}</b> · "
+        f"Objetivos: <b>{int(resumen.get('total_objetivos') or 0)}</b> · "
+        f"Actividades: <b>{int(resumen.get('total_actividades') or 0)}</b></p>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Avance POA</h4>"
+        f"<p style='margin:0 0 6px;color:#334155;'>Actividades: <b>{int((avance or {}).get('activities_total') or 0)}</b> · "
+        f"Completadas: <b>{int((avance or {}).get('activities_completed') or 0)}</b> · "
+        f"Vencidas: <b>{int((avance or {}).get('activities_overdue') or 0)}</b> · "
+        f"Avance estimado: <b>{float((avance or {}).get('progress_avg') or 0):.2f}%</b></p>"
+        f"<p style='margin:0;color:#64748b;font-size:12px;'>Corte: {escape(str((avance or {}).get('generated_at') or ''))}</p>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Cron semanal (renovación automática)</h4>"
+        f"<p style='margin:0 0 6px;color:#334155;'>Intervalo: <b>{int((cron or {}).get('intervalo_dias') or _POA_BASE_IA_WEEKLY_INTERVAL_DAYS)} días</b> · "
+        f"Última actualización: <b>{escape(str((cron or {}).get('ultima_actualizacion') or 'N/D'))}</b> · "
+        f"Próxima: <b>{escape(str((cron or {}).get('proxima_actualizacion') or 'N/D'))}</b></p>"
+        f"<p style='margin:0 0 10px;color:#64748b;font-size:12px;'>Estado: {escape(str((cron or {}).get('estado') or 'sin_ejecucion'))}</p>"
+        "<button type='button' id='poa-base-ia-weekly-refresh' style='background:#14532d;color:#fff;border:1px solid #14532d;border-radius:10px;padding:8px 14px;cursor:pointer;'>Actualizar ahora (reemplaza contenido previo)</button>"
+        "<span id='poa-base-ia-weekly-refresh-status' style='margin-left:10px;font-size:12px;color:#475569;'></span>"
+        "<script>"
+        "(function(){"
+        "  const btn=document.getElementById('poa-base-ia-weekly-refresh');"
+        "  const st=document.getElementById('poa-base-ia-weekly-refresh-status');"
+        "  if(!btn||!st){return;}"
+        "  btn.addEventListener('click', async function(){"
+        "    btn.disabled=true; st.textContent='Actualizando...';"
+        "    try{"
+        "      const res=await fetch('/api/poa/base-ia/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({force:true})});"
+        "      const data=await res.json();"
+        "      if(!res.ok||!data||data.success!==true){throw new Error((data&&data.error)||'No se pudo actualizar');}"
+        "      st.textContent='Actualización ejecutada. Recarga para ver cambios.';"
+        "    }catch(err){st.textContent=(err&&err.message)?err.message:'Error al actualizar';}"
+        "    finally{btn.disabled=false;}"
+        "  });"
+        "})();"
+        "</script>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Ejes, objetivos y actividades</h4>"
+        f"<div style='display:grid;gap:10px;'>{axes_block}</div>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Contenido adicional para IA (editable)</h4>"
+        "<p style='margin:0 0 8px;color:#475569;'>Este bloque se usa como contexto adicional en Conversaciones IA del módulo POA.</p>"
+        f"<textarea id='poa-base-ia-extra-text' style='width:100%;min-height:180px;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;'>{escape(contenido_adicional_texto)}</textarea>"
+        "<div style='margin-top:10px;display:flex;gap:10px;align-items:center;'>"
+        "<button type='button' id='poa-base-ia-extra-save' style='background:#0f172a;color:#fff;border:1px solid #0f172a;border-radius:10px;padding:8px 14px;cursor:pointer;'>Guardar contenido adicional</button>"
+        "<span id='poa-base-ia-extra-status' style='font-size:12px;color:#475569;'></span>"
+        "</div>"
+        "<script>"
+        "(function(){"
+        "  const btn=document.getElementById('poa-base-ia-extra-save');"
+        "  const txt=document.getElementById('poa-base-ia-extra-text');"
+        "  const st=document.getElementById('poa-base-ia-extra-status');"
+        "  if(!btn||!txt||!st){return;}"
+        "  btn.addEventListener('click', async function(){"
+        "    btn.disabled=true; st.textContent='Guardando...';"
+        "    try{"
+        "      const res=await fetch('/api/poa/base-ia/contenido',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({texto:String(txt.value||'')})});"
+        "      const data=await res.json();"
+        "      if(!res.ok||!data||data.success!==true){throw new Error((data&&data.error)||'No se pudo guardar');}"
+        "      st.textContent='Guardado correctamente';"
+        "    }catch(err){st.textContent=(err&&err.message)?err.message:'Error al guardar';}"
+        "    finally{btn.disabled=false;}"
+        "  });"
+        "})();"
+        "</script>"
+        "</section>"
+        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
+        "<h4 style='margin:0 0 8px;'>Payload estructurado (JSON)</h4>"
+        f"<pre style='margin:0;white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;font-size:12px;'>{escape(payload_json)}</pre>"
+        "</section>"
+        "</section>"
+    )
+
+
+def _refresh_weekly_poa_base_ia_if_due(db, force: bool = False) -> dict:
+    """Actualiza el resumen semanal de POA reemplazando el contenido anterior."""
+    with _poa_base_ia_cron_lock:
+        _ensure_strategic_identity_table(db)
+        meta_row = db.execute(
+            text("SELECT payload FROM strategic_identity_config WHERE bloque = :b LIMIT 1"),
+            {"b": _POA_BASE_IA_WEEKLY_META_BLOCK},
+        ).fetchone()
+        try:
+            meta = json.loads(str(meta_row[0] or "{}")) if meta_row else {}
+        except Exception:
+            meta = {}
+        last_refresh_raw = str(meta.get("last_refresh_at") or "").strip()
+        now = datetime.utcnow()
+        last_refresh_dt = None
+        if last_refresh_raw:
+            try:
+                last_refresh_dt = datetime.fromisoformat(last_refresh_raw)
+            except Exception:
+                pass
+        due = force or (last_refresh_dt is None) or ((now - last_refresh_dt) >= timedelta(days=_POA_BASE_IA_WEEKLY_INTERVAL_DAYS))
+        if not due:
+            next_at = (last_refresh_dt + timedelta(days=_POA_BASE_IA_WEEKLY_INTERVAL_DAYS)).isoformat() if last_refresh_dt else ""
+            return {"updated": False, "reason": "not_due", "last_refresh_at": last_refresh_raw, "next_refresh_at": next_at}
+        # Genera snapshot de estado actual del POA como texto
+        avance = _build_strategic_progress_summary(db)
+        today = now.date()
+        snapshot_lines = [
+            "=== Snapshot semanal POA ===",
+            f"Corte: {now.isoformat()}",
+            f"Actividades: {avance.get('activities_total', 0)} totales · {avance.get('activities_completed', 0)} completadas · {avance.get('activities_overdue', 0)} vencidas",
+            f"Avance estimado: {avance.get('progress_avg', 0):.2f}%",
+        ]
+        # ── Sección 1: Ejes → Objetivos → Actividades ──────────────────────
+        axes = (
+            db.query(StrategicAxisConfig)
+            .filter(StrategicAxisConfig.is_active == True)
+            .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+            .all()
+        ) or db.query(StrategicAxisConfig).order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc()).all()
+        all_activities_global = []  # acumulado para breakdown posterior
+        for axis in axes:
+            snapshot_lines.append(f"\nEje: {axis.nombre} ({axis.codigo})")
+            objectives = (
+                db.query(StrategicObjectiveConfig)
+                .filter(StrategicObjectiveConfig.axis_id == axis.id, StrategicObjectiveConfig.is_active == True)
+                .all()
+            ) or db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.axis_id == axis.id).all()
+            for obj in objectives:
+                activities = db.query(POAActivity).filter(POAActivity.objective_id == obj.id).all()
+                all_activities_global.extend(activities)
+                completadas = sum(1 for a in activities if _activity_status(a, today) == "Terminada")
+                vencidas = sum(1 for a in activities if _activity_status(a, today) == "Atrasada")
+                en_proceso = len(activities) - completadas - vencidas
+                snapshot_lines.append(
+                    f"  OBJ {obj.codigo} · {obj.nombre} · "
+                    f"{len(activities)} act. · {completadas} terminadas · {vencidas} vencidas · {en_proceso} en proceso"
+                )
+                # Detalle de actividades individuales (máx 50 por objetivo para no superar límite)
+                for act in activities[:50]:
+                    estado = _activity_status(act, today)
+                    resp = str(act.responsable or "Sin asignar").strip()
+                    fecha = str(act.fecha_final or "").strip() or "s/f"
+                    snapshot_lines.append(
+                        f"    • [{estado}] {act.codigo or '?'} · {act.nombre or '?'} · "
+                        f"Resp: {resp} · Vence: {fecha}"
+                    )
+        # ── Sección 2: Breakdown por RESPONSABLE ────────────────────────────
+        if all_activities_global:
+            resp_map: dict = {}
+            for act in all_activities_global:
+                r = str(act.responsable or "Sin asignar").strip() or "Sin asignar"
+                if r not in resp_map:
+                    resp_map[r] = {"total": 0, "terminadas": 0, "atrasadas": 0, "en_proceso": 0, "actividades": []}
+                estado = _activity_status(act, today)
+                resp_map[r]["total"] += 1
+                if estado == "Terminada":
+                    resp_map[r]["terminadas"] += 1
+                elif estado == "Atrasada":
+                    resp_map[r]["atrasadas"] += 1
+                else:
+                    resp_map[r]["en_proceso"] += 1
+                resp_map[r]["actividades"].append(
+                    f"{act.codigo or '?'}: {str(act.nombre or '').strip()[:60]} [{estado}]"
+                )
+            snapshot_lines.append("\n=== AVANCE POR RESPONSABLE ===")
+            for responsable in sorted(resp_map.keys()):
+                rd = resp_map[responsable]
+                pct = round(rd["terminadas"] / rd["total"] * 100, 1) if rd["total"] else 0.0
+                snapshot_lines.append(
+                    f"\nResponsable: {responsable} · Total: {rd['total']} · "
+                    f"Terminadas: {rd['terminadas']} · Atrasadas: {rd['atrasadas']} · "
+                    f"En proceso: {rd['en_proceso']} · Avance: {pct}%"
+                )
+                for act_line in rd["actividades"][:20]:
+                    snapshot_lines.append(f"  - {act_line}")
+                if len(rd["actividades"]) > 20:
+                    snapshot_lines.append(f"  ... y {len(rd['actividades']) - 20} actividades más")
+        # ── Sección 3: Resumen estadístico consolidado ──────────────────────
+        total_g = len(all_activities_global)
+        term_g = sum(1 for a in all_activities_global if _activity_status(a, today) == "Terminada")
+        atra_g = sum(1 for a in all_activities_global if _activity_status(a, today) == "Atrasada")
+        proc_g = total_g - term_g - atra_g
+        snapshot_lines.append("\n=== RESUMEN CONSOLIDADO ===")
+        snapshot_lines.append(
+            f"Total actividades: {total_g} | Terminadas: {term_g} ({round(term_g/total_g*100,1) if total_g else 0}%) | "
+            f"Atrasadas: {atra_g} | En proceso: {proc_g}"
+        )
+        new_text = "\n".join(snapshot_lines)
+        # Reemplaza completamente el contenido anterior
+        for bloque, valor in [
+            (_POA_BASE_IA_EXTRA_BLOCK, json.dumps({"texto": new_text}, ensure_ascii=False)),
+        ]:
+            db.execute(
+                text(
+                    "INSERT INTO strategic_identity_config (bloque, payload, updated_at) "
+                    "VALUES (:b, :p, CURRENT_TIMESTAMP) "
+                    "ON CONFLICT (bloque) DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP"
+                ),
+                {"b": bloque, "p": valor},
+            )
+        next_at = (now + timedelta(days=_POA_BASE_IA_WEEKLY_INTERVAL_DAYS)).isoformat()
+        new_meta = {
+            "last_refresh_at": now.isoformat(),
+            "next_refresh_at": next_at,
+            "interval_days": _POA_BASE_IA_WEEKLY_INTERVAL_DAYS,
+            "last_status": "ok",
+            "last_error": "",
+            "generated_chars": len(new_text),
+        }
+        db.execute(
+            text(
+                "INSERT INTO strategic_identity_config (bloque, payload, updated_at) "
+                "VALUES (:b, :p, CURRENT_TIMESTAMP) "
+                "ON CONFLICT (bloque) DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP"
+            ),
+            {"b": _POA_BASE_IA_WEEKLY_META_BLOCK, "p": json.dumps(new_meta, ensure_ascii=False)},
+        )
+        db.commit()
+        return {"updated": True, "last_refresh_at": now.isoformat(), "next_refresh_at": next_at, "generated_chars": len(new_text)}
+
+
+@router.get("/poa/base-ia", response_class=HTMLResponse)
+def poa_base_ia_page(request: Request):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return RedirectResponse(url="/no-acceso", status_code=302)
+    db = SessionLocal()
+    try:
+        try:
+            _refresh_weekly_poa_base_ia_if_due(db, force=False)
+        except Exception:
+            db.rollback()
+        payload = _build_poa_ia_payload(db)
+    finally:
+        db.close()
+    return render_backend_page(
+        request,
+        title="Base IA · POA",
+        description="Concentrado ordenado para consulta IA del módulo POA.",
+        content=_build_poa_ia_html(payload),
+        hide_floating_actions=True,
+        show_page_header=True,
+    )
+
+
+@router.get("/api/poa/base-ia", response_class=JSONResponse)
+def poa_base_ia_api(request: Request):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    db = SessionLocal()
+    try:
+        try:
+            _refresh_weekly_poa_base_ia_if_due(db, force=False)
+        except Exception:
+            db.rollback()
+        payload = _build_poa_ia_payload(db)
+        return JSONResponse({"success": True, "data": payload})
+    finally:
+        db.close()
+
+
+@router.get("/api/poa/base-ia/contenido", response_class=JSONResponse)
+def poa_base_ia_contenido_get(request: Request):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    db = SessionLocal()
+    try:
+        _ensure_strategic_identity_table(db)
+        db.commit()
+        row = db.execute(
+            text("SELECT payload FROM strategic_identity_config WHERE bloque = :b LIMIT 1"),
+            {"b": _POA_BASE_IA_EXTRA_BLOCK},
+        ).fetchone()
+        payload_raw = str(row[0] or "{}") if row else "{}"
+        try:
+            payload_json = json.loads(payload_raw)
+        except Exception:
+            payload_json = {}
+        texto = str((payload_json if isinstance(payload_json, dict) else {}).get("texto") or "").strip()
+        return JSONResponse({"success": True, "data": {"texto": texto}})
+    finally:
+        db.close()
+
+
+@router.put("/api/poa/base-ia/contenido", response_class=JSONResponse)
+def poa_base_ia_contenido_put(request: Request, data: dict = Body(...)):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    texto = str(data.get("texto") or "").strip()
+    encoded = json.dumps({"texto": texto}, ensure_ascii=False)
+    db = SessionLocal()
+    try:
+        _ensure_strategic_identity_table(db)
+        db.execute(
+            text(
+                "INSERT INTO strategic_identity_config (bloque, payload, updated_at) "
+                "VALUES (:b, :p, CURRENT_TIMESTAMP) "
+                "ON CONFLICT (bloque) DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP"
+            ),
+            {"b": _POA_BASE_IA_EXTRA_BLOCK, "p": encoded},
+        )
+        db.commit()
+        return JSONResponse({"success": True, "data": {"texto": texto}})
+    except (sqlite3.OperationalError, SQLAlchemyError):
+        db.rollback()
+        return JSONResponse({"success": False, "error": "No se pudo escribir en la base de datos."}, status_code=500)
+    finally:
+        db.close()
+
+
+@router.post("/api/poa/base-ia/refresh", response_class=JSONResponse)
+def poa_base_ia_refresh(request: Request, data: dict = Body(default={})):
+    _bind_core_symbols()
+    if not is_superadmin(request):
+        return JSONResponse({"success": False, "error": "Acceso denegado"}, status_code=403)
+    force = bool((data or {}).get("force", True))
+    db = SessionLocal()
+    try:
+        result = _refresh_weekly_poa_base_ia_if_due(db, force=force)
+        return JSONResponse({"success": True, "data": result})
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    finally:
+        db.close()
 
 
 @router.get("/api/planificacion/plantilla-plan-poa.csv")
@@ -8586,6 +10669,34 @@ def download_strategic_poa_template():
     content = output.getvalue()
     headers = {"Content-Disposition": 'attachment; filename="plantilla_plan_estrategico_poa.csv"'}
     return Response(content, media_type="text/csv; charset=utf-8", headers=headers)
+
+
+@router.get("/api/planificacion/exportar-plan-poa.xlsx")
+def export_strategic_poa_xlsx():
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        export_rows = _strategic_poa_export_rows(db)
+    finally:
+        db.close()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Plan_POA"
+    ws.append(STRATEGIC_POA_CSV_HEADERS)
+    for row in export_rows:
+        ws.append([_csv_value(row, key) for key in STRATEGIC_POA_CSV_HEADERS])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    filename = f'plan_estrategico_poa_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return Response(
+        content=output.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers,
+    )
 
 
 @router.post("/api/planificacion/importar-plan-poa")
@@ -9270,6 +11381,12 @@ def list_strategic_axes(request: Request):
             .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
             .all()
         )
+        if not axes:
+            axes = (
+                db.query(StrategicAxisConfig)
+                .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
+                .all()
+            )
         payload_axes = [_serialize_strategic_axis(axis) for axis in axes]
         objective_ids: List[int] = []
         for axis_data in payload_axes:
@@ -9713,29 +11830,36 @@ def delete_strategic_objective(objective_id: int):
 
 def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiveConfig]:
     _bind_core_symbols()
-    if is_admin_or_superadmin(request):
-        return (
+    def _active_or_any_objectives() -> List[StrategicObjectiveConfig]:
+        active_rows = (
             db.query(StrategicObjectiveConfig)
             .filter(StrategicObjectiveConfig.is_active == True)
+            .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+            .all()
+        )
+        if active_rows:
+            return active_rows
+        return (
+            db.query(StrategicObjectiveConfig)
             .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
             .all()
         )
 
+    if _is_request_admin_like(request, db):
+        return _active_or_any_objectives()
+
     poa_access_level = _poa_access_level_for_request(request, db)
     if poa_access_level == "todas_tareas":
-        return (
-            db.query(StrategicObjectiveConfig)
-            .filter(StrategicObjectiveConfig.is_active == True)
-            .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
-            .all()
-        )
+        return _active_or_any_objectives()
 
     session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
     user = _current_user_record(request, db)
     aliases = _user_aliases(user, session_username)
     alias_set = {str(item or "").strip().lower() for item in aliases if str(item or "").strip()}
     if not alias_set:
-        return []
+        # Fallback de visualización: si no se pudo resolver identidad de sesión,
+        # mostrar objetivos en modo lectura para evitar tablero vacío.
+        return _active_or_any_objectives()
 
     objective_ids: Set[int] = set()
     own_activities = (
@@ -9762,13 +11886,22 @@ def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiv
         except Exception:
             continue
     if not objective_ids:
-        return []
-    return (
+        # Si el usuario no tiene asignaciones directas, permitir vista global (solo lectura).
+        return _active_or_any_objectives()
+    rows = (
         db.query(StrategicObjectiveConfig)
         .filter(
             StrategicObjectiveConfig.is_active == True,
             StrategicObjectiveConfig.id.in_(sorted(objective_ids)),
         )
+        .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
+        .all()
+    )
+    if rows:
+        return rows
+    return (
+        db.query(StrategicObjectiveConfig)
+        .filter(StrategicObjectiveConfig.id.in_(sorted(objective_ids)))
         .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
         .all()
     )
@@ -9780,6 +11913,7 @@ def poa_board_data(request: Request):
     db = SessionLocal()
     try:
         _ensure_poa_subactivity_recurrence_columns(db)
+        admin_like = _is_request_admin_like(request, db)
         objectives = _allowed_objectives_for_user(request, db)
         objective_ids = [obj.id for obj in objectives]
         objective_axis_map = {obj.id: obj.eje_id for obj in objectives}
@@ -9824,10 +11958,14 @@ def poa_board_data(request: Request):
         poa_access_level = _poa_access_level_for_request(request, db)
         session_role_raw = str(getattr(request.state, "user_role", None) or request.cookies.get("user_role") or "")
         session_role_normalized = normalize_role_name(session_role_raw)
+        detected_role = normalize_role_name(get_current_role(request))
+        if detected_role in {"administrador", "superadministrador"}:
+            admin_like = True
+            poa_access_level = "todas_tareas"
         objective_can_validate: Dict[int, bool] = {}
         for obj in objectives:
             leader = (obj.lider or "").strip().lower()
-            objective_can_validate[int(obj.id)] = bool(leader and leader in aliases) or is_admin_or_superadmin(request)
+            objective_can_validate[int(obj.id)] = bool(leader and leader in aliases) or admin_like
 
         pending_approvals = (
             db.query(POADeliverableApproval)
@@ -9888,14 +12026,15 @@ def poa_board_data(request: Request):
                 "pending_approvals": approvals_for_user,
                 "permissions": {
                     "poa_access_level": poa_access_level,
-                    "can_manage_content": bool(is_admin_or_superadmin(request)),
+                    "can_manage_content": bool(admin_like),
                     "can_view_gantt": bool(poa_access_level == "todas_tareas"),
                 },
                 "diagnostics": {
                     "user_name": session_username,
                     "role_raw": session_role_raw,
                     "role_normalized": session_role_normalized,
-                    "is_admin_or_superadmin": bool(is_admin_or_superadmin(request)),
+                    "role_detected": detected_role,
+                    "is_admin_or_superadmin": bool(admin_like),
                     "poa_access_level": poa_access_level,
                     "objectives_count": len(objectives),
                     "activities_count": len(activities),
@@ -10114,6 +12253,67 @@ def notifications_summary(request: Request):
                     }
                 )
 
+        # Alertas IA de riesgo POA publicadas por el motor de riesgo.
+        try:
+            db.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS ia_poa_risk_alerts (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL,
+                        alert_key TEXT NOT NULL UNIQUE,
+                        activity_id INTEGER,
+                        objective_id INTEGER,
+                        axis_id INTEGER,
+                        severity TEXT NOT NULL,
+                        risk_score REAL NOT NULL DEFAULT 0,
+                        status TEXT NOT NULL DEFAULT 'active',
+                        owner TEXT DEFAULT '',
+                        title TEXT NOT NULL DEFAULT '',
+                        message TEXT NOT NULL DEFAULT '',
+                        recommendation TEXT NOT NULL DEFAULT '',
+                        source TEXT NOT NULL DEFAULT 'ia_risk_engine',
+                        resolved_at TEXT DEFAULT ''
+                    )
+                    """
+                )
+            )
+            db.commit()
+            alerts_rows = db.execute(
+                text(
+                    """
+                    SELECT id, created_at, updated_at, severity, risk_score, title, message, recommendation
+                    FROM ia_poa_risk_alerts
+                    WHERE source = 'ia_risk_engine' AND status = 'active'
+                    ORDER BY
+                        CASE severity WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END DESC,
+                        risk_score DESC,
+                        updated_at DESC
+                    LIMIT 20
+                    """
+                )
+            ).fetchall()
+            for row in alerts_rows:
+                severity = str(row.severity or "").strip().lower()
+                severity_label = "alto" if severity == "high" else ("medio" if severity == "medium" else "bajo")
+                created_at_raw = str(row.updated_at or row.created_at or now.isoformat()).strip() or now.isoformat()
+                items.append(
+                    {
+                        "id": f"ia-poa-risk-{int(row.id or 0)}",
+                        "kind": "ia_riesgo_poa",
+                        "title": str(row.title or "Alerta IA de riesgo POA").strip(),
+                        "message": (
+                            f"{str(row.message or '').strip()} · Riesgo {severity_label} · "
+                            f"Recomendación: {str(row.recommendation or '').strip()}"
+                        ).strip(" ·"),
+                        "created_at": created_at_raw,
+                        "href": "/poa/crear",
+                    }
+                )
+        except Exception:
+            db.rollback()
+
         items.sort(key=lambda item: item.get("created_at") or "", reverse=True)
         limited_items = items[:25]
         notification_ids = [str(item.get("id") or "").strip() for item in limited_items if str(item.get("id") or "").strip()]
@@ -10139,6 +12339,7 @@ def notifications_summary(request: Request):
             "actividad_atrasada": 0,
             "actividad_por_vencer": 0,
             "quiz_descuento": 0,
+            "ia_riesgo_poa": 0,
         }
         for item in limited_items:
             kind = str(item.get("kind") or "")
@@ -10259,8 +12460,6 @@ def mark_all_notifications_read(request: Request, data: dict = Body(default={}))
 @router.post("/api/poa/activities")
 def create_poa_activity(request: Request, data: dict = Body(...)):
     _bind_core_symbols()
-    if not is_admin_or_superadmin(request):
-        return JSONResponse({"success": False, "error": "Solo administrador puede crear actividades"}, status_code=403)
     objective_id = int(data.get("objective_id") or 0)
     nombre = (data.get("nombre") or "").strip()
     responsable = (data.get("responsable") or "").strip()
@@ -10302,8 +12501,11 @@ def create_poa_activity(request: Request, data: dict = Body(...)):
 
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
+        if not admin_like:
+            return JSONResponse({"success": False, "error": "Solo administrador puede crear actividades"}, status_code=403)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
-        if objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+        if objective_id not in allowed_ids and not admin_like:
             return JSONResponse({"success": False, "error": "No autorizado para este objetivo"}, status_code=403)
         objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
         if not objective:
@@ -10311,7 +12513,7 @@ def create_poa_activity(request: Request, data: dict = Body(...)):
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
         user = _current_user_record(request, db)
         aliases = _user_aliases(user, session_username)
-        can_validate_deliverables = bool((objective.lider or "").strip().lower() in aliases) or is_admin_or_superadmin(request)
+        can_validate_deliverables = bool((objective.lider or "").strip().lower() in aliases) or admin_like
         if not can_validate_deliverables:
             normalized_deliverables = [{**item, "validado": False} for item in normalized_deliverables]
         valid_milestone_ids = {int(item.get("id") or 0) for item in _milestones_by_objective_ids(db, [objective_id]).get(objective_id, [])}
@@ -10367,15 +12569,16 @@ def create_poa_activity(request: Request, data: dict = Body(...)):
 @router.put("/api/poa/activities/{activity_id}")
 def update_poa_activity(request: Request, activity_id: int, data: dict = Body(...)):
     _bind_core_symbols()
-    if not is_admin_or_superadmin(request):
-        return JSONResponse({"success": False, "error": "Solo administrador puede editar actividades"}, status_code=403)
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
+        if not admin_like:
+            return JSONResponse({"success": False, "error": "Solo administrador puede editar actividades"}, status_code=403)
         activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
-        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+        if activity.objective_id not in allowed_ids and not admin_like:
             return JSONResponse({"success": False, "error": "No autorizado para editar esta actividad"}, status_code=403)
         nombre = (data.get("nombre") or "").strip()
         responsable = (data.get("responsable") or "").strip()
@@ -10420,7 +12623,7 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
         user = _current_user_record(request, db)
         aliases = _user_aliases(user, session_username)
-        can_validate_deliverables = bool((objective.lider or "").strip().lower() in aliases) or is_admin_or_superadmin(request)
+        can_validate_deliverables = bool((objective.lider or "").strip().lower() in aliases) or admin_like
         if not can_validate_deliverables:
             normalized_deliverables = [{**item, "validado": False} for item in normalized_deliverables]
         valid_milestone_ids = {int(item.get("id") or 0) for item in _milestones_by_objective_ids(db, [int(objective.id)]).get(int(objective.id), [])}
@@ -10475,15 +12678,16 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
 @router.delete("/api/poa/activities/{activity_id}")
 def delete_poa_activity(request: Request, activity_id: int):
     _bind_core_symbols()
-    if not is_admin_or_superadmin(request):
-        return JSONResponse({"success": False, "error": "Solo administrador puede eliminar actividades"}, status_code=403)
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
+        if not admin_like:
+            return JSONResponse({"success": False, "error": "Solo administrador puede eliminar actividades"}, status_code=403)
         activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
-        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+        if activity.objective_id not in allowed_ids and not admin_like:
             return JSONResponse({"success": False, "error": "No autorizado para eliminar esta actividad"}, status_code=403)
         db.query(POASubactivity).filter(POASubactivity.activity_id == activity.id).delete()
         _delete_activity_budgets(db, int(activity.id))
@@ -10501,11 +12705,12 @@ def mark_poa_activity_in_progress(request: Request, activity_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
         activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
-        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+        if activity.objective_id not in allowed_ids and not admin_like:
             return JSONResponse({"success": False, "error": "No autorizado para esta actividad"}, status_code=403)
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
         user = _current_user_record(request, db)
@@ -10533,11 +12738,12 @@ def mark_poa_activity_finished(request: Request, activity_id: int, data: dict = 
     send_review = bool(data.get("enviar_revision"))
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
         activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
-        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+        if activity.objective_id not in allowed_ids and not admin_like:
             return JSONResponse({"success": False, "error": "No autorizado para esta actividad"}, status_code=403)
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
         user = _current_user_record(request, db)
@@ -10629,11 +12835,12 @@ def request_poa_activity_completion(request: Request, activity_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
         activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
-        if activity.objective_id not in allowed_ids and not is_admin_or_superadmin(request):
+        if activity.objective_id not in allowed_ids and not admin_like:
             return JSONResponse({"success": False, "error": "No autorizado para esta actividad"}, status_code=403)
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
         user = _current_user_record(request, db)
@@ -10738,8 +12945,6 @@ def decide_poa_deliverable_approval(request: Request, approval_id: int, data: di
 @router.post("/api/poa/activities/{activity_id}/subactivities")
 def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body(...)):
     _bind_core_symbols()
-    if not is_admin_or_superadmin(request):
-        return JSONResponse({"success": False, "error": "Solo administrador puede crear subtareas"}, status_code=403)
     nombre = (data.get("nombre") or "").strip()
     responsable = (data.get("responsable") or "").strip()
     if not nombre:
@@ -10770,6 +12975,9 @@ def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body
 
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
+        if not admin_like:
+            return JSONResponse({"success": False, "error": "Solo administrador puede crear subtareas"}, status_code=403)
         _ensure_poa_subactivity_recurrence_columns(db)
         activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
         if not activity:
@@ -10840,10 +13048,11 @@ def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body
 @router.put("/api/poa/subactivities/{subactivity_id}")
 def update_poa_subactivity(request: Request, subactivity_id: int, data: dict = Body(...)):
     _bind_core_symbols()
-    if not is_admin_or_superadmin(request):
-        return JSONResponse({"success": False, "error": "Solo administrador puede editar subtareas"}, status_code=403)
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
+        if not admin_like:
+            return JSONResponse({"success": False, "error": "Solo administrador puede editar subtareas"}, status_code=403)
         _ensure_poa_subactivity_recurrence_columns(db)
         sub = db.query(POASubactivity).filter(POASubactivity.id == subactivity_id).first()
         if not sub:
@@ -10928,10 +13137,11 @@ def update_poa_subactivity(request: Request, subactivity_id: int, data: dict = B
 @router.delete("/api/poa/subactivities/{subactivity_id}")
 def delete_poa_subactivity(request: Request, subactivity_id: int):
     _bind_core_symbols()
-    if not is_admin_or_superadmin(request):
-        return JSONResponse({"success": False, "error": "Solo administrador puede eliminar subtareas"}, status_code=403)
     db = SessionLocal()
     try:
+        admin_like = _is_request_admin_like(request, db)
+        if not admin_like:
+            return JSONResponse({"success": False, "error": "Solo administrador puede eliminar subtareas"}, status_code=403)
         _ensure_poa_subactivity_recurrence_columns(db)
         sub = db.query(POASubactivity).filter(POASubactivity.id == subactivity_id).first()
         if not sub:
