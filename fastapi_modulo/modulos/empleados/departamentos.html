@@ -1,1958 +1,977 @@
-<section class="departamentos-page">
-  <h1 class="page-title">Áreas Organizacionales</h1>
-  <p class="page-description">Administra la estructura organizacional de la organización</p>
+<section id="departamentos-module" class="w-full space-y-6">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/templates/icon/boton/organigrama.svg"
+        alt="Icono módulo"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+      />
+      <div class="w-full grid grid-cols-1 gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Áreas organizacionales</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Definir claramente las áreas organizacionales es fundamental para el éxito de cualquier empresa</div>
+      </div>
+    </div>
+  </div>
 
-  <div class="view-buttons">
-    <button type="button" class="view-pill active" data-view="form">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span><span class="view-pill-label">Form</span>
+  <div class="view-buttons page-view-buttons">
+    <button id="dep-btn-nuevo" class="view-pill boton_vista boton_vista-eliptico" type="button" data-tooltip="Nuevo" aria-label="Nuevo" title="Nuevo" style="margin-right:60px;">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+      <span class="view-pill-label">Nuevo</span>
     </button>
-    <button type="button" class="view-pill" data-view="list">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span><span class="view-pill-label">Lista</span>
+    <button class="view-pill boton_vista" type="button" data-view="list" data-tooltip="Lista" aria-label="Lista">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Lista</span>
     </button>
-    <button type="button" class="view-pill" data-view="kanban">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span><span class="view-pill-label">Kanban</span>
+    <button class="view-pill boton_vista" type="button" data-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Kanban</span>
     </button>
-    <button type="button" class="view-pill" data-view="organigrama">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span><span class="view-pill-label">Organigrama</span>
+    <button class="view-pill boton_vista" type="button" data-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Organigrama</span>
     </button>
-    <button type="button" class="view-pill" data-view="puestos">
-      <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span><span class="view-pill-label">Puestos laborales</span>
+    <button class="view-pill boton_vista" type="button" data-view="puestos" data-tooltip="Puestos laborales" aria-label="Puestos laborales">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Puestos laborales</span>
     </button>
   </div>
 
-  <section id="area-panel" class="usuario-panel">
-    <div id="area-view"></div>
-  </section>
-
-  <style>
-    .departamentos-page .area-card {
-      border: 1px solid #dbe3ef;
-      border-radius: 14px;
-      background: #fff;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-    .departamentos-page .area-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .departamentos-page .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .departamentos-page .field.field-full {
-      grid-column: 1 / -1;
-    }
-    .departamentos-page .field input,
-    .departamentos-page .field select,
-    .departamentos-page .field textarea {
-      border: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 20%, #ffffff 80%);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font: inherit;
-      color: var(--navbar-text, #1f172a);
-      background: var(--field-color, #ffffff);
-    }
-    .departamentos-page .field textarea {
-      min-height: 92px;
-      resize: vertical;
-    }
-    .departamentos-page .color-field-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .departamentos-page .color-swatch {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      border: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 22%, #ffffff 78%);
-      background: #1d4ed8;
-      flex: 0 0 40px;
-    }
-    .departamentos-page .btn-icon {
-      width: 34px;
-      height: 34px;
-      padding: 0;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .departamentos-page .btn-icon img {
-      width: 16px;
-      height: 16px;
-      object-fit: contain;
-      display: block;
-    }
-    .departamentos-page .save-status {
-      min-height: 20px;
-      font-size: .9rem;
-      font-weight: 600;
-      align-self: center;
-    }
-    .departamentos-page .save-status.is-pending { color: #334155; }
-    .departamentos-page .save-status.is-ok { color: #166534; }
-    .departamentos-page .save-status.is-error { color: #b91c1c; }
-    .departamentos-page .list {
-      display: grid;
-      gap: 10px;
-    }
-    .departamentos-page .list-item {
-      border: 1px solid #dbe3ef;
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      cursor: pointer;
-      background: #fff;
-    }
-    .departamentos-page .list-item:hover {
-      background: #f8fafc;
-    }
-    .departamentos-page .badge {
-      border: 1px solid #dbe3ef;
-      border-radius: 999px;
-      padding: 3px 8px;
-      font-size: .8rem;
-    }
-    .departamentos-page .kanban {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .departamentos-page .kanban-col {
-      border: 1px dashed #cbd5e1;
-      border-radius: 12px;
-      padding: 10px;
-      background: #fff;
-    }
-    .departamentos-page .kanban-col h4 {
-      margin: 0 0 10px;
-    }
-    .departamentos-page .org-root {
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-    .departamentos-page .dept-org-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1200;
-      padding: 16px;
-    }
-    .departamentos-page .dept-org-modal.open {
-      display: flex;
-    }
-    .departamentos-page .dept-org-dialog {
-      width: min(980px, 96vw);
-      max-height: 90vh;
-      overflow: auto;
-      background: #ffffff;
-      border-radius: 14px;
-      border: 1px solid #dbe3ef;
-      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.24);
-      padding: 14px;
-    }
-    .departamentos-page .dept-org-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .departamentos-page .dept-org-title {
-      margin: 0;
-      font-size: 1rem;
-      color: #0f172a;
-    }
-    .departamentos-page .dept-org-close {
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      background: #fff;
-      color: #0f172a;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-    .departamentos-page .emp-note {
-      margin-top: 12px;
-      border: 1px solid #dbe3ef;
-      border-radius: 12px;
-      background: #fff;
-      overflow: hidden;
-    }
-    .departamentos-page .emp-note-tabs {
-      display: flex;
-      overflow-x: auto;
-      scrollbar-width: none;
-      border-bottom: 1px solid #e2e8f0;
-      background: #f8fafc;
-    }
-    .departamentos-page .emp-note-tabs::-webkit-scrollbar { display: none; }
-    .departamentos-page .emp-note-tab {
-      border: 0;
-      background: transparent;
-      padding: 10px 14px;
-      font-weight: 700;
-      cursor: pointer;
-      color: #0f172a;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .departamentos-page .emp-note-tab .tab-icon {
-      width: 16px;
-      height: 16px;
-      display: inline-block;
-      flex: 0 0 auto;
-    }
-    .departamentos-page .emp-note-tab.active {
-      background: #ffffff;
-      border-bottom: 2px solid #0f172a;
-    }
-    .departamentos-page .emp-note-tab .tab-label { display: inline; }
-    .departamentos-page .emp-note-tab.collapsed .tab-label { display: none; }
-    .departamentos-page .emp-note-tab .tab-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 14px;
-      height: 14px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      line-height: 1;
-      color: inherit;
-      opacity: 0.45;
-      margin-left: 2px;
-      flex: 0 0 auto;
-      transition: opacity 0.15s;
-    }
-    .departamentos-page .emp-note-tab:hover .tab-toggle { opacity: 0.9; }
-    .departamentos-page .emp-note-panel {
-      padding: 10px 12px 12px;
-    }
-    .departamentos-page .emp-assigned-list {
-      margin: 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 4px;
-    }
-    .departamentos-page .emp-assigned-meta {
-      color: #334155;
-      margin: 0 0 8px;
-      font-weight: 600;
-      font-size: .92rem;
-    }
-    .departamentos-page{
-      --bg:#f6f8fb;
-      --card:#ffffff;
-      --border:#e7edf5;
-      --text:#0f172a;
-      --muted:#64748b;
-      --shadow: 0 14px 32px rgba(15,23,42,.10);
-      --radius:16px;
-    }
-    .departamentos-page .oc-card{
-      width: 320px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      transition: transform .18s ease, box-shadow .18s ease;
-    }
-    .departamentos-page .oc-card:hover{
-      transform: translateY(-3px);
-      box-shadow: 0 18px 40px rgba(15,23,42,.14);
-    }
-    .departamentos-page .oc-top{
-      padding: 12px 14px;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      background: linear-gradient(180deg,#fff,#fbfdff);
-    }
-    .departamentos-page .oc-name{
-      font-weight: 700;
-      font-size: 14px;
-      letter-spacing: -.01em;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .departamentos-page .oc-sub{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-top: 8px;
-    }
-    .departamentos-page .oc-pill{
-      font-size: 11px;
-      color:#334155;
-      background:#f8fafc;
-      border:1px solid var(--border);
-      border-radius:999px;
-      padding: 6px 10px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-    .departamentos-page .oc-score{
-      font-weight: 800;
-      font-size: 13px;
-      background:#0f172a;
-      color:#fff;
-      border-radius:12px;
-      padding: 8px 10px;
-      height: fit-content;
-      flex: 0 0 auto;
-    }
-    .departamentos-page .oc-progress{
-      height: 10px;
-      background:#e2e8f0;
-      border-top:1px solid var(--border);
-      border-bottom:1px solid var(--border);
-    }
-    .departamentos-page .oc-fill{
-      height:100%;
-      width:0%;
-    }
-    .departamentos-page .oc-bottom{
-      padding: 12px 14px 14px;
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-end;
-      gap: 10px;
-    }
-    .departamentos-page .oc-status{
-      font-weight: 800;
-      font-size: 12px;
-    }
-    .departamentos-page .oc-card[data-status="ok"] .oc-status{ color:#16a34a; }
-    .departamentos-page .oc-card[data-status="warning"] .oc-status{ color:#f59e0b; }
-    .departamentos-page .oc-card[data-status="danger"] .oc-status{ color:#ef4444; }
-    .departamentos-page .oc-kpis{
-      display:flex;
-      gap:10px;
-    }
-    .departamentos-page .oc-kpi span{
-      display:block;
-      font-size:10px;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .departamentos-page .oc-kpi strong{
-      display:block;
-      font-size:13px;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    @media (max-width: 980px) {
-      .departamentos-page .area-grid,
-      .departamentos-page .kanban {
-        grid-template-columns: 1fr;
-      }
-    }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-    /* Puestos notebook drawer */
-    .dept-pl-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.18); z-index: 2000; display: none; }
-    .dept-pl-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(500px,95vw); background: #fff; z-index: 2001; box-shadow: -4px 0 28px rgba(0,0,0,.12); display: flex; flex-direction: column; transform: translateX(100%); transition: transform .28s cubic-bezier(.4,0,.2,1); }
-    .dept-pl-drawer.open { transform: translateX(0); }
-    .dept-pl-head { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px; }
-    .dept-pl-titulo { font-size: 1rem; font-weight: 700; color: #0f172a; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .dept-pl-head-sub { font-size: .72rem; color: #64748b; }
-    .dept-pl-close { border: none; background: none; cursor: pointer; font-size: 1.4rem; line-height: 1; color: #94a3b8; padding: 2px 6px; border-radius: 6px; transition: background .12s; }
-    .dept-pl-close:hover { background: #f1f5f9; }
-    .dept-pl-tabs { display: flex; padding: 12px 20px 0; gap: 2px; border-bottom: 1px solid #e2e8f0; }
-    .dept-pl-tab { border: none; background: none; cursor: pointer; padding: 9px 16px; font-size: .84rem; font-weight: 600; color: #94a3b8; border-bottom: 2.5px solid transparent; margin-bottom: -1px; border-radius: 6px 6px 0 0; transition: color .14s, border-color .14s; }
-    .dept-pl-tab.active { color: #0f172a; border-bottom-color: var(--button-bg,#0f172a); }
-    .dept-pl-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
-    .dept-pl-panel { display: none; }
-    .dept-pl-panel.active { display: block; }
-    .dept-pl-loading { color: #94a3b8; font-size: .85rem; }
-    .dept-pl-hab-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; margin-bottom: 6px; }
-    .dept-pl-hab-nombre { flex: 1; font-size: .875rem; font-weight: 600; color: #0f172a; }
-    .dept-pl-hab-badge { flex-shrink: 0; font-size: .78rem; font-weight: 700; background: color-mix(in srgb,var(--button-bg,#0f172a) 10%,#fff 90%); color: #0f172a; padding: 2px 8px; border-radius: 20px; }
-    .dept-pl-save-bar { padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; align-items: center; }
-    .dept-pl-btn-save { border: none; border-radius: 10px; padding: 9px 22px; background: var(--button-bg,#0f172a); color: #fff; font-size: .9rem; font-weight: 600; cursor: pointer; }
-    .dept-pl-saved { font-size: .82rem; color: #22c55e; display: none; }
-    .dept-pl-nb-btn { border: none; background: transparent; cursor: pointer; font-size: .82rem; color: #94a3b8; padding: 3px 7px; border-radius: 6px; transition: background .12s, color .12s; flex-shrink: 0; }
-    .dept-pl-nb-btn:hover { background: color-mix(in srgb,var(--button-bg,#0f172a) 8%,#fff 92%); color: var(--button-bg,#0f172a); }
-  </style>
-
-  <script>
-    (function () {
-      const areaView = document.getElementById('area-view');
-      const areaTabs = document.querySelectorAll('.view-pill[data-view]');
-      if (!areaView || !areaTabs.length) return;
-
-      let areasData = [];
-      let createAreaMode = false;
-      let selectedAreaCode = null;
-      let lastSaveFeedback = { message: '', tone: '' };
-      let orgLibPromise = null;
-      let orgChartInstance = null;
-      let orgAvatarUrl = '/templates/icon/organigrama.svg';
-      let colaboradoresData = [];
-
-      const escapeHtml = (value) => String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-
-      const normalizeAreaStatus = (value) => {
-        const raw = String(value || '').trim();
-        if (raw === 'Estratégico' || raw === 'En revisión' || raw === 'Activo') return raw;
-        return 'Activo';
-      };
-
-      const normalizeAreaColor = (value) => {
-        const raw = String(value || '').trim();
-        return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : '#1d4ed8';
-      };
-      const statusFromProgress = (progress) => {
-        const p = Number(progress || 0);
-        if (p >= 85) return 'ok';
-        if (p >= 60) return 'warning';
-        return 'danger';
-      };
-      const statusLabel = (status) => {
-        if (status === 'danger') return 'Atrasado';
-        if (status === 'warning') return 'En riesgo';
-        return 'OK';
-      };
-
-      const normalizeAreaRow = (row, fallbackIndex = 0) => {
-        const data = row && typeof row === 'object' ? row : {};
-        const code = String(data.code || data.codigo || '').trim() || `DEP-${String(fallbackIndex + 1).padStart(3, '0')}`;
-        return {
-          name: String(data.name || data.nombre || '').trim(),
-          parent: String(data.parent || data.padre || 'N/A').trim() || 'N/A',
-          manager: String(data.manager || data.responsable || '').trim(),
-          code,
-          color: normalizeAreaColor(data.color),
-          status: normalizeAreaStatus(data.status || data.estado),
-        };
-      };
-
-      const replaceAreasData = (rows = []) => {
-        const clean = (Array.isArray(rows) ? rows : [])
-          .map((row, index) => normalizeAreaRow(row, index))
-          .filter((row) => row.name && row.code);
-        areasData = clean;
-      };
-      const normalizeText = (value) => String(value || '').trim().toLowerCase();
-      const getAssignedEmployees = (area) => {
-        const areaName = normalizeText(area?.name);
-        const areaCode = normalizeText(area?.code);
-        if (!areaName && !areaCode) return [];
-        return colaboradoresData.filter((col) => {
-          const dep = normalizeText(col?.departamento);
-          return !!dep && (dep === areaName || dep === areaCode);
-        });
-      };
-      const assignedCount = (area) => {
-        const backendCount = Number(area?.empleados_asignados);
-        if (!Number.isNaN(backendCount)) return backendCount;
-        return getAssignedEmployees(area).length;
-      };
-
-      const loadAreasData = async () => {
-        try {
-          const res = await fetch('/api/inicio/departamentos');
-          const json = await res.json().catch(() => ({}));
-          if (!res.ok || json?.success === false) throw new Error();
-          replaceAreasData(json?.data || []);
-        } catch (_error) {
-          replaceAreasData([]);
-        }
-      };
-      const loadColaboradoresData = async () => {
-        try {
-          const res = await fetch('/api/colaboradores');
-          const json = await res.json().catch(() => ({}));
-          if (!res.ok || json?.success === false) throw new Error();
-          colaboradoresData = Array.isArray(json?.data) ? json.data : [];
-        } catch (_error) {
-          colaboradoresData = [];
-        }
-      };
-
-      const persistAreasData = async () => {
-        const res = await fetch('/api/inicio/departamentos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: areasData }),
-        });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json?.success === false) {
-          const backendMessage = String(
-            json?.error || json?.detail || json?.message || ''
-          ).trim();
-          throw new Error(backendMessage || 'No se pudieron guardar departamentos');
-        }
-        if (json?.message) {
-          lastSaveFeedback = { message: String(json.message), tone: 'ok' };
-        }
-        replaceAreasData(json?.data || []);
-      };
-
-      const getAreaParentOptions = (selected = '') => {
-        const names = [...new Set(areasData.map((a) => a.name).filter(Boolean))];
-        const options = ['N/A', ...names];
-        return options
-          .map((name) => `<option value="${escapeHtml(name)}" ${name === selected ? 'selected' : ''}>${escapeHtml(name)}</option>`)
-          .join('');
-      };
-
-      const renderAreaForm = () => {
-
-        const selectedArea = createAreaMode
-          ? {}
-          : (
-            areasData.find((area) => String(area.code || '').trim() === String(selectedAreaCode || '').trim())
-            || areasData[0]
-            || {}
-          );
-
-        const selectedName = escapeHtml(selectedArea.name || '');
-        const selectedParentRaw = selectedArea.parent || 'N/A';
-        const selectedCode = escapeHtml(selectedArea.code || '');
-        const selectedManager = escapeHtml(selectedArea.manager || '');
-        const selectedColor = normalizeAreaColor(selectedArea.color || '#1d4ed8');
-        const selectedStatus = escapeHtml(selectedArea.status || 'Activo');
-        const relation = selectedStatus === 'En revisión' ? 'Funcional' : 'Línea';
-        const assigned = getAssignedEmployees(selectedArea);
-        const renderNotebookPanel = (tabName) => {
-          if (tabName === 'empleados') {
-            return `
-              <p class="emp-assigned-meta">Empleados asignados: ${assigned.length}</p>
-              ${assigned.length
-                ? `<ul class="emp-assigned-list">
-                    ${assigned.map((emp) => `<li>${escapeHtml(emp.nombre || emp.usuario || 'Sin nombre')} ${emp.puesto ? `- ${escapeHtml(emp.puesto)}` : ''}</li>`).join('')}
-                  </ul>`
-                : '<p>Sin empleados asignados.</p>'
-              }
-            `;
-          }
-          return '<p>Sin acceso, consulte al administrdor</p>';
-        };
-        const _sinAcceso = '<div style="max-width:380px;margin:40px auto;background:#fff;border:1px solid #dbe3ef;border-radius:14px;padding:28px;text-align:center;"><p style="font-size:1.4rem;margin-bottom:10px;">&#128274;</p><h2 style="font-size:1rem;color:#0f172a;margin:0 0 8px;">Sin acceso</h2><p style="color:#64748b;margin:0;font-size:.875rem;">No tiene acceso, com&#250;niquese con el administrador.</p></div>';
-        const renderNotebookPanel2 = (tabName) => {
-          if (tabName === 'puestos') return '<div id="puestos-tab-root"></div>';
-          if (tabName === 'funciones') return '<div id="funciones-tab-root"></div>';
-          if (tabName === 'ejes') {
-            return `<div id="area-ejes-tree-root" style="padding:6px 0;">
-              <div style="display:flex;align-items:center;gap:8px;color:#64748b;font-size:13px;padding:10px 4px;">
-                <span style="display:inline-block;width:18px;height:18px;border:2px solid #0f3d2e;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex:0 0 auto;"></span>
-                Cargando ejes estratégicos&hellip;
-              </div>
-            </div>`;
-          }
-          return renderNotebookPanel(tabName);
-        };
-
-        /* ---- Puestos laborales tab ---- */
-        const _renderPuestosTab = async (container) => {
-          const root = container.querySelector('#puestos-tab-root');
-          if (!root) return;
-          root.innerHTML = '<p style="color:#64748b;font-size:.875rem;padding:8px 2px;">Cargando puestos&hellip;</p>';
-          try {
-            const res = await fetch('/api/puestos-laborales');
-            const json = await res.json();
-            const todos = json.data || [];
-            const areaName = String(selectedArea.name || '').trim().toLowerCase();
-            const list = todos.filter((p) => String(p.area || '').trim().toLowerCase() === areaName);
-            if (!list.length) {
-              root.innerHTML = '<p style="color:#94a3b8;font-size:.875rem;padding:8px 2px;">No hay puestos laborales asignados a este departamento.</p>';
-              return;
-            }
-            root.innerHTML = `
-              <div style="display:flex;flex-direction:column;gap:8px;">
-                ${list.map((p) => {
-                  const habCount = (p.habilidades_requeridas || []).length;
-                  const colCount = (p.colaboradores_asignados || []).length;
-                  return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:${p.descripcion ? '6px' : '0'};">
-                      <span style="font-weight:700;font-size:.9rem;color:#0f172a;flex:1;">${escapeHtml(p.nombre)}</span>
-                      ${p.nivel ? `<span style="font-size:.72rem;font-weight:600;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:20px;flex-shrink:0;">${escapeHtml(p.nivel)}</span>` : ''}
-                      ${habCount ? `<span style="font-size:.72rem;font-weight:600;background:color-mix(in srgb,#0f172a 10%,#fff 90%);color:#0f172a;padding:2px 8px;border-radius:20px;flex-shrink:0;" title="Habilidades requeridas">${habCount} hab.</span>` : ''}
-                      ${colCount ? `<span style="font-size:.72rem;font-weight:600;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:20px;flex-shrink:0;" title="Colaboradores asignados">${colCount} col.</span>` : ''}
-                      <button class="dept-pl-nb-btn" data-puesto-id="${escapeHtml(p.id)}" title="Notebook del puesto">&#128203;</button>
-                    </div>
-                    ${p.descripcion ? `<p style="margin:0;font-size:.82rem;color:#64748b;line-height:1.45;">${escapeHtml(p.descripcion)}</p>` : ''}
-                  </div>`;
-                }).join('')}
-              </div>`;
-            root.querySelectorAll('.dept-pl-nb-btn').forEach((btn) => {
-              btn.addEventListener('click', () => openPuestoNb(btn.getAttribute('data-puesto-id'), todos));
-            });
-          } catch (e) {
-            root.innerHTML = '<p style="color:#ef4444;font-size:.875rem;padding:8px 2px;">Error al cargar puestos.</p>';
-          }
-        };
-
-        /* ---- Funciones tab (Misionales / Apoyo / Proyectos específicos) ---- */
-        const _normFuncItem = (raw) => {
-          if (raw && typeof raw === 'object') {
-            return {
-              nombre:        String(raw.nombre || '').trim(),
-              periodicidad:  String(raw.periodicidad || '').trim(),
-              descripcion:   String(raw.descripcion || '').trim(),
-            };
-          }
-          // legacy plain-string migration
-          return { nombre: String(raw || '').trim(), periodicidad: '', descripcion: '' };
-        };
-        const PERIODICIDAD_OPTIONS = ['Diaria','Semanal','Quincenal','Mensual','Trimestral','Semestral','Anual','Permanente','Según demanda'];
-        const _renderFuncionesTab = (container) => {
-          const areaCode = String(selectedArea.code || '').trim();
-          const target = areasData.find((a) => String(a.code || '').trim() === areaCode) || selectedArea;
-          const BLOCKS = [
-            { key: 'funciones_misionales',  label: 'Misionales',            icon: '🎯' },
-            { key: 'funciones_apoyo',        label: 'Apoyo',                 icon: '🤝' },
-            { key: 'funciones_proyectos',    label: 'Proyectos específicos', icon: '🚀' },
-          ];
-          const periodBadge = (p) => p
-            ? `<span style="flex:0 0 auto;font-size:10px;font-weight:700;color:#0f3d2e;background:rgba(15,61,46,.10);border:1px solid rgba(15,61,46,.22);border-radius:999px;padding:2px 8px;white-space:nowrap;">${escapeHtml(p)}</span>`
-            : '';
-          const buildBlock = (block) => {
-            const rawItems = Array.isArray(target[block.key]) ? target[block.key] : [];
-            const items = rawItems.map(_normFuncItem);
-            const rows = items.map((item, idx) => `
-              <li style="border:1px solid rgba(148,163,184,.22);border-radius:9px;background:#f8fafc;padding:8px 10px;display:grid;gap:3px;">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <span style="flex:1;font-size:13px;color:#0f172a;font-weight:600;line-height:1.4;">${escapeHtml(item.nombre || '—')}</span>
-                  ${periodBadge(item.periodicidad)}
-                  <button type="button" data-func-remove="${idx}" data-func-block="${block.key}"
-                    style="flex:0 0 auto;border:1px solid rgba(239,68,68,.28);background:#fff5f5;color:#b91c1c;border-radius:7px;padding:3px 8px;font-size:12px;cursor:pointer;line-height:1;" title="Eliminar">✕</button>
-                </div>
-                ${item.descripcion ? `<div style="font-size:11px;color:#64748b;line-height:1.4;padding-left:1px;">${escapeHtml(item.descripcion)}</div>` : ''}
-              </li>`);
-            const periodOptions = PERIODICIDAD_OPTIONS.map(
-              (o) => `<option value="${o}">${o}</option>`
-            ).join('');
-            return `
-              <div style="border:1px solid rgba(148,163,184,.28);border-radius:12px;background:#fff;margin-bottom:10px;overflow:hidden;">
-                <div style="padding:10px 12px;background:rgba(15,61,46,.07);border-bottom:1px solid rgba(148,163,184,.18);display:flex;align-items:center;gap:8px;">
-                  <span style="font-size:15px;">${block.icon}</span>
-                  <strong style="font-size:13px;color:#0f172a;">${block.label}</strong>
-                  <span style="margin-left:auto;font-size:11px;color:#64748b;">${items.length} función(es)</span>
-                </div>
-                <div style="padding:10px 12px;">
-                  <ul style="margin:0 0 10px;padding:0;list-style:none;display:grid;gap:5px;">
-                    ${rows.length ? rows.join('') : '<li style="font-size:12px;color:#94a3b8;font-style:italic;padding:4px 2px;">Sin funciones registradas.</li>'}
-                  </ul>
-                  <div style="border:1px dashed rgba(148,163,184,.40);border-radius:10px;padding:10px;display:grid;gap:7px;background:rgba(248,250,252,.7);">
-                    <div style="display:grid;grid-template-columns:1fr auto;gap:7px;align-items:end;">
-                      <div style="display:flex;flex-direction:column;gap:4px;">
-                        <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.02em;">NOMBRE</label>
-                        <input type="text" id="func-nombre-${block.key}" placeholder="Nombre de la función…" autocomplete="off"
-                          style="border:1px solid rgba(148,163,184,.38);border-radius:8px;padding:7px 10px;font-size:13px;background:#fff;width:100%;">
-                      </div>
-                      <div style="display:flex;flex-direction:column;gap:4px;">
-                        <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.02em;">PERIODICIDAD</label>
-                        <select id="func-period-${block.key}"
-                          style="border:1px solid rgba(148,163,184,.38);border-radius:8px;padding:7px 10px;font-size:13px;background:#fff;min-width:140px;">
-                          <option value="">— Selecciona —</option>
-                          ${periodOptions}
-                        </select>
-                      </div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:4px;">
-                      <label style="font-size:11px;font-weight:700;color:#475569;letter-spacing:.02em;">DESCRIPCIÓN <span style="font-weight:400;color:#94a3b8;">(opcional)</span></label>
-                      <input type="text" id="func-desc-${block.key}" placeholder="Describe brevemente la función…" autocomplete="off"
-                        style="border:1px solid rgba(148,163,184,.38);border-radius:8px;padding:7px 10px;font-size:13px;background:#fff;width:100%;">
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;">
-                      <button type="button" data-func-add="${block.key}"
-                        style="border:1px solid rgba(15,61,46,.35);background:rgba(15,61,46,.08);color:#0f3d2e;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">+ Agregar función</button>
-                    </div>
-                  </div>
-                </div>
-              </div>`;
-          };
-          const root = container.querySelector('#funciones-tab-root');
-          if (!root) return;
-          root.innerHTML = `
-            <div style="padding:2px 0;">
-              ${BLOCKS.map(buildBlock).join('')}
-              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
-                <button type="button" id="func-save-btn"
-                  style="border:1px solid rgba(15,61,46,.4);background:#0f3d2e;color:#fff;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;">Guardar funciones</button>
-                <span id="func-save-msg" style="font-size:12px;color:#0f3d2e;min-height:1em;"></span>
-              </div>
-            </div>`;
-          const _addItem = (blockKey) => {
-            const nombreEl  = root.querySelector(`#func-nombre-${blockKey}`);
-            const periodEl  = root.querySelector(`#func-period-${blockKey}`);
-            const descEl    = root.querySelector(`#func-desc-${blockKey}`);
-            const nombre = String(nombreEl?.value || '').trim();
-            if (!nombre) { nombreEl && nombreEl.focus(); return; }
-            if (!Array.isArray(target[blockKey])) target[blockKey] = [];
-            target[blockKey].push({
-              nombre,
-              periodicidad: String(periodEl?.value || '').trim(),
-              descripcion:  String(descEl?.value || '').trim(),
-            });
-            _renderFuncionesTab(container);
-          };
-          // Remove / Add buttons
-          root.addEventListener('click', (e) => {
-            const removeBtn = e.target.closest('[data-func-remove]');
-            if (removeBtn) {
-              const blockKey = removeBtn.getAttribute('data-func-block');
-              const idx = Number(removeBtn.getAttribute('data-func-remove'));
-              if (!Array.isArray(target[blockKey])) return;
-              target[blockKey].splice(idx, 1);
-              _renderFuncionesTab(container);
-              return;
-            }
-            const addBtn = e.target.closest('[data-func-add]');
-            if (addBtn) { _addItem(addBtn.getAttribute('data-func-add')); }
-          });
-          // Enter on Nombre field triggers add
-          BLOCKS.forEach((block) => {
-            const nombreEl = root.querySelector(`#func-nombre-${block.key}`);
-            nombreEl && nombreEl.addEventListener('keydown', (e) => {
-              if (e.key === 'Enter') { e.preventDefault(); _addItem(block.key); }
-            });
-          });
-          // Save button
-          const saveBtn = root.querySelector('#func-save-btn');
-          const saveMsg = root.querySelector('#func-save-msg');
-          saveBtn && saveBtn.addEventListener('click', async () => {
-            saveBtn.disabled = true;
-            if (saveMsg) { saveMsg.textContent = 'Guardando…'; saveMsg.style.color = '#64748b'; }
-            try {
-              await persistAreasData();
-              if (saveMsg) { saveMsg.textContent = 'Guardado correctamente.'; saveMsg.style.color = '#16a34a'; }
-            } catch (err) {
-              if (saveMsg) { saveMsg.textContent = err?.message || 'Error al guardar.'; saveMsg.style.color = '#b91c1c'; }
-            } finally {
-              saveBtn.disabled = false;
-            }
-          });
-        };
-
-        /* ---- Ejes Estratégicos tree for the notebook tab ---- */
-        const _statusFromProgress = (p) => {
-          const n = Number(p || 0);
-          if (n >= 85) return 'ok';
-          if (n >= 60) return 'warning';
-          return 'danger';
-        };
-        const _statusColor = (s) => s === 'ok' ? '#16a34a' : (s === 'warning' ? '#f59e0b' : '#ef4444');
-        const _statusLabel = (s) => s === 'ok' ? 'OK' : (s === 'warning' ? 'En riesgo' : 'Atrasado');
-
-        const _renderAreaEjesTree = async (container, area) => {
-          const root = container.querySelector('#area-ejes-tree-root');
-          if (!root) return;
-          const areaName = String(area.name || '').trim().toLowerCase();
-          try {
-            const [axesPayload, boardPayload] = await Promise.all([
-              fetch('/api/strategic-axes', { credentials: 'same-origin' }).then((r) => r.json()),
-              fetch('/api/poa/board-data', { credentials: 'same-origin' }).then((r) => r.json()),
-            ]);
-            const allAxes = Array.isArray(axesPayload.data) ? axesPayload.data : [];
-            const allActivities = Array.isArray(boardPayload.activities) ? boardPayload.activities : [];
-
-            // Build map: objective_id → activities[]
-            const actsByObj = {};
-            allActivities.forEach((act) => {
-              const key = Number(act.objective_id || 0);
-              if (!key) return;
-              if (!actsByObj[key]) actsByObj[key] = [];
-              actsByObj[key].push(act);
-            });
-
-            // Filter axes that belong to this area (leader dept match)
-            const filtered = allAxes.filter((ax) =>
-              String(ax.lider_departamento || '').trim().toLowerCase() === areaName
-            );
-
-            if (!filtered.length) {
-              root.innerHTML = `<div style="padding:18px 4px;color:#64748b;font-size:13px;">
-                Sin ejes estratégicos asignados a <strong>${escapeHtml(area.name || 'esta área')}</strong>.
-              </div>`;
-              return;
-            }
-
-            const buildBar = (pct, status) => {
-              const color = _statusColor(status);
-              return `<div style="height:6px;border-radius:999px;background:rgba(148,163,184,.22);margin-top:5px;overflow:hidden;">
-                <div style="height:100%;width:${pct}%;background:${color};border-radius:inherit;transition:width .4s;"></div>
-              </div>`;
-            };
-
-            const buildActivityRows = (acts) => {
-              if (!acts || !acts.length) return `<div style="font-size:12px;color:#94a3b8;padding:3px 0 3px 18px;font-style:italic;">Sin actividades POA registradas.</div>`;
-              return acts.map((act) => {
-                const pct = Number(act.avance || 0);
-                const st = _statusFromProgress(pct);
-                const col = _statusColor(st);
-                return `<div style="padding:4px 0 4px 18px;border-left:2px solid rgba(148,163,184,.30);margin:3px 0 3px 8px;">
-                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                    <span style="width:8px;height:8px;border-radius:50%;background:${col};flex:0 0 auto;"></span>
-                    <span style="font-size:12px;color:#334155;font-weight:600;flex:1;min-width:0;">${escapeHtml(act.nombre || 'Actividad')}</span>
-                    <span style="font-size:11px;font-weight:800;color:${col};white-space:nowrap;">${pct}%</span>
-                  </div>
-                  ${act.responsable ? `<div style="font-size:11px;color:#94a3b8;padding-left:14px;margin-top:1px;">👤 ${escapeHtml(act.responsable)}</div>` : ''}
-                  ${buildBar(pct, st)}
-                </div>`;
-              }).join('');
-            };
-
-            const buildObjectiveBlocks = (objs, axisId) => {
-              if (!objs || !objs.length) return `<div style="font-size:12px;color:#94a3b8;padding:6px 0;font-style:italic;">Sin objetivos estratégicos.</div>`;
-              return objs.map((obj) => {
-                const pct = Number(obj.avance || 0);
-                const st = _statusFromProgress(pct);
-                const col = _statusColor(st);
-                const acts = actsByObj[Number(obj.id || 0)] || [];
-                return `<details style="border:1px solid rgba(148,163,184,.25);border-radius:10px;background:#fff;margin-bottom:6px;overflow:hidden;">
-                  <summary style="cursor:pointer;padding:8px 10px;background:rgba(255,255,255,.96);list-style:none;display:flex;align-items:center;gap:8px;user-select:none;">
-                    <span style="width:9px;height:9px;border-radius:50%;background:${col};flex:0 0 auto;"></span>
-                    <span style="font-size:12px;color:#334155;font-weight:700;flex:1;min-width:0;">${escapeHtml(obj.codigo || '')} ${escapeHtml(obj.nombre || 'Objetivo')}</span>
-                    <span style="font-size:11px;font-weight:800;color:${col};white-space:nowrap;">${pct}%</span>
-                    <span style="font-size:11px;color:#94a3b8;">${acts.length} act.</span>
-                  </summary>
-                  <div style="padding:6px 10px 8px;">
-                    ${buildBar(pct, st)}
-                    ${obj.lider ? `<div style="font-size:11px;color:#64748b;margin-top:4px;">👤 ${escapeHtml(obj.lider)}</div>` : ''}
-                    <div style="margin-top:6px;">${buildActivityRows(acts)}</div>
-                  </div>
-                </details>`;
-              }).join('');
-            };
-
-            const html = filtered.map((ax) => {
-              const pct = Number(ax.avance || 0);
-              const st = _statusFromProgress(pct);
-              const col = _statusColor(st);
-              const objs = Array.isArray(ax.objetivos) ? ax.objetivos : [];
-              return `<details open style="border:1px solid rgba(15,61,46,.22);border-radius:12px;background:rgba(15,61,46,.04);margin-bottom:10px;overflow:hidden;">
-                <summary style="cursor:pointer;padding:10px 12px;background:rgba(15,61,46,.08);list-style:none;display:flex;align-items:center;gap:8px;user-select:none;">
-                  <span style="width:11px;height:11px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,.7);flex:0 0 auto;"></span>
-                  <span style="font-size:13px;color:#0f172a;font-weight:800;flex:1;min-width:0;">${escapeHtml(ax.nombre || 'Eje sin nombre')}</span>
-                  <span style="font-size:11px;font-weight:800;color:${col};white-space:nowrap;">${pct}%</span>
-                  <span style="font-size:11px;color:#64748b;white-space:nowrap;">${objs.length} obj.</span>
-                </summary>
-                <div style="padding:8px 12px 10px;">
-                  <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#64748b;margin-bottom:6px;">
-                    ${ax.codigo ? `<span>Código: <strong style="color:#0f172a;">${escapeHtml(ax.codigo)}</strong></span>` : ''}
-                    ${ax.responsabilidad_directa ? `<span>Resp: <strong style="color:#0f172a;">${escapeHtml(ax.responsabilidad_directa)}</strong></span>` : ''}
-                    <span>Estado: <strong style="color:${col};">${_statusLabel(st)}</strong></span>
-                  </div>
-                  ${buildBar(pct, st)}
-                  <div style="margin-top:8px;">${buildObjectiveBlocks(objs, ax.id)}</div>
-                </div>
-              </details>`;
-            }).join('');
-
-            root.innerHTML = `
-              <div style="padding:0 2px;">
-                <div style="font-size:12px;color:#64748b;margin-bottom:8px;">
-                  ${filtered.length} eje(s) asignado(s) a <strong style="color:#0f172a;">${escapeHtml(area.name || '')}</strong>
-                </div>
-                ${html}
-              </div>
-            `;
-          } catch (err) {
-            root.innerHTML = `<div style="color:#b91c1c;font-size:13px;padding:10px 4px;">Error al cargar ejes: ${escapeHtml(String(err.message || err))}</div>`;
-          }
-        };
-
-        areaView.innerHTML = `
-          <section class="area-card">
-            <h2>Datos del área</h2>
-            <p>Completa la información base y define su relación organizacional.</p>
-            <form id="area-form">
-              <div class="area-grid">
-                <div class="field">
-                  <label>Nombre</label>
-                  <input id="area-name-input" type="text" value="${selectedName}" placeholder="Nombre del área">
-                </div>
-                <div class="field">
-                  <label>Departamento padre</label>
-                  <select id="area-parent-select">${getAreaParentOptions(selectedParentRaw)}</select>
-                </div>
-                <div class="field field-full">
-                  <label>Responsable</label>
-                  <select id="area-manager-select"><option value="">Cargando...</option></select>
-                </div>
-                <div class="field">
-                  <label>Relación organizacional</label>
-                  <select id="area-relacion-select">
-                    <option value="Línea" ${relation === 'Línea' ? 'selected' : ''}>Línea</option>
-                    <option value="Staff" ${relation === 'Staff' ? 'selected' : ''}>Staff</option>
-                    <option value="Funcional" ${relation === 'Funcional' ? 'selected' : ''}>Funcional</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Código</label>
-                  <input id="area-code-input" type="text" value="${selectedCode}" placeholder="Ej: OPE-010">
-                </div>
-                <div class="field">
-                  <label>Color</label>
-                  <div class="color-field-row">
-                    <input id="area-color-input" type="color" value="${selectedColor}">
-                    <span id="area-color-swatch" class="color-swatch" style="background:${selectedColor};"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="area-grid" style="margin-top:10px;">
-                <div class="field">
-                  <label>Descripción</label>
-                  <textarea placeholder="Describe el propósito del área"></textarea>
-                </div>
-                <div class="field">
-                  <label>Notas internas</label>
-                  <textarea placeholder="Observaciones, acuerdos, excepciones"></textarea>
-                </div>
-              </div>
-              <div class="emp-note">
-                <div class="emp-note-tabs">
-                  <button type="button" class="emp-note-tab active" data-note-tab="empleados"><img src="/templates/icon/organigrama.svg" alt="" class="tab-icon"><span class="tab-label">Empleados</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
-                  <button type="button" class="emp-note-tab" data-note-tab="ejes"><img src="/templates/icon/biblioteca.svg" alt="" class="tab-icon"><span class="tab-label">Ejes estratégicos asignados</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
-                  <button type="button" class="emp-note-tab" data-note-tab="kpis"><img src="/templates/icon/kpi.svg" alt="" class="tab-icon"><span class="tab-label">KPI</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
-                  <button type="button" class="emp-note-tab" data-note-tab="indice"><img src="/templates/icon/habilidades.svg" alt="" class="tab-icon"><span class="tab-label">Indice de bateo</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
-                  <button type="button" class="emp-note-tab" data-note-tab="puestos"><img src="/templates/icon/formulario.svg" alt="" class="tab-icon"><span class="tab-label">Puestos laborales</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
-                  <button type="button" class="emp-note-tab" data-note-tab="funciones"><img src="/templates/icon/biblioteca.svg" alt="" class="tab-icon"><span class="tab-label">Funciones</span><span class="tab-toggle" title="Ocultar / mostrar">&#x2212;</span></button>
-                </div>
-                <div class="emp-note-panel" id="area-emp-note-panel">
-                  ${renderNotebookPanel('empleados')}
-                </div>
-              </div>
-              <div class="action-buttons-group">
-                <button type="button" id="area-form-new-btn" class="action-button" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
-                  <img src="/icon/boton/nuevo.svg" alt="Nuevo">
-                  <span class="action-label">Nuevo</span>
-                </button>
-                <button type="button" id="area-form-edit-btn" class="action-button" data-hover-label="Editar" aria-label="Editar" title="Editar">
-                  <img src="/icon/boton/editar.svg" alt="Editar">
-                  <span class="action-label">Editar</span>
-                </button>
-                <button type="submit" id="area-form-save-btn" class="action-button" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
-                  <img src="/icon/boton/guardar.svg" alt="Guardar">
-                  <span class="action-label">Guardar</span>
-                </button>
-                <button type="button" id="area-form-delete-btn" class="action-button" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
-                  <img src="/icon/boton/eliminar.svg" alt="Eliminar">
-                  <span class="action-label">Eliminar</span>
-                </button>
-                <span id="area-form-save-status" class="save-status" role="status" aria-live="polite"></span>
-              </div>
-            </form>
-          </section>
-        `;
-        // Poblar select de responsables (colaboradores)
-        const managerSelect = areaView.querySelector('#area-manager-select');
-        if (managerSelect) {
-          if (colaboradoresData.length) {
-            managerSelect.innerHTML = '<option value="">Seleccione responsable</option>' +
-              colaboradoresData.map(function(col) {
-                const label = (col.nombre ? col.nombre : col.usuario) + (col.departamento ? ' (' + col.departamento + ')' : '');
-                return '<option value="' + (col.nombre || col.usuario || '') + '"' + (selectedManager === (col.nombre || col.usuario) ? ' selected' : '') + '>' + label + '</option>';
-              }).join('');
-          } else {
-            managerSelect.innerHTML = '<option value="">Sin colaboradores</option>';
-          }
-        }
-
-        const form = areaView.querySelector('#area-form');
-        const notebookPanel = areaView.querySelector('#area-emp-note-panel');
-        const notebookTabs = areaView.querySelectorAll('.emp-note-tab[data-note-tab]');
-        areaView.querySelectorAll('.emp-note-tab .tab-toggle').forEach(function(toggleSpan) {
-          const tab = toggleSpan.closest('.emp-note-tab');
-          if (!tab) return;
-          toggleSpan.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (tab.classList.contains('collapsed')) {
-              tab.classList.remove('collapsed');
-              this.innerHTML = '&#x2212;';
-            } else {
-              tab.classList.add('collapsed');
-              this.innerHTML = '+';
-            }
-          });
-        });
-        const newBtn = areaView.querySelector('#area-form-new-btn');
-        const editBtn = areaView.querySelector('#area-form-edit-btn');
-        const saveBtn = areaView.querySelector('#area-form-save-btn');
-        const deleteBtn = areaView.querySelector('#area-form-delete-btn');
-        const saveStatus = areaView.querySelector('#area-form-save-status');
-        const colorInput = areaView.querySelector('#area-color-input');
-        const colorSwatch = areaView.querySelector('#area-color-swatch');
-
-        const setSaveStatus = (message, tone = '') => {
-          lastSaveFeedback = { message: message || '', tone: tone || '' };
-          if (!saveStatus) return;
-          saveStatus.textContent = message || '';
-          saveStatus.classList.remove('is-pending', 'is-ok', 'is-error');
-          if (tone) saveStatus.classList.add(`is-${tone}`);
-        };
-        if (lastSaveFeedback.message) {
-          setSaveStatus(lastSaveFeedback.message, lastSaveFeedback.tone);
-        }
-        if (colorInput && colorSwatch) {
-          const syncColorSwatch = () => {
-            colorSwatch.style.background = normalizeAreaColor(colorInput.value);
-          };
-          colorInput.addEventListener('input', syncColorSwatch);
-          syncColorSwatch();
-        }
-        if (notebookTabs.length && notebookPanel) {
-          notebookTabs.forEach((tabBtn) => {
-            tabBtn.addEventListener('click', () => {
-              notebookTabs.forEach((btn) => btn.classList.remove('active'));
-              tabBtn.classList.add('active');
-              const tabKey = tabBtn.getAttribute('data-note-tab');
-              notebookPanel.innerHTML = renderNotebookPanel2(tabKey);
-              if (tabKey === 'ejes') {
-                _renderAreaEjesTree(notebookPanel, selectedArea);
-              }
-              if (tabKey === 'funciones') {
-                _renderFuncionesTab(notebookPanel);
-              }
-              if (tabKey === 'puestos') {
-                _renderPuestosTab(notebookPanel);
-              }
-            });
-          });
-        }
-
-        newBtn && newBtn.addEventListener('click', () => {
-          createAreaMode = true;
-          selectedAreaCode = null;
-          renderAreaForm();
-        });
-
-        editBtn && editBtn.addEventListener('click', () => {
-          const code = String(areaView.querySelector('#area-code-input')?.value || '').trim();
-          if (!code) {
-            setSaveStatus('Selecciona un área para editar.', 'error');
-            return;
-          }
-          const found = areasData.find((area) => String(area.code || '').trim() === code);
-          if (!found) {
-            setSaveStatus('El código no existe en el listado.', 'error');
-            return;
-          }
-          createAreaMode = false;
-          selectedAreaCode = code;
-          setSaveStatus('Área cargada para edición.', 'pending');
-          renderAreaForm();
-        });
-
-        deleteBtn && deleteBtn.addEventListener('click', async () => {
-          const code = String(areaView.querySelector('#area-code-input')?.value || selectedAreaCode || '').trim();
-          if (!code) {
-            setSaveStatus('Selecciona un área para eliminar.', 'error');
-            return;
-          }
-          const target = areasData.find((area) => String(area.code || '').trim() === code);
-          if (!target) {
-            setSaveStatus('No existe el área seleccionada.', 'error');
-            return;
-          }
-          if (!window.confirm(`¿Seguro que deseas eliminar el área "${target.name || code}"?`)) return;
-          try {
-            deleteBtn.disabled = true;
-            setSaveStatus('Eliminando...', 'pending');
-            const res = await fetch('/api/inicio/departamentos/' + encodeURIComponent(code), { method: 'DELETE' });
-            const json = await res.json().catch(() => ({}));
-            if (!res.ok || json?.success === false) {
-              throw new Error(String(json?.error || json?.detail || 'No se pudo eliminar.'));
-            }
-            replaceAreasData(json?.data || []);
-            createAreaMode = !areasData.length;
-            selectedAreaCode = areasData[0]?.code || null;
-            setSaveStatus('Área eliminada correctamente.', 'ok');
-            setAreaView('form');
-          } catch (error) {
-            setSaveStatus(error?.message || 'Error al eliminar.', 'error');
-          } finally {
-            deleteBtn.disabled = false;
-          }
-        });
-
-        form && form.addEventListener('submit', async (event) => {
-          event.preventDefault();
-          const name = String(areaView.querySelector('#area-name-input')?.value || '').trim();
-          const parent = String(areaView.querySelector('#area-parent-select')?.value || 'N/A').trim() || 'N/A';
-          const manager = String(areaView.querySelector('#area-manager-select')?.value || '').trim();
-          const code = String(areaView.querySelector('#area-code-input')?.value || '').trim();
-          const color = normalizeAreaColor(areaView.querySelector('#area-color-input')?.value || '#1d4ed8');
-          const relationValue = String(areaView.querySelector('#area-relacion-select')?.value || 'Línea').trim();
-          const status = relationValue === 'Funcional' ? 'En revisión' : 'Activo';
-          if (!name || !code) {
-            setSaveStatus('Nombre y código son obligatorios.', 'error');
-            return;
-          }
-          const payload = { name, parent, manager, code, color, status };
-          const index = areasData.findIndex((area) => String(area.code || '').trim() === code);
-          if (index >= 0) {
-            areasData[index] = payload;
-          } else {
-            areasData.push(payload);
-          }
-          try {
-            saveBtn && (saveBtn.disabled = true);
-            setSaveStatus('Guardando...', 'pending');
-            await persistAreasData();
-            createAreaMode = false;
-            selectedAreaCode = code;
-            setSaveStatus('Guardado correctamente.', 'ok');
-            setAreaView('form');
-          } catch (error) {
-            setSaveStatus(error?.message || 'Error al guardar.', 'error');
-          } finally {
-            saveBtn && (saveBtn.disabled = false);
-          }
-        });
-      };
-
-      const renderAreaList = () => {
-        const sortedAreas = [...areasData].sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || ''), 'es', { sensitivity: 'base' }));
-        areaView.innerHTML = `
-          <section class="area-card">
-            <h2>Listado de áreas</h2>
-            <p>Consulta áreas por código, responsable y estado.</p>
-            <div class="list">
-              ${sortedAreas.length ? sortedAreas.map((area) => `
-                <div class="list-item" data-area-code="${escapeHtml(area.code)}">
-                  <span><strong>${escapeHtml(area.name)}</strong><br><small>${escapeHtml(area.manager || 'Sin responsable')}</small><br><small>Empleados asignados: ${assignedCount(area)}</small></span>
-                  <span>
-                    <span class="badge">${escapeHtml(area.code || 'N/A')}</span>
-                    <span class="badge">${escapeHtml(area.status || 'N/A')}</span>
-                    <button class="btn btn-icon btn-delete" data-delete-code="${escapeHtml(area.code)}" title="Eliminar" style="margin-left:8px;background:#dc2626;color:#fff;border-color:#dc2626;">
-                      <img src="/icon/eliminar.svg" alt="Eliminar">
-                    </button>
-                  </span>
-                </div>
-              `).join('') : '<p>Sin áreas registradas.</p>'}
-            </div>
-          </section>
-        `;
-        areaView.querySelectorAll('[data-area-code]').forEach((item) => {
-          item.addEventListener('click', (ev) => {
-            // Evitar que el click en el botón Eliminar abra el formulario
-            if (ev.target && ev.target.matches('.btn-delete')) return;
-            createAreaMode = false;
-            selectedAreaCode = String(item.getAttribute('data-area-code') || '').trim();
-            setAreaView('form');
-          });
-        });
-        areaView.querySelectorAll('.btn-delete').forEach((btn) => {
-          btn.addEventListener('click', async (ev) => {
-            ev.stopPropagation();
-            const code = btn.getAttribute('data-delete-code');
-            if (!code) return;
-            if (!confirm('¿Seguro que deseas eliminar este departamento?')) return;
-            try {
-              const res = await fetch('/api/inicio/departamentos/' + encodeURIComponent(code), { method: 'DELETE' });
-              const json = await res.json().catch(() => ({}));
-              if (!res.ok || json?.success === false) {
-                throw new Error(String(json?.error || json?.detail || 'No se pudo eliminar.'));
-              }
-              replaceAreasData(json?.data || []);
-              setAreaView('list');
-            } catch (error) {
-              alert(error?.message || 'Error al eliminar.');
-            }
-          });
-        });
-      };
-
-      const renderAreaKanban = () => {
-        const byStatus = {
-          'Estratégico': areasData.filter((area) => area.status === 'Estratégico'),
-          'Activo': areasData.filter((area) => area.status === 'Activo'),
-          'En revisión': areasData.filter((area) => area.status === 'En revisión'),
-        };
-        areaView.innerHTML = `
-          <section class="area-card">
-            <h2>Kanban de áreas</h2>
-            <p>Distribución por estado.</p>
-            <div class="kanban">
-              ${Object.entries(byStatus).map(([status, rows]) => `
-                <div class="kanban-col">
-                  <h4>${status} (${rows.length})</h4>
-                  ${rows.length ? rows.map((area) => `
-                    <div class="list-item" style="cursor:default;">
-                      <span><strong>${escapeHtml(area.name)}</strong><br><small>${escapeHtml(area.code)}</small><br><small>Empleados asignados: ${assignedCount(area)}</small></span>
-                    </div>
-                  `).join('') : '<p>Sin elementos.</p>'}
-                </div>
-              `).join('')}
-            </div>
-          </section>
-        `;
-      };
-
-      const renderAreaOrganigrama = () => {
-        areaView.innerHTML = `
-          <section class="area-card">
-            <h2>Organigrama de áreas</h2>
-            <p>Vista jerárquica interactiva.</p>
-            <div class="org-toolbar">
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" id="area-org-expand-btn" class="btn">Expandir todo</button>
-                <button type="button" id="area-org-collapse-btn" class="btn">Contraer todo</button>
-                <button type="button" id="area-org-fullscreen-btn" class="btn">Ver en pantalla completa</button>
-              </div>
-              <span id="area-org-fullscreen-hint" class="org-fullscreen-hint">Esc para salir de pantalla completa</span>
-            </div>
-            <div id="area-org-chart" class="org-chart-wrap"></div>
-          </section>
-        `;
-        const chartEl = areaView.querySelector('#area-org-chart');
-        const expandBtn = areaView.querySelector('#area-org-expand-btn');
-        const collapseBtn = areaView.querySelector('#area-org-collapse-btn');
-        const fullscreenBtn = areaView.querySelector('#area-org-fullscreen-btn');
-        const fullscreenHint = areaView.querySelector('#area-org-fullscreen-hint');
-        if (!chartEl) return;
-        if (expandBtn) {
-          expandBtn.addEventListener('click', () => {
-            if (!orgChartInstance) return;
-            if (typeof orgChartInstance.expandAll === 'function') orgChartInstance.expandAll();
-            if (typeof orgChartInstance.fit === 'function') orgChartInstance.fit();
-          });
-        }
-        if (collapseBtn) {
-          collapseBtn.addEventListener('click', () => {
-            if (!orgChartInstance) return;
-            if (typeof orgChartInstance.collapseAll === 'function') orgChartInstance.collapseAll();
-            if (typeof orgChartInstance.fit === 'function') orgChartInstance.fit();
-          });
-        }
-        setupOrgFullscreen(chartEl, fullscreenBtn, fullscreenHint);
-        renderOrgChartWithLibrary(chartEl);
-      };
-      const renderDepartmentEmployeesOrg = (area) => {
-        const areaName = normalizeText(area?.name);
-        const areaCode = normalizeText(area?.code);
-        const rows = colaboradoresData.filter((col) => {
-          const dep = normalizeText(col?.departamento);
-          return !!dep && (dep === areaName || dep === areaCode);
-        });
-        if (!rows.length) return '<p>Sin empleados asignados en este departamento.</p>';
-        const byId = {};
-        const idByKey = {};
-        rows.forEach((row) => {
-          const id = Number(row.id || 0);
-          if (id) byId[id] = row;
-          const keyName = normalizeText(row.nombre);
-          const keyUser = normalizeText(row.usuario);
-          if (keyName) idByKey[keyName] = id;
-          if (keyUser) idByKey[keyUser] = id;
-        });
-        const byBoss = {};
-        rows.forEach((row) => {
-          const myId = Number(row.id || 0);
-          const bossIdRaw = Number(row.jefe_inmediato_id || 0);
-          let bossId = bossIdRaw && byId[bossIdRaw] ? bossIdRaw : 0;
-          if (!bossId) {
-            const bossKey = normalizeText(row.jefe);
-            bossId = bossKey ? Number(idByKey[bossKey] || 0) : 0;
-          }
-          const groupKey = bossId && bossId !== myId ? String(bossId) : 'root';
-          if (!byBoss[groupKey]) byBoss[groupKey] = [];
-          byBoss[groupKey].push(row);
-        });
-        const roots = byBoss.root || rows;
-        const renderLevel = (nodes, depth) => {
-          if (!nodes || !nodes.length) return '';
-          return `<div class="org-level" style="margin-top:${depth ? '10px' : '0'};">${
-            nodes.map((node) => {
-              const kids = byBoss[String(node.id)] || [];
-              const avatar = escapeHtml((node.imagen || '').trim() || '/icon/usuario.png');
-              return `
-                <div class="${depth === 0 ? 'org-root' : ''}">
-                  <div class="org-node">
-                    <div class="org-node-avatar"><img src="${avatar}" alt="${escapeHtml(node.nombre || 'Colaborador')}" loading="lazy" onerror="this.src='/icon/usuario.png'"></div>
-                    <strong>${escapeHtml(node.nombre || node.usuario || 'Sin nombre')}</strong>
-                    <span>${escapeHtml(node.puesto || node.usuario || '')}</span>
-                  </div>
-                  ${kids.length ? `<div class="org-divider"></div>${renderLevel(kids, depth + 1)}` : ''}
-                </div>
-              `;
-            }).join('')
-          }</div>`;
-        };
-        return `<div class="usuario-organigrama">${renderLevel(roots, 0)}</div>`;
-      };
-      const ensureDeptOrgModal = () => {
-        let modal = document.getElementById('dept-org-modal');
-        if (modal) return modal;
-        modal = document.createElement('div');
-        modal.id = 'dept-org-modal';
-        modal.className = 'dept-org-modal';
-        modal.innerHTML = `
-          <div class="dept-org-dialog" role="dialog" aria-modal="true" aria-labelledby="dept-org-modal-title">
-            <div class="dept-org-head">
-              <h3 id="dept-org-modal-title" class="dept-org-title">Organigrama del departamento</h3>
-              <button type="button" class="dept-org-close" data-close-dept-org>Cerrar</button>
-            </div>
-            <div id="dept-org-modal-body"></div>
-          </div>
-        `;
-        modal.addEventListener('click', (event) => {
-          if (event.target === modal) modal.classList.remove('open');
-        });
-        modal.querySelector('[data-close-dept-org]')?.addEventListener('click', () => modal.classList.remove('open'));
-        document.addEventListener('keydown', (event) => {
-          if (event.key === 'Escape') modal.classList.remove('open');
-        });
-        document.body.appendChild(modal);
-        return modal;
-      };
-      const openDeptOrgModal = (area) => {
-        const modal = ensureDeptOrgModal();
-        const titleEl = modal.querySelector('#dept-org-modal-title');
-        const bodyEl = modal.querySelector('#dept-org-modal-body');
-        if (titleEl) titleEl.textContent = `Organigrama del departamento: ${String(area?.name || area?.code || 'N/A')}`;
-        if (bodyEl) bodyEl.innerHTML = renderDepartmentEmployeesOrg(area);
-        modal.classList.add('open');
-      };
-
-      const getFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
-
-      const requestElementFullscreen = async (element) => {
-        if (!element) return;
-        if (element.requestFullscreen) {
-          await element.requestFullscreen();
-          return;
-        }
-        if (element.webkitRequestFullscreen) {
-          element.webkitRequestFullscreen();
-        }
-      };
-
-      const exitAnyFullscreen = async () => {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-          return;
-        }
-        if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
-      };
-
-      const setupOrgFullscreen = (chartEl, btnEl, hintEl) => {
-        if (!chartEl || !btnEl) return;
-        const target = chartEl;
-        const updateFullscreenUi = () => {
-          const isActive = getFullscreenElement() === target;
-          btnEl.textContent = isActive ? 'Salir de pantalla completa' : 'Ver en pantalla completa';
-          if (hintEl) hintEl.classList.toggle('visible', isActive);
-        };
-        btnEl.addEventListener('click', async () => {
-          const isActive = getFullscreenElement() === target;
-          try {
-            if (isActive) {
-              await exitAnyFullscreen();
-            } else {
-              await requestElementFullscreen(target);
-            }
-          } catch (_error) {
-            // Ignorar fallo silencioso del navegador en fullscreen sin gesto permitido.
-          } finally {
-            updateFullscreenUi();
-          }
-        });
-        document.addEventListener('fullscreenchange', updateFullscreenUi);
-        document.addEventListener('webkitfullscreenchange', updateFullscreenUi);
-        updateFullscreenUi();
-      };
-
-      const loadScript = (src) => new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve();
-          return;
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
-        document.head.appendChild(script);
-      });
-
-      const ensureOrgChartLibrary = async () => {
-        if (window.d3 && window.d3.OrgChart) return true;
-        if (!orgLibPromise) {
-          orgLibPromise = (async () => {
-            try {
-              await loadScript('/static/vendor/d3.min.js');
-              await loadScript('/static/vendor/d3-flextree.min.js');
-              await loadScript('/static/vendor/d3-org-chart.min.js');
-            } catch (_localError) {
-              await loadScript('https://cdn.jsdelivr.net/npm/d3@7');
-              await loadScript('https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js');
-              await loadScript('https://cdn.jsdelivr.net/npm/d3-org-chart@3');
-            }
-          })().catch(() => false);
-        }
-        const result = await orgLibPromise;
-        return result !== false && !!(window.d3 && window.d3.OrgChart);
-      };
-
-      const buildOrgNodes = () => {
-        const nameToCode = new Map();
-        areasData.forEach((area) => {
-          const name = String(area.name || '').trim();
-          const code = String(area.code || '').trim();
-          if (name && code && !nameToCode.has(name)) nameToCode.set(name, code);
-        });
-        const nodes = areasData.map((area) => {
-          const parentName = String(area.parent || '').trim();
-          const parentCode = parentName && parentName !== 'N/A' ? (nameToCode.get(parentName) || '') : '';
-          return {
-            id: String(area.code || '').trim(),
-            parentId: parentCode || null,
-            name: String(area.name || '').trim(),
-            code: String(area.code || '').trim(),
-            manager: String(area.manager || '').trim(),
-            status: String(area.status || '').trim() || 'Activo',
-            color: normalizeAreaColor(area.color),
-            empleados_asignados: assignedCount(area),
-          };
-        }).filter((node) => node.id && node.name);
-        const rootNodes = nodes.filter((node) => !node.parentId);
-        if (rootNodes.length > 1) {
-          const virtualRootId = '__root__areas__';
-          rootNodes.forEach((node) => { node.parentId = virtualRootId; });
-          nodes.unshift({
-            id: virtualRootId,
-            parentId: null,
-            name: 'Áreas organizacionales',
-            code: 'ROOT',
-            manager: '',
-            status: 'Activo',
-            color: '#0f172a',
-          });
-        }
-        return nodes;
-      };
-
-      const renderOrgChartWithLibrary = async (container) => {
-        const available = await ensureOrgChartLibrary();
-        if (!available) {
-          container.innerHTML = '<p>No se pudo cargar la librería de organigrama.</p>';
-          return;
-        }
-        const nodes = buildOrgNodes();
-        if (!nodes.length) {
-          container.innerHTML = '<p>Sin áreas disponibles.</p>';
-          return;
-        }
-        container.innerHTML = '';
-        orgChartInstance = new window.d3.OrgChart()
-          .container(container)
-          .data(nodes)
-          .nodeWidth(() => 340)
-          .nodeHeight(() => 160)
-          .childrenMargin(() => 60)
-          .compactMarginBetween(() => 25)
-          .compactMarginPair(() => 80)
-          .pagingStep(() => 999999)
-          .minPagingVisibleNodes(() => 999999)
-          .linkYOffset(20)
-          .setActiveNodeCentered(false)
-          .onNodeClick((d) => {
-            const code = String(d?.data?.code || '').trim();
-            if (!code || code === 'ROOT') return;
-            openDeptOrgModal(d?.data || {});
-          })
-          .linkUpdate(function (d) {
-            window.d3.select(this)
-              .attr('stroke-width', 1.1)
-              .attr('stroke', 'rgba(15, 23, 42, 0.38)');
-          })
-          .initialExpandLevel(99)
-          .compact(false)
-          .nodeContent((d) => {
-            const data = d?.data || {};
-            const rawName = String(data.name || '').trim();
-            const rawOwner = String(data.owner || data.manager || '').trim();
-            const rawType = String(data.type || '').trim().toLowerCase();
-            const numericProgress = Number(data.progress);
-            const progress = Number.isFinite(numericProgress) ? Math.max(0, Math.min(100, numericProgress)) : 0;
-            const status = String(data.status || data.status_key || '').trim() || statusFromProgress(progress);
-            const name = escapeHtml(rawName || 'Área / Puesto');
-            const typeBadge = rawType === 'consejo' ? '🏛 Consejo'
-              : rawType === 'direccion' ? '🧭 Dirección'
-              : rawType === 'control' ? '🛡 Control'
-              : rawType === 'operacion' ? '⚙ Operación'
-              : '🏷 Área';
-            const owner = rawOwner ? `<span class="oc-pill">👤 ${escapeHtml(rawOwner)}</span>` : '';
-            const kpi1 = (data.kpi_1 ?? '') !== ''
-              ? `<div class="oc-kpi"><span>${escapeHtml(data.kpi_1_label || 'KPI')}</span><strong>${escapeHtml(data.kpi_1)}</strong></div>`
-              : `<div class="oc-kpi"><span>Empleados</span><strong>${Number(data.empleados_asignados || 0)}</strong></div>`;
-            const kpi2 = (data.kpi_2 ?? '') !== ''
-              ? `<div class="oc-kpi"><span>${escapeHtml(data.kpi_2_label || 'KPI')}</span><strong>${escapeHtml(data.kpi_2)}</strong></div>`
-              : `<div class="oc-kpi"><span>Código</span><strong>${escapeHtml(data.code || '-')}</strong></div>`;
-            const empleados = Number(data.empleados_asignados || 0);
-            const grad = status === 'danger'
-              ? 'linear-gradient(90deg,#ef4444,#fb7185)'
-              : status === 'warning'
-                ? 'linear-gradient(90deg,#f59e0b,#fbbf24)'
-                : 'linear-gradient(90deg,#16a34a,#22c55e)';
-            return `
-              <div class="oc-card" data-status="${escapeHtml(status)}" title="Empleados asignados: ${empleados}">
-                <div class="oc-top">
-                  <div class="oc-title">
-                    <div class="oc-name">${name}</div>
-                    <div class="oc-sub">
-                      <span class="oc-pill">${typeBadge}</span>
-                      ${owner}
-                    </div>
-                  </div>
-                  <div class="oc-score">${Math.round(progress)}%</div>
-                </div>
-                <div class="oc-progress"><div class="oc-fill" style="width:${progress}%;background:${grad};"></div></div>
-                <div class="oc-bottom">
-                  <div class="oc-status">${statusLabel(status)}</div>
-                  <div class="oc-kpis">${kpi1}${kpi2}</div>
-                </div>
-              </div>
-            `;
-          })
-          .render();
-        if (orgChartInstance && typeof orgChartInstance.expandAll === 'function') {
-          orgChartInstance.expandAll();
-        }
-        if (orgChartInstance && typeof orgChartInstance.fit === 'function') {
-          orgChartInstance.fit();
-        }
-      };
-
-      const renderAreaPuestos = () => {
-        if (!document.getElementById('_pl2-styles')) {
-          const s = document.createElement('style'); s.id = '_pl2-styles';
-          s.textContent = `
-            .pl-wrap{max-width:860px;display:flex;flex-direction:column;gap:18px;}
-            .pl-card{background:#fff;border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 14%,#ffffff 86%);border-radius:14px;padding:22px;}
-            .pl-card-title{font-size:1rem;font-weight:700;color:var(--sidebar-bottom,#0f172a);margin:0 0 16px;}
-            .pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
-            .pl-field{display:flex;flex-direction:column;gap:5px;} .pl-field.full{grid-column:1/-1;}
-            .pl-label{font-size:.8rem;font-weight:600;color:color-mix(in srgb,var(--button-bg,#0f172a) 55%,#ffffff 45%);}
-            .pl-input,.pl-select,.pl-textarea{border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 18%,#ffffff 82%);border-radius:10px;padding:9px 12px;font:inherit;color:var(--navbar-text,#0f172a);background:var(--field-color,#fff);outline:none;transition:border-color .15s;}
-            .pl-input:focus,.pl-select:focus,.pl-textarea:focus{border-color:color-mix(in srgb,var(--button-bg,#0f172a) 40%,#ffffff 60%);}
-            .pl-textarea{min-height:80px;resize:vertical;}
-            .pl-form-actions{display:flex;gap:10px;align-items:center;margin-top:6px;}
-            .pl-btn-save{border:none;border-radius:10px;padding:9px 22px;background:color-mix(in srgb,var(--button-bg,#0f172a) 90%,#ffffff 10%);color:#fff;font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .15s;}
-            .pl-btn-save:hover{opacity:.85;}
-            .pl-btn-cancel{border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 18%,#ffffff 82%);border-radius:10px;padding:9px 18px;background:transparent;color:var(--sidebar-bottom,#0f172a);font-size:.9rem;cursor:pointer;}
-            .pl-msg{font-size:.82rem;color:#22c55e;display:none;}
-            .pl-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 12%,#ffffff 88%);}
-            .pl-table{width:100%;border-collapse:collapse;font-size:.875rem;}
-            .pl-table thead th{padding:11px 14px;text-align:left;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:color-mix(in srgb,var(--button-bg,#0f172a) 50%,#ffffff 50%);background:color-mix(in srgb,var(--button-bg,#0f172a) 5%,#ffffff 95%);border-bottom:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%);}
-            .pl-table tbody tr{border-bottom:1px solid color-mix(in srgb,var(--button-bg,#0f172a) 7%,#ffffff 93%);transition:background .12s;}
-            .pl-table tbody tr:last-child{border-bottom:none;}
-            .pl-table tbody tr:hover{background:color-mix(in srgb,var(--button-bg,#0f172a) 3%,#ffffff 97%);}
-            .pl-table td{padding:11px 14px;color:var(--sidebar-bottom,#0f172a);vertical-align:top;}
-            .pl-act-btn{border:none;background:none;cursor:pointer;padding:4px 6px;border-radius:6px;font-size:.82rem;transition:background .12s;}
-            .pl-act-btn.edit{color:color-mix(in srgb,var(--button-bg,#0f172a) 45%,#ffffff 55%);}
-            .pl-act-btn.edit:hover{background:color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%);}
-            .pl-act-btn.del{color:#ef4444;} .pl-act-btn.del:hover{background:#fee2e2;}
-            .pl-act-btn.nb{color:color-mix(in srgb,var(--button-bg,#0f172a) 45%,#ffffff 55%);}
-            .pl-act-btn.nb:hover{background:color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%);}
-            .pl-empty{text-align:center;padding:32px;color:color-mix(in srgb,var(--button-bg,#0f172a) 35%,#ffffff 65%);font-size:.875rem;}
-            @media(max-width:620px){.pl-grid{grid-template-columns:1fr;}.pl-field.full{grid-column:1;}}
-          `;
-          document.head.appendChild(s);
-        }
-        areaView.innerHTML = `
-          <div class="pl-wrap">
-            <div class="pl-card">
-              <p class="pl-card-title" id="pl2-form-title">Nuevo puesto laboral</p>
-              <input type="hidden" id="pl2-edit-id" value="">
-              <div class="pl-grid">
-                <div class="pl-field">
-                  <label class="pl-label" for="pl2-nombre">Nombre del puesto <span style="color:#ef4444">*</span></label>
-                  <input class="pl-input" id="pl2-nombre" type="text" placeholder="Ej. Gerente de Marketing" autocomplete="off">
-                </div>
-                <div class="pl-field">
-                  <label class="pl-label" for="pl2-area">\u00c1rea a la que pertenece</label>
-                  <select class="pl-select" id="pl2-area"><option value="">\u2014 Sin \u00e1rea asignada \u2014</option></select>
-                </div>
-                <div class="pl-field">
-                  <label class="pl-label" for="pl2-nivel">Nivel organizacional</label>
-                  <select class="pl-select" id="pl2-nivel">
-                    <option value="">\u2014 Seleccionar \u2014</option>
-                    <option>Directivo</option><option>Gerencial</option><option>Jefatura</option>
-                    <option>Coordinaci\u00f3n</option><option>Supervisor</option>
-                    <option>T\u00e9cnico / Especialista</option><option>Operativo</option>
-                    <option>Auxiliar / Asistente</option><option>Pasante / Pr\u00e1cticas</option>
-                  </select>
-                </div>
-                <div class="pl-field full">
-                  <label class="pl-label" for="pl2-desc">Descripci\u00f3n</label>
-                  <textarea class="pl-textarea" id="pl2-desc" placeholder="Responsabilidades principales del puesto..."></textarea>
-                </div>
-              </div>
-              <div class="pl-form-actions">
-                <button class="pl-btn-save" id="pl2-btn-save">Guardar puesto</button>
-                <button class="pl-btn-cancel" id="pl2-btn-cancel" style="display:none;">Cancelar</button>
-                <span class="pl-msg" id="pl2-msg">&#10003; Guardado</span>
-              </div>
-            </div>
-            <div class="pl-card">
-              <p class="pl-card-title">Puestos registrados <span id="pl2-count" style="font-weight:400;font-size:.82rem;"></span></p>
-              <div class="pl-table-wrap">
-                <table class="pl-table">
-                  <thead><tr><th>Nombre</th><th>\u00c1rea</th><th>Nivel</th><th>Descripci\u00f3n</th><th></th></tr></thead>
-                  <tbody id="pl2-tbody"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>`;
-
-        // populate area select
-        const areasSel = document.getElementById('pl2-area');
-        (areasData || []).forEach((a) => {
-          const o = document.createElement('option');
-          o.value = a.name; o.textContent = a.name;
-          areasSel.appendChild(o);
-        });
-
-        let _pl2Puestos = [];
-        const _pl2Esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-        const _pl2RenderTable = () => {
-          const tbody = document.getElementById('pl2-tbody');
-          const cnt = document.getElementById('pl2-count');
-          if (cnt) cnt.textContent = _pl2Puestos.length ? `(${_pl2Puestos.length})` : '';
-          if (!_pl2Puestos.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="pl-empty">No hay puestos registrados.</td></tr>';
-            return;
-          }
-          tbody.innerHTML = '';
-          _pl2Puestos.forEach((p) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td><strong>${_pl2Esc(p.nombre)}</strong></td>
-              <td style="font-size:.82rem;color:color-mix(in srgb,var(--button-bg,#0f172a) 50%,#ffffff 50%)">${_pl2Esc(p.area||'\u2014')}</td>
-              <td style="font-size:.82rem;color:color-mix(in srgb,var(--button-bg,#0f172a) 50%,#ffffff 50%)">${_pl2Esc(p.nivel||'\u2014')}</td>
-              <td style="font-size:.82rem;max-width:220px;color:color-mix(in srgb,var(--button-bg,#0f172a) 45%,#ffffff 55%)">${_pl2Esc(p.descripcion||'\u2014')}</td>
-              <td style="white-space:nowrap">
-                <button class="pl-act-btn nb" title="Notebook">&#128203;</button>
-                <button class="pl-act-btn edit" title="Editar">&#9998;</button>
-                <button class="pl-act-btn del" title="Eliminar">&times;</button>
-              </td>`;
-            tr.querySelector('.nb').addEventListener('click', () => openPuestoNb(p.id, _pl2Puestos));
-            tr.querySelector('.edit').addEventListener('click', () => {
-              document.getElementById('pl2-edit-id').value = p.id;
-              document.getElementById('pl2-nombre').value = p.nombre;
-              document.getElementById('pl2-area').value = p.area || '';
-              document.getElementById('pl2-nivel').value = p.nivel || '';
-              document.getElementById('pl2-desc').value = p.descripcion || '';
-              document.getElementById('pl2-form-title').textContent = 'Editar puesto laboral';
-              document.getElementById('pl2-btn-cancel').style.display = 'inline-block';
-              document.getElementById('pl2-nombre').focus();
-            });
-            tr.querySelector('.del').addEventListener('click', async () => {
-              if (!confirm('\u00bfEliminar este puesto?')) return;
-              const r = await fetch('/api/puestos-laborales', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'delete',id:p.id}) });
-              const j = await r.json();
-              if (j.success) { _pl2Puestos = j.data; _pl2RenderTable(); }
-            });
-            tbody.appendChild(tr);
-          });
-        };
-
-        const _pl2Reset = () => {
-          document.getElementById('pl2-edit-id').value = '';
-          document.getElementById('pl2-nombre').value = '';
-          document.getElementById('pl2-area').value = '';
-          document.getElementById('pl2-nivel').value = '';
-          document.getElementById('pl2-desc').value = '';
-          document.getElementById('pl2-form-title').textContent = 'Nuevo puesto laboral';
-          document.getElementById('pl2-btn-cancel').style.display = 'none';
-          document.getElementById('pl2-msg').style.display = 'none';
-        };
-
-        document.getElementById('pl2-btn-cancel').addEventListener('click', _pl2Reset);
-        document.getElementById('pl2-btn-save').addEventListener('click', async () => {
-          const nombre = document.getElementById('pl2-nombre').value.trim();
-          if (!nombre) { document.getElementById('pl2-nombre').focus(); return; }
-          const payload = {
-            id: document.getElementById('pl2-edit-id').value || undefined,
-            nombre,
-            area: document.getElementById('pl2-area').value,
-            nivel: document.getElementById('pl2-nivel').value,
-            descripcion: document.getElementById('pl2-desc').value.trim(),
-          };
-          const r = await fetch('/api/puestos-laborales', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-          const j = await r.json();
-          if (j.success) {
-            _pl2Puestos = j.data; _pl2RenderTable(); _pl2Reset();
-            const msg = document.getElementById('pl2-msg');
-            msg.style.display = 'inline';
-            setTimeout(() => { msg.style.display = 'none'; }, 2000);
-          }
-        });
-
-        fetch('/api/puestos-laborales').then((r) => r.json()).then((res) => { _pl2Puestos = res.data || []; _pl2RenderTable(); });
-      };
-
-      const setAreaView = (view) => {
-        areaTabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.view === view));
-        switch (view) {
-          case 'list':
-            renderAreaList();
-            break;
-          case 'kanban':
-            renderAreaKanban();
-            break;
-          case 'organigrama':
-            renderAreaOrganigrama();
-            break;
-          case 'puestos':
-            renderAreaPuestos();
-            break;
-          default:
-            renderAreaForm();
-            break;
-        }
-      };
-
-      areaTabs.forEach((tab) => {
-        tab.addEventListener('click', () => setAreaView(tab.dataset.view));
-      });
-
-      document.addEventListener('backend-view-change', (event) => {
-        const rawView = String(event.detail?.view || '').trim().toLowerCase();
-        if (!rawView) return;
-        if (rawView === 'graph' || rawView === 'grafica') {
-          setAreaView('organigrama');
-          return;
-        }
-        if (rawView === 'form' || rawView === 'list' || rawView === 'kanban' || rawView === 'organigrama') {
-          setAreaView(rawView);
-        }
-      });
-
-      Promise.all([loadAreasData(), loadColaboradoresData()]).then(() => setAreaView('form'));
-
-      // ── Puestos notebook drawer (inline, inside departamentos page) ──────────
-      let _deptNbHabCatalog = null;
-      let _deptNbPuestoId = null;
-      let _deptNbAllPuestos = [];
-
-      function openPuestoNb(puestoId, allPuestos) {
-        const p = (allPuestos || _deptNbAllPuestos).find((x) => x.id === puestoId);
-        if (!p) return;
-        _deptNbPuestoId = puestoId;
-        _deptNbAllPuestos = allPuestos || _deptNbAllPuestos;
-        document.getElementById('dept-pl-titulo').textContent = p.nombre;
-        document.querySelectorAll('.dept-pl-tab').forEach((t) => t.classList.remove('active'));
-        document.querySelectorAll('.dept-pl-panel').forEach((t) => t.classList.remove('active'));
-        document.querySelector('.dept-pl-tab[data-tab="hab"]').classList.add('active');
-        document.getElementById('dept-pl-panel-hab').classList.add('active');
-        document.getElementById('dept-pl-overlay').style.display = 'block';
-        document.getElementById('dept-pl-drawer').classList.add('open');
-        document.getElementById('dept-pl-saved').style.display = 'none';
-        _deptNbLoadHab(p);
-      }
-
-      function closePuestoNb() {
-        document.getElementById('dept-pl-drawer').classList.remove('open');
-        document.getElementById('dept-pl-overlay').style.display = 'none';
-        _deptNbPuestoId = null;
-      }
-
-      document.getElementById('dept-pl-close-btn').addEventListener('click', closePuestoNb);
-      document.getElementById('dept-pl-overlay').addEventListener('click', closePuestoNb);
-
-      document.querySelectorAll('.dept-pl-tab').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.dept-pl-tab').forEach((t) => t.classList.remove('active'));
-          document.querySelectorAll('.dept-pl-panel').forEach((t) => t.classList.remove('active'));
-          btn.classList.add('active');
-          document.getElementById('dept-pl-panel-' + btn.getAttribute('data-tab')).classList.add('active');
-        });
-      });
-
-      const _HAB_CAT_LABELS_DEPT = {
-        'comunicacion_interpersonales': 'Comunicaci\u00f3n e interpersonales',
-        'liderazgo_gestion': 'Liderazgo y gesti\u00f3n',
-        'liderazgo_equipos': 'Liderazgo de equipos',
-        'resolucion_pensamiento': 'Resoluci\u00f3n y pensamiento',
-        'organizacion_autogestion': 'Organizaci\u00f3n y autogesti\u00f3n',
-        'informatica_tecnologia_general': 'Inform\u00e1tica y tecnolog\u00eda general',
-        'tecnologias_informacion_it': 'Tecnolog\u00edas de la informaci\u00f3n (IT)',
-        'diseno_multimedia': 'Dise\u00f1o y multimedia',
-        'marketing_ventas_comunicacion': 'Marketing, ventas y comunicaci\u00f3n',
-        'finanzas_contabilidad_administracion': 'Finanzas, contabilidad y administraci\u00f3n',
-        'logistica_produccion_operaciones': 'Log\u00edstica, producci\u00f3n y operaciones',
-        'idiomas_duros': 'Idiomas',
-        'sector_salud': 'Sector salud',
-        'sector_legal': 'Sector legal',
-        'habilidades_manuales_tecnicas': 'Habilidades manuales y t\u00e9cnicas'
-      };
-
-      function _deptNbLoadHab(p) {
-        const panel = document.getElementById('dept-pl-panel-hab');
-        const _normItem = (raw) => raw && typeof raw === 'object'
-          ? { nombre: String(raw.nombre || '').trim(), minimo: parseInt(raw.minimo, 10) || 0 }
-          : { nombre: String(raw || '').trim(), minimo: 0 };
-        let items = (p.habilidades_requeridas || []).map(_normItem);
-
-        const _listHtml = () => !items.length
-          ? '<p class="dept-pl-loading">Sin habilidades agregadas.</p>'
-          : items.map((it, idx) =>
-              `<div class="dept-pl-hab-row" data-idx="${idx}">
-                <span class="dept-pl-hab-nombre">${escapeHtml(it.nombre)}</span>
-                <span class="dept-pl-hab-badge">${it.minimo}%</span>
-                <button class="dept-pl-hab-del" data-idx="${idx}" style="border:0;background:transparent;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:0 2px;" title="Eliminar">&times;</button>
-              </div>`).join('');
-
-        const _buildSelect = (catalog) => {
-          const allSkills = [];
-          Object.keys(catalog).forEach((cat) => {
-            const catLabel = _HAB_CAT_LABELS_DEPT[cat] || cat.replace(/_/g, ' ');
-            (catalog[cat] || []).forEach((skill) => {
-              const s = typeof skill === 'string' ? skill : (skill.nombre || skill.name || String(skill));
-              if (s) allSkills.push({ nombre: s, categoria: catLabel });
-            });
-          });
-          allSkills.sort((a, b) => a.nombre.localeCompare(b.nombre));
-          let opts = '<option value="">— Selecciona una habilidad —</option>';
-          let lastCat = '';
-          allSkills.forEach((sk) => {
-            if (sk.categoria !== lastCat) {
-              if (lastCat) opts += '</optgroup>';
-              opts += `<optgroup label="${escapeHtml(sk.categoria)}">` ;
-              lastCat = sk.categoria;
-            }
-            opts += `<option value="${escapeHtml(sk.nombre)}">${escapeHtml(sk.nombre)}</option>`;
-          });
-          if (lastCat) opts += '</optgroup>';
-          return opts;
-        };
-
-        const _renderUI = (selOpts) => {
-          panel.innerHTML =
-            `<div id="dept-pl-hab-list" style="margin-bottom:14px;">${_listHtml()}</div>
-            <div style="border-top:1px solid #e2e8f0;padding-top:12px;display:flex;flex-direction:column;gap:8px;">
-              <label style="font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.04em;">Agregar habilidad</label>
-              <select id="dept-pl-hab-sel" style="width:100%;padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem;">${selOpts}</select>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <label style="font-size:.85rem;color:#475569;white-space:nowrap;">M\u00ednimo requerido</label>
-                <input id="dept-pl-hab-pct" type="number" min="0" max="100" value="80" style="width:72px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:.9rem;text-align:center;">
-                <span style="font-size:.9rem;color:#64748b;">%</span>
-                <button id="dept-pl-hab-add" style="margin-left:auto;padding:7px 16px;background:var(--button-bg,#0f172a);color:#fff;border:0;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem;">Agregar</button>
-              </div>
-            </div>`;
-
-          const _rebindDel = () => {
-            panel.querySelectorAll('.dept-pl-hab-del').forEach((btn) => {
-              btn.addEventListener('click', () => {
-                items.splice(parseInt(btn.getAttribute('data-idx'), 10), 1);
-                document.getElementById('dept-pl-hab-list').innerHTML = _listHtml();
-                _rebindDel();
-              });
-            });
-          };
-          _rebindDel();
-
-          document.getElementById('dept-pl-hab-add').addEventListener('click', () => {
-            const sel = document.getElementById('dept-pl-hab-sel');
-            const pct = document.getElementById('dept-pl-hab-pct');
-            const nombre = sel.value.trim();
-            const minimo = Math.min(100, Math.max(0, parseInt(pct.value, 10) || 0));
-            if (!nombre) { sel.focus(); return; }
-            if (items.find((x) => x.nombre === nombre)) { sel.value = ''; sel.focus(); return; }
-            items.push({ nombre, minimo });
-            sel.value = '';
-            pct.value = 80;
-            document.getElementById('dept-pl-hab-list').innerHTML = _listHtml();
-            _rebindDel();
-          });
-        };
-
-        if (_deptNbHabCatalog) { _renderUI(_buildSelect(_deptNbHabCatalog)); return; }
-        panel.innerHTML = '<p class="dept-pl-loading">Cargando cat\u00e1logo...</p>';
-        fetch('/api/habilidades-catalog')
-          .then((r) => r.json())
-          .then((res) => {
-            _deptNbHabCatalog = res.catalog || res.data || res || {};
-            _renderUI(_buildSelect(_deptNbHabCatalog));
-          })
-          .catch(() => { panel.innerHTML = '<p class="dept-pl-loading">Error al cargar cat\u00e1logo.</p>'; });
-      }
-
-      document.getElementById('dept-pl-btn-save').addEventListener('click', () => {
-        if (!_deptNbPuestoId) return;
-        const habs = [];
-        document.querySelectorAll('#dept-pl-panel-hab .dept-pl-hab-row').forEach((row) => {
-          const nombre = row.querySelector('.dept-pl-hab-nombre')?.textContent.trim();
-          const minimo = parseInt(row.querySelector('.dept-pl-hab-badge')?.textContent || '0', 10) || 0;
-          if (nombre) habs.push({ nombre, minimo });
-        });
-        fetch('/api/puestos-laborales', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'update_notebook', id: _deptNbPuestoId, habilidades_requeridas: habs, colaboradores_asignados: (_deptNbAllPuestos.find((x) => x.id === _deptNbPuestoId) || {}).colaboradores_asignados || [] })
-        })
-        .then((r) => r.json())
-        .then((res) => {
-          if (res.success) {
-            _deptNbAllPuestos = res.data;
-            const saved = document.getElementById('dept-pl-saved');
-            saved.style.display = 'inline';
-            setTimeout(() => { saved.style.display = 'none'; }, 2000);
-          }
-        });
-      });
-
-    })();
-  </script>
-
-  <!-- Puestos laborales notebook drawer -->
-  <div class="dept-pl-overlay" id="dept-pl-overlay"></div>
-  <div class="dept-pl-drawer" id="dept-pl-drawer">
-    <div class="dept-pl-head">
-      <div style="flex:1;min-width:0;">
-        <div class="dept-pl-titulo" id="dept-pl-titulo">—</div>
-        <div class="dept-pl-head-sub">Habilidades del puesto</div>
+  <div id="dep-layout" class="flex flex-col gap-4 lg:flex-row">
+    <aside id="dep-filter-card" class="card bg-base-100 border border-base-300 shadow-sm lg:w-80 lg:shrink-0">
+      <div class="card-body space-y-3">
+        <h2 class="card-title text-[color:var(--sidebar-bottom)]">Departamento</h2>
+        <label class="input input-bordered w-full flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4 opacity-70 fill-current"><path d="M10 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 2a6 6 0 1 0 3.473 10.894l4.816 4.817 1.414-1.414-4.817-4.816A6 6 0 0 0 10 4Z"/></svg>
+          <input id="dep-filter-search" type="text" class="grow" placeholder="Buscar..." />
+        </label>
+        <div id="dep-filter-tree" class="menu bg-base-100 rounded-box w-full max-h-[60vh] overflow-auto"></div>
       </div>
-      <button class="dept-pl-close" id="dept-pl-close-btn" title="Cerrar">&times;</button>
-    </div>
-    <div class="dept-pl-tabs">
-      <button class="dept-pl-tab active" data-tab="hab">Habilidades requeridas para el puesto</button>
-    </div>
-    <div class="dept-pl-body">
-      <div class="dept-pl-panel active" id="dept-pl-panel-hab"><p class="dept-pl-loading">Cargando...</p></div>
-    </div>
-    <div class="dept-pl-save-bar">
-      <button class="dept-pl-btn-save" id="dept-pl-btn-save">Guardar</button>
-      <span class="dept-pl-saved" id="dept-pl-saved">&#10003; Guardado</span>
+    </aside>
+
+    <div id="dep-content-col" class="grid gap-4 w-full min-w-0 lg:flex-1">
+      <div id="dep-form-card" class="hidden card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body space-y-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 id="dep-form-modal-title" class="card-title">Datos del área</h2>
+              <p class="text-base-content/70">Ingrese los datos del área</p>
+            </div>
+          </div>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Nombre</legend>
+            <input id="dep-nombre" class="input input-bordered w-full campo" type="text" placeholder="Nombre del área" />
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Código</legend>
+            <input id="dep-codigo" class="input input-bordered w-full campo" type="text" placeholder="Ej: OPE-010" />
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Responsable</legend>
+            <input id="dep-responsable" class="input input-bordered w-full campo" type="text" placeholder="Nombre del responsable" />
+          </fieldset>
+
+          <div class="rounded-box border border-base-300 bg-base-100 p-3">
+            <div class="tabs tabs-boxed w-full flex-wrap" role="tablist" aria-label="Pestañas del área">
+              <button type="button" class="tab gap-2 rounded-t-lg tab-active" data-dep-tab="1" data-tab="empleados">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/usuarios.svg')"></span>
+                Empleados
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="ejes">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/ejes.svg')"></span>
+                Ejes estratégicos asignados
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="kpi">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/kpi.svg')"></span>
+                KPIs
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="indice">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/bateo.svg')"></span>
+                Índice de bateo
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="puestos">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/usuarios.svg')"></span>
+                Puestos laborales
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="funciones">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/objetivos.svg')"></span>
+                Funciones
+              </button>
+            </div>
+            <div class="tabs-content grid gap-3">
+              <div data-panel="empleados">
+                <p class="text-xl font-semibold text-[color:var(--sidebar-bottom)]">Empleados asignados: 0</p>
+              </div>
+              <div class="hidden" data-panel="ejes">
+                <p class="text-base-content/70">Sin ejes estratégicos asignados.</p>
+              </div>
+              <div class="hidden" data-panel="kpi">
+                <p class="text-base-content/70">Sin KPI configurados.</p>
+              </div>
+              <div class="hidden" data-panel="indice">
+                <p class="text-base-content/70">Sin datos para índice de bateo.</p>
+              </div>
+              <div class="hidden" data-panel="puestos">
+                <p class="text-base-content/70">Sin puestos laborales vinculados.</p>
+              </div>
+              <div class="hidden" data-panel="funciones">
+                <div class="grid gap-3">
+                  <details class="collapse collapse-arrow border border-base-300 bg-base-100" open>
+                    <summary class="collapse-title text-sm font-semibold text-[color:var(--sidebar-bottom)]">Misionales</summary>
+                    <div class="collapse-content grid gap-2">
+                      <label class="input input-bordered campo flex items-center gap-2">
+                        <input id="dep-funcion-input-misionales" type="text" class="grow" placeholder="Agregar función misional" />
+                        <button id="dep-funcion-add-misionales" type="button" class="btn btn-xs">Agregar</button>
+                      </label>
+                      <div id="dep-funciones-list-misionales" class="grid gap-2"></div>
+                    </div>
+                  </details>
+                  <details class="collapse collapse-arrow border border-base-300 bg-base-100" open>
+                    <summary class="collapse-title text-sm font-semibold text-[color:var(--sidebar-bottom)]">Apoyo</summary>
+                    <div class="collapse-content grid gap-2">
+                      <label class="input input-bordered campo flex items-center gap-2">
+                        <input id="dep-funcion-input-apoyo" type="text" class="grow" placeholder="Agregar función de apoyo" />
+                        <button id="dep-funcion-add-apoyo" type="button" class="btn btn-xs">Agregar</button>
+                      </label>
+                      <div id="dep-funciones-list-apoyo" class="grid gap-2"></div>
+                    </div>
+                  </details>
+                  <details class="collapse collapse-arrow border border-base-300 bg-base-100" open>
+                    <summary class="collapse-title text-sm font-semibold text-[color:var(--sidebar-bottom)]">Proyectos especiales</summary>
+                    <div class="collapse-content grid gap-2">
+                      <label class="input input-bordered campo flex items-center gap-2">
+                        <input id="dep-funcion-input-proyectos_especiales" type="text" class="grow" placeholder="Agregar función de proyecto especial" />
+                        <button id="dep-funcion-add-proyectos_especiales" type="button" class="btn btn-xs">Agregar</button>
+                      </label>
+                      <div id="dep-funciones-list-proyectos_especiales" class="grid gap-2"></div>
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="botones_accion">
+            <button id="dep-btn-editar" class="view-pill boton_vista" type="button" data-tooltip="Editar" aria-label="Editar" title="Editar">
+              <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/editar.svg')"></span>
+              <span class="boton_vista-label">Editar</span>
+            </button>
+            <button id="dep-btn-guardar" class="view-pill boton_vista" type="button" data-tooltip="Guardar" aria-label="Guardar" title="Guardar">
+              <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/guardar.svg')"></span>
+              <span class="boton_vista-label">Guardar</span>
+            </button>
+            <button id="dep-btn-eliminar" class="view-pill boton_vista" type="button" data-tooltip="Eliminar" aria-label="Eliminar" title="Eliminar">
+              <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/eliminar.svg')"></span>
+              <span class="boton_vista-label">Eliminar</span>
+            </button>
+          </div>
+          <p id="dep-msg" class="text-sm text-base-content/70"></p>
+        </div>
+      </div>
+
+      <div id="dep-main-grid" class="grid gap-4 grid-cols-1">
+        <div id="dep-table-card" class="card bg-base-100 border border-base-300 shadow-sm">
+          <div class="card-body space-y-4">
+            <h2 id="dep-table-title" class="card-title">Estado del módulo</h2>
+            <div id="dep-table-alert" class="alert alert-warning">
+              <span>Se retiró temporalmente toda personalización fuera de DaisyUI.</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="table lista">
+                <colgroup>
+                  <col style="width:50%">
+                  <col style="width:10%">
+                  <col style="width:40%">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Área</th>
+                    <th>Código</th>
+                    <th>Responsable</th>
+                  </tr>
+                </thead>
+                <tbody id="dep-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="dep-vista-extra" class="hidden card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+          <h3 id="dep-vista-extra-titulo" class="card-title">Vista</h3>
+          <p id="dep-vista-extra-texto" class="text-base-content/70"></p>
+        </div>
+      </div>
+      <div id="dep-kanban-card" class="hidden card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">Kanban de áreas</h3>
+          <div id="dep-kanban-grid" class="kanban"></div>
+        </div>
+      </div>
+      <div id="dep-org-card" class="hidden card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">Organigrama de áreas</h3>
+          <div id="dep-org-chart" class="w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3"></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
+<script>
+(function () {
+  var rows = [];
+  var editingCode = "";
+  var readOnlyMode = false;
+  var nombreEl = document.getElementById("dep-nombre");
+  var codigoEl = document.getElementById("dep-codigo");
+  var responsableEl = document.getElementById("dep-responsable");
+  var msgEl = document.getElementById("dep-msg");
+  var funcionesGroups = ["misionales", "apoyo", "proyectos_especiales"];
+  var funcionesInputs = {
+    misionales: document.getElementById("dep-funcion-input-misionales"),
+    apoyo: document.getElementById("dep-funcion-input-apoyo"),
+    proyectos_especiales: document.getElementById("dep-funcion-input-proyectos_especiales")
+  };
+  var funcionesAddBtns = {
+    misionales: document.getElementById("dep-funcion-add-misionales"),
+    apoyo: document.getElementById("dep-funcion-add-apoyo"),
+    proyectos_especiales: document.getElementById("dep-funcion-add-proyectos_especiales")
+  };
+  var funcionesLists = {
+    misionales: document.getElementById("dep-funciones-list-misionales"),
+    apoyo: document.getElementById("dep-funciones-list-apoyo"),
+    proyectos_especiales: document.getElementById("dep-funciones-list-proyectos_especiales")
+  };
+  var tbody = document.getElementById("dep-tbody");
+  var filterSearchEl = document.getElementById("dep-filter-search");
+  var filterTreeEl = document.getElementById("dep-filter-tree");
+  var mainGrid = document.getElementById("dep-main-grid");
+  var tableCard = document.getElementById("dep-table-card");
+  var tableTitle = document.getElementById("dep-table-title");
+  var tableAlert = document.getElementById("dep-table-alert");
+  var extraCard = document.getElementById("dep-vista-extra");
+  var extraTitle = document.getElementById("dep-vista-extra-titulo");
+  var extraText = document.getElementById("dep-vista-extra-texto");
+  var kanbanCard = document.getElementById("dep-kanban-card");
+  var kanbanGrid = document.getElementById("dep-kanban-grid");
+  var orgCard = document.getElementById("dep-org-card");
+  var orgChartEl = document.getElementById("dep-org-chart");
+  var formCardEl = document.getElementById("dep-form-card");
+  var modalTitleEl = document.getElementById("dep-form-modal-title");
+  var filterState = { type: "all", value: "" };
+  var filterQuery = "";
+  var treeOpen = {};
+  var currentView = "list";
+  var orgLibPromise = null;
+  var depOrgChart = null;
+  var orgExpandedNodeId = "";
+  var funcionesDraft = { misionales: [], apoyo: [], proyectos_especiales: [] };
+
+  function normalizeFunciones(raw) {
+    var out = { misionales: [], apoyo: [], proyectos_especiales: [] };
+    if (Array.isArray(raw)) {
+      raw.forEach(function (f) {
+        var txt = String(f || "").trim();
+        if (txt && out.misionales.indexOf(txt) < 0) out.misionales.push(txt);
+      });
+      return out;
+    }
+    if (!raw || typeof raw !== "object") return out;
+    funcionesGroups.forEach(function (group) {
+      var vals = raw[group];
+      if (!Array.isArray(vals)) return;
+      vals.forEach(function (f) {
+        var txt = String(f || "").trim();
+        if (txt && out[group].indexOf(txt) < 0) out[group].push(txt);
+      });
+    });
+    return out;
+  }
+
+  function esc(v) {
+    return String(v || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;");
+  }
+
+  function setMsg(text, tone) {
+    if (!msgEl) return;
+    msgEl.textContent = text || "";
+    msgEl.className = tone === "ok" ? "text-sm text-success" : (tone === "error" ? "text-sm text-error" : "text-sm text-base-content/70");
+  }
+
+  function clearForm() {
+    editingCode = "";
+    if (nombreEl) nombreEl.value = "";
+    if (codigoEl) codigoEl.value = "";
+    if (responsableEl) responsableEl.value = "";
+    funcionesDraft = { misionales: [], apoyo: [], proyectos_especiales: [] };
+    renderFuncionesDraft();
+  }
+
+  function setFormReadOnly(enabled) {
+    readOnlyMode = !!enabled;
+    if (nombreEl) nombreEl.readOnly = readOnlyMode;
+    if (codigoEl) codigoEl.readOnly = readOnlyMode;
+    if (responsableEl) responsableEl.readOnly = readOnlyMode;
+    var saveBtn = document.getElementById("dep-btn-guardar");
+    var delBtn = document.getElementById("dep-btn-eliminar");
+    if (saveBtn) saveBtn.disabled = readOnlyMode;
+    if (delBtn) delBtn.disabled = readOnlyMode;
+    funcionesGroups.forEach(function (group) {
+      if (funcionesInputs[group]) funcionesInputs[group].disabled = readOnlyMode;
+      if (funcionesAddBtns[group]) funcionesAddBtns[group].disabled = readOnlyMode;
+      var listEl = funcionesLists[group];
+      if (listEl) {
+        Array.from(listEl.querySelectorAll('button[data-func-del]')).forEach(function (btn) {
+          btn.disabled = readOnlyMode;
+        });
+      }
+    });
+  }
+
+  function openFormModal(titleText) {
+    if (modalTitleEl) modalTitleEl.textContent = titleText || "Datos del área";
+    currentView = "form";
+    setActiveViewButton("");
+    if (extraCard) extraCard.classList.add("hidden");
+    if (kanbanCard) kanbanCard.classList.add("hidden");
+    if (orgCard) orgCard.classList.add("hidden");
+    if (mainGrid) mainGrid.classList.add("hidden");
+    if (formCardEl) formCardEl.classList.remove("hidden");
+  }
+
+  function closeFormModal() {
+    if (formCardEl) formCardEl.classList.add("hidden");
+    renderView("list");
+  }
+
+  function findByCode(code) {
+    var target = String(code || "").trim().toLowerCase();
+    return rows.find(function (r) { return String(r.code || "").trim().toLowerCase() === target; }) || null;
+  }
+
+  function norm(v) {
+    return String(v || "").trim().toLowerCase();
+  }
+
+  function getChildrenByParentName(name) {
+    var key = norm(name);
+    return rows.filter(function (r) { return norm(r.parent || "") === key; });
+  }
+
+  function collectSubtreeNames(rootName, out, stack) {
+    var key = norm(rootName);
+    if (!key || out.has(key)) return;
+    if (stack.has(key)) return;
+    out.add(key);
+    stack.add(key);
+    getChildrenByParentName(rootName).forEach(function (child) {
+      collectSubtreeNames(child.name, out, stack);
+    });
+    stack.delete(key);
+  }
+
+  function countNodeAndDescendants(nodeName) {
+    var names = new Set();
+    collectSubtreeNames(nodeName, names, new Set());
+    return rows.filter(function (r) { return names.has(norm(r.name)); }).length;
+  }
+
+  function getRootNodes() {
+    var names = new Set(rows.map(function (r) { return norm(r.name); }));
+    return rows.filter(function (r) {
+      var p = norm(r.parent || "");
+      return !p || p === "n/a" || !names.has(p);
+    });
+  }
+
+  function isInSelectedBranch(row) {
+    if (filterState.type !== "node") return true;
+    var selected = norm(filterState.value);
+    if (!selected) return true;
+    var branchNames = new Set();
+    collectSubtreeNames(filterState.value, branchNames, new Set());
+    return branchNames.has(norm(row.name));
+  }
+
+  function matchesQuery(row) {
+    if (!filterQuery) return true;
+    var q = norm(filterQuery);
+    return norm(row.name).indexOf(q) >= 0 || norm(row.code).indexOf(q) >= 0 || norm(row.manager).indexOf(q) >= 0;
+  }
+
+  function getVisibleRows() {
+    return rows.filter(function (r) {
+      return isInSelectedBranch(r) && matchesQuery(r);
+    });
+  }
+
+  function renderFuncionesDraft() {
+    funcionesGroups.forEach(function (group) {
+      var listEl = funcionesLists[group];
+      if (!listEl) return;
+      var groupList = Array.isArray(funcionesDraft[group]) ? funcionesDraft[group] : [];
+      if (!groupList.length) {
+        listEl.innerHTML = '<p class="text-sm text-base-content/60">Sin funciones registradas.</p>';
+        return;
+      }
+      listEl.innerHTML = groupList.map(function (fn, idx) {
+        return '' +
+          '<div class="flex items-center gap-2 rounded-box border border-base-300 px-3 py-2">' +
+            '<span class="flex-1 text-sm">' + esc(fn) + '</span>' +
+            '<button type="button" class="btn btn-xs btn-error btn-outline" data-func-del="' + idx + '" data-func-group="' + group + '">Quitar</button>' +
+          '</div>';
+      }).join('');
+      Array.from(listEl.querySelectorAll('button[data-func-del]')).forEach(function (btn) {
+        btn.disabled = readOnlyMode;
+        btn.addEventListener("click", function () {
+          if (readOnlyMode) return;
+          var idx = parseInt(btn.getAttribute("data-func-del") || "-1", 10);
+          var g = btn.getAttribute("data-func-group") || "";
+          if (idx < 0 || funcionesGroups.indexOf(g) < 0) return;
+          if (!Array.isArray(funcionesDraft[g])) funcionesDraft[g] = [];
+          funcionesDraft[g].splice(idx, 1);
+          renderFuncionesDraft();
+        });
+      });
+    });
+  }
+
+  function addFuncionDraft(group) {
+    if (readOnlyMode) return;
+    if (funcionesGroups.indexOf(group) < 0) return;
+    var inputEl = funcionesInputs[group];
+    if (!inputEl) return;
+    var val = String(inputEl.value || "").trim();
+    if (!val) {
+      inputEl.focus();
+      return;
+    }
+    if (!Array.isArray(funcionesDraft[group])) funcionesDraft[group] = [];
+    if (funcionesDraft[group].indexOf(val) >= 0) {
+      inputEl.value = "";
+      inputEl.focus();
+      return;
+    }
+    funcionesDraft[group].push(val);
+    inputEl.value = "";
+    renderFuncionesDraft();
+    inputEl.focus();
+  }
+
+  function renderFilterTree() {
+    if (!filterTreeEl) return;
+    var total = rows.length;
+    var roots = getRootNodes().sort(function (a, b) {
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+
+    var html = '';
+    html += '<li><button type="button" class="' + (filterState.type === "all" ? 'active' : '') + '" data-filter-type="all" data-filter-value="">Todos <span class="ml-auto opacity-70">' + total + '</span></button></li>';
+
+    roots.forEach(function (root) {
+      var rootKey = norm(root.name);
+      if (typeof treeOpen[rootKey] === "undefined") treeOpen[rootKey] = true;
+      var children = getChildrenByParentName(root.name).sort(function (a, b) {
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      });
+      var rootCount = countNodeAndDescendants(root.name);
+      html += '<li>';
+      html += '<details ' + (treeOpen[rootKey] ? 'open' : '') + ' data-tree="' + esc(rootKey) + '">';
+      html += '<summary class="' + (filterState.type === "node" && norm(filterState.value) === rootKey ? 'active' : '') + '" data-filter-type="node" data-filter-value="' + esc(root.name) + '">';
+      html += esc(root.name) + '<span class="ml-auto opacity-70">' + rootCount + '</span>';
+      html += '</summary>';
+      if (children.length) {
+        html += '<ul>';
+        children.forEach(function (child) {
+          var childCount = countNodeAndDescendants(child.name);
+          html += '<li><button type="button" class="' + (filterState.type === "node" && norm(filterState.value) === norm(child.name) ? 'active' : '') + '" data-filter-type="node" data-filter-value="' + esc(child.name) + '">';
+          html += esc(child.name) + '<span class="ml-auto opacity-70">' + childCount + '</span></button></li>';
+        });
+        html += '</ul>';
+      }
+      html += '</details>';
+      html += '</li>';
+    });
+    filterTreeEl.innerHTML = html;
+
+    Array.from(filterTreeEl.querySelectorAll("[data-filter-type]")).forEach(function (el) {
+      el.addEventListener("click", function (event) {
+        if ((el.tagName || "").toLowerCase() !== "summary") {
+          event.preventDefault();
+        }
+        event.stopPropagation();
+        filterState.type = el.getAttribute("data-filter-type") || "all";
+        filterState.value = el.getAttribute("data-filter-value") || "";
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+      });
+    });
+
+    Array.from(filterTreeEl.querySelectorAll("details[data-tree]")).forEach(function (detail) {
+      detail.addEventListener("toggle", function () {
+        treeOpen[detail.getAttribute("data-tree")] = detail.open;
+      });
+    });
+  }
+
+  function renderTable() {
+    var data = getVisibleRows();
+    if (!tbody) return;
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td>Sin datos</td><td>—</td><td>—</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function (r) {
+      return '<tr data-code="' + esc(r.code) + '" class="cursor-pointer hover">' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td>' + esc(r.code) + '</td>' +
+        '<td>' + esc(r.manager || "—") + '</td>' +
+      '</tr>';
+    }).join("");
+
+    Array.from(tbody.querySelectorAll("tr[data-code]")).forEach(function (tr) {
+      tr.addEventListener("click", function () {
+        var code = tr.getAttribute("data-code") || "";
+        var item = findByCode(code);
+        if (!item) return;
+        editingCode = item.code || "";
+        if (nombreEl) nombreEl.value = item.name || "";
+        if (codigoEl) codigoEl.value = item.code || "";
+        if (responsableEl) responsableEl.value = item.manager || "";
+        funcionesDraft = normalizeFunciones(item.funciones);
+        renderFuncionesDraft();
+        setFormReadOnly(false);
+        setMsg("Registro cargado para edición", "ok");
+        openFormModal("Editar área");
+        if (nombreEl) nombreEl.focus();
+      });
+    });
+  }
+
+  function renderKanban() {
+    if (!kanbanGrid) return;
+    var data = getVisibleRows();
+    if (!data.length) {
+      kanbanGrid.innerHTML = '<div class="kanban-empty">Sin datos para mostrar.</div>';
+      return;
+    }
+    kanbanGrid.innerHTML = data.map(function (r) {
+      var color = String(r.color || "").trim() || "#ffffff";
+      var colorLower = color.toLowerCase();
+      var textOnColor = (colorLower === "#fff" || colorLower === "#ffffff" || colorLower === "white") ? "#0f172a" : "#ffffff";
+      var initial = esc((r.name || "?").charAt(0).toUpperCase());
+      return '' +
+        '<article class="kanban-item">' +
+          '<div class="kanban-color" style="background:' + esc(color) + ';color:' + textOnColor + ';">' + initial + '</div>' +
+          '<div class="kanban-content">' +
+            '<p class="kanban-title">' + esc(r.name || "Área") + '</p>' +
+            '<p class="kanban-meta"><strong>Responsable:</strong> ' + esc(r.manager || "Sin responsable") + '</p>' +
+            '<p class="kanban-meta"><strong>Código:</strong> ' + esc(r.code || "—") + '</p>' +
+          '</div>' +
+        '</article>';
+    }).join("");
+  }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) {
+        resolve();
+        return;
+      }
+      var script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.onload = function () { resolve(); };
+      script.onerror = function () { reject(new Error("No se pudo cargar " + src)); };
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureOrgLibrary() {
+    if (window.d3 && window.d3.OrgChart) return true;
+    if (!orgLibPromise) {
+      orgLibPromise = (async function () {
+        await loadScript("/static/vendor/d3.min.js");
+        await loadScript("/static/vendor/d3-flextree.min.js");
+        await loadScript("/static/vendor/d3-org-chart.min.js");
+      })().catch(function () { return false; });
+    }
+    var result = await orgLibPromise;
+    return result !== false && !!(window.d3 && window.d3.OrgChart);
+  }
+
+  async function renderOrganigrama() {
+    if (!orgChartEl) return;
+    var data = getVisibleRows();
+    if (!data.length) {
+      orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">Sin datos para organigrama.</p>';
+      return;
+    }
+    var libOk = await ensureOrgLibrary();
+    if (!libOk) {
+      orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">No se pudo cargar la librería de organigrama.</p>';
+      return;
+    }
+
+    var byName = {};
+    data.forEach(function (row) { byName[norm(row.name)] = row; });
+    var nodes = data.map(function (row) {
+      var parentName = norm(row.parent || "");
+      var hasParent = !!(parentName && parentName !== "n/a" && byName[parentName]);
+      return {
+        id: String(row.code || row.name || Math.random().toString(36).slice(2)),
+        parentId: hasParent ? String(byName[parentName].code || byName[parentName].name) : "",
+        name: String(row.name || "Área"),
+        manager: String(row.manager || "Sin responsable"),
+        code: String(row.code || "—"),
+        color: String(row.color || "#ffffff")
+      };
+    });
+
+    function getPathToRoot(id, mapById) {
+      var path = [];
+      var current = mapById[id];
+      var guard = 0;
+      while (current && guard < 200) {
+        path.push(current.id);
+        if (!current.parentId) break;
+        current = mapById[current.parentId];
+        guard += 1;
+      }
+      return path;
+    }
+
+    var roots = nodes.filter(function (n) { return !n.parentId; });
+    if (roots.length > 1) {
+      nodes.push({
+        id: "__ROOT__",
+        parentId: "",
+        name: "Estructura organizacional",
+        manager: "—",
+        code: "ORG",
+        color: "#0f172a"
+      });
+      nodes = nodes.map(function (n) {
+        if (!n.parentId && n.id !== "__ROOT__") n.parentId = "__ROOT__";
+        return n;
+      });
+    }
+
+    var nodeMap = {};
+    nodes.forEach(function (n) { nodeMap[n.id] = n; });
+    var baseRootId = nodeMap["__ROOT__"] ? "__ROOT__" : (roots[0] ? roots[0].id : "");
+    if (!orgExpandedNodeId) orgExpandedNodeId = baseRootId;
+    var expandedPath = new Set(getPathToRoot(orgExpandedNodeId, nodeMap));
+    nodes = nodes.map(function (n) {
+      n._expanded = expandedPath.has(n.id);
+      return n;
+    });
+
+    orgChartEl.innerHTML = "";
+    depOrgChart = new window.d3.OrgChart()
+      .container(orgChartEl)
+      .data(nodes)
+      .nodeWidth(function () { return 320; })
+      .nodeHeight(function () { return 150; })
+      .childrenMargin(function () { return 48; })
+      .compact(true)
+      .initialExpandLevel(0)
+      .setActiveNodeCentered(true)
+      .nodeButtonWidth(function () { return 36; })
+      .nodeButtonHeight(function () { return 36; })
+      .nodeButtonX(function () { return -18; })
+      .nodeButtonY(function () { return -18; })
+      .buttonContent(function (ctx) {
+        var node = ctx && ctx.node ? ctx.node : null;
+        var expanded = !!(node && node.children);
+        var sign = expanded ? "−" : "+";
+        var count = Number(node && node.data ? node.data._directSubordinates || 0 : 0);
+        return '<div style="width:36px;height:36px;border-radius:9999px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;border:2px solid #fff;box-shadow:0 4px 10px rgba(15,23,42,.22);">' + sign + (count > 0 ? '<span style="font-size:10px;margin-left:2px;">' + count + '</span>' : '') + '</div>';
+      })
+      .nodeContent(function (d) {
+        var item = d && d.data ? d.data : {};
+        var color = String(item.color || "#ffffff");
+        var colorLower = color.toLowerCase();
+        var textColor = (colorLower === "#fff" || colorLower === "#ffffff" || colorLower === "white") ? "#0f172a" : "#ffffff";
+        return ''
+          + '<div style="display:grid;grid-template-columns:90px 1fr;height:146px;border:1px solid #dbe2ea;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 14px rgba(15,23,42,.12);font-family:inherit;">'
+          +   '<div style="background:' + color + ';color:' + textColor + ';display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:800;">' + esc((item.name || "?").charAt(0).toUpperCase()) + '</div>'
+          +   '<div style="padding:12px;display:grid;gap:6px;align-content:start;">'
+          +     '<div style="font-size:24px;font-weight:800;color:#0f172a;line-height:1.1;">' + esc(item.name || "Área") + '</div>'
+          +     '<div style="font-size:14px;color:#334155;"><strong>Responsable:</strong> ' + esc(item.manager || "Sin responsable") + '</div>'
+          +     '<div style="font-size:14px;color:#334155;"><strong>Código:</strong> ' + esc(item.code || "—") + '</div>'
+          +   '</div>'
+          + '</div>';
+      })
+      .onNodeClick(function (d) {
+        var clickedId = d && d.data ? d.data.id : "";
+        if (!clickedId) return;
+        if (orgExpandedNodeId === clickedId) {
+          orgExpandedNodeId = baseRootId;
+        } else {
+          orgExpandedNodeId = clickedId;
+        }
+        renderOrganigrama();
+      })
+      .render();
+  }
+
+  function loadRows() {
+    return fetch("/api/inicio/departamentos")
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        rows = Array.isArray(res && res.data) ? res.data : [];
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+      })
+      .catch(function () {
+        setMsg("No se pudo cargar la información", "error");
+      });
+  }
+
+  function setActiveViewButton(view) {
+    var viewButtons = Array.from(document.querySelectorAll('#departamentos-module .view-buttons .view-pill[data-view]'));
+    viewButtons.forEach(function (btn) {
+      btn.classList.toggle("active", (btn.getAttribute("data-view") || "") === view);
+    });
+  }
+
+  function renderView(view) {
+    if (!view) view = "form";
+    currentView = view;
+    if (view === "puestos") {
+      window.location.href = "/inicio/departamentos/puestos-laborales";
+      return;
+    }
+
+    if (view === "form") {
+      openFormModal(readOnlyMode ? "Detalle del área (solo lectura)" : "Datos del área");
+      return;
+    }
+
+    setActiveViewButton(view);
+    if (formCardEl) formCardEl.classList.add("hidden");
+    if (extraCard) extraCard.classList.add("hidden");
+    if (kanbanCard) kanbanCard.classList.add("hidden");
+    if (orgCard) orgCard.classList.add("hidden");
+    if (mainGrid) mainGrid.classList.remove("hidden");
+
+    if (view === "list") {
+      if (tableCard) tableCard.classList.remove("hidden");
+      if (tableCard) tableCard.classList.add("lg:col-span-2");
+      if (tableTitle) tableTitle.textContent = "Listado de áreas";
+      if (tableAlert) tableAlert.classList.add("hidden");
+      return;
+    }
+
+    if (view === "kanban") {
+      if (mainGrid) mainGrid.classList.add("hidden");
+      if (kanbanCard) kanbanCard.classList.remove("hidden");
+      renderKanban();
+      return;
+    }
+
+    if (view === "organigrama") {
+      if (mainGrid) mainGrid.classList.add("hidden");
+      if (orgCard) orgCard.classList.remove("hidden");
+      renderOrganigrama();
+      return;
+    }
+  }
+
+  function saveRow() {
+    if (readOnlyMode) {
+      setMsg("Vista en modo lectura", "error");
+      return;
+    }
+    var name = (nombreEl && nombreEl.value || "").trim();
+    var code = (codigoEl && codigoEl.value || "").trim();
+    var manager = (responsableEl && responsableEl.value || "").trim();
+    if (!name || !code) {
+      setMsg("Nombre y código son obligatorios", "error");
+      if (!name && nombreEl) nombreEl.focus();
+      else if (codigoEl) codigoEl.focus();
+      return;
+    }
+
+    var payload = {
+      data: [{
+        name: name,
+        code: code,
+        manager: manager,
+        parent: "N/A",
+        color: "#1d4ed8",
+        status: "Activo",
+        funciones: normalizeFunciones(funcionesDraft)
+      }]
+    };
+
+    var runSave = function () {
+      return fetch("/api/inicio/departamentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function (r) { return r.json(); });
+    };
+
+    var maybeRename = Promise.resolve();
+    if (editingCode && editingCode.toLowerCase() !== code.toLowerCase()) {
+      maybeRename = fetch("/api/inicio/departamentos/" + encodeURIComponent(editingCode), { method: "DELETE" });
+    }
+
+    maybeRename
+      .then(runSave)
+      .then(function (res) {
+        rows = Array.isArray(res && res.data) ? res.data : rows;
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+        editingCode = code;
+        setMsg("Departamento guardado correctamente", "ok");
+      })
+      .catch(function () {
+        setMsg("No se pudo guardar el departamento", "error");
+      });
+  }
+
+  function editByCode() {
+    if (readOnlyMode) {
+      setFormReadOnly(false);
+    }
+    var code = (codigoEl && codigoEl.value || "").trim();
+    if (!code) {
+      setMsg("Ingresa un código para editar", "error");
+      if (codigoEl) codigoEl.focus();
+      return;
+    }
+    var item = findByCode(code);
+    if (!item) {
+      setMsg("Código no encontrado", "error");
+      return;
+    }
+    editingCode = item.code || "";
+    if (nombreEl) nombreEl.value = item.name || "";
+    if (codigoEl) codigoEl.value = item.code || "";
+    if (responsableEl) responsableEl.value = item.manager || "";
+      setMsg("Registro cargado para edición", "ok");
+      funcionesDraft = normalizeFunciones(item.funciones);
+      renderFuncionesDraft();
+  }
+
+  function deleteByCode() {
+    if (readOnlyMode) {
+      setMsg("Vista en modo lectura", "error");
+      return;
+    }
+    var code = (codigoEl && codigoEl.value || "").trim();
+    if (!code) {
+      setMsg("Ingresa un código para eliminar", "error");
+      return;
+    }
+    var item = findByCode(code);
+    if (!item) {
+      setMsg("Código no encontrado", "error");
+      return;
+    }
+    if (!window.confirm('¿Eliminar el área "' + (item.name || code) + '"?')) return;
+    fetch("/api/inicio/departamentos/" + encodeURIComponent(item.code), { method: "DELETE" })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        rows = Array.isArray(res && res.data) ? res.data : rows.filter(function (x) { return String(x.code || "").toLowerCase() !== String(code).toLowerCase(); });
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+        clearForm();
+        setMsg("Departamento eliminado", "ok");
+      })
+      .catch(function () {
+        setMsg("No se pudo eliminar", "error");
+      });
+  }
+
+  var btnNuevo = document.getElementById("dep-btn-nuevo");
+  var btnEditar = document.getElementById("dep-btn-editar");
+  var btnGuardar = document.getElementById("dep-btn-guardar");
+  var btnEliminar = document.getElementById("dep-btn-eliminar");
+
+  if (btnNuevo) btnNuevo.addEventListener("click", function () {
+    setFormReadOnly(false);
+    clearForm();
+    openFormModal("Nueva área");
+    setMsg("Formulario limpio", "ok");
+    if (nombreEl) nombreEl.focus();
+  });
+  if (btnEditar) btnEditar.addEventListener("click", editByCode);
+  if (btnGuardar) btnGuardar.addEventListener("click", saveRow);
+  if (btnEliminar) btnEliminar.addEventListener("click", deleteByCode);
+  funcionesGroups.forEach(function (group) {
+    var btn = funcionesAddBtns[group];
+    var inp = funcionesInputs[group];
+    if (btn) {
+      btn.addEventListener("click", function () {
+        addFuncionDraft(group);
+      });
+    }
+    if (inp) {
+      inp.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addFuncionDraft(group);
+        }
+      });
+    }
+  });
+  if (filterSearchEl) {
+    filterSearchEl.addEventListener("input", function () {
+      filterQuery = filterSearchEl.value || "";
+      renderTable();
+      renderKanban();
+      if (currentView === "organigrama") renderOrganigrama();
+    });
+  }
+
+  function setFormTab(tabName) {
+    var target = String(tabName || "empleados");
+    Array.from(document.querySelectorAll("[data-dep-tab][data-tab]")).forEach(function (btn) {
+      var active = (btn.getAttribute("data-tab") || "") === target;
+      btn.classList.toggle("tab-active", active);
+    });
+    Array.from(document.querySelectorAll("[data-panel]")).forEach(function (panel) {
+      var show = (panel.getAttribute("data-panel") || "") === target;
+      panel.classList.toggle("hidden", !show);
+    });
+  }
+
+  Array.from(document.querySelectorAll("[data-dep-tab][data-tab]")).forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setFormTab(btn.getAttribute("data-tab") || "empleados");
+    });
+  });
+  setFormTab("empleados");
+
+  Array.from(document.querySelectorAll('#departamentos-module .view-buttons .view-pill[data-view]')).forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      renderView(btn.getAttribute("data-view") || "form");
+    });
+  });
+
+  loadRows();
+  renderFuncionesDraft();
+  renderView("list");
+})();
+</script>

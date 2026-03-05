@@ -90,23 +90,25 @@ def _bootstrap_defaults_from_active() -> None:
             _save_default_from_path(field, active)
 
 
-async def _store_asset(field: str, file_obj: UploadFile) -> Optional[str]:
+async def _store_asset(field: str, file_obj: UploadFile) -> tuple:
+    """Guarda el asset optimizado. Devuelve (filename, info_dict)."""
     if not file_obj or not (file_obj.filename or "").strip():
-        return None
+        return None, {}
     _clear_asset(field)
     ext = _safe_ext(file_obj.filename)
     contents = await file_obj.read()
     # Optimizar imagen antes de guardar
     try:
-        from fastapi_modulo.image_utils import optimize_image, profile_for_prefix
+        from fastapi_modulo.image_utils import optimize_image, profile_for_prefix, image_info
         contents, ext = optimize_image(contents, ext, profile=profile_for_prefix(field))
+        info = image_info(contents)
     except Exception:
-        pass
+        info = {}
     filename = f"{field}{ext}"
     target = UPLOAD_DIR / filename
     target.write_bytes(contents)
     _save_default_from_path(field, target)
-    return filename
+    return filename, info
 
 
 def _asset_url(filename: str) -> str:
@@ -209,6 +211,7 @@ async def guardar_personalizacion(
 
     updated = []
     removed = []
+    asset_details: dict = {}
 
     for field in ASSET_FIELDS:
         if str(remove_map.get(field, "0")).strip() == "1":
@@ -216,15 +219,18 @@ async def guardar_personalizacion(
                 removed.append(field)
 
     for field, upload in file_map.items():
-        saved = await _store_asset(field, upload) if upload else None
+        saved, info = await _store_asset(field, upload) if upload else (None, {})
         if saved:
             updated.append(field)
+            if info:
+                asset_details[field] = info
 
     return JSONResponse(
         {
             "ok": True,
             "updated": updated,
             "removed": removed,
+            "asset_details": asset_details,
             "assets": _assets_state(),
         }
     )

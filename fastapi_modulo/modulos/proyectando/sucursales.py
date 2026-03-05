@@ -89,7 +89,7 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
     for row_idx, rubro in enumerate(rubros, start=1):
         inputs = "".join(
             (
-                f'<td><input class="suc-result-input" type="number" step="0.01" min="0" '
+                f'<td><input class="input input-bordered input-sm w-full text-right tabular-nums" type="number" step="0.01" min="0" '
                 f'name="suc_result_{row_idx}_{offset}" placeholder="0.00"></td>'
             )
             for offset in column_offsets
@@ -97,7 +97,7 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
         results_rows.append(
             f"""
             <tr>
-                <td class="suc-result-rubro">{escape(rubro)}</td>
+                <td class="font-semibold whitespace-nowrap">{escape(rubro)}</td>
                 {inputs}
             </tr>
             """
@@ -115,277 +115,62 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
     activo_fijo_catalog_json = json.dumps(activo_fijo_catalog, ensure_ascii=False)
 
     sucursales_content = dedent(f"""
-        <section id="sucursales-module" style="display:grid; gap:14px;">
-            <style>
-                .suc-tabs {{
-                    display:flex;
-                    flex-wrap:wrap;
-                    gap:10px;
-                    border-bottom:1px solid #cbd5e1;
-                    padding-bottom:8px;
-                }}
-                .suc-tab-btn {{
-                    display:inline-flex;
-                    align-items:center;
-                    gap:8px;
-                    border:1px solid transparent;
-                    border-bottom:3px solid transparent;
-                    border-radius:10px;
-                    background:transparent;
-                    padding:10px 12px;
-                    color:#334155;
-                    font-weight:700;
-                    cursor:pointer;
-                }}
-                .suc-tab-btn img {{
-                    width:18px;
-                    height:18px;
-                    object-fit:contain;
-                }}
-                .suc-tab-btn.active {{
-                    border-color: var(--sidebar-bottom, #0f172a);
-                    border-bottom-color: var(--sidebar-bottom, #0f172a);
-                    background: var(--sidebar-text, #ffffff);
-                    color: var(--sidebar-bottom, #0f172a);
-                }}
-                .suc-tab-panel {{
-                    display:none;
-                }}
-                .suc-tab-panel.active {{
-                    display:block;
-                }}
-                .suc-card {{
-                    background:#ffffff;
-                    border:1px solid #dbe3ef;
-                    border-radius:14px;
-                    padding:14px;
-                }}
-                .suc-title {{
-                    margin:0 0 10px;
-                    font-size:1.02rem;
-                    color:#0f172a;
-                }}
-                .suc-grid {{
-                    display:grid;
-                    grid-template-columns:repeat(4, minmax(0, 1fr));
-                    gap:12px;
-                }}
-                .suc-field {{
-                    display:flex;
-                    flex-direction:column;
-                    gap:6px;
-                }}
-                .suc-field label {{
-                    font-size:0.85rem;
-                    font-weight:700;
-                    color:var(--sidebar-bottom, #0f172a);
-                }}
-                .suc-field input,
-                .suc-field select,
-                .suc-field textarea {{
-                    width:100%;
-                    border:1px solid color-mix(in srgb, var(--button-bg, #0f172a) 20%, #ffffff 80%);
-                    border-radius:10px;
-                    padding:10px;
-                    color:var(--navbar-text, #1f172a);
-                    background:var(--field-color, #ffffff);
-                    font-size:0.95rem;
-                }}
-                .suc-field textarea {{
-                    min-height:82px;
-                    resize:vertical;
-                }}
-                .suc-msg {{
-                    font-size:0.88rem;
-                    color:#334155;
-                }}
-                .suc-table {{
-                    width:100%;
-                    border-collapse:collapse;
-                }}
-                .suc-table th,
-                .suc-table td {{
-                    border-bottom:1px solid #e2e8f0;
-                    padding:10px;
-                    text-align:left;
-                    vertical-align:top;
-                }}
-                .suc-table th {{
-                    color:#334155;
-                    font-size:0.85rem;
-                    text-transform:uppercase;
-                    letter-spacing:.04em;
-                }}
-                .view-list-excel {{
-                    width:100%;
-                    border-collapse:collapse;
-                    border:1px solid rgba(15,23,42,.16);
-                    border-radius:12px;
-                    overflow:hidden;
-                    background:#ffffff;
-                }}
-                .view-list-excel thead th {{
-                    text-align:left;
-                    font-size:12px;
-                    letter-spacing:.06em;
-                    text-transform:uppercase;
-                    color:rgba(15,23,42,.82);
-                    background:linear-gradient(180deg, rgba(239,246,255,.96), rgba(219,234,254,.90));
-                    border:1px solid rgba(15,23,42,.14);
-                    padding:10px 12px;
-                    white-space:nowrap;
-                }}
-                .view-list-excel tbody td {{
-                    border:1px solid rgba(15,23,42,.10);
-                    padding:10px 12px;
-                    color:#0f172a;
-                    background:#ffffff;
-                }}
-                .view-list-excel tbody tr:nth-child(even) td {{
-                    background:#f3f4f6;
-                }}
-                .view-list-excel tbody tr:hover td {{
-                    background:#e5e7eb;
-                }}
-                .suc-kanban {{
-                    display:grid;
-                    grid-template-columns:repeat(3, minmax(0, 1fr));
-                    gap:12px;
-                }}
-                .suc-col {{
-                    border:1px solid #dbe3ef;
-                    border-radius:12px;
-                    background:#f8fafc;
-                    padding:10px;
-                }}
-                .suc-col h4 {{
-                    margin:0 0 10px;
-                    font-size:0.9rem;
-                    color:#0f172a;
-                }}
-                .suc-item {{
-                    border:1px solid #dbe3ef;
-                    border-radius:10px;
-                    background:#ffffff;
-                    padding:10px;
-                    margin-bottom:8px;
-                    cursor:pointer;
-                }}
-                .suc-item strong {{
-                    color:#0f172a;
-                    display:block;
-                    margin-bottom:4px;
-                }}
-                .suc-item p {{
-                    margin:0;
-                    color:#475569;
-                    font-size:0.9rem;
-                }}
-                .suc-results-wrap {{
-                    overflow-x:auto;
-                }}
-                .suc-results-table {{
-                    width:100%;
-                    min-width:980px;
-                    border-collapse:collapse;
-                    border-spacing:0;
-                }}
-                .suc-results-table thead th {{
-                    text-align:left;
-                    font-size:13px;
-                    letter-spacing:.08em;
-                    text-transform:uppercase;
-                    color:rgba(15,23,42,.75);
-                    background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.74));
-                    border-bottom:1px solid rgba(15,23,42,.10);
-                    border-right:1px solid rgba(15,23,42,.10);
-                    padding:14px 12px;
-                    white-space:nowrap;
-                }}
-                .suc-results-table thead th:last-child {{
-                    border-right:0;
-                }}
-                .suc-results-table tbody td {{
-                    border-bottom:1px solid rgba(15,23,42,.08);
-                    border-right:1px solid rgba(15,23,42,.10);
-                    background:#ffffff;
-                    padding:10px 12px;
-                    vertical-align:middle;
-                }}
-                .suc-results-table tbody td:last-child {{
-                    border-right:0;
-                }}
-                .suc-results-table tbody tr:nth-child(even) td {{
-                    background:#ecfdf3;
-                }}
-                .suc-results-table tbody tr:hover td {{
-                    background:#dcfce7;
-                }}
-                .suc-result-rubro {{
-                    font-weight:700;
-                    color:#0f172a;
-                    white-space:nowrap;
-                }}
-                .suc-result-input {{
-                    width:100%;
-                    height:34px;
-                    border:1px solid #cbd5e1;
-                    border-radius:8px;
-                    padding:0 10px;
-                    background:#ffffff;
-                    color:#0f172a;
-                    text-align:right;
-                    font-variant-numeric:tabular-nums;
-                }}
-                .suc-af-toolbar {{
-                    display:flex;
-                    align-items:center;
-                    gap:10px;
-                    margin-bottom:10px;
-                    flex-wrap:wrap;
-                }}
-                .suc-af-btn {{
-                    height:36px;
-                    padding:0 12px;
-                    border:1px solid #0f172a;
-                    border-radius:8px;
-                    background:#0f172a;
-                    color:#ffffff;
-                    font-weight:600;
-                    cursor:pointer;
-                }}
-                .suc-af-note {{
-                    font-size:0.82rem;
-                    color:#64748b;
-                }}
-                .suc-af-input,
-                .suc-af-select {{
-                    width:100%;
-                    height:34px;
-                    border:1px solid #cbd5e1;
-                    border-radius:8px;
-                    padding:0 8px;
-                    background:#ffffff;
-                    color:#0f172a;
-                }}
-                .suc-af-input.num {{
-                    text-align:right;
-                    font-variant-numeric:tabular-nums;
-                }}
-                @media (max-width: 1100px) {{
-                    .suc-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)); }}
-                }}
-                @media (max-width: 980px) {{
-                    .suc-grid {{ grid-template-columns:1fr; }}
-                    .suc-kanban {{ grid-template-columns:1fr; }}
-                }}
-            </style>
-            <div id="sucursales-view"></div>
+        <section id="sucursales-module" class="grid gap-4 w-full">
+            <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+                <div class="w-full flex flex-col md:flex-row items-center gap-10">
+                    <img
+                        src="/templates/icon/sucursales.svg"
+                        alt="Icono sucursales"
+                        width="96"
+                        height="96"
+                        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+                    />
+                    <div class="w-full grid gap-2 content-center">
+                        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Sucursales</div>
+                        <div class="block w-full text-base sm:text-lg text-base-content/70">Registro y visualización de sucursales.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="view-buttons page-view-buttons">
+                <button class="view-pill boton_vista" type="button" data-view="form" data-tooltip="Formulario" aria-label="Formulario">
+                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span>
+                    <span class="view-pill-label boton_vista-label">Formulario</span>
+                </button>
+                <button class="view-pill boton_vista active" type="button" data-view="list" data-tooltip="Lista" aria-label="Lista">
+                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+                    <span class="view-pill-label boton_vista-label">Lista</span>
+                </button>
+                <button class="view-pill boton_vista" type="button" data-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+                    <span class="view-pill-label boton_vista-label">Kanban</span>
+                </button>
+                <button class="view-pill boton_vista" type="button" data-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+                    <span class="view-pill-label boton_vista-label">Organigrama</span>
+                </button>
+            </div>
+            <div id="suc-layout" class="flex flex-col gap-4 lg:flex-row">
+                <aside id="suc-filter-card" class="card bg-base-100 border border-base-300 shadow-sm lg:w-80 lg:shrink-0">
+                    <div class="card-body space-y-3">
+                        <h2 class="card-title text-[color:var(--sidebar-bottom)]">Sucursales</h2>
+                        <label class="input input-bordered w-full flex items-center gap-2 campo campo-sin-borde">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4 opacity-70 fill-current"><path d="M10 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 2a6 6 0 1 0 3.473 10.894l4.816 4.817 1.414-1.414-4.817-4.816A6 6 0 0 0 10 4Z"/></svg>
+                            <input id="suc-filter-search" type="text" class="grow" placeholder="Buscar..." />
+                        </label>
+                        <div id="suc-filter-tree" class="menu bg-base-100 rounded-box w-full max-h-[60vh] overflow-auto"></div>
+                    </div>
+                </aside>
+                <div class="w-full min-w-0 lg:flex-1">
+                    <div id="sucursales-view"></div>
+                </div>
+            </div>
         </section>
         <script>
             (() => {{
                 const mount = document.getElementById('sucursales-view');
                 if (!mount) return;
+                const filterSearchEl = document.getElementById('suc-filter-search');
+                const filterTreeEl = document.getElementById('suc-filter-tree');
                 const data = [];
                 const activoFijoCatalog = {activo_fijo_catalog_json};
                 const projectionYears = {projection_years};
@@ -397,11 +182,16 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                 ];
                 const statusOptions = ["Solicitado", "Autorizado", "Comprado"];
                 const activoFijoRowsData = [];
+                const colaboradoresData = [];
                 const regionCatalog = [];
                 const regionRowsData = [];
                 let currentView = 'list';
                 let editingIndex = -1;
                 let formTab = 'captura';
+                let filterState = {{ type: 'all', value: '' }};
+                let filterQuery = '';
+                let orgLibPromise = null;
+                let sucOrgChart = null;
 
                 const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => (
                     {{ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }}[char] || char
@@ -441,8 +231,10 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                         const json = await res.json().catch(() => ({{}}));
                         if (!res.ok || json?.success === false) throw new Error('No se pudieron cargar sucursales');
                         replaceData(json?.data || []);
+                        renderFilterTree();
                     }} catch (_error) {{
                         replaceData([]);
+                        renderFilterTree();
                     }}
                 }};
                 const persistSucursales = async () => {{
@@ -455,6 +247,7 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                         const json = await res.json().catch(() => ({{}}));
                         if (!res.ok || json?.success === false) throw new Error('No se pudieron guardar sucursales');
                         replaceData(json?.data || []);
+                        renderFilterTree();
                         return true;
                     }} catch (_error) {{
                         return false;
@@ -485,6 +278,84 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                         return false;
                     }}
                 }};
+                const normalizeColaborador = (row) => {{
+                    const item = row && typeof row === 'object' ? row : {{}};
+                    const eficiencia = item.eficiencia;
+                    const desempenoRaw = (eficiencia === null || eficiencia === undefined || eficiencia === '')
+                        ? ''
+                        : String(eficiencia).trim();
+                    return {{
+                        nombre: String(item.nombre || '').trim(),
+                        desempeno: desempenoRaw,
+                    }};
+                }};
+                const replaceColaboradores = (rows) => {{
+                    const normalized = Array.isArray(rows)
+                        ? rows
+                            .filter((row) => row && row.colaborador !== false)
+                            .map(normalizeColaborador)
+                            .filter((row) => Boolean(row.nombre))
+                        : [];
+                    colaboradoresData.splice(0, colaboradoresData.length, ...normalized);
+                }};
+                const loadColaboradores = async () => {{
+                    try {{
+                        const res = await fetch('/api/colaboradores', {{ headers: {{ Accept: 'application/json' }} }});
+                        const json = await res.json().catch(() => ({{}}));
+                        if (!res.ok || json?.success === false) throw new Error('No se pudieron cargar colaboradores');
+                        replaceColaboradores(json?.data || []);
+                    }} catch (_error) {{
+                        replaceColaboradores([]);
+                    }}
+                }};
+
+                const norm = (value) => String(value || '').trim().toLowerCase();
+                const laneName = (region) => {{
+                    const key = String(region || '').trim();
+                    return key || 'Sin región';
+                }};
+                const isInSelectedRegion = (row) => {{
+                    if (filterState.type !== 'region') return true;
+                    const selected = norm(filterState.value);
+                    if (!selected) return true;
+                    return norm(laneName(row.region)) === selected;
+                }};
+                const matchesQuery = (row) => {{
+                    if (!filterQuery) return true;
+                    const q = norm(filterQuery);
+                    return norm(row.nombre).includes(q) || norm(row.region).includes(q) || norm(row.codigo).includes(q) || norm(row.descripcion).includes(q);
+                }};
+                const getVisibleData = () => data.filter((row) => isInSelectedRegion(row) && matchesQuery(row));
+
+                const renderFilterTree = () => {{
+                    if (!filterTreeEl) return;
+                    const total = data.length;
+                    const byRegion = {{}};
+                    data.forEach((row) => {{
+                        const key = laneName(row.region);
+                        if (!byRegion[key]) byRegion[key] = 0;
+                        byRegion[key] += 1;
+                    }});
+                    const regions = Object.keys(byRegion).sort((a, b) => a.localeCompare(b, 'es', {{ sensitivity: 'base' }}));
+                    let html = '';
+                    html += `<li><button type="button" class="${{filterState.type === 'all' ? 'active' : ''}}" data-filter-type="all" data-filter-value="">Todas <span class="ml-auto opacity-70">${{total}}</span></button></li>`;
+                    regions.forEach((regionName) => {{
+                        const active = filterState.type === 'region' && norm(filterState.value) === norm(regionName);
+                        html += `<li><button type="button" class="${{active ? 'active' : ''}}" data-filter-type="region" data-filter-value="${{escapeHtml(regionName)}}">${{escapeHtml(regionName)}} <span class="ml-auto opacity-70">${{byRegion[regionName]}}</span></button></li>`;
+                    }});
+                    filterTreeEl.innerHTML = html;
+                    Array.from(filterTreeEl.querySelectorAll('[data-filter-type]')).forEach((el) => {{
+                        el.addEventListener('click', (event) => {{
+                            event.preventDefault();
+                            filterState = {{
+                                type: el.getAttribute('data-filter-type') || 'all',
+                                value: el.getAttribute('data-filter-value') || '',
+                            }};
+                            renderFilterTree();
+                            render(currentView);
+                        }});
+                    }});
+                }};
 
                 const renderForm = () => {{
                     const current = editingIndex >= 0
@@ -503,74 +374,85 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     const isResultados = formTab === 'resultados';
                     const isActivoFijo = formTab === 'activo-fijo';
                     const isReparaciones = formTab === 'reparaciones';
+                    const isColaboradores = formTab === 'colaboradores';
                     mount.innerHTML = `
-                        <article class="suc-card">
-                            <h3 class="suc-title">Formulario de sucursales</h3>
-                            <div class="suc-tabs" role="tablist" aria-label="Control por sucursal">
-                                <button type="button" class="suc-tab-btn ${{isCaptura ? 'active' : ''}}" data-suc-form-tab="captura" aria-selected="${{isCaptura ? 'true' : 'false'}}">Captura</button>
-                                <button type="button" class="suc-tab-btn ${{isResultados ? 'active' : ''}}" data-suc-form-tab="resultados" aria-selected="${{isResultados ? 'true' : 'false'}}">
-                                    <img src="/templates/icon/resultados.svg" alt="">
-                                    Resultados
-                                </button>
-                                <button type="button" class="suc-tab-btn ${{isActivoFijo ? 'active' : ''}}" data-suc-form-tab="activo-fijo" aria-selected="${{isActivoFijo ? 'true' : 'false'}}">
-                                    <img src="/templates/icon/activo_fijo.svg" alt="">
-                                    Compras de activo fijo
-                                </button>
-                                <button type="button" class="suc-tab-btn ${{isReparaciones ? 'active' : ''}}" data-suc-form-tab="reparaciones" aria-selected="${{isReparaciones ? 'true' : 'false'}}">
-                                    <img src="/templates/icon/reparaciones.svg" alt="">
-                                    Reparaciones
-                                </button>
-                            </div>
-                            <div class="suc-tab-panel ${{isCaptura ? 'active' : ''}}" data-suc-form-panel="captura">
-                            <form id="sucursales-form">
-                                <div class="suc-grid">
-                                    <div class="suc-field">
-                                        <label for="sucursal-nombre">Nombre</label>
-                                        <input id="sucursal-nombre" type="text" value="${{escapeHtml(current.nombre)}}" required>
-                                    </div>
-                                    <div class="suc-field">
-                                        <label for="sucursal-region-select">Región</label>
-                                        <select id="sucursal-region-select" required>
+                        <article class="card bg-base-100 border border-base-300 shadow-sm">
+                            <div class="card-body gap-4">
+                            <h3 class="card-title text-base-content">Formulario de sucursales</h3>
+                            <div class="rounded-box border border-base-300 bg-base-100 p-3">
+                                <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Control por sucursal">
+                                    <button type="button" class="tab gap-2 rounded-t-lg ${{isCaptura ? 'tab-active' : ''}}" data-suc-form-tab="captura" aria-selected="${{isCaptura ? 'true' : 'false'}}">
+                                        <img src="/templates/icon/form.svg" alt="" class="w-4 h-4">
+                                        Captura
+                                    </button>
+                                    <button type="button" class="tab gap-2 rounded-t-lg ${{isResultados ? 'tab-active' : ''}}" data-suc-form-tab="resultados" aria-selected="${{isResultados ? 'true' : 'false'}}">
+                                        <img src="/templates/icon/resultados.svg" alt="" class="w-4 h-4">
+                                        Resultados
+                                    </button>
+                                    <button type="button" class="tab gap-2 rounded-t-lg ${{isActivoFijo ? 'tab-active' : ''}}" data-suc-form-tab="activo-fijo" aria-selected="${{isActivoFijo ? 'true' : 'false'}}">
+                                        <img src="/templates/icon/activo_fijo.svg" alt="" class="w-4 h-4">
+                                        Compras de activo fijo
+                                    </button>
+                                    <button type="button" class="tab gap-2 rounded-t-lg ${{isReparaciones ? 'tab-active' : ''}}" data-suc-form-tab="reparaciones" aria-selected="${{isReparaciones ? 'true' : 'false'}}">
+                                        <img src="/templates/icon/reparaciones.svg" alt="" class="w-4 h-4">
+                                        Reparaciones
+                                    </button>
+                                    <button type="button" class="tab gap-2 rounded-t-lg ${{isColaboradores ? 'tab-active' : ''}}" data-suc-form-tab="colaboradores" aria-selected="${{isColaboradores ? 'true' : 'false'}}">
+                                        <img src="/templates/icon/cv.svg" alt="" class="w-4 h-4">
+                                        Colaboradores
+                                    </button>
+                                </div>
+                                <div class="-mt-px rounded-b-box border border-base-300 bg-base-100 p-4 grid gap-3">
+                            <div class="${{isCaptura ? 'block' : 'hidden'}}" data-suc-form-panel="captura">
+                            <form id="sucursales-form" class="grid gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                                    <label class="form-control w-full">
+                                        <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+                                        <input id="sucursal-nombre" class="input input-bordered w-full campo campo-sin-borde" type="text" value="${{escapeHtml(current.nombre)}}" required>
+                                    </label>
+                                    <label class="form-control w-full">
+                                        <div class="label"><span class="label-text font-semibold">Región</span></div>
+                                        <select id="sucursal-region-select" class="select select-bordered w-full campo campo-sin-borde" required>
                                             <option value="">Seleccione región</option>
                                             ${{regionOptionsHtml}}
                                             <option value="__new__">+ Agregar región</option>
                                         </select>
-                                        <input id="sucursal-region-new" type="text" placeholder="Nueva región" style="display:none; margin-top:6px;">
-                                    </div>
-                                    <div class="suc-field">
-                                        <label for="sucursal-codigo">Código</label>
-                                        <input id="sucursal-codigo" type="text" value="${{escapeHtml(current.codigo)}}" required>
-                                    </div>
-                                    <div class="suc-field">
-                                        <label for="sucursal-descripcion">Descripción</label>
-                                        <textarea id="sucursal-descripcion">${{escapeHtml(current.descripcion)}}</textarea>
-                                    </div>
+                                        <input id="sucursal-region-new" class="input input-bordered w-full mt-2 hidden campo campo-sin-borde" type="text" placeholder="Nueva región">
+                                    </label>
+                                    <label class="form-control w-full">
+                                        <div class="label"><span class="label-text font-semibold">Código</span></div>
+                                        <input id="sucursal-codigo" class="input input-bordered w-full campo campo-sin-borde" type="text" value="${{escapeHtml(current.codigo)}}" required>
+                                    </label>
+                                    <label class="form-control w-full">
+                                        <div class="label"><span class="label-text font-semibold">Descripción</span></div>
+                                        <textarea id="sucursal-descripcion" class="textarea textarea-bordered w-full min-h-24 campo campo-sin-borde">${{escapeHtml(current.descripcion)}}</textarea>
+                                    </label>
                                 </div>
-                                <div class="action-buttons-group">
-                                    <button type="button" class="action-button" id="suc-btn-new" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
-                                        <img src="/icon/boton/nuevo.svg" alt="Nuevo">
-                                        <span class="action-label">Nuevo</span>
+                                <div class="botones_accion">
+                                    <button type="button" class="view-pill boton_vista" id="suc-btn-new" data-tooltip="Nuevo" aria-label="Nuevo" title="Nuevo">
+                                        <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+                                        <span class="boton_vista-label">Nuevo</span>
                                     </button>
-                                    <button type="button" class="action-button" id="suc-btn-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
-                                        <img src="/icon/boton/editar.svg" alt="Editar">
-                                        <span class="action-label">Editar</span>
+                                    <button type="button" class="view-pill boton_vista" id="suc-btn-edit" data-tooltip="Editar" aria-label="Editar" title="Editar">
+                                        <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/editar.svg')"></span>
+                                        <span class="boton_vista-label">Editar</span>
                                     </button>
-                                    <button type="submit" class="action-button" id="suc-btn-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
-                                        <img src="/icon/boton/guardar.svg" alt="Guardar">
-                                        <span class="action-label">Guardar</span>
+                                    <button type="submit" class="view-pill boton_vista" id="suc-btn-save" data-tooltip="Guardar" aria-label="Guardar" title="Guardar">
+                                        <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/guardar.svg')"></span>
+                                        <span class="boton_vista-label">Guardar</span>
                                     </button>
-                                    <button type="button" class="action-button" id="suc-btn-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
-                                        <img src="/icon/boton/eliminar.svg" alt="Eliminar">
-                                        <span class="action-label">Eliminar</span>
+                                    <button type="button" class="view-pill boton_vista" id="suc-btn-delete" data-tooltip="Eliminar" aria-label="Eliminar" title="Eliminar">
+                                        <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/eliminar.svg')"></span>
+                                        <span class="boton_vista-label">Eliminar</span>
                                     </button>
-                                    <span class="suc-msg" id="suc-form-msg">${{data.length}} registro(s)</span>
                                 </div>
+                                <span class="text-sm text-base-content/70" id="suc-form-msg">${{data.length}} registro(s)</span>
                             </form>
                             </div>
-                            <div class="suc-tab-panel ${{isResultados ? 'active' : ''}}" data-suc-form-panel="resultados">
-                                <h3 class="suc-title">Resultados</h3>
-                                <div class="suc-results-wrap">
-                                    <table class="suc-results-table">
+                            <div class="${{isResultados ? 'block' : 'hidden'}}" data-suc-form-panel="resultados">
+                                <h3 class="text-lg font-semibold text-base-content mb-3">Resultados</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="table table-zebra table-pin-rows min-w-[980px]">
                                         <thead>
                                             <tr>
                                                 <th>Rubro</th>
@@ -583,14 +465,14 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                                     </table>
                                 </div>
                             </div>
-                            <div class="suc-tab-panel ${{isActivoFijo ? 'active' : ''}}" data-suc-form-panel="activo-fijo">
-                                <h3 class="suc-title">Activo fijo</h3>
-                                <div class="suc-af-toolbar">
-                                    <button type="button" class="suc-af-btn" id="suc-af-add-btn">Compra de activo fijo</button>
-                                    <span class="suc-af-note">Procedimiento de autorización pendiente.</span>
+                            <div class="${{isActivoFijo ? 'block' : 'hidden'}}" data-suc-form-panel="activo-fijo">
+                                <h3 class="text-lg font-semibold text-base-content mb-3">Activo fijo</h3>
+                                <div class="flex flex-wrap items-center gap-3 mb-3">
+                                    <button type="button" class="btn btn-outline btn-primary btn-sm" id="suc-af-add-btn">Compra de activo fijo</button>
+                                    <span class="text-xs text-base-content/60">Procedimiento de autorización pendiente.</span>
                                 </div>
-                                <div class="suc-results-wrap">
-                                    <table class="suc-results-table">
+                                <div class="overflow-x-auto">
+                                    <table class="table table-zebra min-w-[980px]">
                                         <thead>
                                             <tr>
                                                 <th>Código</th>
@@ -606,10 +488,38 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                                     </table>
                                 </div>
                             </div>
-                            <div class="suc-tab-panel ${{isReparaciones ? 'active' : ''}}" data-suc-form-panel="reparaciones">
-                                <h3 class="suc-title">Reparaciones</h3>
-                                <p class="suc-msg">Aquí se llevará el registro de las solicitudes de reparación de la sucursal.</p>
-                                <p class="suc-msg">Lógica y código pendientes.</p>
+                            <div class="${{isReparaciones ? 'block' : 'hidden'}}" data-suc-form-panel="reparaciones">
+                                <h3 class="text-lg font-semibold text-base-content mb-2">Reparaciones</h3>
+                                <p class="text-sm text-base-content/70">Aquí se llevará el registro de las solicitudes de reparación de la sucursal.</p>
+                                <p class="text-sm text-base-content/70">Lógica y código pendientes.</p>
+                            </div>
+                            <div class="${{isColaboradores ? 'block' : 'hidden'}}" data-suc-form-panel="colaboradores">
+                                <h3 class="text-lg font-semibold text-base-content mb-2">Colaboradores</h3>
+                                <div class="grid gap-3">
+                                    <div class="flex flex-wrap items-center gap-3">
+                                        <label class="form-control w-full sm:w-72">
+                                            <div class="label"><span class="label-text font-semibold">Ordenar por</span></div>
+                                            <select id="suc-colab-sort" class="select select-bordered w-full campo campo-sin-borde">
+                                                <option value="nombre">Nombre</option>
+                                                <option value="desempeno">Desempeño</option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="table table-zebra">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nombre</th>
+                                                    <th>Desempeño</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="suc-colab-rows"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                                </div>
+                            </div>
                             </div>
                         </article>
                     `;
@@ -627,6 +537,7 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     const deleteBtn = document.getElementById('suc-btn-delete');
                     const regionSelect = document.getElementById('sucursal-region-select');
                     const regionNewInput = document.getElementById('sucursal-region-new');
+                    const colaboradoresSortEl = document.getElementById('suc-colab-sort');
                     const upsertRegionOption = (name) => {{
                         if (!regionSelect) return;
                         const normalized = normalizeRegionName(name);
@@ -649,7 +560,7 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     const syncRegionNewVisibility = () => {{
                         if (!regionSelect || !regionNewInput) return;
                         const isNew = regionSelect.value === '__new__';
-                        regionNewInput.style.display = isNew ? 'block' : 'none';
+                        regionNewInput.classList.toggle('hidden', !isNew);
                         regionNewInput.required = isNew;
                     }};
                     regionSelect && regionSelect.addEventListener('change', syncRegionNewVisibility);
@@ -769,76 +680,195 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                         row[field] = target.value;
                     }});
                     renderActivoFijoRows();
+                    colaboradoresSortEl && colaboradoresSortEl.addEventListener('change', renderColaboradoresRows);
+                    renderColaboradoresRows();
                 }};
 
                 const renderList = () => {{
+                    const visible = getVisibleData();
                     mount.innerHTML = `
-                        <article class="suc-card">
-                            <h3 class="suc-title">Lista de sucursales</h3>
-                            <table class="suc-table view-list-excel">
-                                <thead>
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th>Región</th>
-                                        <th>Código</th>
-                                        <th>Descripción</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${{data.length ? data.map((row) => `
-                                        <tr class="suc-open-form-row" data-row-code="${{escapeHtml(row.codigo)}}">
-                                            <td>${{escapeHtml(row.nombre)}}</td>
-                                            <td>${{escapeHtml(row.region)}}</td>
-                                            <td>${{escapeHtml(row.codigo)}}</td>
-                                            <td>${{escapeHtml(row.descripcion)}}</td>
+                        <article class="card bg-base-100 border border-base-300 shadow-sm">
+                            <div class="card-body gap-4">
+                            <h3 class="card-title text-base-content">Lista de sucursales</h3>
+                            <div class="overflow-x-auto">
+                                <table class="table lista">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Región</th>
+                                            <th>Código</th>
+                                            <th>Descripción</th>
                                         </tr>
-                                    `).join('') : `
-                                        <tr><td colspan="4" style="color:#64748b;">Sin registros.</td></tr>
-                                    `}}
-                                </tbody>
-                            </table>
-                        </article>
-                    `;
-                }};
-
-                const laneName = (region) => {{
-                    const key = (region || '').trim();
-                    return key || 'Sin región';
-                }};
-
-                const renderKanban = () => {{
-                    const lanes = {{}};
-                    data.forEach((row) => {{
-                        const lane = laneName(row.region);
-                        if (!lanes[lane]) lanes[lane] = [];
-                        lanes[lane].push(row);
-                    }});
-                    if (!Object.keys(lanes).length) lanes['Sin región'] = [];
-                    mount.innerHTML = `
-                        <article class="suc-card">
-                            <h3 class="suc-title">Kanban de sucursales</h3>
-                            <div class="suc-kanban">
-                                ${{Object.keys(lanes).map((key) => `
-                                    <div class="suc-col">
-                                        <h4>${{escapeHtml(key)}}</h4>
-                                        ${{lanes[key].length ? lanes[key].map((row) => `
-                                            <article class="suc-item" data-row-code="${{escapeHtml(row.codigo)}}">
-                                                <strong>${{escapeHtml(row.nombre)}}</strong>
-                                                <p>${{escapeHtml(row.codigo)}}</p>
-                                                <p>${{escapeHtml(row.descripcion)}}</p>
-                                            </article>
-                                        `).join('') : '<p class="suc-msg">Sin registros.</p>'}}
-                                    </div>
-                                `).join('')}}
+                                    </thead>
+                                    <tbody>
+                                        ${{visible.length ? visible.map((row) => `
+                                            <tr data-suc-open-form-row data-row-code="${{escapeHtml(row.codigo)}}" class="cursor-pointer hover">
+                                                <td>${{escapeHtml(row.nombre)}}</td>
+                                                <td>${{escapeHtml(row.region)}}</td>
+                                                <td>${{escapeHtml(row.codigo)}}</td>
+                                                <td>${{escapeHtml(row.descripcion)}}</td>
+                                            </tr>
+                                        `).join('') : `
+                                            <tr><td colspan="4" class="text-base-content/60">Sin registros.</td></tr>
+                                        `}}
+                                    </tbody>
+                                </table>
+                            </div>
                             </div>
                         </article>
                     `;
                 }};
 
+                const renderKanban = () => {{
+                    const visible = getVisibleData();
+                    mount.innerHTML = `
+                        <article class="card bg-base-100 border border-base-300 shadow-sm">
+                            <div class="card-body gap-4">
+                            <h3 class="card-title text-base-content">Kanban de sucursales</h3>
+                            ${{visible.length ? `
+                                <div class="kanban">
+                                    ${{visible.map((row) => `
+                                        <article data-suc-item data-row-code="${{escapeHtml(row.codigo)}}" class="kanban-item cursor-pointer">
+                                            <div class="kanban-color" style="background: var(--sidebar-bottom, #0f172a); color: var(--sidebar-text, #ffffff);">
+                                                ${{escapeHtml((row.nombre || '?').charAt(0).toUpperCase())}}
+                                            </div>
+                                            <div class="kanban-content">
+                                                <p class="kanban-title">${{escapeHtml(row.nombre)}}</p>
+                                                <p class="kanban-meta"><strong>Región:</strong> ${{escapeHtml(row.region || 'Sin región')}}</p>
+                                                <p class="kanban-meta"><strong>Código:</strong> ${{escapeHtml(row.codigo)}}</p>
+                                                <p class="kanban-meta"><strong>Descripción:</strong> ${{escapeHtml(row.descripcion || '—')}}</p>
+                                            </div>
+                                        </article>
+                                    `).join('')}}
+                                </div>
+                            ` : '<p class="text-sm text-base-content/60">Sin registros.</p>'}}
+                            </div>
+                        </article>
+                    `;
+                }};
+
+                const loadScript = (src) => new Promise((resolve, reject) => {{
+                    if (document.querySelector(`script[src="${{src}}"]`)) {{
+                        resolve();
+                        return;
+                    }}
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.async = true;
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error(`No se pudo cargar ${{src}}`));
+                    document.head.appendChild(script);
+                }});
+
+                const ensureOrgLibrary = async () => {{
+                    if (window.d3 && window.d3.OrgChart) return true;
+                    if (!orgLibPromise) {{
+                        orgLibPromise = (async () => {{
+                            await loadScript('/static/vendor/d3.min.js');
+                            await loadScript('/static/vendor/d3-flextree.min.js');
+                            await loadScript('/static/vendor/d3-org-chart.min.js');
+                        }})().catch(() => false);
+                    }}
+                    const result = await orgLibPromise;
+                    return result !== false && !!(window.d3 && window.d3.OrgChart);
+                }};
+
+                const renderOrganigrama = async () => {{
+                    const visible = getVisibleData();
+                    mount.innerHTML = `
+                        <article class="card bg-base-100 border border-base-300 shadow-sm">
+                            <div class="card-body gap-4">
+                                <h3 class="card-title text-base-content">Organigrama de sucursales</h3>
+                                <div id="suc-org-chart" class="w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3">
+                                    <p class="text-sm text-base-content/70">Cargando organigrama...</p>
+                                </div>
+                            </div>
+                        </article>
+                    `;
+                    const orgChartEl = document.getElementById('suc-org-chart');
+                    if (!orgChartEl) return;
+                    if (!visible.length) {{
+                        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">Sin registros para organizar.</p>';
+                        return;
+                    }}
+                    const libOk = await ensureOrgLibrary();
+                    if (!libOk) {{
+                        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">No se pudo cargar la librería de organigrama.</p>';
+                        return;
+                    }}
+                    const nodes = [];
+                    const regionMap = {{}};
+                    visible.forEach((row) => {{
+                        const regionName = laneName(row.region);
+                        const regionId = `region::${{regionName}}`;
+                        if (!regionMap[regionId]) {{
+                            regionMap[regionId] = true;
+                            nodes.push({{
+                                id: regionId,
+                                parentId: '',
+                                name: regionName,
+                                manager: 'Región',
+                                code: regionName,
+                                color: '#0f172a',
+                                isRegion: true,
+                            }});
+                        }}
+                        nodes.push({{
+                            id: String(row.codigo || row.nombre || Math.random().toString(36).slice(2)),
+                            parentId: regionId,
+                            name: String(row.nombre || 'Sucursal'),
+                            manager: String(row.region || 'Sin región'),
+                            code: String(row.codigo || '—'),
+                            color: '#ffffff',
+                            descripcion: String(row.descripcion || ''),
+                            isRegion: false,
+                        }});
+                    }});
+                    orgChartEl.innerHTML = '';
+                    sucOrgChart = new window.d3.OrgChart()
+                        .container(orgChartEl)
+                        .data(nodes)
+                        .nodeWidth(() => 320)
+                        .nodeHeight(() => 150)
+                        .childrenMargin(() => 48)
+                        .compact(true)
+                        .initialExpandLevel(2)
+                        .setActiveNodeCentered(true)
+                        .nodeButtonWidth(() => 36)
+                        .nodeButtonHeight(() => 36)
+                        .nodeButtonX(() => -18)
+                        .nodeButtonY(() => -18)
+                        .buttonContent((ctx) => {{
+                            const node = ctx && ctx.node ? ctx.node : null;
+                            const expanded = !!(node && node.children);
+                            const sign = expanded ? '−' : '+';
+                            const count = Number(node && node.data ? node.data._directSubordinates || 0 : 0);
+                            return `<div style="width:36px;height:36px;border-radius:9999px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;border:2px solid #fff;box-shadow:0 4px 10px rgba(15,23,42,.22);">${{sign}}${{count > 0 ? `<span style='font-size:10px;margin-left:2px;'>${{count}}</span>` : ''}}</div>`;
+                        }})
+                        .nodeContent((d) => {{
+                            const item = d && d.data ? d.data : {{}};
+                            const isRegion = !!item.isRegion;
+                            const color = isRegion ? '#0f172a' : '#ffffff';
+                            const textColor = isRegion ? '#ffffff' : '#0f172a';
+                            const sideLetter = isRegion ? 'R' : (item.name || '?').charAt(0).toUpperCase();
+                            return ''
+                                + '<div style="display:grid;grid-template-columns:90px 1fr;height:146px;border:1px solid #dbe2ea;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 14px rgba(15,23,42,.12);font-family:inherit;">'
+                                +   `<div style="background:${{color}};color:${{textColor}};display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:800;">${{escapeHtml(sideLetter)}}</div>`
+                                +   '<div style="padding:12px;display:grid;gap:6px;align-content:start;">'
+                                +     `<div style="font-size:24px;font-weight:800;color:#0f172a;line-height:1.1;">${{escapeHtml(item.name || 'Sucursal')}}</div>`
+                                +     `<div style="font-size:14px;color:#334155;"><strong>Región:</strong> ${{escapeHtml(item.manager || 'Sin región')}}</div>`
+                                +     `<div style="font-size:14px;color:#334155;"><strong>Código:</strong> ${{escapeHtml(item.code || '—')}}</div>`
+                                +   '</div>'
+                                + '</div>';
+                        }})
+                        .render();
+                }};
+
                 const render = (view) => {{
-                    currentView = ['form', 'list', 'kanban'].includes(view) ? view : 'form';
+                    currentView = ['form', 'list', 'kanban', 'organigrama'].includes(view) ? view : 'form';
                     if (currentView === 'list') return renderList();
                     if (currentView === 'kanban') return renderKanban();
+                    if (currentView === 'organigrama') return renderOrganigrama();
                     return renderForm();
                 }};
                 const openFormByCode = (codigo) => {{
@@ -867,6 +897,34 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     const sequence = String(activoFijoRowsData.length + 1).padStart(3, "0");
                     return `${{branchCode}}-${{sequence}}`;
                 }};
+                const renderColaboradoresRows = () => {{
+                    const tbody = document.getElementById('suc-colab-rows');
+                    if (!tbody) return;
+                    const sortEl = document.getElementById('suc-colab-sort');
+                    const sortBy = (sortEl && sortEl.value) || 'nombre';
+                    const rows = [...colaboradoresData].sort((a, b) => {{
+                        if (sortBy === 'desempeno') {{
+                            const aNum = Number(a.desempeno);
+                            const bNum = Number(b.desempeno);
+                            const aValid = Number.isFinite(aNum);
+                            const bValid = Number.isFinite(bNum);
+                            if (aValid && bValid) return bNum - aNum;
+                            if (aValid) return -1;
+                            if (bValid) return 1;
+                        }}
+                        return String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', {{ sensitivity: 'base' }});
+                    }});
+                    if (!rows.length) {{
+                        tbody.innerHTML = '<tr><td colspan="2" class="text-base-content/60">Sin colaboradores asignados.</td></tr>';
+                        return;
+                    }}
+                    tbody.innerHTML = rows.map((row) => `
+                        <tr>
+                            <td>${{escapeHtml(row.nombre)}}</td>
+                            <td>${{escapeHtml(row.desempeno || 'N/D')}}</td>
+                        </tr>
+                    `).join('');
+                }};
 
                 const rubroSelectOptions = (selected) => activoFijoCatalog.map((item) => {{
                     const isSelected = item.rubro === selected ? "selected" : "";
@@ -890,18 +948,18 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                     const activoFijoRows = document.getElementById('suc-af-rows');
                     if (!activoFijoRows) return;
                     if (!activoFijoRowsData.length) {{
-                        activoFijoRows.innerHTML = '<tr><td colspan="7" style="color:#64748b;">Sin registros de compras.</td></tr>';
+                        activoFijoRows.innerHTML = '<tr><td colspan="7" class="text-base-content/60">Sin registros de compras.</td></tr>';
                         return;
                     }}
                     activoFijoRows.innerHTML = activoFijoRowsData.map((row, idx) => `
                         <tr data-af-row="${{idx}}">
-                            <td><input class="suc-af-input" type="text" data-field="code" value="${{escapeHtml(row.code)}}" readonly></td>
-                            <td><input class="suc-af-input" type="text" data-field="article" value="${{escapeHtml(row.article)}}"></td>
-                            <td><select class="suc-af-select" data-field="rubro">${{rubroSelectOptions(row.rubro)}}</select></td>
-                            <td><input class="suc-af-input num" type="number" min="0" step="0.01" data-field="price" value="${{escapeHtml(row.price)}}"></td>
-                            <td><select class="suc-af-select" data-field="year">${{yearSelectOptions(row.year)}}</select></td>
-                            <td><select class="suc-af-select" data-field="month">${{monthSelectOptions(row.month)}}</select></td>
-                            <td><select class="suc-af-select" data-field="status">${{statusSelectOptions(row.status)}}</select></td>
+                            <td><input class="input input-bordered input-sm w-full" type="text" data-field="code" value="${{escapeHtml(row.code)}}" readonly></td>
+                            <td><input class="input input-bordered input-sm w-full" type="text" data-field="article" value="${{escapeHtml(row.article)}}"></td>
+                            <td><select class="select select-bordered select-sm w-full" data-field="rubro">${{rubroSelectOptions(row.rubro)}}</select></td>
+                            <td><input class="input input-bordered input-sm w-full text-right tabular-nums" type="number" min="0" step="0.01" data-field="price" value="${{escapeHtml(row.price)}}"></td>
+                            <td><select class="select select-bordered select-sm w-full" data-field="year">${{yearSelectOptions(row.year)}}</select></td>
+                            <td><select class="select select-bordered select-sm w-full" data-field="month">${{monthSelectOptions(row.month)}}</select></td>
+                            <td><select class="select select-bordered select-sm w-full" data-field="status">${{statusSelectOptions(row.status)}}</select></td>
                         </tr>
                     `).join("");
                 }};
@@ -929,21 +987,33 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
                 mount.addEventListener('click', (event) => {{
                     const target = event.target;
                     if (!(target instanceof HTMLElement)) return;
-                    const listRow = target.closest('.suc-open-form-row');
+                    const listRow = target.closest('[data-suc-open-form-row]');
                     if (listRow instanceof HTMLElement) {{
                         openFormByCode(listRow.getAttribute('data-row-code') || '');
                         return;
                     }}
-                    const kanbanCard = target.closest('.suc-item');
+                    const kanbanCard = target.closest('[data-suc-item]');
                     if (kanbanCard instanceof HTMLElement) {{
                         const codeText = (kanbanCard.getAttribute('data-row-code') || '').trim();
                         openFormByCode(codeText);
+                        return;
                     }}
+                    const organigramaCard = target.closest('[data-suc-org-item]');
+                    if (organigramaCard instanceof HTMLElement) {{
+                        const codeText = (organigramaCard.getAttribute('data-row-code') || '').trim();
+                        openFormByCode(codeText);
+                    }}
+                }});
+                filterSearchEl && filterSearchEl.addEventListener('input', () => {{
+                    filterQuery = filterSearchEl.value || '';
+                    render(currentView);
                 }});
 
                 (async () => {{
                     await loadRegionesCatalog();
+                    await loadColaboradores();
                     await loadSucursales();
+                    renderFilterTree();
                     render('list');
                 }})();
             }})();
@@ -955,10 +1025,11 @@ def _render_sucursales_page(request: Request) -> HTMLResponse:
         description="Registro y visualización de sucursales.",
         content=sucursales_content,
         hide_floating_actions=True,
-        show_page_header=True,
+        show_page_header=False,
         view_buttons=[
-            {"label": "Form", "icon": "/templates/icon/formulario.svg", "view": "form"},
-            {"label": "Lista", "icon": "/templates/icon/list.svg", "view": "list", "active": True},
-            {"label": "Kanban", "icon": "/templates/icon/kanban.svg", "view": "kanban"},
+            {"label": "Form", "icon": "/icon/boton/formulario.svg", "view": "form"},
+            {"label": "Lista", "icon": "/icon/boton/grid.svg", "view": "list", "active": True},
+            {"label": "Kanban", "icon": "/icon/boton/kanban.svg", "view": "kanban"},
+            {"label": "Organigrama", "icon": "/icon/boton/organigrama.svg", "view": "organigrama"},
         ],
     )

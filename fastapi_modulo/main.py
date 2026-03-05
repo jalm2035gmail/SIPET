@@ -1884,7 +1884,6 @@ app.include_router(presupuesto_router, prefix="/proyectando")
 app.include_router(empleados_router)
 app.include_router(regiones_router)
 app.include_router(departamentos_router)
-app.include_router(frontend_router)
 app.include_router(proyectando_tablero_router)
 app.include_router(proyectando_datos_preliminares_router)
 app.include_router(proyectando_crecimiento_general_router)
@@ -3449,6 +3448,11 @@ def logout():
     response.delete_cookie(PASSKEY_COOKIE_REGISTER)
     response.delete_cookie(PASSKEY_COOKIE_MFA_GATE)
     return response
+
+
+# Frontend builder registrado DESPUÉS de /web/login, /web/404 y /web/passkey/*
+# para que el catch-all /web/{slug} no intercepte rutas fijas del sistema.
+app.include_router(frontend_router)
 
 
 def get_colores_context() -> Dict[str, str]:

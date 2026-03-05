@@ -17,6 +17,41 @@ _RUNTIME_STORE_DIR = (os.environ.get("RUNTIME_STORE_DIR") or os.path.join(_DEFAU
 COLAB_META_PATH = Path(
     os.environ.get("COLAB_META_PATH") or os.path.join(_RUNTIME_STORE_DIR, "colaboradores_meta.json")
 )
+_PUESTOS_PATH = Path(
+    os.environ.get("PUESTOS_LAB_PATH") or os.path.join(_RUNTIME_STORE_DIR, "puestos_laborales.json")
+)
+CV_CONTACT_KEYS = ("nombre_completo", "telefono", "correo_electronico", "direccion", "linkedin", "portfolio")
+CV_CONTACT_ALIASES = {
+    "nombre_completo": ("nombre_completo", "nombre"),
+    "telefono": ("telefono", "celular"),
+    "correo_electronico": ("correo_electronico", "correo"),
+    "direccion": ("direccion", "direccion_personal"),
+    "linkedin": ("linkedin", "perfil_linkedin"),
+    "portfolio": ("portfolio", "portafolio", "sitio_web", "website"),
+}
+
+
+def _load_puestos_laborales_catalog() -> List[str]:
+    try:
+        if not _PUESTOS_PATH.exists():
+            return []
+        raw = json.loads(_PUESTOS_PATH.read_text(encoding="utf-8"))
+        if not isinstance(raw, list):
+            return []
+        names: List[str] = []
+        seen = set()
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            nombre = str(item.get("nombre") or "").strip()
+            key = nombre.lower()
+            if not nombre or key in seen:
+                continue
+            seen.add(key)
+            names.append(nombre)
+        return names
+    except Exception:
+        return []
 
 
 def _colab_sort_key(row: Dict[str, Any]) -> tuple[str, str]:
@@ -30,7 +65,20 @@ def _load_colab_meta() -> Dict[str, Dict[str, Any]]:
         if not COLAB_META_PATH.exists():
             return {}
         raw = json.loads(COLAB_META_PATH.read_text(encoding="utf-8"))
-        return raw if isinstance(raw, dict) else {}
+        if not isinstance(raw, dict):
+            return {}
+        changed = False
+        for user_id, payload in raw.items():
+            if not isinstance(payload, dict):
+                continue
+            normalized_contact = _normalize_cv_contacto(payload.get("cv_contacto", {}))
+            if payload.get("cv_contacto") != normalized_contact:
+                payload["cv_contacto"] = normalized_contact
+                changed = True
+        if changed:
+            COLAB_META_PATH.parent.mkdir(parents=True, exist_ok=True)
+            COLAB_META_PATH.write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8")
+        return raw
     except Exception:
         return {}
 
@@ -38,6 +86,22 @@ def _load_colab_meta() -> Dict[str, Dict[str, Any]]:
 def _save_colab_meta(meta: Dict[str, Dict[str, Any]]) -> None:
     COLAB_META_PATH.parent.mkdir(parents=True, exist_ok=True)
     COLAB_META_PATH.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _normalize_cv_contacto(raw_cv_contacto: Any) -> Dict[str, str]:
+    normalized = {key: "" for key in CV_CONTACT_KEYS}
+    if not isinstance(raw_cv_contacto, dict):
+        return normalized
+    for key in CV_CONTACT_KEYS:
+        aliases = CV_CONTACT_ALIASES.get(key, (key,))
+        value = ""
+        for alias in aliases:
+            candidate = str(raw_cv_contacto.get(alias) or "").strip()
+            if candidate:
+                value = candidate
+                break
+        normalized[key] = value
+    return normalized
 
 
 def _normalize_poa_access_level(value: Any) -> str:
@@ -118,7 +182,7 @@ def api_listar_colaboradores(request: Request):
                 "app_access": meta.get(str(u.id), {}).get("app_access", []),
                 "web_roles": meta.get(str(u.id), {}).get("web_roles", []),
                 "eficiencia": meta.get(str(u.id), {}).get("eficiencia", None),
-                "cv_contacto": meta.get(str(u.id), {}).get("cv_contacto", {}),
+                "cv_contacto": _normalize_cv_contacto(meta.get(str(u.id), {}).get("cv_contacto", {})),
                 "cv_perfil_profesional": meta.get(str(u.id), {}).get("cv_perfil_profesional", ""),
                 "cv_experiencia": meta.get(str(u.id), {}).get("cv_experiencia", []),
                 "cv_educacion": meta.get(str(u.id), {}).get("cv_educacion", []),
@@ -299,10 +363,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
     if isinstance(raw_web_roles, list):
         web_roles = [str(r).strip() for r in raw_web_roles if str(r).strip() in _VALID_WEB_ROLES]
     raw_cv_contacto = data.get("cv_contacto") or {}
-    cv_contacto: dict = {}
-    if isinstance(raw_cv_contacto, dict):
-        for _k in ("nombre_completo", "telefono", "correo_electronico", "direccion", "linkedin", "portfolio"):
-            cv_contacto[_k] = str(raw_cv_contacto.get(_k) or "").strip()
+    cv_contacto: dict = _normalize_cv_contacto(raw_cv_contacto)
     cv_perfil_profesional: str = str(data.get("cv_perfil_profesional") or "").strip()
     raw_cv_experiencia = data.get("cv_experiencia") or []
     cv_experiencia: list = []
@@ -444,6 +505,17 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
         existing = None
         if incoming_id:
             existing = db.query(Usuario).filter(Usuario.id == incoming_id).first()
+        puestos_catalog = _load_puestos_laborales_catalog()
+        if puesto and puestos_catalog:
+            puestos_map = {str(name).strip().lower(): str(name).strip() for name in puestos_catalog if str(name).strip()}
+            normalized_puesto = puestos_map.get(puesto.lower())
+            if normalized_puesto:
+                puesto = normalized_puesto
+            elif not (existing and str(existing.puesto or "").strip().lower() == puesto.lower()):
+                return JSONResponse(
+                    {"success": False, "error": "Puesto inválido. Seleccione un puesto del listado."},
+                    status_code=400,
+                )
         # Duplicate check: for new users check all records; for edits exclude the current user.
         _dup_user_q = db.query(Usuario).filter(Usuario.usuario_hash == user_hash)
         if incoming_id:
@@ -691,10 +763,13 @@ def api_eliminar_colaborador(request: Request, colaborador_id: int):
 
 @router.post("/api/colaboradores/foto", response_class=JSONResponse)
 async def api_subir_foto_colaborador(request: Request, file: UploadFile = File(...)):
-    from fastapi_modulo.main import require_admin_or_superadmin
-    from fastapi_modulo.image_utils import optimize_image
+    from fastapi_modulo.main import normalize_role_name
+    from fastapi_modulo.image_utils import generate_thumbnails, image_info
 
-    require_admin_or_superadmin(request)
+    allowed_roles = {"superadministrador", "administrador", "usuario"}
+    viewer_role = normalize_role_name((getattr(request.state, "user_role", None) or "").strip().lower())
+    if viewer_role not in allowed_roles:
+        raise HTTPException(status_code=403, detail="Acceso restringido para edición de foto")
     content_type = (file.content_type or "").lower()
     if not content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Solo se permiten imágenes")
@@ -707,12 +782,29 @@ async def api_subir_foto_colaborador(request: Request, file: UploadFile = File(.
         raise HTTPException(status_code=400, detail="Archivo vacío")
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="La imagen supera 5MB")
-    # Optimizar: redimensionar a 300×300 máx y convertir a WebP
-    optimized, final_ext = optimize_image(content, ext, profile="avatar")
-    filename = f"colab_{uuid.uuid4().hex}{final_ext}"
-    target = COLAB_UPLOAD_DIR / filename
-    target.write_bytes(optimized)
-    return {"success": True, "url": f"/colaboradores/uploads/{filename}"}
+
+    # Generar variantes lg (300×300) y sm (48×48) en una sola apertura de imagen
+    thumbs = generate_thumbnails(content, ext, profile="avatar")
+    is_svg = ext == ".svg"
+    final_ext = ".svg" if is_svg else ".webp"
+    lg_bytes = thumbs.get("lg") or thumbs.get("original", content)
+    sm_bytes = thumbs.get("sm") or lg_bytes
+
+    uid = uuid.uuid4().hex
+    filename_lg = f"colab_{uid}{final_ext}"
+    filename_sm = f"colab_{uid}_sm{final_ext}"
+    (COLAB_UPLOAD_DIR / filename_lg).write_bytes(lg_bytes)
+    (COLAB_UPLOAD_DIR / filename_sm).write_bytes(sm_bytes)
+
+    info = image_info(lg_bytes) if not is_svg else {}
+    return {
+        "success": True,
+        "url": f"/colaboradores/uploads/{filename_lg}",
+        "url_sm": f"/colaboradores/uploads/{filename_sm}",
+        "width": info.get("width", 0),
+        "height": info.get("height", 0),
+        "size_kb": info.get("size_kb", 0),
+    }
 
 
 @router.get("/colaboradores/uploads/{filename}")
@@ -749,11 +841,12 @@ def _render_empleados_page(
         description=description,
         content=_load_empleados_template(),
         hide_floating_actions=True,
+        show_page_header=False,
         view_buttons=[
-            {"label": "Form", "icon": "/templates/icon/formulario.svg", "view": "form"},
-            {"label": "Lista", "icon": "/templates/icon/list.svg", "view": "list", "active": True},
-            {"label": "Kanban", "icon": "/templates/icon/kanban.svg", "view": "kanban"},
-            {"label": "Organigrama", "icon": "/icon/organigrama.svg", "view": "organigrama"},
+            {"label": "Form", "icon": "/icon/boton/formulario.svg", "view": "form"},
+            {"label": "Lista", "icon": "/icon/boton/grid.svg", "view": "list", "active": True},
+            {"label": "Kanban", "icon": "/icon/boton/kanban.svg", "view": "kanban"},
+            {"label": "Organigrama", "icon": "/icon/boton/organigrama.svg", "view": "organigrama"},
         ],
         floating_actions_screen="none",
     )
@@ -957,268 +1050,182 @@ def colaboradores_habilidades_page(request: Request):
     from fastapi_modulo.main import render_backend_page
 
     content = """
-<style>
-/* ── Layout ── */
-.hab-accordion { display: flex; flex-direction: column; gap: 14px; max-width: 860px; }
-/* ── Level-1 blocks ── */
-.hab-block {
-    border: 1px solid color-mix(in srgb, var(--button-bg,#0f172a) 16%, #ffffff 84%);
-    border-radius: 14px; overflow: hidden; background: #fff;
-}
-.hab-block > summary {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 22px; cursor: pointer; list-style: none; user-select: none;
-    font-weight: 600; font-size: 1.05rem; color: var(--sidebar-bottom,#0f172a);
-    background: color-mix(in srgb, var(--button-bg,#0f172a) 4%, #ffffff 96%);
-    transition: background 0.15s;
-}
-.hab-block > summary::-webkit-details-marker { display: none; }
-.hab-block > summary:hover { background: color-mix(in srgb, var(--button-bg,#0f172a) 8%, #ffffff 92%); }
-.hab-block-title { display: flex; align-items: center; gap: 8px; flex: 1; font-size:1.05rem; }
-.hab-block-icon { font-size: 1.3rem; }
-.hab-block-caret { font-size:0.8rem; color:color-mix(in srgb,var(--button-bg,#0f172a) 35%,#ffffff 65%); transition:transform 0.2s; }
-.hab-block[open] > summary .hab-block-caret { transform: rotate(180deg); }
-.hab-block-body { padding: 20px; border-top: 1px solid color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%); }
-/* ── Level-2 sub-blocks ── */
-.hab-sub-accordion { display: flex; flex-direction: column; gap: 8px; }
-.hab-sub-block {
-    border: 1px solid color-mix(in srgb,var(--button-bg,#0f172a) 11%,#ffffff 89%);
-    border-radius: 10px; overflow: hidden;
-}
-.hab-sub-block > summary {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 11px 16px; cursor: pointer; list-style: none; user-select: none;
-    font-weight: 600; font-size: 0.9rem; color: var(--sidebar-bottom,#0f172a);
-    background: color-mix(in srgb,var(--button-bg,#0f172a) 5%,#ffffff 95%);
-    transition: background 0.15s;
-}
-.hab-sub-block > summary::-webkit-details-marker { display: none; }
-.hab-sub-block > summary:hover { background: color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%); }
-.hab-sub-title { display: flex; align-items: center; gap: 7px; flex: 1; }
-.hab-sub-emoji { font-size: 1rem; }
-.hab-sub-caret { font-size:0.72rem; color:color-mix(in srgb,var(--button-bg,#0f172a) 30%,#ffffff 70%); transition:transform 0.2s; }
-.hab-sub-block[open] > summary .hab-sub-caret { transform: rotate(180deg); }
-.hab-sub-body { padding: 14px 16px; border-top: 1px solid color-mix(in srgb,var(--button-bg,#0f172a) 8%,#ffffff 92%); }
-/* ── Items list ── */
-.hab-items { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-.hab-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 7px 10px;
-    border: 1px solid color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%);
-    border-radius: 8px;
-    background: color-mix(in srgb,var(--button-bg,#0f172a) 3%,#ffffff 97%);
-    font-size: 0.875rem; color: var(--sidebar-bottom,#0f172a);
-}
-.hab-item-text { flex: 1; }
-.hab-item-edit, .hab-item-del {
-    flex: 0 0 auto; border: none; background: none; cursor: pointer;
-    padding: 3px 5px; border-radius: 5px; font-size: 0.8rem; line-height: 1;
-    transition: background 0.12s;
-}
-.hab-item-edit { color: color-mix(in srgb,var(--button-bg,#0f172a) 45%,#ffffff 55%); }
-.hab-item-edit:hover { background: color-mix(in srgb,var(--button-bg,#0f172a) 10%,#ffffff 90%); }
-.hab-item-del { color: #ef4444; }
-.hab-item-del:hover { background: #fee2e2; }
-/* ── Item edit inline ── */
-.hab-item.editing .hab-item-text { display: none; }
-.hab-item.editing .hab-item-input { display: block; }
-.hab-item.editing .hab-item-edit { display: none; }
-.hab-item.editing .hab-item-save { display: inline-block; }
-.hab-item-input {
-    display: none; flex: 1; border: 1px solid color-mix(in srgb,var(--button-bg,#0f172a) 20%,#ffffff 80%);
-    border-radius: 6px; padding: 4px 8px; font-size: 0.875rem;
-    background: var(--field-color,#fff); color: var(--navbar-text,#0f172a);
-    outline: none; font-family: inherit;
-}
-.hab-item-save {
-    display: none; flex: 0 0 auto; border: none;
-    background: color-mix(in srgb,var(--button-bg,#0f172a) 90%,#ffffff 10%);
-    color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer;
-}
-/* ── Add row ── */
-.hab-add-row { display: flex; gap: 7px; margin-top: 4px; }
-.hab-add-input {
-    flex: 1; border: 1px solid color-mix(in srgb,var(--button-bg,#0f172a) 20%,#ffffff 80%);
-    border-radius: 8px; padding: 7px 10px; font-size: 0.875rem;
-    background: var(--field-color,#fff); color: var(--navbar-text,#0f172a);
-    outline: none; font-family: inherit;
-}
-.hab-add-input:focus { border-color: color-mix(in srgb,var(--button-bg,#0f172a) 40%,#ffffff 60%); }
-.hab-add-btn {
-    flex: 0 0 auto; border: none; border-radius: 8px; padding: 7px 14px;
-    background: color-mix(in srgb,var(--button-bg,#0f172a) 90%,#ffffff 10%);
-    color: #fff; font-size: 0.875rem; cursor: pointer; white-space: nowrap;
-    transition: opacity 0.15s;
-}
-.hab-add-btn:hover { opacity: 0.85; }
-/* ── Save bar ── */
-.hab-save-bar {
-    display: none; position: sticky; bottom: 14px;
-    background: color-mix(in srgb,var(--button-bg,#0f172a) 96%,#ffffff 4%);
-    color: #fff; border-radius: 12px; padding: 12px 20px;
-    font-size: 0.9rem; align-items: center; justify-content: space-between; gap: 12px;
-    box-shadow: 0 4px 20px #0003; z-index: 50; margin-top: 18px;
-}
-.hab-save-bar.visible { display: flex; }
-.hab-save-btn {
-    border: none; border-radius: 8px; padding: 8px 22px;
-    background: #22c55e; color: #fff; font-size: 0.9rem; font-weight: 600;
-    cursor: pointer; white-space: nowrap; transition: opacity 0.15s;
-}
-.hab-save-btn:hover { opacity: 0.85; }
-.hab-save-msg { font-size: 0.82rem; opacity: 0.75; }
-</style>
-
-<div class="hab-accordion" id="hab-root">
-    <!-- HABILIDADES BLANDAS -->
-    <details class="hab-block" open>
-        <summary>
-            <span class="hab-block-title"><span class="hab-block-icon">&#129309;</span> Habilidades blandas</span>
-            <span class="hab-block-caret">&#9660;</span>
-        </summary>
-        <div class="hab-block-body">
-            <div class="hab-sub-accordion">
-                <details class="hab-sub-block" open>
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128483;</span> Comunicaci&oacute;n e Interpersonales</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="comunicacion_interpersonales"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#127775;</span> Liderazgo y Gesti&oacute;n</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="liderazgo_gestion"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128101;</span> Liderazgo de equipos</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="liderazgo_equipos"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#129504;</span> Resoluci&oacute;n y Pensamiento</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="resolucion_pensamiento"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128197;</span> Organizaci&oacute;n y Autogesti&oacute;n</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="organizacion_autogestion"></div>
-                </details>
+<div class="grid gap-4 max-w-5xl">
+    <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+                src="/templates/icon/usuarios.svg"
+                alt="Icono habilidades"
+                width="96"
+                height="96"
+                class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+                <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Habilidades</div>
+                <div class="block w-full text-base sm:text-lg text-base-content/70">Catálogo y administración de habilidades para colaboradores.</div>
             </div>
         </div>
+    </div>
+
+<div id="hab-root" class="grid gap-4 max-w-5xl">
+    <details class="collapse collapse-arrow border border-base-300 bg-base-100" open>
+        <summary class="collapse-title text-lg font-semibold">🤝 Habilidades blandas</summary>
+        <div class="collapse-content grid gap-3">
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100" open>
+                <summary class="collapse-title text-base font-medium">💬 Comunicación e Interpersonales</summary>
+                <div class="collapse-content" data-cat="comunicacion_interpersonales"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">🌟 Liderazgo y Gestión</summary>
+                <div class="collapse-content" data-cat="liderazgo_gestion"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">👥 Liderazgo de equipos</summary>
+                <div class="collapse-content" data-cat="liderazgo_equipos"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">🧠 Resolución y Pensamiento</summary>
+                <div class="collapse-content" data-cat="resolucion_pensamiento"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">📅 Organización y Autogestión</summary>
+                <div class="collapse-content" data-cat="organizacion_autogestion"></div>
+            </details>
+        </div>
     </details>
-    <!-- HABILIDADES DURAS -->
-    <details class="hab-block" open>
-        <summary>
-            <span class="hab-block-title"><span class="hab-block-icon">&#9881;&#65039;</span> Habilidades duras</span>
-            <span class="hab-block-caret">&#9660;</span>
-        </summary>
-        <div class="hab-block-body">
-            <div class="hab-sub-accordion">
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128187;</span> Inform&aacute;tica y Tecnolog&iacute;a (Generales)</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="informatica_tecnologia_general"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128225;</span> Tecnolog&iacute;as de la Informaci&oacute;n (IT)</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="tecnologias_informacion_it"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#127912;</span> Dise&ntilde;o y Multimedia</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="diseno_multimedia"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128200;</span> Marketing, Ventas y Comunicaci&oacute;n</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="marketing_ventas_comunicacion"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128181;</span> Finanzas, Contabilidad y Administraci&oacute;n</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="finanzas_contabilidad_administracion"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128666;</span> Log&iacute;stica, Producci&oacute;n y Operaciones</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="logistica_produccion_operaciones"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#127760;</span> Idiomas</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="idiomas_duros"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#129657;</span> Sector Salud</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="sector_salud"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#9878;&#65039;</span> Sector Legal</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="sector_legal"></div>
-                </details>
-                <details class="hab-sub-block">
-                    <summary><span class="hab-sub-title"><span class="hab-sub-emoji">&#128296;</span> Habilidades Manuales o T&eacute;cnicas Espec&iacute;ficas</span><span class="hab-sub-caret">&#9660;</span></summary>
-                    <div class="hab-sub-body" data-cat="habilidades_manuales_tecnicas"></div>
-                </details>
-            </div>
+
+    <details class="collapse collapse-arrow border border-base-300 bg-base-100" open>
+        <summary class="collapse-title text-lg font-semibold">⚙️ Habilidades duras</summary>
+        <div class="collapse-content grid gap-3">
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">💻 Informática y Tecnología (Generales)</summary>
+                <div class="collapse-content" data-cat="informatica_tecnologia_general"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">📡 Tecnologías de la Información (IT)</summary>
+                <div class="collapse-content" data-cat="tecnologias_informacion_it"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">🎨 Diseño y Multimedia</summary>
+                <div class="collapse-content" data-cat="diseno_multimedia"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">📈 Marketing, Ventas y Comunicación</summary>
+                <div class="collapse-content" data-cat="marketing_ventas_comunicacion"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">💵 Finanzas, Contabilidad y Administración</summary>
+                <div class="collapse-content" data-cat="finanzas_contabilidad_administracion"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">🚚 Logística, Producción y Operaciones</summary>
+                <div class="collapse-content" data-cat="logistica_produccion_operaciones"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">🌐 Idiomas</summary>
+                <div class="collapse-content" data-cat="idiomas_duros"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">🩺 Sector Salud</summary>
+                <div class="collapse-content" data-cat="sector_salud"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">⚖️ Sector Legal</summary>
+                <div class="collapse-content" data-cat="sector_legal"></div>
+            </details>
+            <details class="collapse collapse-arrow border border-base-300 bg-base-100">
+                <summary class="collapse-title text-base font-medium">🔨 Habilidades Manuales o Técnicas Específicas</summary>
+                <div class="collapse-content" data-cat="habilidades_manuales_tecnicas"></div>
+            </details>
         </div>
     </details>
 </div>
 
-<!-- Save bar -->
-<div class="hab-save-bar" id="hab-save-bar">
-    <span class="hab-save-msg">Tienes cambios sin guardar</span>
-    <button class="hab-save-btn" id="hab-save-btn">Guardar cambios</button>
+<div id="hab-save-bar" class="hidden sticky bottom-4 z-20 mt-4">
+    <div class="alert shadow-lg border border-base-300 bg-base-100">
+        <span class="text-sm">Tienes cambios sin guardar</span>
+        <button class="btn btn-success btn-sm" id="hab-save-btn">Guardar cambios</button>
+    </div>
+</div>
 </div>
 
 <script>
 (function() {
     var catalog = {};
-    var dirty = false;
 
     function markDirty() {
-        dirty = true;
-        document.getElementById('hab-save-bar').classList.add('visible');
+        document.getElementById('hab-save-bar').classList.remove('hidden');
+    }
+
+    function setEditMode(li, editing) {
+        var text = li.querySelector('[data-role="text"]');
+        var input = li.querySelector('[data-role="input"]');
+        var saveBtn = li.querySelector('[data-role="save"]');
+        var editBtn = li.querySelector('[data-role="edit"]');
+        if (!text || !input || !saveBtn || !editBtn) return;
+        text.classList.toggle('hidden', editing);
+        input.classList.toggle('hidden', !editing);
+        saveBtn.classList.toggle('hidden', !editing);
+        editBtn.classList.toggle('hidden', editing);
+        if (editing) input.focus();
     }
 
     function renderCat(cat) {
         var items = catalog[cat] || [];
         var body = document.querySelector('[data-cat="' + cat + '"]');
         if (!body) return;
-        var ul = document.createElement('ul');
-        ul.className = 'hab-items';
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'grid gap-2';
+
         items.forEach(function(text, idx) {
-            var li = document.createElement('li');
-            li.className = 'hab-item';
+            var li = document.createElement('div');
             li.dataset.idx = idx;
+            li.className = 'flex items-center gap-2 rounded-box border border-base-300 bg-base-100 p-2';
             li.innerHTML =
-                '<span class="hab-item-text">' + _esc(text) + '</span>' +
-                '<input class="hab-item-input" value="' + _esc(text) + '" />' +
-                '<button class="hab-item-save" title="Guardar">&#10003;</button>' +
-                '<button class="hab-item-edit" title="Editar">&#9998;</button>' +
-                '<button class="hab-item-del" title="Eliminar">&times;</button>';
-            // edit
-            li.querySelector('.hab-item-edit').addEventListener('click', function() {
-                li.classList.add('editing');
-                li.querySelector('.hab-item-input').focus();
+                '<span data-role="text" class="flex-1 text-sm">' + _esc(text) + '</span>' +
+                '<input data-role="input" class="input input-bordered input-sm flex-1 hidden" value="' + _esc(text) + '" />' +
+                '<button data-role="save" class="btn btn-primary btn-xs hidden" title="Guardar">✓</button>' +
+                '<button data-role="edit" class="btn btn-outline btn-xs" title="Editar">✎</button>' +
+                '<button data-role="del" class="btn btn-outline btn-error btn-xs" title="Eliminar">×</button>';
+
+            li.querySelector('[data-role="edit"]').addEventListener('click', function() {
+                setEditMode(li, true);
             });
-            // save inline
-            li.querySelector('.hab-item-save').addEventListener('click', function() {
-                var val = li.querySelector('.hab-item-input').value.trim();
+
+            li.querySelector('[data-role="save"]').addEventListener('click', function() {
+                var val = li.querySelector('[data-role="input"]').value.trim();
                 if (!val) return;
                 catalog[cat][idx] = val;
-                li.classList.remove('editing');
-                li.querySelector('.hab-item-text').textContent = val;
-                li.querySelector('.hab-item-input').value = val;
+                li.querySelector('[data-role="text"]').textContent = val;
+                li.querySelector('[data-role="input"]').value = val;
+                setEditMode(li, false);
                 markDirty();
             });
-            li.querySelector('.hab-item-input').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') li.querySelector('.hab-item-save').click();
-                if (e.key === 'Escape') { li.classList.remove('editing'); }
+
+            li.querySelector('[data-role="input"]').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') li.querySelector('[data-role="save"]').click();
+                if (e.key === 'Escape') setEditMode(li, false);
             });
-            // delete
-            li.querySelector('.hab-item-del').addEventListener('click', function() {
+
+            li.querySelector('[data-role="del"]').addEventListener('click', function() {
                 catalog[cat].splice(idx, 1);
                 markDirty();
                 renderCat(cat);
             });
-            ul.appendChild(li);
+
+            wrapper.appendChild(li);
         });
-        // add row
+
         var addRow = document.createElement('div');
-        addRow.className = 'hab-add-row';
-        addRow.innerHTML = '<input class="hab-add-input" placeholder="Nueva habilidad..." /><button class="hab-add-btn">+ Agregar</button>';
-        var inp = addRow.querySelector('.hab-add-input');
-        var btn = addRow.querySelector('.hab-add-btn');
+        addRow.className = 'flex flex-col sm:flex-row gap-2 mt-2';
+        addRow.innerHTML =
+            '<input class="input input-bordered input-sm w-full" placeholder="Nueva habilidad..." />' +
+            '<button class="btn btn-primary btn-sm">+ Agregar</button>';
+
+        var inp = addRow.querySelector('input');
+        var btn = addRow.querySelector('button');
+
         function doAdd() {
             var v = inp.value.trim();
             if (!v) return;
@@ -1226,14 +1233,15 @@ def colaboradores_habilidades_page(request: Request):
             catalog[cat].push(v);
             markDirty();
             renderCat(cat);
-            // re-focus new input
-            var newInp = document.querySelector('[data-cat="' + cat + '"] .hab-add-input');
+            var newInp = document.querySelector('[data-cat="' + cat + '"] input');
             if (newInp) newInp.focus();
         }
+
         btn.addEventListener('click', doAdd);
         inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') doAdd(); });
+
         body.innerHTML = '';
-        body.appendChild(ul);
+        body.appendChild(wrapper);
         body.appendChild(addRow);
     }
 
@@ -1241,7 +1249,6 @@ def colaboradores_habilidades_page(request: Request):
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // load
     fetch('/api/habilidades-catalog')
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -1249,7 +1256,6 @@ def colaboradores_habilidades_page(request: Request):
             Object.keys(catalog).forEach(renderCat);
         });
 
-    // save
     document.getElementById('hab-save-btn').addEventListener('click', function() {
         fetch('/api/habilidades-catalog', {
             method: 'POST',
@@ -1259,8 +1265,7 @@ def colaboradores_habilidades_page(request: Request):
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.success) {
-                dirty = false;
-                document.getElementById('hab-save-bar').classList.remove('visible');
+                document.getElementById('hab-save-bar').classList.add('hidden');
             }
         });
     });
@@ -1272,6 +1277,7 @@ def colaboradores_habilidades_page(request: Request):
         title="Habilidades",
         description="Módulo de habilidades de colaboradores",
         content=content,
+        show_page_header=False,
         hide_floating_actions=True,
         floating_actions_screen="none",
     )

@@ -1,333 +1,285 @@
-        <section id="regiones-module" style="display:grid; gap:14px;">
-            <style>
-                .reg-card {
-                    background:#ffffff;
-                    border:1px solid #dbe3ef;
-                    border-radius:14px;
-                    padding:14px;
-                }
-                .reg-title {
-                    margin:0 0 10px;
-                    font-size:1.02rem;
-                    color:#0f172a;
-                }
-                .reg-grid {
-                    display:grid;
-                    grid-template-columns:repeat(3, minmax(0, 1fr));
-                    gap:12px;
-                }
-                .reg-field {
-                    display:flex;
-                    flex-direction:column;
-                    gap:6px;
-                }
-                .reg-field label {
-                    font-size:0.85rem;
-                    font-weight:700;
-                    color:var(--sidebar-bottom, #0f172a);
-                }
-                .reg-field input,
-                .reg-field textarea,
-                .reg-field select {
-                    width:100%;
-                    border:1px solid color-mix(in srgb, var(--button-bg, #0f172a) 20%, #ffffff 80%);
-                    border-radius:10px;
-                    padding:10px;
-                    color:var(--navbar-text, #1f172a);
-                    background:var(--field-color, #ffffff);
-                    font-size:0.95rem;
-                }
-                .reg-field textarea {
-                    min-height:82px;
-                    resize:vertical;
-                }
-                .reg-msg {
-                    font-size:0.88rem;
-                    color:#334155;
-                }
-                .reg-table {
-                    width:100%;
-                    border-collapse:collapse;
-                }
-                .reg-table th,
-                .reg-table td {
-                    border-bottom:1px solid #e2e8f0;
-                    padding:10px;
-                    text-align:left;
-                    vertical-align:top;
-                }
-                .reg-table th {
-                    color:#334155;
-                    font-size:0.85rem;
-                    text-transform:uppercase;
-                    letter-spacing:.04em;
-                }
-                .view-list-excel {
-                    width:100%;
-                    border-collapse:collapse;
-                    border:1px solid rgba(15,23,42,.16);
-                    border-radius:12px;
-                    overflow:hidden;
-                    background:#ffffff;
-                }
-                .view-list-excel thead th {
-                    text-align:left;
-                    font-size:12px;
-                    letter-spacing:.06em;
-                    text-transform:uppercase;
-                    color:rgba(15,23,42,.82);
-                    background:linear-gradient(180deg, rgba(239,246,255,.96), rgba(219,234,254,.90));
-                    border:1px solid rgba(15,23,42,.14);
-                    padding:10px 12px;
-                    white-space:nowrap;
-                }
-                .view-list-excel tbody td {
-                    border:1px solid rgba(15,23,42,.10);
-                    padding:10px 12px;
-                    color:#0f172a;
-                    background:#ffffff;
-                }
-                .view-list-excel tbody tr:nth-child(even) td {
-                    background:#f3f4f6;
-                }
-                .view-list-excel tbody tr:hover td {
-                    background:#e5e7eb;
-                }
-                .reg-kanban {
-                    display:grid;
-                    grid-template-columns:repeat(3, minmax(0, 1fr));
-                    gap:12px;
-                }
-                .reg-col {
-                    border:1px solid #dbe3ef;
-                    border-radius:12px;
-                    background:#f8fafc;
-                    padding:10px;
-                }
-                .reg-col h4 {
-                    margin:0 0 10px;
-                    font-size:0.9rem;
-                    color:#0f172a;
-                }
-                .reg-item {
-                    border:1px solid #dbe3ef;
-                    border-radius:10px;
-                    background:#ffffff;
-                    padding:10px;
-                    margin-bottom:8px;
-                }
-                .reg-item strong {
-                    color:#0f172a;
-                    display:block;
-                    margin-bottom:4px;
-                }
-                .reg-item p {
-                    margin:0;
-                    color:#475569;
-                    font-size:0.9rem;
-                }
-                @media (max-width: 980px) {
-                    .reg-grid { grid-template-columns:1fr; }
-                    .reg-kanban { grid-template-columns:1fr; }
-                }
-            </style>
-            <div id="regiones-view"></div>
-        </section>
-        <script>
-            (() => {
-                const mount = document.getElementById('regiones-view');
-                if (!mount) return;
-                const data = [];
-                let currentView = 'form';
-                let editingIndex = -1;
+<section id="regiones-module" class="grid gap-4 w-full">
+    <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+                src="/templates/icon/sucursales.svg"
+                alt="Icono regiones"
+                width="96"
+                height="96"
+                class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+                <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight" style="color: var(--sidebar-bottom);">Regiones</div>
+                <div class="block w-full text-base sm:text-lg text-base-content/70">Registro y visualización de regiones.</div>
+            </div>
+        </div>
+    </div>
+    <div class="view-buttons page-view-buttons">
+        <button class="view-pill boton_vista active" type="button" data-view="form" data-tooltip="Formulario" aria-label="Formulario">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Formulario</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-view="list" data-tooltip="Lista" aria-label="Lista">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Lista</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Kanban</span>
+        </button>
+    </div>
+    <div id="regiones-view"></div>
+</section>
+<script>
+    (() => {
+        const mount = document.getElementById('regiones-view');
+        const viewButtons = Array.from(document.querySelectorAll('#regiones-module .view-buttons .view-pill[data-view]'));
+        if (!mount) return;
 
-                const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => (
-                    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char
-                ));
-                const normalizeRegion = (row) => {
-                    const item = row && typeof row === 'object' ? row : {};
-                    return {
-                        nombre: String(item.nombre || '').trim(),
-                        codigo: String(item.codigo || '').trim(),
-                        descripcion: String(item.descripcion || '').trim(),
-                    };
-                };
-                const replaceData = (rows) => {
-                    const normalized = Array.isArray(rows) ? rows.map(normalizeRegion) : [];
-                    data.splice(0, data.length, ...normalized);
-                };
-                const loadRegiones = async () => {
-                    try {
-                        const res = await fetch('/api/inicio/regiones');
-                        const json = await res.json().catch(() => ({}));
-                        if (!res.ok || json?.success === false) throw new Error('No se pudieron cargar regiones');
-                        replaceData(json?.data || []);
-                    } catch (_error) {
-                        replaceData([]);
-                    }
-                };
-                const persistRegiones = async () => {
-                    try {
-                        const res = await fetch('/api/inicio/regiones', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ data }),
-                        });
-                        const json = await res.json().catch(() => ({}));
-                        if (!res.ok || json?.success === false) throw new Error('No se pudieron guardar regiones');
-                        replaceData(json?.data || []);
-                        return true;
-                    } catch (_error) {
-                        return false;
-                    }
-                };
+        const data = [];
+        let currentView = 'form';
+        let editingIndex = -1;
 
-                const renderForm = () => {
-                    const current = editingIndex >= 0 ? data[editingIndex] : { nombre: '', codigo: '', descripcion: '' };
-                    mount.innerHTML = `
-                        <article class="reg-card">
-                            <h3 class="reg-title">Formulario de regiones</h3>
-                            <form id="regiones-form">
-                                <div class="reg-grid">
-                                    <div class="reg-field">
-                                        <label for="region-nombre">Nombre</label>
-                                        <input id="region-nombre" type="text" value="${escapeHtml(current.nombre)}" required>
+        const STATUS_BASE_CLASS = 'text-sm text-base-content/70';
+        const STATUS_OK_CLASS = 'text-sm text-success';
+        const STATUS_ERROR_CLASS = 'text-sm text-error';
+
+        const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char
+        ));
+
+        const normalizeRegion = (row) => {
+            const item = row && typeof row === 'object' ? row : {};
+            return {
+                nombre: String(item.nombre || '').trim(),
+                codigo: String(item.codigo || '').trim(),
+                descripcion: String(item.descripcion || '').trim(),
+            };
+        };
+
+        const replaceData = (rows) => {
+            const normalized = Array.isArray(rows) ? rows.map(normalizeRegion) : [];
+            data.splice(0, data.length, ...normalized);
+        };
+
+        const loadRegiones = async () => {
+            try {
+                const res = await fetch('/api/inicio/regiones');
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok || json?.success === false) throw new Error('No se pudieron cargar regiones');
+                replaceData(json?.data || []);
+            } catch (_error) {
+                replaceData([]);
+            }
+        };
+
+        const persistRegiones = async () => {
+            try {
+                const res = await fetch('/api/inicio/regiones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data }),
+                });
+                const json = await res.json().catch(() => ({}));
+                if (!res.ok || json?.success === false) throw new Error('No se pudieron guardar regiones');
+                replaceData(json?.data || []);
+                return true;
+            } catch (_error) {
+                return false;
+            }
+        };
+
+        const setStatus = (msgEl, message, tone) => {
+            if (!msgEl) return;
+            const countLabel = `${data.length} registro(s)`;
+            if (!message) {
+                msgEl.textContent = countLabel;
+                msgEl.className = STATUS_BASE_CLASS;
+                return;
+            }
+            msgEl.textContent = `${message} · ${countLabel}`;
+            msgEl.className = tone === 'ok' ? STATUS_OK_CLASS : (tone === 'error' ? STATUS_ERROR_CLASS : STATUS_BASE_CLASS);
+        };
+
+        const renderForm = () => {
+            const current = editingIndex >= 0 ? data[editingIndex] : { nombre: '', codigo: '', descripcion: '' };
+
+            mount.innerHTML = `
+                <article class="card bg-base-100 border border-base-300 shadow-sm">
+                    <div class="card-body gap-4">
+                        <h3 class="card-title text-base-content">Formulario de regiones</h3>
+                        <form id="regiones-form" class="grid gap-4">
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                <label class="form-control w-full">
+                                    <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+                                    <input id="region-nombre" class="input input-bordered w-full campo campo-sin-borde" type="text" value="${escapeHtml(current.nombre)}" required>
+                                </label>
+                                <label class="form-control w-full">
+                                    <div class="label"><span class="label-text font-semibold">Código</span></div>
+                                    <input id="region-codigo" class="input input-bordered w-full campo campo-sin-borde" type="text" value="${escapeHtml(current.codigo)}" required>
+                                </label>
+                                <label class="form-control w-full">
+                                    <div class="label"><span class="label-text font-semibold">Descripción</span></div>
+                                    <textarea id="region-descripcion" class="textarea textarea-bordered w-full min-h-24 campo campo-sin-borde">${escapeHtml(current.descripcion)}</textarea>
+                                </label>
+                            </div>
+                            <div class="rounded-box border border-base-300 bg-base-100 p-3">
+                                <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Pestañas de la región">
+                                    <button type="button" class="tab gap-2 rounded-t-lg tab-active" data-reg-tab="1" data-tab="sucursales" aria-selected="true">
+                                        <img src="/templates/icon/sucursales.svg" alt="" class="w-4 h-4">
+                                        Sucursales
+                                    </button>
+                                    <button type="button" class="tab gap-2 rounded-t-lg" data-reg-tab="1" data-tab="kpis" aria-selected="false">
+                                        <img src="/templates/icon/kpi.svg" alt="" class="w-4 h-4">
+                                        KPIs
+                                    </button>
+                                    <button type="button" class="tab gap-2 rounded-t-lg" data-reg-tab="1" data-tab="pendientes" aria-selected="false">
+                                        <img src="/templates/icon/ojo.svg" alt="" class="w-4 h-4">
+                                        Pendientes
+                                    </button>
+                                </div>
+                                <div class="-mt-px rounded-b-box border border-base-300 bg-base-100 p-4 grid gap-3">
+                                    <div data-panel="sucursales">
+                                        <p class="text-base-content/70">Sin sucursales vinculadas.</p>
                                     </div>
-                                    <div class="reg-field">
-                                        <label for="region-codigo">Código</label>
-                                        <input id="region-codigo" type="text" value="${escapeHtml(current.codigo)}" required>
+                                    <div class="hidden" data-panel="kpis">
+                                        <p class="text-base-content/70">Página en blanco: KPIs.</p>
                                     </div>
-                                    <div class="reg-field">
-                                        <label for="region-descripcion">Descripción</label>
-                                        <textarea id="region-descripcion">${escapeHtml(current.descripcion)}</textarea>
+                                    <div class="hidden" data-panel="pendientes">
+                                        <p class="text-base-content/70">Página en blanco: Pendientes.</p>
                                     </div>
                                 </div>
-                                <div class="action-buttons-group">
-                                    <button type="button" id="reg-btn-nuevo" class="action-button" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
-                                        <img src="/icon/boton/nuevo.svg" alt="Nuevo">
-                                        <span class="action-label">Nuevo</span>
-                                    </button>
-                                    <button type="button" id="reg-btn-editar" class="action-button" data-hover-label="Editar" aria-label="Editar" title="Editar">
-                                        <img src="/icon/boton/editar.svg" alt="Editar">
-                                        <span class="action-label">Editar</span>
-                                    </button>
-                                    <button type="submit" id="reg-btn-guardar" class="action-button" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
-                                        <img src="/icon/boton/guardar.svg" alt="Guardar">
-                                        <span class="action-label">Guardar</span>
-                                    </button>
-                                    <button type="button" id="reg-btn-eliminar" class="action-button" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
-                                        <img src="/icon/boton/eliminar.svg" alt="Eliminar">
-                                        <span class="action-label">Eliminar</span>
-                                    </button>
-                                    <span class="reg-msg">${data.length} registro(s)</span>
-                                </div>
-                            </form>
-                        </article>
-                    `;
-                    const form = document.getElementById('regiones-form');
-                    const msgEl = mount.querySelector('.reg-msg');
-                    const setMsg = (message, tone) => {
-                        if (!msgEl) return;
-                        const countLabel = `${data.length} registro(s)`;
-                        if (!message) {
-                            msgEl.textContent = countLabel;
-                            msgEl.style.color = '#334155';
-                            return;
-                        }
-                        msgEl.textContent = `${message} · ${countLabel}`;
-                        if (tone === 'ok') msgEl.style.color = '#166534';
-                        else if (tone === 'error') msgEl.style.color = '#b91c1c';
-                        else msgEl.style.color = '#334155';
-                    };
+                            </div>
+                            <div class="botones_accion">
+                                <button type="button" id="reg-btn-nuevo" class="view-pill boton_vista" data-tooltip="Nuevo" aria-label="Nuevo" title="Nuevo">
+                                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+                                    <span class="boton_vista-label">Nuevo</span>
+                                </button>
+                                <button type="button" id="reg-btn-editar" class="view-pill boton_vista" data-tooltip="Editar" aria-label="Editar" title="Editar">
+                                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/editar.svg')"></span>
+                                    <span class="boton_vista-label">Editar</span>
+                                </button>
+                                <button type="submit" id="reg-btn-guardar" class="view-pill boton_vista" data-tooltip="Guardar" aria-label="Guardar" title="Guardar">
+                                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/guardar.svg')"></span>
+                                    <span class="boton_vista-label">Guardar</span>
+                                </button>
+                                <button type="button" id="reg-btn-eliminar" class="view-pill boton_vista" data-tooltip="Eliminar" aria-label="Eliminar" title="Eliminar">
+                                    <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/eliminar.svg')"></span>
+                                    <span class="boton_vista-label">Eliminar</span>
+                                </button>
+                            </div>
+                            <span id="reg-status" class="${STATUS_BASE_CLASS}">${data.length} registro(s)</span>
+                        </form>
+                    </div>
+                </article>
+            `;
 
-                    const newBtn = document.getElementById('reg-btn-nuevo');
-                    const editBtn = document.getElementById('reg-btn-editar');
-                    const deleteBtn = document.getElementById('reg-btn-eliminar');
+            const form = document.getElementById('regiones-form');
+            const msgEl = document.getElementById('reg-status');
+            const newBtn = document.getElementById('reg-btn-nuevo');
+            const editBtn = document.getElementById('reg-btn-editar');
+            const deleteBtn = document.getElementById('reg-btn-eliminar');
+            const formTabs = Array.from(mount.querySelectorAll('[data-reg-tab][data-tab]'));
+            const formPanels = Array.from(mount.querySelectorAll('[data-panel]'));
 
-                    newBtn && newBtn.addEventListener('click', () => {
-                        editingIndex = -1;
-                        renderForm();
-                    });
+            const setFormTab = (tab) => {
+                formTabs.forEach((btn) => {
+                    const active = (btn.getAttribute('data-tab') || '') === tab;
+                    btn.classList.toggle('tab-active', active);
+                    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+                });
+                formPanels.forEach((panel) => {
+                    const active = (panel.getAttribute('data-panel') || '') === tab;
+                    panel.classList.toggle('hidden', !active);
+                });
+            };
 
-                    editBtn && editBtn.addEventListener('click', () => {
-                        const codigo = (document.getElementById('region-codigo')?.value || '').trim();
-                        if (!codigo) {
-                            setMsg('Ingresa un código para editar', 'error');
-                            return;
-                        }
-                        const idx = data.findIndex((row) => String(row.codigo || '').trim() === codigo);
-                        if (idx < 0) {
-                            setMsg('Código no encontrado', 'error');
-                            return;
-                        }
-                        editingIndex = idx;
-                        setMsg('Registro cargado para edición', 'ok');
-                        renderForm();
-                    });
+            formTabs.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    setFormTab(btn.getAttribute('data-tab') || 'sucursales');
+                });
+            });
+            setFormTab('sucursales');
 
-                    deleteBtn && deleteBtn.addEventListener('click', async () => {
-                        const codigo = (document.getElementById('region-codigo')?.value || '').trim();
-                        if (!codigo) {
-                            setMsg('Ingresa un código para eliminar', 'error');
-                            return;
-                        }
-                        const idx = data.findIndex((row) => String(row.codigo || '').trim() === codigo);
-                        if (idx < 0) {
-                            setMsg('Código no encontrado', 'error');
-                            return;
-                        }
-                        if (!window.confirm(`¿Eliminar la región "${data[idx].nombre || codigo}"?`)) return;
-                        data.splice(idx, 1);
-                        editingIndex = -1;
-                        const ok = await persistRegiones();
-                        if (!ok) {
-                            setMsg('Error al eliminar', 'error');
-                            return;
-                        }
-                        renderForm();
-                        setTimeout(() => {
-                            const msg = mount.querySelector('.reg-msg');
-                            if (msg) {
-                                msg.textContent = `Registro eliminado · ${data.length} registro(s)`;
-                                msg.style.color = '#166534';
-                            }
-                        }, 0);
-                    });
+            newBtn && newBtn.addEventListener('click', () => {
+                editingIndex = -1;
+                renderForm();
+            });
 
-                    form && form.addEventListener('submit', async (event) => {
-                        event.preventDefault();
-                        const nombre = (document.getElementById('region-nombre')?.value || '').trim();
-                        const codigo = (document.getElementById('region-codigo')?.value || '').trim();
-                        const descripcion = (document.getElementById('region-descripcion')?.value || '').trim();
-                        if (!nombre || !codigo) return;
-                        const payload = { nombre, codigo, descripcion };
-                        if (editingIndex >= 0) {
-                            data[editingIndex] = payload;
-                        } else {
-                            data.push(payload);
-                        }
-                        editingIndex = -1;
-                        const ok = await persistRegiones();
-                        if (!ok) {
-                            setMsg('Error al guardar', 'error');
-                            return;
-                        }
-                        renderForm();
-                        setTimeout(() => {
-                            const msg = mount.querySelector('.reg-msg');
-                            if (msg) {
-                                msg.textContent = `Guardado correctamente · ${data.length} registro(s)`;
-                                msg.style.color = '#166534';
-                            }
-                        }, 0);
-                    });
-                };
+            editBtn && editBtn.addEventListener('click', () => {
+                const codigo = (document.getElementById('region-codigo')?.value || '').trim();
+                if (!codigo) {
+                    setStatus(msgEl, 'Ingresa un código para editar', 'error');
+                    return;
+                }
+                const idx = data.findIndex((row) => String(row.codigo || '').trim() === codigo);
+                if (idx < 0) {
+                    setStatus(msgEl, 'Código no encontrado', 'error');
+                    return;
+                }
+                editingIndex = idx;
+                renderForm();
+                setTimeout(() => {
+                    setStatus(document.getElementById('reg-status'), 'Registro cargado para edición', 'ok');
+                }, 0);
+            });
 
-                const renderList = () => {
-                    mount.innerHTML = `
-                        <article class="reg-card">
-                            <h3 class="reg-title">Lista de regiones</h3>
-                            <table class="reg-table view-list-excel">
+            deleteBtn && deleteBtn.addEventListener('click', async () => {
+                const codigo = (document.getElementById('region-codigo')?.value || '').trim();
+                if (!codigo) {
+                    setStatus(msgEl, 'Ingresa un código para eliminar', 'error');
+                    return;
+                }
+                const idx = data.findIndex((row) => String(row.codigo || '').trim() === codigo);
+                if (idx < 0) {
+                    setStatus(msgEl, 'Código no encontrado', 'error');
+                    return;
+                }
+                if (!window.confirm(`¿Eliminar la región "${data[idx].nombre || codigo}"?`)) return;
+                data.splice(idx, 1);
+                editingIndex = -1;
+                const ok = await persistRegiones();
+                if (!ok) {
+                    setStatus(msgEl, 'Error al eliminar', 'error');
+                    return;
+                }
+                renderForm();
+                setTimeout(() => {
+                    setStatus(document.getElementById('reg-status'), 'Registro eliminado', 'ok');
+                }, 0);
+            });
+
+            form && form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const nombre = (document.getElementById('region-nombre')?.value || '').trim();
+                const codigo = (document.getElementById('region-codigo')?.value || '').trim();
+                const descripcion = (document.getElementById('region-descripcion')?.value || '').trim();
+                if (!nombre || !codigo) return;
+
+                const payload = { nombre, codigo, descripcion };
+                if (editingIndex >= 0) data[editingIndex] = payload;
+                else data.push(payload);
+
+                editingIndex = -1;
+                const ok = await persistRegiones();
+                if (!ok) {
+                    setStatus(msgEl, 'Error al guardar', 'error');
+                    return;
+                }
+                renderForm();
+                setTimeout(() => {
+                    setStatus(document.getElementById('reg-status'), 'Guardado correctamente', 'ok');
+                }, 0);
+            });
+        };
+
+        const renderList = () => {
+            mount.innerHTML = `
+                <article class="card bg-base-100 border border-base-300 shadow-sm">
+                    <div class="card-body gap-4">
+                        <h3 class="card-title text-base-content">Lista de regiones</h3>
+                        <div class="overflow-x-auto">
+                            <table class="table lista">
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
@@ -337,68 +289,100 @@
                                 </thead>
                                 <tbody>
                                     ${data.length ? data.map((row) => `
-                                        <tr>
+                                        <tr data-reg-open-form-row data-row-code="${escapeHtml(row.codigo)}" class="cursor-pointer hover">
                                             <td>${escapeHtml(row.nombre)}</td>
                                             <td>${escapeHtml(row.codigo)}</td>
                                             <td>${escapeHtml(row.descripcion)}</td>
                                         </tr>
                                     `).join('') : `
-                                        <tr><td colspan="3" style="color:#64748b;">Sin registros.</td></tr>
+                                        <tr><td colspan="3" class="text-base-content/60">Sin registros.</td></tr>
                                     `}
                                 </tbody>
                             </table>
-                        </article>
-                    `;
-                };
+                        </div>
+                    </div>
+                </article>
+            `;
+        };
 
-                const laneName = (nombre) => {
-                    const first = (nombre || '').trim().charAt(0).toUpperCase();
-                    if (!first) return 'Sin clasificar';
-                    if (first <= 'H') return 'A - H';
-                    if (first <= 'P') return 'I - P';
-                    return 'Q - Z';
-                };
+        const openFormByCode = (codigo) => {
+            const targetCode = String(codigo || '').trim();
+            if (!targetCode) return;
+            const idx = data.findIndex((row) => String(row.codigo || '').trim() === targetCode);
+            if (idx < 0) return;
+            editingIndex = idx;
+            setActiveViewButton('form');
+            render('form');
+            setTimeout(() => {
+                setStatus(document.getElementById('reg-status'), 'Registro cargado para edición', 'ok');
+            }, 0);
+        };
 
-                const renderKanban = () => {
-                    const lanes = { 'A - H': [], 'I - P': [], 'Q - Z': [], 'Sin clasificar': [] };
-                    data.forEach((row, index) => { lanes[laneName(row.nombre)].push({ ...row, index }); });
-                    mount.innerHTML = `
-                        <article class="reg-card">
-                            <h3 class="reg-title">Kanban de regiones</h3>
-                            <div class="reg-kanban">
-                                ${Object.keys(lanes).map((key) => `
-                                    <div class="reg-col">
-                                        <h4>${key}</h4>
-                                        ${lanes[key].length ? lanes[key].map((row) => `
-                                            <article class="reg-item">
-                                                <strong>${escapeHtml(row.nombre)}</strong>
-                                                <p>${escapeHtml(row.codigo)}</p>
-                                                <p>${escapeHtml(row.descripcion)}</p>
-                                            </article>
-                                        `).join('') : '<p class="reg-msg">Sin registros.</p>'}
-                                    </div>
+        const renderKanban = () => {
+            mount.innerHTML = `
+                <article class="card bg-base-100 border border-base-300 shadow-sm">
+                    <div class="card-body gap-4">
+                        <h3 class="card-title text-base-content">Kanban de regiones</h3>
+                        ${data.length ? `
+                            <div class="kanban">
+                                ${data.map((row) => `
+                                    <article class="kanban-item">
+                                        <div class="kanban-color" style="background: var(--sidebar-bottom, #0f172a); color: var(--sidebar-text, #ffffff);">${escapeHtml((row.nombre || '?').charAt(0).toUpperCase())}</div>
+                                        <div class="kanban-content">
+                                            <p class="kanban-title">${escapeHtml(row.nombre)}</p>
+                                            <p class="kanban-meta"><strong>Código:</strong> ${escapeHtml(row.codigo)}</p>
+                                            <p class="kanban-meta"><strong>Descripción:</strong> ${escapeHtml(row.descripcion || '—')}</p>
+                                        </div>
+                                    </article>
                                 `).join('')}
                             </div>
-                        </article>
-                    `;
-                };
+                        ` : '<p class="text-sm text-base-content/60">Sin registros.</p>'}
+                    </div>
+                </article>
+            `;
+        };
 
-                const render = (view) => {
-                    currentView = ['form', 'list', 'kanban'].includes(view) ? view : 'form';
-                    if (currentView === 'list') return renderList();
-                    if (currentView === 'kanban') return renderKanban();
-                    return renderForm();
-                };
+        const render = (view) => {
+            currentView = ['form', 'list', 'kanban'].includes(view) ? view : 'form';
+            if (currentView === 'list') return renderList();
+            if (currentView === 'kanban') return renderKanban();
+            return renderForm();
+        };
 
-                document.addEventListener('backend-view-change', (event) => {
-                    const view = event.detail?.view;
-                    if (!view) return;
-                    render(view);
-                });
+        const setActiveViewButton = (view) => {
+            viewButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+            });
+        };
 
-                (async () => {
-                    await loadRegiones();
-                    render('form');
-                })();
-            })();
-        </script>
+        document.addEventListener('backend-view-change', (event) => {
+            const view = event.detail?.view;
+            if (!view) return;
+            setActiveViewButton(view);
+            render(view);
+        });
+
+        viewButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const view = btn.getAttribute('data-view') || 'form';
+                setActiveViewButton(view);
+                render(view);
+            });
+        });
+
+        mount.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const listRow = target.closest('[data-reg-open-form-row]');
+            if (listRow instanceof HTMLElement) {
+                openFormByCode(listRow.getAttribute('data-row-code') || '');
+            }
+        });
+
+        (async () => {
+            await loadRegiones();
+            setActiveViewButton('form');
+            render('form');
+        })();
+    })();
+</script>

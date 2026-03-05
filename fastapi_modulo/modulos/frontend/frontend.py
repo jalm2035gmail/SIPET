@@ -17,9 +17,15 @@ _VERSIONS_PATH    = os.path.join("fastapi_modulo", "modulos", "frontend", "versi
 _GALLERY_DIR      = os.path.join("static", "gallery")
 _GALLERY_MAX_MB   = 5
 _MAX_VERSIONS     = 5
+_BRAND_PATH       = os.path.join("fastapi_modulo", "modulos", "frontend", "brand_store.json")
 
 # Simple in-memory page render cache: {slug: rendered_html}
 _page_cache: dict = {}
+
+
+def clear_all_page_cache() -> None:
+    """Flush the full page render cache (e.g. after brand color changes)."""
+    _page_cache.clear()
 
 _TASAS_DEFAULT = [
     {"id": "ahorro_vista",  "label": "Ahorro a la vista",   "rate": "3.50",  "color": "#3b82f6", "unit": "% anual"},
@@ -135,6 +141,7 @@ async def api_pages_save(request: Request):
         "title":    str(body.get("title") or "Sin título").strip(),
         "slug":     slug,
         "status":   str(body.get("status") or "draft"),
+        "is_home":  bool(body.get("is_home", False)),
         "gjs_html": str(body.get("gjs_html") or ""),
         "gjs_css":  str(body.get("gjs_css")  or ""),
         "blocks":   body.get("blocks") if isinstance(body.get("blocks"), list) else [],
@@ -146,10 +153,17 @@ async def api_pages_save(request: Request):
     else:
         pages.append(page)
 
+    # if this page is marked as home, unset all others
+    if page["is_home"]:
+        for p in pages:
+            if p["id"] != pid:
+                p["is_home"] = False
+
     _snapshot_version(pid, page)
     _save_pages(pages)
     # Invalidate render cache on any save
     _page_cache.pop(page["slug"], None)
+    _page_cache.pop("web:" + page["slug"], None)
     return {"success": True, "data": pages, "page": page}
 
 
@@ -165,6 +179,21 @@ def public_page(slug: str):
         return HTMLResponse("<h1 style='font-family:sans-serif;padding:40px'>Página no encontrada</h1>", status_code=404)
     rendered = _render_page_html(page)
     _page_cache[slug] = rendered.body.decode("utf-8")
+    return rendered
+
+
+@router.get("/web/{slug}", response_class=HTMLResponse)
+def public_page_web(slug: str):
+    """Public pages served at /web/<slug> — mirrors /p/<slug>."""
+    cache_key = "web:" + slug
+    if cache_key in _page_cache:
+        return HTMLResponse(_page_cache[cache_key])
+    pages = _load_pages()
+    page = next((p for p in pages if p.get("slug") == slug and p.get("status") == "published"), None)
+    if not page:
+        return HTMLResponse("<h1 style='font-family:sans-serif;padding:40px'>Página no encontrada</h1>", status_code=404)
+    rendered = _render_page_html(page)
+    _page_cache[cache_key] = rendered.body.decode("utf-8")
     return rendered
 
 
@@ -188,6 +217,7 @@ def api_page_publish(page_id: str):
     page["status"] = "published"
     _save_pages(pages)
     _page_cache.pop(page.get("slug", ""), None)
+    _page_cache.pop("web:" + page.get("slug", ""), None)
     return {"success": True, "page": page}
 
 
@@ -340,6 +370,19 @@ _FORM_WIDGET_SCRIPT = """
 </script>"""
 
 
+def _brand_css_vars() -> str:
+    """Return a <style>:root{...}</style> block with brand color CSS variables."""
+    try:
+        from fastapi_modulo.main import get_colores_context
+        data = get_colores_context()
+        if not data:
+            return ""
+        rules = "".join(f"--{k.replace(' ','-')}:{v};" for k, v in data.items() if isinstance(v, str))
+        return f"<style>:root{{{rules}}}</style>" if rules else ""
+    except Exception:
+        return ""
+
+
 def _render_page_html(page: dict) -> HTMLResponse:
     title = _esc(page.get("title", ""))
     meta  = page.get("meta") or {}
@@ -358,6 +401,7 @@ def _render_page_html(page: dict) -> HTMLResponse:
     # Inject form-widget script only when needed
     has_forms = 'sipet-form-widget' in (gjs_html or body_content)
     form_script = _FORM_WIDGET_SCRIPT if has_forms else ""
+    brand_vars = _brand_css_vars()
     return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -370,6 +414,7 @@ def _render_page_html(page: dict) -> HTMLResponse:
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  {brand_vars}
   <style>*{{box-sizing:border-box;margin:0;padding:0}}body{{font-family:system-ui,sans-serif;color:#1e293b}}</style>
   {extra_style}
 </head>
@@ -558,6 +603,73 @@ def _gallery_items() -> list:
     return items
 
 
+def _load_brand() -> dict:
+    try:
+        with open(_BRAND_PATH, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _save_brand(data: dict) -> None:
+    os.makedirs(os.path.dirname(_BRAND_PATH), exist_ok=True)
+    with open(_BRAND_PATH, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False, indent=2)
+
+
+def _resolve_identidad_logo_url() -> str:
+    """Retorna la URL del logo configurado en /empresa/identidad institucional.
+    Prioridad: 1) logo subido en Identidad institucional, 2) logo en Personalización.
+    """
+    import glob as _glob
+    _CONFIG = (os.environ.get("IDENTIDAD_LOGIN_CONFIG_PATH") or "fastapi_modulo/identidad_login.json").strip()
+    _IMG_DIR = "fastapi_modulo/templates/imagenes"
+    _DEFAULT_LOGO = "icon.png"
+    # Priority 1: identidad institucional
+    try:
+        with open(_CONFIG, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        logo_filename = str(data.get("logo_filename") or "").strip()
+        if logo_filename and logo_filename != _DEFAULT_LOGO:
+            path = os.path.join(_IMG_DIR, logo_filename)
+            v = int(os.path.getmtime(path)) if os.path.exists(path) else 0
+            return f"/templates/imagenes/{logo_filename}?v={v}"
+    except (OSError, json.JSONDecodeError):
+        pass
+    # Priority 2: personalizacion/uploads/logo_empresa.*
+    _UPLOADS = os.path.join("fastapi_modulo", "modulos", "personalizacion", "uploads")
+    candidates = sorted(
+        _glob.glob(os.path.join(_UPLOADS, "logo_empresa.*")),
+        key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0,
+        reverse=True,
+    )
+    if candidates:
+        fname = os.path.basename(candidates[0])
+        v = int(os.path.getmtime(candidates[0])) if os.path.exists(candidates[0]) else 0
+        return f"/personalizar/uploads/{fname}?v={v}"
+    return ""
+
+
+@router.get("/api/frontend/brand")
+def api_brand_get():
+    brand = _load_brand()
+    # Always expose the identidad institucional logo so the builder can auto-inject it
+    brand["identidad_logo_url"] = _resolve_identidad_logo_url()
+    return {"success": True, "data": brand}
+
+
+@router.post("/api/frontend/brand")
+async def api_brand_save(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"success": False, "error": "JSON inválido"}, status_code=400)
+    brand = _load_brand()
+    brand.update({k: v for k, v in body.items() if isinstance(v, str)})
+    _save_brand(brand)
+    return {"success": True, "data": brand}
+
+
 @router.get("/api/frontend/gallery")
 def api_gallery_list():
     return {"success": True, "data": _gallery_items()}
@@ -577,6 +689,12 @@ async def api_gallery_upload(file: UploadFile = File(...)):
             {"success": False, "error": f"Imagen demasiado grande (máx {_GALLERY_MAX_MB} MB)"},
             status_code=413
         )
+    # Optimizar: redimensionar a máx 1200×1200 y convertir a WebP (excepto SVG)
+    try:
+        from fastapi_modulo.image_utils import optimize_image
+        data, ext = optimize_image(data, ext, profile="asset")
+    except Exception:
+        pass  # Si falla, guarda el original
     os.makedirs(_GALLERY_DIR, exist_ok=True)
     safe_name = f"{_uuid.uuid4().hex}{ext}"
     dest = os.path.join(_GALLERY_DIR, safe_name)

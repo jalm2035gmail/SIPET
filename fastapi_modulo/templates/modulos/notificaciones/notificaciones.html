@@ -23,9 +23,9 @@
 
         <div class="wa-index-status" id="wa-index-status" style="display:none">Cargando índice...</div>
 
-        <div class="wa-tabs">
-          <button type="button" class="wa-tab active" data-tab="avan">AVAN</button>
-          <button type="button" class="wa-tab" data-tab="users">Usuarios</button>
+        <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Conversaciones">
+          <button type="button" class="tab tab-active rounded-t-lg" data-wa-tab="1" data-tab="avan">AVAN</button>
+          <button type="button" class="tab rounded-t-lg" data-wa-tab="1" data-tab="users">Usuarios</button>
         </div>
 
         <div class="wa-search-wrap">
@@ -90,161 +90,7 @@
   </div>
 
   <!-- =================== STYLES =================== -->
-  <style>
-    .wa-shell {
-      display: grid; grid-template-columns: 360px 1fr;
-      min-height: 700px; background: #e5ddd5;
-      border: 1px solid rgba(15,23,42,.14); border-radius: 14px; overflow: hidden;
-    }
-    .wa-sidebar {
-      background: #fff; border-right: 1px solid rgba(15,23,42,.14);
-      display: flex; flex-direction: column; min-height: 700px;
-    }
-    .wa-sidebar-head {
-      height: 72px; padding: 10px 12px; background: #f0f2f5;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid rgba(15,23,42,.1);
-    }
-    .wa-profile { display:flex; align-items:center; gap:10px; }
-    .wa-profile img { width:42px; height:42px; border-radius:50%; object-fit:cover; }
-    .wa-profile strong { display:block; font-size:14px; color:#111b21; }
-    .wa-profile small  { color:#667781; font-size:11px; }
-    .wa-head-actions { display:flex; gap:8px; }
-    .wa-icon-btn {
-      width:32px; height:32px; border:1px solid rgba(15,23,42,.16);
-      background:#fff; border-radius:50%; cursor:pointer; font-size:16px; color:#111b21; line-height:1;
-    }
-    .wa-icon-btn:hover { background:#f5f6f6; }
-    .wa-index-status {
-      margin:8px 12px 0; padding:7px 10px; border-radius:8px;
-      border:1px solid rgba(15,23,42,.12); background:#f8fafb; color:#54656f; font-size:11px;
-    }
-    .wa-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:10px 12px 8px; }
-    .wa-tab {
-      border:1px solid rgba(15,23,42,.16); background:#fff; color:#41525d;
-      border-radius:999px; padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer;
-    }
-    .wa-tab.active { background:#d9fdd3; color:#0a5c36; border-color:#b6e6ae; }
-    .wa-search-wrap { padding:0 12px 10px; }
-    .wa-search-wrap input {
-      width:100%; border:1px solid rgba(15,23,42,.14); border-radius:8px;
-      padding:9px 11px; font-size:13px; color:#111b21; background:#f0f2f5; box-sizing:border-box;
-    }
-    .wa-list { overflow:auto; border-top:1px solid rgba(15,23,42,.08); flex:1; }
-    .wa-empty { padding:12px; color:#667781; font-size:12px; }
-    .wa-item {
-      width:100%; border:0; border-bottom:1px solid rgba(15,23,42,.06);
-      background:#fff; text-align:left; padding:10px 12px;
-      display:grid; grid-template-columns:42px 1fr; gap:10px; cursor:pointer; align-items:center;
-    }
-    .wa-item:hover { background:#f5f6f6; }
-    .wa-item.active { background:#f0f2f5; }
-    .wa-item-avatar {
-      width:42px; height:42px; border-radius:50%; background:#dfe5e7; color:#44525b;
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:700; text-transform:uppercase; overflow:hidden; flex-shrink:0;
-    }
-    .wa-item-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-    .wa-item-main { min-width:0; }
-    .wa-item-top { display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
-    .wa-item-name { font-size:14px; font-weight:600; color:#111b21; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .wa-item-time { font-size:11px; color:#667781; white-space:nowrap; }
-    .wa-item-msg  { margin-top:4px; font-size:12px; color:#667781; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .wa-unread-badge {
-      display:inline-flex; align-items:center; justify-content:center;
-      min-width:18px; height:18px; padding:0 5px;
-      background:#25d366; color:#fff; border-radius:999px; font-size:10px; font-weight:700;
-    }
-    .wa-chat {
-      display:grid; grid-template-rows:72px 1fr 66px;
-      background:#efeae2; min-height:700px;
-      background-image:
-        radial-gradient(rgba(0,0,0,.02) 1px, transparent 1px),
-        radial-gradient(rgba(0,0,0,.01) 1px, transparent 1px);
-      background-size:12px 12px, 16px 16px;
-      background-position:0 0, 8px 8px;
-    }
-    .wa-chat-head {
-      background:#f0f2f5; border-bottom:1px solid rgba(15,23,42,.12);
-      display:flex; align-items:center; justify-content:space-between; padding:10px 14px;
-    }
-    .wa-chat-contact { display:flex; gap:10px; align-items:center; min-width:0; flex:1; }
-    .wa-chat-avatar {
-      width:42px; height:42px; border-radius:50%; background:#dfe5e7; color:#44525b; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:700; overflow:hidden;
-    }
-    .wa-chat-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-    .wa-chat-contact strong {
-      display:block; color:#111b21; font-size:15px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:420px;
-    }
-    .wa-chat-contact small { color:#667781; font-size:12px; }
-    .wa-chat-tools { display:flex; align-items:center; gap:6px; color:#54656f; font-size:12px; flex-shrink:0; }
-    .wa-chat-tools select { border:1px solid rgba(15,23,42,.18); border-radius:8px; height:32px; padding:0 6px; background:#fff; }
-    .wa-messages { overflow:auto; padding:14px 20px; display:flex; flex-direction:column; gap:8px; }
-    .wa-msg { max-width:78%; border-radius:8px; padding:7px 10px 6px; box-shadow:0 1px 0 rgba(0,0,0,.08); word-wrap:break-word; }
-    .wa-msg--in  { align-self:flex-start; background:#fff; color:#111b21; }
-    .wa-msg--out { align-self:flex-end; background:#d9fdd3; color:#111b21; }
-    .wa-msg-body { font-size:13px; line-height:1.4; white-space:pre-wrap; }
-    .wa-msg-meta { margin-top:4px; font-size:10px; color:#667781; text-align:right; }
-    .wa-citations { margin-top:6px; padding-top:6px; border-top:1px dashed rgba(15,23,42,.22); display:grid; gap:4px; font-size:11px; color:#41525d; }
-    .wa-citation { background:rgba(255,255,255,.66); border:1px solid rgba(15,23,42,.16); border-radius:6px; padding:4px 6px; }
-    .wa-msg--typing .wa-msg-body { color:#667781; font-style:italic; }
-    .wa-input {
-      background:#f0f2f5; border-top:1px solid rgba(15,23,42,.1);
-      display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:10px 14px;
-    }
-    .wa-input input {
-      width:100%; height:42px; border:1px solid rgba(15,23,42,.14);
-      border-radius:999px; padding:0 14px; font-size:13px;
-      background:#fff; color:#111b21; box-sizing:border-box;
-    }
-    .wa-send-btn {
-      height:42px; border-radius:999px; border:1px solid #0a5c36;
-      background:#0a5c36; color:#fff; font-size:13px; font-weight:700; padding:0 16px; cursor:pointer;
-    }
-    .wa-send-btn:disabled { opacity:.55; cursor:not-allowed; }
-    .wa-send-btn:hover:not(:disabled) { filter:brightness(1.05); }
-    /* Modal */
-    .wa-modal-backdrop {
-      position:fixed; inset:0; background:rgba(0,0,0,.44);
-      display:flex; align-items:center; justify-content:center; z-index:9999;
-    }
-    .wa-modal {
-      background:#fff; border-radius:14px; width:380px; max-height:540px;
-      display:flex; flex-direction:column; overflow:hidden;
-      box-shadow:0 8px 32px rgba(0,0,0,.22);
-    }
-    .wa-modal-head {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 16px; border-bottom:1px solid rgba(15,23,42,.1);
-      font-weight:700; color:#111b21; font-size:15px;
-    }
-    .wa-modal-search-wrap { padding:10px 14px; }
-    .wa-modal-search-wrap input {
-      width:100%; border:1px solid rgba(15,23,42,.14); border-radius:8px;
-      padding:9px 11px; font-size:13px; box-sizing:border-box; background:#f0f2f5;
-    }
-    .wa-modal-list { list-style:none; margin:0; padding:0; overflow:auto; flex:1; }
-    .wa-modal-user { display:flex; align-items:center; gap:12px; padding:10px 16px; cursor:pointer; border-bottom:1px solid rgba(15,23,42,.06); }
-    .wa-modal-user:hover { background:#f5f6f6; }
-    .wa-modal-avatar {
-      width:40px; height:40px; border-radius:50%; background:#dfe5e7; color:#44525b; flex-shrink:0;
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:700; overflow:hidden;
-    }
-    .wa-modal-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-    .wa-modal-info strong { display:block; font-size:14px; color:#111b21; }
-    .wa-modal-info small  { font-size:12px; color:#667781; }
-    @media (max-width:1100px) {
-      .wa-shell { grid-template-columns:1fr; min-height:auto; }
-      .wa-sidebar { min-height:300px; }
-      .wa-chat { min-height:520px; }
-    }
-  </style>
-
-  <!-- =================== SCRIPT =================== -->
+<!-- =================== SCRIPT =================== -->
   <script>
   (() => {
     "use strict";
@@ -605,7 +451,7 @@
         const res = await fetch("/api/v1/conversaciones/unread-count");
         const d = await res.json();
         const n = d?.data?.count ?? 0;
-        const tab = document.querySelector('.wa-tab[data-tab="users"]');
+        const tab = document.querySelector('[data-wa-tab][data-tab="users"]');
         if (tab) tab.textContent = n > 0 ? `Usuarios (${n})` : "Usuarios";
       } catch { /* ignore */ }
     };
@@ -621,10 +467,11 @@
     };
 
     // ── Events ──────────────────────────────────────────────────────────
-    document.querySelectorAll(".wa-tab").forEach((btn) => {
+    document.querySelectorAll("[data-wa-tab][data-tab]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".wa-tab").forEach((x) => x.classList.remove("active"));
+        document.querySelectorAll("[data-wa-tab][data-tab]").forEach((x) => { x.classList.remove("active"); x.classList.remove("tab-active"); });
         btn.classList.add("active");
+        btn.classList.add("tab-active");
         activeTab = btn.getAttribute("data-tab") || "avan";
         indexStatusEl.style.display = activeTab === "avan" ? "block" : "none";
         renderList();
@@ -657,4 +504,3 @@
   })();
   </script>
 </section>
-

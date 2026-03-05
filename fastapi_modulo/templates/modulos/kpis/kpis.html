@@ -1,50 +1,330 @@
-<section class="kpis-module">
-  <article class="content-section">
-    <header class="content-section-head">
-      <h2 class="content-section-title">Panel KPI</h2>
-    </header>
-    <div class="content-section-body">
-      <div class="tabla-oficial-wrap">
-        <table class="tabla-oficial">
-          <thead>
-            <tr>
-              <th>Indicador</th>
-              <th class="tabla-oficial-num">Valor actual</th>
-              <th class="tabla-oficial-num">Meta</th>
-              <th>Estado</th>
-              <th>IA</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><input type="text" id="kpi-nombre" placeholder="Nombre del KPI"></td>
-              <td class="tabla-oficial-num"><input type="text" id="kpi-valor" placeholder="Valor"></td>
-              <td class="tabla-oficial-num"><input type="text" id="kpi-meta" placeholder="Meta"></td>
-              <td><input type="text" id="kpi-estado" placeholder="Estado"></td>
-              <td><button type="button" id="btn-sugerir-kpi-ia">Sugerir con IA</button></td>
-            </tr>
-          </tbody>
-        </table>
-        <div id="sugerencia-kpi-ia" style="margin-top:20px;"></div>
+<section class="w-full">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6 mb-4">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/icon/kpi.svg"
+        alt="Icono KPIs"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+      />
+      <div class="w-full grid gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">KPIs</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Gestión y seguimiento de indicadores clave de desempeño.</div>
       </div>
+    </div>
+  </div>
+  <!-- ── KPI Tracking UI ────────────────────────────────────────────────── -->
+  <article class="card border border-base-300 bg-base-100 shadow-sm">
+    <header class="flex items-center justify-between gap-2 flex-wrap p-4 pb-2">
+      <h2 class="text-lg font-semibold">Panel KPI</h2>
+      <button id="btn-abrir-registro" class="btn btn-sm btn-primary" type="button">+ Registrar medición</button>
+    </header>
+    <div class="p-4 pt-2 space-y-4">
+
+      <!-- ── Estado global de carga ──────────────────────────────────────── -->
+      <div id="kpi-loading" class="flex items-center gap-2 text-base-content/50 text-sm py-4">
+        <span class="loading loading-spinner loading-sm"></span> Cargando KPIs…
+      </div>
+
+      <!-- ── Tarjetas de estado ──────────────────────────────────────────── -->
+      <div id="kpi-cards-grid" class="hidden grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
+        <!-- generado por JS -->
+      </div>
+
+      <!-- ── Historial del KPI seleccionado ─────────────────────────────── -->
+      <div id="kpi-historial-section" class="hidden card border border-base-300 bg-base-100 shadow-sm">
+        <header class="flex items-center justify-between gap-2 flex-wrap p-4 pb-2">
+          <h3 class="text-base font-semibold" id="kpi-historial-titulo">Historial</h3>
+          <button id="btn-cerrar-historial" class="btn btn-xs btn-ghost" type="button">✕ Cerrar</button>
+        </header>
+        <div class="p-4 pt-2">
+          <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+            <table class="table table-zebra w-full text-sm">
+              <thead>
+                <tr>
+                  <th>Periodo</th>
+                  <th class="text-right">Valor (%)</th>
+                  <th>Notas</th>
+                  <th>Registrado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="kpi-historial-tbody">
+                <tr><td colspan="5" class="text-center text-base-content/40 py-4">Sin mediciones</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Modal registro de medición ────────────────────────────────── -->
+      <div id="kpi-registro-modal" class="fixed inset-0 z-[2500] hidden items-center justify-center bg-base-content/45">
+        <div class="card bg-base-100 shadow-xl w-full max-w-md mx-4">
+          <div class="card-body gap-4">
+            <h3 class="card-title text-base">Registrar medición</h3>
+            <div class="form-control">
+              <label class="label"><span class="label-text">Indicador</span></label>
+              <select id="reg-kpi-id" class="select select-bordered select-sm w-full">
+                <option value="">-- Selecciona un KPI --</option>
+              </select>
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text">Valor (%)</span></label>
+              <input id="reg-valor" type="number" step="0.01" class="input input-bordered input-sm w-full" placeholder="Ej: 7.5">
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text">Periodo</span></label>
+              <input id="reg-periodo" type="text" class="input input-bordered input-sm w-full" placeholder="Ej: Enero 2025 / Q1-2025">
+            </div>
+            <div class="form-control">
+              <label class="label"><span class="label-text">Notas <span class="text-base-content/40">(opcional)</span></span></label>
+              <textarea id="reg-notas" class="textarea textarea-bordered textarea-sm w-full" rows="2" placeholder="Observaciones…"></textarea>
+            </div>
+            <div id="reg-error" class="text-error text-xs hidden"></div>
+            <div class="flex gap-2 justify-end pt-2">
+              <button id="btn-reg-cancelar" class="btn btn-sm btn-ghost" type="button">Cancelar</button>
+              <button id="btn-reg-guardar" class="btn btn-sm btn-primary" type="button">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Sugerencia IA (debajo de tarjetas, legacy) ────────────────── -->
+      <div id="sugerencia-kpi-ia" class="mt-2"></div>
       <script>
+      /* ── KPI Tracking – estado global ──────────────────────────────── */
+      let _kpiDefs = [];
+      const _kpiStatusIcon = { ok: '🟢', warning: '🟡', alert: '🔴', sin_meta: '⚪' };
+      const _kpiStatusLabel = { ok: 'En meta', warning: 'Advertencia', alert: 'Fuera de meta', sin_meta: 'Sin medición' };
+      const _kpiStatusClass = { ok: 'badge-success', warning: 'badge-warning', alert: 'badge-error', sin_meta: 'badge-ghost' };
+
+      const _kpiEscHtml = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+      /* Convierte referencia "8%", "5-8%", "5%8%" → número display */
+      const _kpiMetaDisplay = (referencia) => {
+        if (!referencia) return '—';
+        const s = referencia.trim();
+        const range = s.match(/^([\d.]+)%?[-–]([\d.]+)%?$/);
+        if (range) return `${range[1]}% – ${range[2]}%`;
+        return s;
+      };
+
+      /* ── Render de tarjetas ─────────────────────────────────────────── */
+      const _kpiRenderCards = (defs) => {
+        const grid = document.getElementById('kpi-cards-grid');
+        const loading = document.getElementById('kpi-loading');
+        if (!grid) return;
+        if (!defs.length) {
+          if (loading) {
+            loading.classList.remove('hidden');
+            loading.innerHTML = '<span class="text-base-content/40 text-sm">No hay KPIs definidos.</span>';
+          }
+          return;
+        }
+        if (loading) loading.classList.add('hidden');
+        grid.classList.remove('hidden');
+        grid.innerHTML = defs.map((k) => {
+          const st = k.status || 'sin_meta';
+          const icon = _kpiStatusIcon[st] || '⚪';
+          const badge = _kpiStatusClass[st] || 'badge-ghost';
+          const label = _kpiStatusLabel[st] || st;
+          const val = k.ultimo_valor != null ? `${Number(k.ultimo_valor).toFixed(1)}%` : '—';
+          const meta = _kpiMetaDisplay(k.referencia);
+          const fecha = k.ultima_fecha ? k.ultima_fecha.slice(0,10) : '—';
+          let bar = '';
+          if (k.ultimo_valor != null && k.referencia) {
+            const ref = parseFloat(String(k.referencia).replace('%',''));
+            if (!isNaN(ref) && ref > 0) {
+              const pct = Math.min(100, Math.round((k.ultimo_valor / ref) * 100));
+              const barColor = st === 'ok' ? 'bg-success' : st === 'warning' ? 'bg-warning' : 'bg-error';
+              bar = `<progress class="progress ${barColor} w-full mt-2" value="${pct}" max="100"></progress>`;
+            }
+          }
+          return `<div class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer kpi-card" data-kpi-id="${k.id}" title="Ver historial">
+            <div class="card-body p-4 gap-1">
+              <div class="flex items-start justify-between gap-2">
+                <p class="font-semibold text-sm leading-tight">${_kpiEscHtml(k.nombre)}</p>
+                <span class="badge ${badge} badge-sm shrink-0">${icon} ${_kpiEscHtml(label)}</span>
+              </div>
+              <p class="text-xs text-base-content/50 truncate">${_kpiEscHtml(k.proposito || '')}</p>
+              <div class="flex items-end justify-between gap-2 mt-2">
+                <div>
+                  <span class="text-2xl font-bold">${_kpiEscHtml(val)}</span>
+                  <span class="text-xs text-base-content/40 ml-1">actual</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs text-base-content/40">meta</span><br>
+                  <span class="text-sm font-medium">${_kpiEscHtml(meta)}</span>
+                </div>
+              </div>
+              ${bar}
+              <p class="text-xs text-base-content/40 mt-1">Última medición: ${_kpiEscHtml(fecha)}</p>
+            </div>
+          </div>`;
+        }).join('');
+
+        /* click → historial */
+        grid.querySelectorAll('.kpi-card').forEach((card) => {
+          card.addEventListener('click', () => _kpiLoadHistorial(Number(card.dataset.kpiId)));
+        });
+      };
+
+      /* ── Historial ──────────────────────────────────────────────────── */
+      const _kpiLoadHistorial = async (kpiId) => {
+        const sec = document.getElementById('kpi-historial-section');
+        const tbody = document.getElementById('kpi-historial-tbody');
+        const titulo = document.getElementById('kpi-historial-titulo');
+        const kpi = _kpiDefs.find((k) => k.id === kpiId);
+        if (titulo) titulo.textContent = `Historial — ${kpi ? kpi.nombre : kpiId}`;
+        if (sec) sec.classList.remove('hidden');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-base-content/40 py-4"><span class="loading loading-dots loading-xs"></span></td></tr>';
+        try {
+          const res = await fetch(`/api/kpis/mediciones?kpi_id=${kpiId}`, { credentials: 'same-origin' });
+          const data = await res.json().catch(() => ({}));
+          const rows = (data.items || []);
+          if (!rows.length) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-base-content/40 py-4">Sin mediciones registradas</td></tr>';
+            return;
+          }
+          if (tbody) tbody.innerHTML = rows.map((r) => `
+            <tr>
+              <td>${_kpiEscHtml(r.periodo || '—')}</td>
+              <td class="text-right font-mono">${_kpiEscHtml(r.valor != null ? Number(r.valor).toFixed(2) : '—')}</td>
+              <td class="text-xs text-base-content/60">${_kpiEscHtml(r.notas || '')}</td>
+              <td class="text-xs text-base-content/40">${_kpiEscHtml((r.created_at || '').slice(0,16).replace('T',' '))}</td>
+              <td><button type="button" class="btn btn-xs btn-ghost text-error" data-del-id="${r.id}" title="Eliminar">✕</button></td>
+            </tr>`).join('');
+          /* delete handlers */
+          (tbody || document).querySelectorAll('[data-del-id]').forEach((btn) => {
+            btn.addEventListener('click', () => _kpiDeleteMedicion(Number(btn.dataset.delId), kpiId));
+          });
+        } catch (_) {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-error text-sm py-4">Error al cargar historial</td></tr>';
+        }
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      const _kpiDeleteMedicion = async (medicionId, kpiId) => {
+        if (!confirm('¿Eliminar esta medición?')) return;
+        try {
+          await fetch(`/api/kpis/medicion/${medicionId}`, { method: 'DELETE', credentials: 'same-origin' });
+          await _kpiLoadHistorial(kpiId);
+          _kpiLoadDefs();
+        } catch (_) {}
+      };
+
+      /* ── Cargar definiciones ────────────────────────────────────────── */
+      const _kpiLoadDefs = async () => {
+        const loading = document.getElementById('kpi-loading');
+        const grid = document.getElementById('kpi-cards-grid');
+        if (loading) loading.classList.remove('hidden');
+        if (grid) grid.classList.add('hidden');
+        try {
+          const res = await fetch('/api/kpis/definiciones', { credentials: 'same-origin' });
+          const data = await res.json().catch(() => ({}));
+          _kpiDefs = data.items || [];
+          /* populate select */
+          const sel = document.getElementById('reg-kpi-id');
+          if (sel) {
+            sel.innerHTML = '<option value="">-- Selecciona un KPI --</option>' +
+              _kpiDefs.map((k) => `<option value="${k.id}">${_kpiEscHtml(k.nombre)}</option>`).join('');
+          }
+          _kpiRenderCards(_kpiDefs);
+        } catch (_) {
+          if (loading) {
+            loading.classList.remove('hidden');
+            loading.innerHTML = '<span class="text-error text-sm">Error al cargar KPIs</span>';
+          }
+        }
+      };
+
+      /* ── Modal registro ─────────────────────────────────────────────── */
+      const _kpiOpenModal = (kpiId = null) => {
+        const modal = document.getElementById('kpi-registro-modal');
+        const errEl = document.getElementById('reg-error');
+        if (errEl) errEl.classList.add('hidden');
+        if (kpiId) {
+          const sel = document.getElementById('reg-kpi-id');
+          if (sel) sel.value = String(kpiId);
+        }
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+      };
+      const _kpiCloseModal = () => {
+        const modal = document.getElementById('kpi-registro-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+      };
+
+      document.getElementById('btn-abrir-registro')?.addEventListener('click', () => _kpiOpenModal());
+      document.getElementById('btn-reg-cancelar')?.addEventListener('click', _kpiCloseModal);
+      document.getElementById('kpi-registro-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) _kpiCloseModal();
+      });
+      document.getElementById('btn-cerrar-historial')?.addEventListener('click', () => {
+        const sec = document.getElementById('kpi-historial-section');
+        if (sec) sec.classList.add('hidden');
+      });
+
+      document.getElementById('btn-reg-guardar')?.addEventListener('click', async () => {
+        const kpiId = document.getElementById('reg-kpi-id')?.value;
+        const valor = document.getElementById('reg-valor')?.value;
+        const periodo = document.getElementById('reg-periodo')?.value?.trim();
+        const notas = document.getElementById('reg-notas')?.value?.trim();
+        const errEl = document.getElementById('reg-error');
+        if (!kpiId) { if (errEl) { errEl.textContent = 'Selecciona un indicador'; errEl.classList.remove('hidden'); } return; }
+        if (valor === '' || isNaN(Number(valor))) { if (errEl) { errEl.textContent = 'Ingresa un valor numérico'; errEl.classList.remove('hidden'); } return; }
+        if (!periodo) { if (errEl) { errEl.textContent = 'Ingresa el periodo'; errEl.classList.remove('hidden'); } return; }
+        if (errEl) errEl.classList.add('hidden');
+        const btn = document.getElementById('btn-reg-guardar');
+        if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+        try {
+          const res = await fetch('/api/kpis/medicion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ kpi_id: Number(kpiId), valor: Number(valor), periodo, notas: notas || null }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || data.success === false) throw new Error(data.error || 'Error al guardar');
+          _kpiCloseModal();
+          document.getElementById('reg-valor').value = '';
+          document.getElementById('reg-periodo').value = '';
+          document.getElementById('reg-notas').value = '';
+          await _kpiLoadDefs();
+          _kpiLoadHistorial(Number(kpiId));
+        } catch (err) {
+          if (errEl) { errEl.textContent = err.message; errEl.classList.remove('hidden'); }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+        }
+      });
+
+      /* ── IA editor (preservado) ─────────────────────────────────────── */
       const openKpiIaEditor = ({ title = 'Sugerencia IA', suggestion = '' } = {}) => new Promise((resolve) => {
         let overlay = document.getElementById('kpi-ia-overlay');
         if (!overlay) {
           overlay = document.createElement('div');
           overlay.id = 'kpi-ia-overlay';
-          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.42);display:none;align-items:center;justify-content:center;z-index:2600;';
+          overlay.className = 'fixed inset-0 z-[2600] hidden items-center justify-center bg-base-content/40';
           overlay.innerHTML = `
-            <div style="width:min(760px,92vw);max-height:86vh;overflow:auto;background:#fff;border-radius:14px;padding:16px;border:1px solid rgba(148,163,184,.4);box-shadow:0 24px 40px rgba(15,23,42,.28);">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-                <h4 id="kpi-ia-title" style="margin:0;font-size:18px;color:#0f172a;">Sugerencia IA</h4>
-                <button type="button" id="kpi-ia-close" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;">Cerrar</button>
-              </div>
-              <p style="margin:0 0 8px;color:#64748b;font-size:13px;">Edita el texto antes de aplicarlo.</p>
-              <textarea id="kpi-ia-text" style="width:100%;min-height:220px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;color:#0f172a;font-size:14px;line-height:1.45;"></textarea>
-              <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
-                <button type="button" id="kpi-ia-discard" style="border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:10px;padding:8px 12px;cursor:pointer;">Descartar</button>
-                <button type="button" id="kpi-ia-apply" style="border:1px solid #0f3d2e;background:#0f3d2e;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;">Aplicar</button>
+            <div class="w-[min(760px,92vw)] max-h-[86vh] overflow-auto card bg-base-100 border border-base-300 shadow-2xl">
+              <div class="card-body gap-3">
+                <div class="flex items-center justify-between gap-2">
+                  <h4 id="kpi-ia-title" class="m-0 text-lg font-semibold text-base-content">Sugerencia IA</h4>
+                  <button type="button" id="kpi-ia-close" class="btn btn-sm btn-outline">Cerrar</button>
+                </div>
+                <p class="m-0 text-sm text-base-content/60">Edita el texto antes de aplicarlo.</p>
+                <textarea id="kpi-ia-text" class="textarea textarea-bordered w-full min-h-[220px]"></textarea>
+                <div class="mt-1 flex gap-2 justify-end">
+                  <button type="button" id="kpi-ia-discard" class="btn btn-sm btn-outline btn-error">Descartar</button>
+                  <button type="button" id="kpi-ia-apply" class="btn btn-sm btn-primary">Aplicar</button>
+                </div>
               </div>
             </div>
           `;
@@ -58,107 +338,31 @@
         if (titleEl) titleEl.textContent = title;
         if (textEl) textEl.value = String(suggestion || '');
         const finish = (result) => {
-          overlay.style.display = 'none';
+          overlay.classList.add('hidden');
+          overlay.classList.remove('flex');
           document.body.style.overflow = '';
           resolve(result);
         };
         if (closeEl) closeEl.onclick = () => finish({ action: 'close', text: textEl ? textEl.value : '' });
         if (discardEl) discardEl.onclick = () => finish({ action: 'discard', text: textEl ? textEl.value : '' });
         if (applyEl) applyEl.onclick = () => finish({ action: 'apply', text: textEl ? textEl.value : '' });
-        overlay.onclick = (event) => { if (event.target === overlay) finish({ action: 'close', text: textEl ? textEl.value : '' }); };
-        overlay.style.display = 'flex';
+        overlay.onclick = (e) => { if (e.target === overlay) finish({ action: 'close', text: textEl ? textEl.value : '' }); };
+        overlay.classList.remove('hidden');
+        overlay.classList.add('flex');
         document.body.style.overflow = 'hidden';
         if (textEl) textEl.focus();
       });
 
       const isIaEnabledForKpi = async () => {
         try {
-          const res = await fetch('/api/ia/flags?module=kpis&feature_key=suggest_objective_text', {
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-          });
+          const res = await fetch('/api/ia/flags?module=kpis&feature_key=suggest_objective_text', { headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' });
           const data = await res.json().catch(() => ({}));
           return !!(res.ok && data?.success === true && data?.data?.enabled);
-        } catch (_err) {
-          return false;
-        }
+        } catch (_) { return false; }
       };
 
-      const iaBtn = document.getElementById('btn-sugerir-kpi-ia');
-      isIaEnabledForKpi().then((enabled) => {
-        if (!iaBtn) return;
-        iaBtn.disabled = !enabled;
-        iaBtn.style.opacity = enabled ? '1' : '0.55';
-        iaBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
-        if (!enabled) iaBtn.title = 'IA deshabilitada para tu rol/módulo';
-      });
-
-      iaBtn.onclick = async function() {
-        const enabled = await isIaEnabledForKpi();
-        if (!enabled) {
-          document.getElementById('sugerencia-kpi-ia').innerHTML = '<b>IA:</b> deshabilitada para tu rol/módulo.';
-          return;
-        }
-        const nombre = document.getElementById('kpi-nombre').value;
-        const valor = document.getElementById('kpi-valor').value;
-        const meta = document.getElementById('kpi-meta').value;
-        const estado = document.getElementById('kpi-estado').value;
-        const infoEl = document.getElementById('sugerencia-kpi-ia');
-        const prompt = `Sugiere un KPI estratégico para: ${nombre}, valor actual: ${valor}, meta: ${meta}, estado: ${estado}. Responde con propuesta breve y accionable en español.`;
-        infoEl.innerHTML = '<b>IA:</b> generando sugerencia...';
-        try {
-          const draftResp = await fetch('/api/ia/suggestions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              prompt,
-              original_text: `Indicador:${nombre}; Valor:${valor}; Meta:${meta}; Estado:${estado}`,
-              target_module: 'kpis',
-              target_entity: 'kpi',
-              target_entity_id: '',
-              target_field: 'estado',
-            })
-          });
-          const draftData = await draftResp.json().catch(() => ({}));
-          if (!draftResp.ok || draftData.success === false) {
-            throw new Error(draftData.error || 'No se pudo generar sugerencia.');
-          }
-          const draft = draftData.data || {};
-          const decision = await openKpiIaEditor({
-            title: 'Sugerencia IA para KPI',
-            suggestion: String(draft.suggested_text || '')
-          });
-          if (decision.action === 'apply') {
-            const applyResp = await fetch(`/api/ia/suggestions/${draft.id}/apply`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ edited_text: String(decision.text || '').trim() })
-            });
-            const applyData = await applyResp.json().catch(() => ({}));
-            if (!applyResp.ok || applyData.success === false) {
-              throw new Error(applyData.error || 'No se pudo aplicar la sugerencia.');
-            }
-            const appliedText = String(applyData?.data?.applied_text || decision.text || '').trim();
-            document.getElementById('kpi-estado').value = appliedText;
-            infoEl.innerHTML = '<b>Sugerencia IA aplicada:</b><br>' + appliedText;
-          } else if (decision.action === 'discard') {
-            const discardResp = await fetch(`/api/ia/suggestions/${draft.id}/discard`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reason: 'Descartada por usuario', edited_text: String(decision.text || '').trim() })
-            });
-            const discardData = await discardResp.json().catch(() => ({}));
-            if (!discardResp.ok || discardData.success === false) {
-              throw new Error(discardData.error || 'No se pudo descartar la sugerencia.');
-            }
-            infoEl.innerHTML = '<b>Sugerencia IA descartada.</b>';
-          } else {
-            infoEl.innerHTML = '<b>Sugerencia IA generada.</b> Puedes volver a abrirla para aplicar o descartar.';
-          }
-        } catch (err) {
-          infoEl.innerHTML = '<b>Error IA:</b> ' + (err.message || 'Sin respuesta');
-        }
-      };
+      /* ── Init ───────────────────────────────────────────────────────── */
+      _kpiLoadDefs();
       </script>
     </div>
   </article>

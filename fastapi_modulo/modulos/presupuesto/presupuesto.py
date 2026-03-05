@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from html import escape
 from io import StringIO
 from pathlib import Path
+from textwrap import dedent
 from typing import Any, Dict
 import sqlite3
 import threading
@@ -610,37 +611,31 @@ async def guardar_control_mensual(data: dict = Body(default={})):
 @router.get("/presupuesto", response_class=HTMLResponse)
 def proyectando_presupuesto_page(request: Request):
     """Página de proyección de presupuesto con shell oficial."""
-    login_identity = get_login_identity_context()
-    logo_url = escape((login_identity.get("login_logo_url") or "").strip())
-    logo_html = (
-        f'<img src="{logo_url}" alt="Logo de la empresa" '
-        'style="width:min(88px, 14vw); max-width:100%; height:auto; object-fit:contain;">'
-        if logo_url else ""
-    )
-    df = _load_presupuesto_dataframe()
-    control_header_top, control_header_bottom = _control_mensual_header_html()
-    control_rows = _control_mensual_rows_html(df)
-
-    presupuesto_table_rows = "".join(
-        ('<tr class="presupuesto-zebra">' if i % 2 == 1 else "<tr>")
-        + (
-            f'<td class="cod-col" style="display:none;">{escape(row.cod)}</td>'
-            f'<td class="tipo-col" style="display:none;">{escape(row.tipo)}</td>'
-            f'<td class="rubro-col">{escape(row.rubro)}</td>'
-            f'<td class="tabla-oficial-num"><input class="tabla-oficial-input num presupuesto-num-input" type="text" value="{escape(row.monto)}" inputmode="numeric" placeholder="0"></td>'
-            f'<td class="tabla-oficial-num presupuesto-mensual">{escape(row.mensual)}</td></tr>'
-        )
-        for i, row in enumerate(df.itertuples(index=False))
-    )
-
-    content_template = request.app.state.templates.env.get_template("modulos/presupuesto/presupuesto.html")
-    content = content_template.render(
-        logo_html=logo_html,
-        presupuesto_table_rows=presupuesto_table_rows,
-        control_mensual_header_top=control_header_top,
-        control_mensual_header_bottom=control_header_bottom,
-        control_mensual_rows=control_rows,
-    )
+    content = dedent("""
+    <section class="grid gap-4 w-full max-w-6xl">
+      <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+          <img
+            src="/icon/proyectando.svg"
+            alt="Icono datos financieros"
+            width="96"
+            height="96"
+            class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+          />
+          <div class="w-full grid gap-2 content-center">
+            <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Presupuesto</div>
+            <div class="block w-full text-base sm:text-lg text-base-content/70">Control y planeación presupuestaria en modo base DaisyUI.</div>
+          </div>
+        </div>
+      </div>
+      <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body">
+          <h2 class="card-title">Módulo en transición DaisyUI</h2>
+          <p class="text-base-content/70">Se removió temporalmente el CSS personalizado de esta pantalla para mantener solo estilos Daisy.</p>
+        </div>
+      </article>
+    </section>
+    """)
 
     return request.app.state.templates.TemplateResponse(
         "base.html",
@@ -655,7 +650,7 @@ def proyectando_presupuesto_page(request: Request):
             "content": content,
             "floating_actions_html": "",
             "hide_floating_actions": True,
-            "show_page_header": True,
+            "show_page_header": False,
             "colores": _get_colores_context(),
         },
     )

@@ -96,9 +96,9 @@ if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
 fi
 
-# Migrar base de datos (ejemplo para Alembic)
-if [ -d "fastapi_modulo" ] && [ -f "fastapi_modulo/alembic.ini" ]; then
-    alembic upgrade head
+# Migrar base de datos (Alembic — usa 'heads' para soportar múltiples cabezas)
+if [ -f "alembic.ini" ]; then
+    alembic upgrade heads
 fi
 
 # Cargar módulos personalizados (placeholder)

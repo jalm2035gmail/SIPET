@@ -17,7 +17,8 @@ from fastapi import APIRouter, Body, Request, Query, UploadFile, File
 from fastapi.responses import HTMLResponse, JSONResponse, Response, RedirectResponse
 from sqlalchemy import func, text
 from sqlalchemy.exc import SQLAlchemyError
-from openpyxl import Workbook
+import pandas as pd
+import numpy as np
 from fastapi_modulo.db import IAFeatureFlag
 
 router = APIRouter()
@@ -143,22 +144,20 @@ def _build_planificacion_snapshot_html() -> str:
             else 0
         )
         axis_list_html = (
-            '<ul style="margin:8px 0 0 18px;font-size:12px;">' + "".join(axis_rows) + "</ul>"
+            '<ul>' + "".join(axis_rows) + "</ul>"
             if axis_rows
             else ""
         )
         return (
-            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #bfdbfe;'
-            'background:#eff6ff;border-radius:10px;color:#0f172a;">'
-            f'<div style="font-weight:700;">Resumen cargado desde servidor</div>'
-            f'<div style="font-size:13px;">Ejes: {len(axes)} · Objetivos: {len(objective_ids)} · Actividades POA: {activities_count}</div>'
+            '<section>'
+            f'<div>Resumen cargado desde servidor</div>'
+            f'<div>Ejes: {len(axes)} · Objetivos: {len(objective_ids)} · Actividades POA: {activities_count}</div>'
             f'{axis_list_html}'
             '</section>'
         )
     except Exception:
         return (
-            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #fecaca;'
-            'background:#fef2f2;border-radius:10px;color:#7f1d1d;">'
+            '<section>'
             'No se pudo cargar el resumen de estrategia desde servidor.'
             '</section>'
         )
@@ -211,10 +210,9 @@ def _build_poa_debug_html(request: Request) -> str:
             str(getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "")
         ).strip() or "N/D"
         return (
-            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #fde68a;'
-            'background:#fffbeb;border-radius:10px;color:#78350f;">'
-            '<div style="font-weight:700;">Diagnóstico POA (servidor)</div>'
-            '<div style="font-size:13px;">'
+            '<section>'
+            '<div>Diagnóstico POA (servidor)</div>'
+            '<div>'
             'build poa-debug-v3'
             f' · rol_detectado: {escape(detected_role or "n/d")}'
             f' · rol_sesion: {escape(session_role or "n/d")}'
@@ -228,8 +226,7 @@ def _build_poa_debug_html(request: Request) -> str:
         )
     except Exception:
         return (
-            '<section style="margin-bottom:12px;padding:10px 12px;border:1px solid #fecaca;'
-            'background:#fef2f2;border-radius:10px;color:#7f1d1d;">'
+            '<section>'
             'Diagnóstico POA no disponible.'
             '</section>'
         )
@@ -274,7 +271,7 @@ def _build_initial_poa_grid_html() -> str:
             .all()
         )
         if not objectives:
-            return '<div class="poa-obj-card" style="min-width:320px;"><h4>Sin objetivos</h4><div class="meta">No hay objetivos para mostrar.</div></div>'
+            return '<div class="poa-obj-card"><h4>Sin objetivos</h4><div class="meta">No hay objetivos para mostrar.</div></div>'
         axis_map = {int(axis.id): str(axis.nombre or "Sin eje") for axis in db.query(StrategicAxisConfig).all()}
         grouped: Dict[str, List[StrategicObjectiveConfig]] = {}
         for obj in objectives:
@@ -299,7 +296,7 @@ def _build_initial_poa_grid_html() -> str:
             )
         return "".join(columns)
     except Exception:
-        return '<div class="poa-obj-card" style="min-width:320px;"><h4>Error</h4><div class="meta">No se pudo cargar POA inicial.</div></div>'
+        return '<div class="poa-obj-card"><h4>Error</h4><div class="meta">No se pudo cargar POA inicial.</div></div>'
     finally:
         db.close()
 
@@ -454,11 +451,11 @@ def _build_strategic_ia_html(payload: Dict[str, Any]) -> str:
     cron = payload.get("cron_semanal", {}) if isinstance(payload, dict) else {}
     ejes = payload.get("ejes", []) if isinstance(payload, dict) else []
     payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
-    fundamentacion_block = fundamentacion_html or "<p style='color:#64748b;'>Sin fundamentación registrada.</p>"
+    fundamentacion_block = fundamentacion_html or "<p>Sin fundamentación registrada.</p>"
 
     def _render_lines(rows: List[Dict[str, str]]) -> str:
         if not rows:
-            return "<p style='color:#64748b;'>Sin información.</p>"
+            return "<p>Sin información.</p>"
         return "<ul>" + "".join(
             f"<li><strong>{escape(str(item.get('code') or '').upper())}</strong>: {escape(str(item.get('text') or ''))}</li>"
             for item in rows
@@ -479,53 +476,53 @@ def _build_strategic_ia_html(payload: Dict[str, Any]) -> str:
             for obj in objectives
         ) or "<li>Sin objetivos registrados.</li>"
         axes_html.append(
-            "<article style='border:1px solid #dbe4ea;border-radius:10px;padding:10px;background:#fff;'>"
-            f"<h4 style='margin:0 0 6px;'>{axis_name}</h4>"
-            f"<div style='font-size:12px;color:#475569;margin-bottom:8px;'>Código: {axis_code}</div>"
-            f"<ul style='margin:0 0 0 18px;'>{objectives_html}</ul>"
+            "<article>"
+            f"<h4>{axis_name}</h4>"
+            f"<div>Código: {axis_code}</div>"
+            f"<ul>{objectives_html}</ul>"
             "</article>"
         )
-    axes_block = "".join(axes_html) if axes_html else "<p style='color:#64748b;'>Sin ejes registrados.</p>"
+    axes_block = "".join(axes_html) if axes_html else "<p>Sin ejes registrados.</p>"
 
     return (
-        "<section style='display:grid;gap:12px;'>"
-        "<section style='border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px;'>"
-        "<h3 style='margin:0 0 8px;'>Base IA · Estrategia y táctica</h3>"
-        "<p style='margin:0;color:#334155;'>Fuente consolidada para consulta de IA: identidad, fundamentación, ejes y objetivos.</p>"
+        "<section>"
+        "<section>"
+        "<h3>Base IA · Estrategia y táctica</h3>"
+        "<p>Fuente consolidada para consulta de IA: identidad, fundamentación, ejes y objetivos.</p>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Identidad</h4>"
-        "<h5 style='margin:8px 0 4px;'>Misión</h5>"
+        "<section>"
+        "<h4>Identidad</h4>"
+        "<h5>Misión</h5>"
         f"{_render_lines(mision)}"
-        "<h5 style='margin:8px 0 4px;'>Visión</h5>"
+        "<h5>Visión</h5>"
         f"{_render_lines(vision)}"
-        "<h5 style='margin:8px 0 4px;'>Valores</h5>"
+        "<h5>Valores</h5>"
         f"{_render_lines(valores)}"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Fundamentación</h4>"
+        "<section>"
+        "<h4>Fundamentación</h4>"
         f"<div>{fundamentacion_block}</div>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Ejes y objetivos</h4>"
-        f"<div style='display:grid;gap:8px;'>{axes_block}</div>"
+        "<section>"
+        "<h4>Ejes y objetivos</h4>"
+        f"<div>{axes_block}</div>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Lógica de avance</h4>"
-        f"<p style='margin:0 0 6px;color:#334155;'>Actividades: <b>{int((avance or {}).get('activities_total') or 0)}</b> · "
+        "<section>"
+        "<h4>Lógica de avance</h4>"
+        f"<p>Actividades: <b>{int((avance or {}).get('activities_total') or 0)}</b> · "
         f"Completadas: <b>{int((avance or {}).get('activities_completed') or 0)}</b> · "
         f"Vencidas: <b>{int((avance or {}).get('activities_overdue') or 0)}</b> · "
         f"Avance promedio: <b>{float((avance or {}).get('progress_avg') or 0):.2f}%</b></p>"
-        f"<p style='margin:0;color:#64748b;font-size:12px;'>Corte: {escape(str((avance or {}).get('generated_at') or ''))}</p>"
+        f"<p>Corte: {escape(str((avance or {}).get('generated_at') or ''))}</p>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Cron semanal (renovación automática)</h4>"
-        f"<p style='margin:0 0 6px;color:#334155;'>Intervalo: <b>{int((cron or {}).get('intervalo_dias') or 7)} días</b> · "
+        "<section>"
+        "<h4>Cron semanal (renovación automática)</h4>"
+        f"<p>Intervalo: <b>{int((cron or {}).get('intervalo_dias') or 7)} días</b> · "
         f"Última actualización: <b>{escape(str((cron or {}).get('ultima_actualizacion') or 'N/D'))}</b> · "
         f"Próxima: <b>{escape(str((cron or {}).get('proxima_actualizacion') or 'N/D'))}</b></p>"
-        f"<p style='margin:0 0 10px;color:#64748b;font-size:12px;'>Estado: {escape(str((cron or {}).get('estado') or 'sin_ejecucion'))}</p>"
-        "<button type='button' id='base-ia-weekly-refresh' style='background:#14532d;color:#fff;border:1px solid #14532d;border-radius:10px;padding:8px 14px;cursor:pointer;'>Actualizar ahora (reemplaza contenido previo)</button>"
-        "<span id='base-ia-weekly-refresh-status' style='margin-left:10px;font-size:12px;color:#475569;'></span>"
+        f"<p>Estado: {escape(str((cron or {}).get('estado') or 'sin_ejecucion'))}</p>"
+        "<button type='button' id='base-ia-weekly-refresh'>Actualizar ahora (reemplaza contenido previo)</button>"
+        "<span id='base-ia-weekly-refresh-status'></span>"
         "<script>"
         "(function(){"
         "  const btn=document.getElementById('base-ia-weekly-refresh');"
@@ -546,17 +543,17 @@ def _build_strategic_ia_html(payload: Dict[str, Any]) -> str:
         "})();"
         "</script>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Payload estructurado (JSON)</h4>"
-        f"<pre style='margin:0;white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;font-size:12px;'>{escape(payload_json)}</pre>"
+        "<section>"
+        "<h4>Payload estructurado (JSON)</h4>"
+        f"<pre>{escape(payload_json)}</pre>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Contenido adicional para IA (editable)</h4>"
-        "<p style='margin:0 0 8px;color:#475569;'>Este bloque se usa como contexto adicional en Conversaciones IA.</p>"
-        f"<textarea id='base-ia-extra-text' style='width:100%;min-height:180px;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;'>{escape(contenido_adicional_texto)}</textarea>"
-        "<div style='margin-top:10px;display:flex;gap:10px;align-items:center;'>"
-        "<button type='button' id='base-ia-extra-save' style='background:#0f172a;color:#fff;border:1px solid #0f172a;border-radius:10px;padding:8px 14px;cursor:pointer;'>Guardar contenido adicional</button>"
-        "<span id='base-ia-extra-status' style='font-size:12px;color:#475569;'></span>"
+        "<section>"
+        "<h4>Contenido adicional para IA (editable)</h4>"
+        "<p>Este bloque se usa como contexto adicional en Conversaciones IA.</p>"
+        f"<textarea id='base-ia-extra-text'>{escape(contenido_adicional_texto)}</textarea>"
+        "<div>"
+        "<button type='button' id='base-ia-extra-save'>Guardar contenido adicional</button>"
+        "<span id='base-ia-extra-status'></span>"
         "</div>"
         "<script>"
         "(function(){"
@@ -1636,1523 +1633,6 @@ def _serialize_poa_activity(
 
 EJES_ESTRATEGICOS_HTML = dedent("""
     <section class="axm-wrap">
-      <style>
-        .axm-wrap *{ box-sizing:border-box; }
-        .axm-wrap{
-          font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-          color:#0f172a;
-          padding: 10px;
-        }
-        .axm-tabs{
-          display:flex;
-          align-items:center;
-          gap: 6px;
-          flex-wrap: wrap;
-          border-bottom: 1px solid rgba(148,163,184,.28);
-          padding-bottom: 8px;
-          margin-bottom: 12px;
-        }
-        .axm-tab{
-          border: 1px solid rgba(148,163,184,.32);
-          background: #fff;
-          border-radius: 12px;
-          padding: 8px 12px;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 700;
-          color: #0f172a;
-          cursor: pointer;
-        }
-        .axm-tab.active{
-          background: rgba(15,61,46,.10);
-          border-color: rgba(15,61,46,.34);
-        }
-        .axm-tab .tab-icon{
-          width: 16px;
-          height: 16px;
-          display: inline-block;
-          flex: 0 0 auto;
-        }
-        .axm-global-msg{
-          margin: 4px 0 10px;
-          font-size: 13px;
-          color: #0f3d2e;
-          min-height: 18px;
-        }
-        .axm-tab-panel{
-          background: rgba(255,255,255,.92);
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 18px;
-          min-height: 62vh;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          text-align:center;
-          padding: 20px;
-          font-size: 28px;
-          font-weight: 700;
-          color: #0f172a;
-        }
-        .axm-identidad{
-          display: none;
-          background: rgba(255,255,255,.92);
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 18px;
-          padding: 14px;
-          margin-bottom: 12px;
-        }
-        .axm-foundacion{
-          display: none;
-          background: rgba(255,255,255,.92);
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 18px;
-          padding: 14px;
-          margin-bottom: 12px;
-        }
-        .axm-foundacion h3{
-          margin: 0 0 6px;
-          font-size: 16px;
-          color: #0f172a;
-        }
-        .axm-foundacion p{
-          margin: 0 0 10px;
-          color: #64748b;
-          font-size: 13px;
-        }
-        .axm-foundacion-toolbar{
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          align-items: center;
-          margin-bottom: 8px;
-        }
-        .axm-foundacion-tool{
-          border: 1px solid rgba(148,163,184,.34);
-          background: #fff;
-          color: #0f172a;
-          border-radius: 10px;
-          padding: 6px 10px;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
-        }
-        .axm-foundacion-tool:hover{
-          background: #f8fafc;
-        }
-        .axm-foundacion-editor{
-          width: 100%;
-          min-height: 260px;
-          border: 1px solid rgba(148,163,184,.35);
-          border-radius: 12px;
-          padding: 12px;
-          font-size: 14px;
-          line-height: 1.45;
-          resize: vertical;
-          background: #fff;
-          color: #0f172a;
-          overflow: auto;
-        }
-        .axm-foundacion-source{
-          margin-top: 8px;
-          width: 100%;
-          min-height: 160px;
-          border: 1px solid rgba(148,163,184,.35);
-          border-radius: 12px;
-          padding: 12px;
-          font-size: 13px;
-          line-height: 1.4;
-          resize: vertical;
-          background: #fff;
-          color: #0f172a;
-          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-          display: none;
-        }
-        .axm-foundacion-actions{
-          margin-top: 10px;
-          display: flex;
-          gap: 8px;
-          justify-content: flex-end;
-        }
-        .axm-foundacion-msg{
-          min-height: 18px;
-          margin-top: 8px;
-          font-size: 12px;
-          color: #0f3d2e;
-        }
-        .axm-id-acc{
-          border: 1px solid rgba(148,163,184,.32);
-          border-radius: 14px;
-          background: #fff;
-          margin-bottom: 10px;
-          overflow: hidden;
-        }
-        .axm-id-acc:last-child{ margin-bottom: 0; }
-        .axm-id-acc > summary{
-          cursor: pointer;
-          padding: 12px 14px;
-          font-weight: 800;
-          background: rgba(15,61,46,.08);
-          border-bottom: 1px solid rgba(148,163,184,.24);
-          list-style: none;
-        }
-        .axm-id-acc > summary::-webkit-details-marker{ display:none; }
-        .axm-id-grid{
-          display:grid;
-          grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr);
-          gap: 12px;
-          padding: 12px;
-        }
-        .axm-id-left{
-          display:grid;
-          gap: 8px;
-          align-content:start;
-        }
-        .axm-id-lines{
-          display:grid;
-          gap: 8px;
-        }
-        .axm-id-row{
-          display:grid;
-          grid-template-columns: 78px 1fr auto auto;
-          gap: 8px;
-          align-items:center;
-        }
-        .axm-id-code{
-          width: 100%;
-          border: 1px solid rgba(148,163,184,.42);
-          border-radius: 10px;
-          padding: 9px 10px;
-          font-size: 13px;
-          font-weight: 700;
-          text-transform: uppercase;
-          background: #fff;
-          color: #0f3d2e;
-        }
-        .axm-id-tag{
-          font-size: 12px;
-          font-weight: 800;
-          color: #0f3d2e;
-          text-transform: uppercase;
-        }
-        .axm-id-input{
-          width: 100%;
-          border: 1px solid rgba(148,163,184,.42);
-          border-radius: 10px;
-          padding: 9px 10px;
-          font-size: 14px;
-          background: #fff;
-        }
-        .axm-id-remove{
-          border: 1px solid rgba(239,68,68,.28);
-          background: #fff5f5;
-          color: #b91c1c;
-          border-radius: 10px;
-          padding: 8px 10px;
-          font-weight: 700;
-          cursor: pointer;
-        }
-        .axm-id-action{
-          width: 34px;
-          height: 34px;
-          border-radius: 10px;
-          border: 1px solid rgba(148,163,184,.32);
-          background: #fff;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          padding: 0;
-        }
-        .axm-id-action img{
-          width: 16px;
-          height: 16px;
-          object-fit: contain;
-          display: block;
-        }
-        .axm-id-action.edit{
-          border-color: rgba(15,61,46,.28);
-          background: rgba(15,61,46,.08);
-        }
-        .axm-id-action.delete{
-          border-color: rgba(239,68,68,.28);
-          background: #fff5f5;
-        }
-        .axm-id-add{
-          justify-self:start;
-          border: 0;
-          border-radius: 0;
-          padding: 0;
-          background: transparent;
-          color: #0f3d2e;
-          font-weight: 400;
-          font-style: italic;
-          cursor: pointer;
-          text-decoration: underline;
-          text-underline-offset: 2px;
-        }
-        .axm-id-actions{
-          display:flex;
-          gap:8px;
-          flex-wrap:wrap;
-        }
-        .axm-id-msg{
-          margin-top: 8px;
-          font-size: 12px;
-          color: #0f3d2e;
-          min-height: 18px;
-        }
-        .axm-id-right{
-          border: 0;
-          border-radius: 0;
-          background: transparent;
-          box-shadow: 14px 0 24px -16px rgba(15,23,42,.35);
-          padding: 14px;
-          min-height: 180px;
-          display: grid;
-          align-content: center;
-          justify-items: center;
-          gap: 8px;
-        }
-        .axm-id-right h4{
-          margin: 0;
-          font-size: 14px;
-          color: var(--sidebar-bottom, #0f172a);
-          letter-spacing: .02em;
-          text-transform: uppercase;
-          text-align: center;
-        }
-        .axm-id-full{
-          margin: 0;
-          color: var(--sidebar-bottom, #0f172a);
-          line-height: 1.6;
-          white-space: pre-line;
-          text-align: center;
-        }
-        @media (max-width: 980px){
-          .axm-id-grid{ grid-template-columns: 1fr; }
-        }
-        .axm-intro{
-          background: rgba(255,255,255,.92);
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 18px;
-          padding: 14px;
-          margin-bottom: 12px;
-          color: #0f172a;
-          line-height: 1.55;
-        }
-        .axm-intro p{
-          margin: 0 0 8px;
-          color: #334155;
-        }
-        .axm-intro ul{
-          margin: 0;
-          padding-left: 18px;
-          color: #334155;
-          display: grid;
-          gap: 4px;
-        }
-        .axm-track{
-          margin-top: 12px;
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 14px;
-          background: #fff;
-          padding: 12px;
-        }
-        .axm-track h4{
-          margin: 0;
-          font-size: 15px;
-          color: #0f172a;
-        }
-        .axm-track-grid{
-          margin-top: 8px;
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 8px;
-        }
-        .axm-track-card{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          background: rgba(248,250,252,.95);
-          padding: 8px 10px;
-        }
-        .axm-track-label{
-          font-size: 11px;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: .03em;
-        }
-        .axm-track-value{
-          margin-top: 3px;
-          font-size: 18px;
-          font-weight: 800;
-          color: #0f3d2e;
-        }
-        .axm-track-bar{
-          margin-top: 8px;
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(148,163,184,.20);
-          overflow: hidden;
-        }
-        .axm-track-fill{
-          height: 100%;
-          background: linear-gradient(90deg, #0f3d2e 0%, #16a34a 100%);
-          border-radius: inherit;
-        }
-        .axm-track-meta{
-          margin-top: 8px;
-          font-size: 12px;
-          color: #475569;
-          display: flex;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-        .axm-track-hitos{
-          margin-top: 10px;
-          border: 1px solid rgba(148,163,184,.24);
-          border-radius: 10px;
-          background: rgba(248,250,252,.82);
-          padding: 10px;
-          display: grid;
-          grid-template-columns: auto 1fr;
-          gap: 12px;
-          align-items: center;
-        }
-        .axm-track-hitos-chart{
-          width: 76px;
-          height: 76px;
-          border-radius: 50%;
-          border: 1px solid rgba(148,163,184,.25);
-          display: grid;
-          place-items: center;
-          color: #0f172a;
-          font-weight: 800;
-          font-size: 15px;
-          background: #fff;
-        }
-        .axm-track-hitos-chart span{
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          background: #fff;
-          border: 1px solid rgba(226,232,240,.92);
-          box-shadow: inset 0 0 0 1px rgba(148,163,184,.18);
-        }
-        .axm-track-hitos-info{
-          display: grid;
-          gap: 5px;
-        }
-        .axm-track-hitos-title{
-          font-size: 12px;
-          color: #475569;
-          text-transform: uppercase;
-          letter-spacing: .03em;
-          font-weight: 700;
-        }
-        .axm-track-hitos-values{
-          display:flex;
-          gap:10px;
-          flex-wrap:wrap;
-          font-size: 12px;
-          color:#334155;
-        }
-        .axm-track-hitos-values b{
-          color:#0f172a;
-        }
-        .axm-track-missing{
-          margin-top: 10px;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .axm-track-missing-card{
-          border: 1px solid rgba(148,163,184,.24);
-          border-radius: 10px;
-          background: rgba(248,250,252,.82);
-          padding: 10px;
-        }
-        .axm-track-missing-title{
-          margin: 0;
-          font-size: 12px;
-          color: #475569;
-          text-transform: uppercase;
-          letter-spacing: .03em;
-          font-weight: 700;
-        }
-        .axm-track-missing-sub{
-          margin-top: 4px;
-          font-size: 12px;
-          color: #0f172a;
-          font-weight: 700;
-        }
-        .axm-track-missing-list{
-          margin: 6px 0 0;
-          padding-left: 16px;
-          display: grid;
-          gap: 4px;
-          color: #334155;
-          font-size: 12px;
-        }
-        .axm-track-missing-empty{
-          margin-top: 6px;
-          font-size: 12px;
-          color: #0f766e;
-          font-style: italic;
-        }
-        .axm-track-missing-more{
-          margin-top: 4px;
-          font-size: 11px;
-          color: #64748b;
-          font-style: italic;
-        }
-        .axm-grid{
-          display:grid;
-          grid-template-columns: 1fr;
-          gap: 14px;
-        }
-        .axm-card{
-          background: rgba(255,255,255,.92);
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 18px;
-          padding: 14px;
-          box-shadow: 0 8px 20px rgba(15,23,42,.06);
-        }
-        .axm-title{ margin:0; font-size: 20px; letter-spacing: -0.02em; }
-        .axm-sub{ margin: 6px 0 0; color:#64748b; font-size:13px; }
-        .axm-list{ margin-top: 12px; display:flex; flex-direction:column; gap: 10px; max-height: 65vh; overflow:auto; }
-        .axm-axis-btn{
-          width: 100%;
-          border: 1px solid rgba(148,163,184,.32);
-          background: rgba(255,255,255,.96);
-          border-radius: 14px;
-          padding: 12px;
-          text-align: left;
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap: 10px;
-          cursor:pointer;
-        }
-        .axm-axis-btn.active{
-          background: rgba(15,61,46,.08);
-          border-color: rgba(15,61,46,.32);
-        }
-        .axm-axis-meta{ color:#64748b; font-size: 12px; }
-        .axm-count{
-          font-size: 12px;
-          font-weight: 800;
-          border:1px solid rgba(15,23,42,.14);
-          border-radius: 999px;
-          padding: 4px 8px;
-          background: rgba(15,23,42,.04);
-        }
-        .axm-row{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .axm-field{ display:flex; flex-direction:column; gap: 6px; margin-top: 10px; }
-        .axm-field label{ font-size: 12px; color:#475569; font-weight:700; letter-spacing: .02em; }
-        .axm-base-grid{
-          display: grid;
-          grid-template-columns: 16fr 20fr;
-          gap: 10px;
-          align-items: end;
-        }
-        .axm-axis-main-row{
-          display: grid;
-          grid-template-columns: 15fr 50fr 15fr 20fr;
-          gap: 10px;
-          align-items: end;
-        }
-        .axm-axis-main-row .axm-field{
-          margin-top: 0;
-        }
-        .axm-axis-main-row .axm-base-grid{
-          display: contents;
-        }
-        .axm-axis-main-row .axm-base-grid > *{
-          min-width: 0;
-        }
-        .axm-base-preview{
-          min-height: 40px;
-          display: flex;
-          align-items: center;
-          padding: 6px 8px;
-          border: 1px dashed rgba(148,163,184,.45);
-          border-radius: 10px;
-          color: #64748b;
-          font-size: 11px;
-          font-style: italic;
-          line-height: 1.35;
-          background: rgba(255,255,255,.7);
-        }
-        .axm-input, .axm-textarea{
-          width:100%;
-          border:1px solid rgba(148,163,184,.42);
-          border-radius: 12px;
-          padding: 10px 12px;
-          font-size: 14px;
-          background: #fff;
-        }
-        .axm-axis-code-readonly{
-          width: auto !important;
-          min-width: 64px;
-          max-width: 78px;
-          padding: 0 !important;
-          border: 0 !important;
-          border-radius: 0 !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          text-align: left;
-          font-weight: 400;
-          font-style: italic;
-          pointer-events: none;
-        }
-        .axm-textarea{ min-height: 82px; resize: vertical; }
-        .axm-rt-wrap{
-          border:1px solid rgba(148,163,184,.42);
-          border-radius: 12px;
-          background:#fff;
-          overflow: hidden;
-        }
-        .axm-rt-toolbar{
-          display:flex;
-          flex-wrap:wrap;
-          gap:6px;
-          padding:8px;
-          border-bottom:1px solid rgba(148,163,184,.24);
-          background:#f8fafc;
-        }
-        .axm-rt-btn{
-          border:1px solid rgba(148,163,184,.34);
-          border-radius:8px;
-          background:#fff;
-          color:#0f172a;
-          font-size:12px;
-          font-weight:700;
-          padding:5px 8px;
-          cursor:pointer;
-        }
-        .axm-rt-editor{
-          min-height: 140px;
-          padding: 10px 12px;
-          font-size: 14px;
-          line-height: 1.45;
-          color:#0f172a;
-          outline:none;
-        }
-        .axm-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px; }
-        .axm-btn{
-          border:1px solid rgba(148,163,184,.42);
-          border-radius: 12px;
-          padding: 9px 12px;
-          background:#fff;
-          cursor:pointer;
-          font-weight:700;
-          font-size: 13px;
-        }
-        .axm-btn.primary{ background:#0f3d2e; border-color:#0f3d2e; color:#fff; }
-        .axm-btn.warn{ background:#ef4444; border-color:#ef4444; color:#fff; }
-        .axm-obj-layout{
-          margin-top: 12px;
-          display:grid;
-          grid-template-columns: 30% 70%;
-          gap: 0;
-          align-items: start;
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 14px;
-          overflow: hidden;
-          background: rgba(255,255,255,.95);
-        }
-        .axm-obj-layout > aside{
-          padding: 12px;
-          border-right: 1px solid rgba(148,163,184,.26);
-          background: #e5e7eb;
-        }
-        .axm-obj-layout > section{
-          padding: 12px;
-        }
-        .axm-obj-axis-list{
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          max-height: 380px;
-          overflow: auto;
-        }
-        .axm-obj-axis-btn{
-          width: 100%;
-          text-align: left;
-          border: 1px solid rgba(148,163,184,.32);
-          border-radius: 12px;
-          padding: 10px 12px;
-          background: rgba(229,231,235,.92);
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          color: #334155;
-          font-size: 12px;
-          font-style: italic;
-          font-weight: 400;
-        }
-        .axm-obj-axis-btn strong{
-          font-size: 12px;
-          font-style: italic;
-          font-weight: 400;
-        }
-        .axm-obj-axis-btn.active{
-          background: #ffffff;
-          border-color: rgba(15,61,46,.30);
-        }
-        .axm-obj-axis-arrow{
-          font-size: 18px;
-          color: #64748b;
-          line-height: 1;
-        }
-        .axm-obj-list{ display:flex; flex-direction:column; gap: 8px; max-height: 320px; overflow:auto; }
-        .axm-obj-btn{
-          width: 100%;
-          text-align: left;
-          border:1px solid rgba(148,163,184,.32);
-          border-radius: 12px;
-          padding: 10px;
-          background: rgba(255,255,255,.95);
-          cursor: pointer;
-        }
-        .axm-obj-btn.active{
-          background: rgba(15,61,46,.08);
-          border-color: rgba(15,61,46,.30);
-        }
-        .axm-obj-sub{
-          margin-top: 4px;
-          font-size: 11px;
-          font-style: italic;
-          color: #64748b;
-        }
-        .axm-obj-code{
-          margin-top: 3px;
-          font-size: 11px;
-          font-style: italic;
-          font-weight: 400;
-          color: #64748b;
-        }
-        .axm-obj-form{
-          border:1px solid rgba(148,163,184,.32);
-          border-radius: 12px;
-          padding: 14px;
-          background: rgba(255,255,255,.95);
-        }
-        .axm-obj-main-row{
-          display: grid;
-          grid-template-columns: 15fr 85fr;
-          gap: 10px;
-          align-items: end;
-        }
-        .axm-obj-main-row .axm-field{
-          margin-top: 0;
-        }
-        .axm-obj-code-readonly{
-          width: auto !important;
-          min-width: 80px;
-          max-width: 110px;
-          padding: 0 !important;
-          border: 0 !important;
-          border-radius: 0 !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          text-align: left;
-          font-weight: 400;
-          font-style: italic;
-          pointer-events: none;
-        }
-        .axm-obj-form .axm-row{
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        }
-        .axm-obj-form .axm-input,
-        .axm-obj-form .axm-textarea{
-          min-width: 0;
-          width: 100%;
-        }
-        .axm-obj-form .axm-textarea{
-          min-height: 116px;
-        }
-        .axm-axis-tabs{
-          display:flex;
-          gap: 6px;
-          margin-top: 10px;
-          border-bottom: 1px solid rgba(148,163,184,.28);
-          padding-bottom: 0;
-        }
-        .axm-axis-tab{
-          border: 1px solid rgba(148,163,184,.32);
-          border-bottom: 0;
-          border-radius: 10px 10px 0 0;
-          background: #fff;
-          padding: 8px 10px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #334155;
-          cursor: pointer;
-        }
-        .axm-axis-tab.active{
-          background: rgba(15,61,46,.10);
-          border-color: rgba(15,61,46,.34);
-          color: #0f3d2e;
-        }
-        .axm-axis-panel{
-          display:none;
-          border: 1px solid rgba(148,163,184,.28);
-          border-top: 0;
-          border-radius: 0 0 12px 12px;
-          background: #fff;
-          padding: 12px;
-        }
-        .axm-axis-panel.active{ display:block; }
-        .axm-axis-objectives{
-          display:grid;
-          gap: 8px;
-          max-height: 220px;
-          overflow:auto;
-        }
-        .axm-axis-objective{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          padding: 8px 10px;
-          background: rgba(255,255,255,.95);
-        }
-        .axm-axis-objective h5{
-          margin: 0;
-          font-size: 14px;
-          color: #0f172a;
-        }
-        .axm-axis-objective .meta{
-          margin-top: 3px;
-          font-size: 12px;
-          color: #64748b;
-          font-style: italic;
-        }
-        .axm-obj-tabs{
-          display:flex;
-          gap: 6px;
-          margin-top: 10px;
-          border-bottom: 1px solid rgba(148,163,184,.28);
-          padding-bottom: 0;
-        }
-        .axm-obj-tab{
-          border: 1px solid rgba(148,163,184,.32);
-          border-bottom: 0;
-          border-radius: 10px 10px 0 0;
-          background: #fff;
-          padding: 8px 10px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #334155;
-          cursor: pointer;
-        }
-        .axm-obj-tab.active{
-          background: rgba(15,61,46,.10);
-          border-color: rgba(15,61,46,.34);
-          color: #0f3d2e;
-        }
-        .axm-obj-panel{
-          display:none;
-          border: 1px solid rgba(148,163,184,.28);
-          border-top: 0;
-          border-radius: 0 0 12px 12px;
-          background: #fff;
-          padding: 12px;
-        }
-        .axm-obj-panel.active{ display:block; }
-        .axm-obj-acts{
-          display:grid;
-          gap: 8px;
-          max-height: 260px;
-          overflow:auto;
-        }
-        .axm-obj-act{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          padding: 8px 10px;
-          background: rgba(255,255,255,.95);
-        }
-        .axm-obj-act h5{
-          margin: 0;
-          font-size: 14px;
-          color: #0f172a;
-        }
-        .axm-obj-act .meta{
-          margin-top: 3px;
-          font-size: 12px;
-          color: #64748b;
-          font-style: italic;
-        }
-        .axm-kpi-form{
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .axm-kpi-form .axm-field{ margin-top: 0; }
-        .axm-kpi-form .axm-field.full{ grid-column: 1 / -1; }
-        .axm-kpi-actions{
-          grid-column: 1 / -1;
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          margin-top: 2px;
-        }
-        .axm-kpi-list{
-          margin-top: 12px;
-          display: grid;
-          gap: 8px;
-          max-height: 260px;
-          overflow: auto;
-        }
-        .axm-kpi-item{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          padding: 8px 10px;
-          background: rgba(255,255,255,.95);
-        }
-        .axm-kpi-item-head{
-          display: flex;
-          justify-content: space-between;
-          gap: 8px;
-          align-items: center;
-        }
-        .axm-kpi-item h5{
-          margin: 0;
-          font-size: 14px;
-          color: #0f172a;
-        }
-        .axm-kpi-item-meta{
-          margin-top: 3px;
-          font-size: 12px;
-          color: #64748b;
-          font-style: italic;
-        }
-        .axm-kpi-item-actions{
-          display: flex;
-          gap: 6px;
-        }
-        .axm-kpi-btn{
-          border: 1px solid rgba(148,163,184,.35);
-          border-radius: 8px;
-          background: #fff;
-          color: #334155;
-          font-size: 12px;
-          padding: 4px 8px;
-          cursor: pointer;
-        }
-        .axm-kpi-btn.danger{
-          color: #b91c1c;
-          border-color: rgba(239,68,68,.35);
-          background: #fff1f2;
-        }
-        .axm-kpi-hint{
-          margin-top: 8px;
-          font-size: 12px;
-          color: #64748b;
-          font-style: italic;
-          min-height: 1.2em;
-        }
-        .axm-obj-grid{ display:grid; grid-template-columns: 150px 1fr; gap: 8px; }
-        .axm-msg{ margin-top: 10px; font-size: 13px; color:#0f3d2e; min-height: 1.2em; }
-        .axm-modal{
-          position: fixed;
-          inset: 0;
-          background: rgba(15,23,42,.45);
-          display: none;
-          align-items: center;
-          justify-content: center;
-          z-index: 99999;
-          padding: 24px 12px;
-        }
-        .axm-modal.open{
-          display: flex;
-        }
-        .axm-modal-dialog{
-          width: min(1280px, 96vw);
-          max-height: 92vh;
-          overflow: auto;
-          background: #eef4f2;
-          border: 1px solid rgba(148,163,184,.35);
-          border-radius: 24px;
-          box-shadow: 0 24px 44px rgba(15,23,42,.28);
-          padding: 20px;
-        }
-        .axm-modal-head{
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-        .axm-close{
-          width: 34px;
-          height: 34px;
-          border-radius: 10px;
-          border: 1px solid rgba(148,163,184,.40);
-          background: #fff;
-          color: #0f172a;
-          font-size: 20px;
-          line-height: 1;
-          cursor: pointer;
-        }
-        .axm-arbol{
-          display: none;
-          background: rgba(255,255,255,.92);
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 18px;
-          padding: 14px;
-          margin-bottom: 12px;
-          width: calc(100vw - 64px);
-          max-width: none;
-          position: relative;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-        .axm-tree-modal-dialog{
-          width: min(1500px, 98vw);
-          max-height: 94vh;
-        }
-        .axm-tree-modal-dialog .axm-arbol{
-          display: block !important;
-          width: auto;
-          max-width: none;
-          position: static;
-          left: auto;
-          transform: none;
-          margin: 0;
-          padding: 0;
-          border: 0;
-          background: transparent;
-          box-shadow: none;
-        }
-        .axm-gantt-wrap{
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 14px;
-          background: linear-gradient(180deg, rgba(248,250,252,.96), rgba(255,255,255,.98));
-          padding: 10px;
-        }
-        .axm-gantt-legend{
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-          margin-bottom: 8px;
-          color: #475569;
-          font-size: 12px;
-        }
-        .axm-gantt-controls{
-          display:flex;
-          gap:10px;
-          align-items:flex-start;
-          justify-content:space-between;
-          flex-wrap:wrap;
-          margin-bottom:10px;
-        }
-        .axm-gantt-actions{
-          display:inline-flex;
-          gap:8px;
-          align-items:center;
-          flex-wrap:wrap;
-        }
-        .axm-gantt-action{
-          border:1px solid rgba(15,23,42,.2);
-          background:#0f172a;
-          color:#fff;
-          border-radius:999px;
-          padding:6px 12px;
-          font-size:12px;
-          cursor:pointer;
-          transition:transform .14s ease, opacity .14s ease;
-        }
-        .axm-gantt-action:hover{
-          transform:scale(1.04);
-          opacity:.92;
-        }
-        .axm-gantt-blocks{
-          display:flex;
-          gap:8px;
-          align-items:center;
-          flex-wrap:wrap;
-        }
-        .axm-gantt-block{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          border:1px solid rgba(148,163,184,.34);
-          border-radius:999px;
-          padding:5px 9px;
-          background:#fff;
-          color:#334155;
-          font-size:12px;
-          cursor:pointer;
-          user-select:none;
-        }
-        .axm-gantt-block input{
-          accent-color:#0f3d2e;
-          cursor:pointer;
-        }
-        .axm-gantt-block code{
-          font-style:italic;
-          color:#0f3d2e;
-          background:transparent;
-        }
-        .axm-gantt-chip{
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 4px 8px;
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 999px;
-          background: #fff;
-        }
-        .axm-gantt-dot{
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          display: inline-block;
-        }
-        .axm-gantt-host{
-          min-height: 68vh;
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 12px;
-          background: #fff;
-          overflow: auto;
-        }
-        .axm-arbol h3{
-          margin: 0;
-          font-size: 18px;
-        }
-        .axm-arbol-sub{
-          margin: 6px 0 12px;
-          color: #64748b;
-          font-size: 13px;
-        }
-        .axm-org-toolbar{
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          gap:10px;
-          flex-wrap:wrap;
-          margin-bottom:10px;
-        }
-        .axm-org-zoom{
-          display:inline-flex;
-          align-items:center;
-          gap:8px;
-        }
-        .axm-org-zoom button{
-          width:34px;
-          height:34px;
-          border:1px solid rgba(15,23,42,.85);
-          border-radius:10px;
-          background:#0f172a;
-          color:#f8fafc;
-          font-weight:700;
-          cursor:pointer;
-          transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
-          box-shadow: 0 4px 10px rgba(15,23,42,.24);
-        }
-        .axm-org-zoom button:hover{
-          transform: scale(1.08);
-          background:#1e293b;
-          box-shadow: 0 8px 18px rgba(15,23,42,.28);
-        }
-        .axm-org-fit{
-          border:1px solid rgba(15,23,42,.85);
-          border-radius:10px;
-          background:#0f172a;
-          color:#f8fafc;
-          font-size:12px;
-          font-weight:700;
-          padding:8px 12px;
-          cursor:pointer;
-          transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
-          box-shadow: 0 4px 10px rgba(15,23,42,.24);
-        }
-        .axm-org-fit:hover{
-          transform: scale(1.08);
-          background:#1e293b;
-          box-shadow: 0 8px 18px rgba(15,23,42,.28);
-        }
-        .axm-org-chart-wrap{
-          min-height: calc(100vh - 250px);
-          border:1px solid rgba(148,163,184,.35);
-          border-radius:14px;
-          background:linear-gradient(180deg, rgba(248,250,252,.96), rgba(255,255,255,.98));
-          padding:8px;
-          overflow:auto;
-        }
-        @media (max-width: 1024px){
-          .axm-arbol{
-            width: calc(100vw - 24px);
-          }
-          .axm-tree-modal-dialog{
-            width: min(98vw, 100%);
-          }
-          .axm-org-chart-wrap{
-            min-height: 68vh;
-          }
-          .axm-gantt-host{
-            min-height: 62vh;
-          }
-        }
-        .axm-arbol{
-          --bg:#f6f8fb;
-          --card:#ffffff;
-          --border:#e7edf5;
-          --text:#0f172a;
-          --muted:#64748b;
-          --shadow: 0 14px 32px rgba(15,23,42,.10);
-          --radius:16px;
-        }
-        .axm-arbol .oc-card{
-          width: 320px;
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow);
-          overflow: hidden;
-          transition: transform .18s ease, box-shadow .18s ease;
-        }
-        .axm-arbol .oc-card:hover{
-          transform: translateY(-3px);
-          box-shadow: 0 18px 40px rgba(15,23,42,.14);
-        }
-        .axm-arbol .oc-top{
-          padding: 12px 14px;
-          display:flex;
-          justify-content:space-between;
-          gap:10px;
-          background: linear-gradient(180deg,#fff,#fbfdff);
-        }
-        .axm-arbol .oc-name{
-          font-weight: 700;
-          font-size: 14px;
-          letter-spacing: -.01em;
-          color: var(--text);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .axm-arbol .oc-sub{
-          display:flex;
-          flex-wrap:wrap;
-          gap:8px;
-          margin-top: 8px;
-        }
-        .axm-arbol .oc-pill{
-          font-size: 11px;
-          color:#334155;
-          background:#f8fafc;
-          border:1px solid var(--border);
-          border-radius:999px;
-          padding: 6px 10px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          max-width: 100%;
-        }
-        .axm-arbol .oc-score{
-          font-weight: 800;
-          font-size: 13px;
-          background:#0f172a;
-          color:#fff;
-          border-radius:12px;
-          padding: 8px 10px;
-          height: fit-content;
-          flex: 0 0 auto;
-        }
-        .axm-arbol .oc-progress{
-          height: 10px;
-          background:#e2e8f0;
-          border-top:1px solid var(--border);
-          border-bottom:1px solid var(--border);
-        }
-        .axm-arbol .oc-fill{ height:100%; width:0%; }
-        .axm-arbol .oc-bottom{
-          padding: 12px 14px 14px;
-          display:flex;
-          justify-content:space-between;
-          align-items:flex-end;
-          gap: 10px;
-        }
-        .axm-arbol .oc-status{
-          font-weight: 800;
-          font-size: 12px;
-        }
-        .axm-arbol .oc-card[data-status="ok"] .oc-status{ color:#16a34a; }
-        .axm-arbol .oc-card[data-status="warning"] .oc-status{ color:#f59e0b; }
-        .axm-arbol .oc-card[data-status="danger"] .oc-status{ color:#ef4444; }
-        .axm-arbol .oc-kpis{
-          display:flex;
-          gap:10px;
-        }
-        .axm-arbol .oc-kpi span{
-          display:block;
-          font-size:10px;
-          color: var(--muted);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .axm-arbol .oc-kpi strong{
-          display:block;
-          font-size:13px;
-          color: var(--text);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .axm-arbol .axm-node-toggle{
-          width: 52px;
-          height: 52px;
-          border-radius: 999px;
-          border: 2px solid #0f172a;
-          background: #0f172a;
-          color: #f8fafc;
-          display: grid;
-          place-items: center;
-          box-shadow: 0 8px 16px rgba(15,23,42,.30);
-          font-weight: 800;
-          line-height: 1;
-          margin: auto;
-        }
-        .axm-arbol .axm-node-toggle-sign{
-          font-size: 24px;
-          margin-top: -2px;
-        }
-        .axm-arbol .axm-node-toggle-count{
-          font-size: 10px;
-          opacity: .92;
-          margin-top: -1px;
-        }
-        .axm-tree-roots{
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .axm-tree-root{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 12px;
-          padding: 10px;
-          background: #fff;
-        }
-        .axm-tree-root h4{
-          margin: 0 0 6px;
-          font-size: 13px;
-          color: #0f3d2e;
-          text-transform: uppercase;
-          letter-spacing: .02em;
-        }
-        .axm-tree-lines{
-          margin: 0;
-          padding: 0;
-          list-style: none;
-          display: grid;
-          gap: 6px;
-        }
-        .axm-tree-line{
-          font-size: 13px;
-          color: #1f2937;
-          display: flex;
-          gap: 6px;
-          align-items: baseline;
-        }
-        .axm-tree-progress{
-          margin-left: auto;
-          font-size: 11px;
-          font-weight: 800;
-          color: #0f3d2e;
-          border: 1px solid rgba(15,61,46,.28);
-          border-radius: 999px;
-          padding: 1px 7px;
-          background: rgba(15,61,46,.08);
-        }
-        .axm-tree-code{
-          display: inline-flex;
-          min-width: 44px;
-          justify-content: center;
-          border: 1px solid rgba(15,61,46,.30);
-          border-radius: 999px;
-          padding: 2px 8px;
-          font-size: 11px;
-          font-weight: 800;
-          color: #0f3d2e;
-          background: rgba(15,61,46,.08);
-          text-transform: uppercase;
-        }
-        .axm-tree-divider{
-          margin: 12px auto;
-          width: 2px;
-          height: 24px;
-          background: rgba(15,61,46,.35);
-          border-radius: 999px;
-          display: none;
-        }
-        .axm-org-roots{
-          display:grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .axm-org-root-node{
-          border: 1px solid rgba(15,61,46,.30);
-          border-radius: 12px;
-          background: rgba(15,61,46,.08);
-          padding: 10px;
-        }
-        .axm-org-root-node h4{
-          margin: 0;
-          font-size: 13px;
-          color: #0f3d2e;
-          text-transform: uppercase;
-        }
-        .axm-org-root-node p{
-          margin: 4px 0 0;
-          font-size: 12px;
-          color: #334155;
-        }
-        .axm-org-board{
-          display:grid;
-          gap: 10px;
-        }
-        .axm-org-branch{
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 12px;
-          background: #fff;
-          padding: 10px;
-        }
-        .axm-org-line-node{
-          display:flex;
-          align-items:center;
-          gap: 8px;
-          padding-bottom: 8px;
-          border-bottom: 1px dashed rgba(148,163,184,.35);
-        }
-        .axm-org-axes-grid{
-          margin-top: 8px;
-          display:grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 8px;
-        }
-        .axm-org-axis-node{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          background: rgba(255,255,255,.95);
-          padding: 8px 10px;
-        }
-        .axm-org-objectives{
-          margin-top: 8px;
-          display: grid;
-          gap: 8px;
-        }
-        .axm-org-objective-node{
-          border: 1px dashed rgba(148,163,184,.40);
-          border-radius: 10px;
-          background: #fff;
-          padding: 8px 10px;
-        }
-        .axm-org-activities{
-          margin-top: 7px;
-          display: grid;
-          gap: 6px;
-        }
-        .axm-org-activity-node{
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 10px;
-          background: rgba(248,250,252,.92);
-          padding: 7px 9px;
-        }
-        .axm-org-subactivities{
-          margin-top: 6px;
-          display: grid;
-          gap: 5px;
-        }
-        .axm-org-subactivity-node{
-          border: 1px solid rgba(148,163,184,.24);
-          border-radius: 8px;
-          background: #fff;
-          padding: 6px 8px;
-          font-size: 12px;
-        }
-        .axm-org-click{
-          width: 100%;
-          text-align: left;
-          border: 0;
-          background: transparent;
-          padding: 0;
-          margin: 0;
-          cursor: pointer;
-          color: inherit;
-          font: inherit;
-        }
-        .axm-node-head{
-          display: flex;
-          align-items: center;
-          gap: 7px;
-        }
-        .axm-status-dot{
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          border: 1px solid rgba(15,23,42,.18);
-          display: inline-block;
-        }
-        .axm-node-gray .axm-status-dot{ background:#9ca3af; }
-        .axm-node-yellow .axm-status-dot{ background:#eab308; }
-        .axm-node-orange .axm-status-dot{ background:#f97316; }
-        .axm-node-green .axm-status-dot{ background:#22c55e; }
-        .axm-node-red .axm-status-dot{ background:#ef4444; }
-        .axm-org-axis-node h5{
-          margin: 0;
-          font-size: 14px;
-        }
-        .axm-org-axis-node p{
-          margin: 4px 0 0;
-          font-size: 12px;
-          color:#64748b;
-        }
-        .axm-tree-axes{
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 10px;
-        }
-        .axm-tree-axis{
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 12px;
-          background: #fff;
-          padding: 10px;
-          box-shadow: 0 8px 18px rgba(15,23,42,.06);
-        }
-        .axm-tree-axis h5{
-          margin: 6px 0 4px;
-          font-size: 15px;
-        }
-        .axm-tree-axis p{
-          margin: 0;
-          font-size: 12px;
-          color: #64748b;
-        }
-        @media (max-width: 980px){
-          .axm-obj-layout{ grid-template-columns: 1fr; }
-          .axm-obj-layout > aside{ border-right: 0; border-bottom: 1px solid rgba(148,163,184,.26); }
-          .axm-obj-form .axm-row{ grid-template-columns: 1fr; }
-        }
-        @media (max-width: 980px){
-          .axm-grid{ grid-template-columns: 1fr; }
-          .axm-list{ max-height: 36vh; }
-          .axm-row{ grid-template-columns: 1fr; }
-          .axm-obj-grid{ grid-template-columns: 1fr; }
-          .axm-track-grid{ grid-template-columns: 1fr 1fr; }
-          .axm-track-missing{ grid-template-columns: 1fr; }
-          .axm-org-roots{ grid-template-columns: 1fr; }
-          .axm-tree-roots{ grid-template-columns: 1fr; }
-          .axm-axis-main-row{ grid-template-columns: 1fr; }
-          .axm-axis-main-row .axm-base-grid{ display: grid; grid-template-columns: 1fr; }
-        }
-      </style>
 
       <article class="axm-intro">
         <section class="axm-track" id="axm-track-board">
@@ -3165,9 +1645,9 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           </div>
         </section>
       </article>
-      <section class="axm-card" id="axm-plan-header-card" style="margin-bottom:12px;">
-        <div class="axm-row" style="margin-top:0;">
-          <div class="axm-field" style="margin-top:0;">
+      <section class="axm-card" id="axm-plan-header-card">
+        <div class="axm-row">
+          <div class="axm-field">
             <label for="axm-plan-years">Vigencia del plan (años):</label>
             <select id="axm-plan-years" class="axm-input">
               <option value="1">1</option>
@@ -3177,18 +1657,18 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               <option value="5">5</option>
             </select>
           </div>
-          <div class="axm-field" style="margin-top:0;">
+          <div class="axm-field">
             <label for="axm-plan-start">Inicio del plan:</label>
             <input id="axm-plan-start" class="axm-input" type="date">
           </div>
         </div>
       </section>
 
-      <div class="axm-tabs">
-        <button type="button" class="axm-tab" data-axm-tab="fundamentacion"><img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación</button>
-        <button type="button" class="axm-tab" data-axm-tab="identidad"><img src="/templates/icon/identidad.svg" alt="" class="tab-icon">Identidad</button>
-        <button type="button" class="axm-tab active" data-axm-tab="ejes"><img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos</button>
-        <button type="button" class="axm-tab" data-axm-tab="objetivos"><img src="/templates/icon/objetivos.svg" alt="" class="tab-icon">Objetivos</button>
+      <div class="tabs tabs-lifted w-full flex-wrap axm-tabs" role="tablist" aria-label="Planificación">
+        <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-axm-tab="fundamentacion"><img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación</button>
+        <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-axm-tab="identidad"><img src="/templates/icon/identidad.svg" alt="" class="tab-icon">Identidad</button>
+        <button type="button" class="tab gap-2 rounded-t-lg tab-active active axm-tab" data-axm-tab="ejes"><img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos</button>
+        <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-axm-tab="objetivos"><img src="/templates/icon/objetivos.svg" alt="" class="tab-icon">Objetivos</button>
       </div>
       <div class="axm-global-msg" id="axm-global-msg" aria-live="polite"></div>
       <section class="axm-foundacion" id="axm-foundacion-panel">
@@ -3201,11 +1681,11 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           <button type="button" class="axm-foundacion-tool" data-found-cmd="insertUnorderedList">Lista</button>
           <button type="button" class="axm-foundacion-tool" data-found-cmd="insertOrderedList">Numerada</button>
           <button type="button" class="axm-foundacion-tool" id="axm-foundacion-upload-btn">Subir HTML</button>
-          <label class="axm-foundacion-tool" style="display:inline-flex;align-items:center;gap:6px;">
+          <label class="axm-foundacion-tool">
             <input id="axm-foundacion-show-source" type="checkbox">
             Ver código HTML
           </label>
-          <input id="axm-foundacion-upload" type="file" accept=".html,text/html" style="display:none;">
+          <input id="axm-foundacion-upload" type="file" accept=".html,text/html">
         </div>
         <div id="axm-foundacion-editor" class="axm-foundacion-editor" contenteditable="true"></div>
         <textarea id="axm-foundacion-source" class="axm-foundacion-source" placeholder="Código HTML..."></textarea>
@@ -3242,7 +1722,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                   <span class="action-label">Eliminar</span>
                 </button>
               </div>
-              <div id="axm-mision-hidden" style="display:none;"></div>
+              <div id="axm-mision-hidden"></div>
             </div>
             <div class="axm-id-right">
               <h4>Misión</h4>
@@ -3270,7 +1750,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                   <span class="action-label">Eliminar</span>
                 </button>
               </div>
-              <div id="axm-vision-hidden" style="display:none;"></div>
+              <div id="axm-vision-hidden"></div>
             </div>
             <div class="axm-id-right">
               <h4>Visión</h4>
@@ -3298,7 +1778,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                   <span class="action-label">Eliminar</span>
                 </button>
               </div>
-              <div id="axm-valores-hidden" style="display:none;"></div>
+              <div id="axm-valores-hidden"></div>
             </div>
             <div class="axm-id-right">
               <h4>Valores</h4>
@@ -3317,7 +1797,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           <section class="axm-arbol" id="axm-arbol-panel">
             <p class="axm-arbol-sub">Vista organigrama: Misión/Visión como base, líneas por código y ejes vinculados.</p>
             <div class="axm-org-toolbar">
-              <span class="axm-arbol-sub" style="margin:0;">Haz clic en un nodo para abrir su formulario correspondiente.</span>
+              <span class="axm-arbol-sub">Haz clic en un nodo para abrir su formulario correspondiente.</span>
               <div class="axm-org-zoom">
                 <button type="button" id="axm-tree-expand" title="Expandir todo">▾▾</button>
                 <button type="button" id="axm-tree-collapse" title="Contraer todo">▸▸</button>
@@ -3338,9 +1818,9 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           </div>
           <div class="axm-gantt-wrap">
             <div class="axm-gantt-legend">
-              <span class="axm-gantt-chip"><span class="axm-gantt-dot" style="background:#0f3d2e;"></span>Eje estratégico</span>
-              <span class="axm-gantt-chip"><span class="axm-gantt-dot" style="background:#2563eb;"></span>Objetivo estratégico</span>
-              <span class="axm-gantt-chip"><span class="axm-gantt-dot" style="background:#ef4444;"></span>Hoy</span>
+              <span class="axm-gantt-chip"><span class="axm-gantt-dot"></span>Eje estratégico</span>
+              <span class="axm-gantt-chip"><span class="axm-gantt-dot"></span>Objetivo estratégico</span>
+              <span class="axm-gantt-chip"><span class="axm-gantt-dot"></span>Hoy</span>
             </div>
             <div class="axm-gantt-controls">
               <div class="axm-gantt-actions">
@@ -3353,17 +1833,17 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           </div>
         </section>
       </div>
-      <section class="axm-tab-panel" id="axm-tab-panel" style="display:none;">No tiene acceso, consulte con el administrador</section>
-      <section class="axm-card" id="axm-objetivos-panel" style="display:none;">
-        <h3 style="margin:0;font-size:16px;">Objetivos del eje</h3>
+      <section class="axm-tab-panel" id="axm-tab-panel">No tiene acceso, consulte con el administrador</section>
+      <section class="axm-card" id="axm-objetivos-panel">
+        <h3>Objetivos del eje</h3>
         <div class="axm-obj-layout">
           <aside>
-            <h4 style="margin:0 0 8px;font-size:14px;">Ejes estratégicos</h4>
+            <h4>Ejes estratégicos</h4>
             <div class="axm-obj-axis-list" id="axm-obj-axis-list"></div>
           </aside>
           <section>
-            <div class="axm-actions" style="margin-top:0;justify-content:space-between;">
-              <h4 id="axm-obj-axis-title" style="margin:0;font-size:14px;">Objetivos</h4>
+            <div class="axm-actions">
+              <h4 id="axm-obj-axis-title">Objetivos</h4>
               <button class="axm-btn primary" id="axm-add-obj" type="button">Agregar objetivo</button>
             </div>
             <div class="axm-obj-list" id="axm-obj-list"></div>
@@ -3379,7 +1859,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             <button class="axm-btn primary" id="axm-add-axis" type="button" onclick="(function(){var m=document.getElementById('axm-axis-modal');if(m){m.classList.add('open');m.style.display='flex';document.body.style.overflow='hidden';}})();">Agregar eje</button>
             <button class="axm-btn" id="axm-download-template" type="button">Descargar plantilla CSV</button>
             <button class="axm-btn" id="axm-import-csv" type="button">Importar CSV estratégico + POA</button>
-            <input id="axm-import-csv-file" type="file" accept=".csv,text/csv" style="display:none;">
+            <input id="axm-import-csv-file" type="file" accept=".csv,text/csv">
           </div>
           <div class="axm-list" id="axm-axis-list"></div>
         </aside>
@@ -3442,12 +1922,12 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             <label for="axm-axis-progress">Avance</label>
             <input id="axm-axis-progress" class="axm-input" type="text" readonly>
           </div>
-          <div class="axm-axis-tabs">
-            <button type="button" class="axm-axis-tab active" data-axis-tab="desc">Descripción</button>
-            <button type="button" class="axm-axis-tab" data-axis-tab="objs">Objetivos</button>
+          <div class="tabs tabs-lifted w-full flex-wrap axm-axis-tabs" role="tablist" aria-label="Eje">
+            <button type="button" class="tab rounded-t-lg tab-active active axm-axis-tab" data-axis-tab="desc">Descripción</button>
+            <button type="button" class="tab rounded-t-lg axm-axis-tab" data-axis-tab="objs">Objetivos</button>
           </div>
           <section class="axm-axis-panel active" data-axis-panel="desc">
-            <div class="axm-field" style="margin-top:0;">
+            <div class="axm-field">
               <label for="axm-axis-desc">Descripción</label>
               <textarea id="axm-axis-desc" class="axm-textarea" placeholder="Describe el propósito del eje"></textarea>
             </div>
@@ -3509,14 +1989,14 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                 <input id="axm-obj-end" class="axm-input" type="date">
               </div>
             </div>
-            <div class="axm-obj-tabs">
-              <button type="button" class="axm-obj-tab active" data-obj-tab="desc">Descripción</button>
-              <button type="button" class="axm-obj-tab" data-obj-tab="hitos">Hitos</button>
-              <button type="button" class="axm-obj-tab" data-obj-tab="kpi">Kpis</button>
-              <button type="button" class="axm-obj-tab" data-obj-tab="acts">Actividades</button>
+            <div class="tabs tabs-lifted w-full flex-wrap axm-obj-tabs" role="tablist" aria-label="Objetivo">
+              <button type="button" class="tab rounded-t-lg tab-active active axm-obj-tab" data-obj-tab="desc">Descripción</button>
+              <button type="button" class="tab rounded-t-lg axm-obj-tab" data-obj-tab="hitos">Hitos</button>
+              <button type="button" class="tab rounded-t-lg axm-obj-tab" data-obj-tab="kpi">Kpis</button>
+              <button type="button" class="tab rounded-t-lg axm-obj-tab" data-obj-tab="acts">Actividades</button>
             </div>
             <section class="axm-obj-panel active" data-obj-panel="desc">
-              <div class="axm-field" style="margin-top:0;">
+              <div class="axm-field">
                 <label for="axm-obj-desc">Descripción</label>
                 <textarea id="axm-obj-desc" class="axm-textarea" placeholder="Descripción del objetivo"></textarea>
               </div>
@@ -3535,8 +2015,8 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                   <input id="axm-hito-date" class="axm-input" type="date">
                 </div>
                 <div class="axm-field">
-                  <label style="display:flex;align-items:center;gap:8px;font-weight:600;color:#334155;">
-                    <input id="axm-hito-done" type="checkbox" style="accent-color:#0f3d2e;">
+                  <label>
+                    <input id="axm-hito-done" type="checkbox">
                     Logrado
                   </label>
                 </div>
@@ -4077,8 +2557,9 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           if (tabs.length) {
             tabs.forEach((tabBtn) => {
               tabBtn.addEventListener("click", () => {
-                tabs.forEach((btn) => btn.classList.remove("active"));
+                tabs.forEach((btn) => { btn.classList.remove("active"); btn.classList.remove("tab-active"); });
                 tabBtn.classList.add("active");
+                tabBtn.classList.add("tab-active");
                 applyTabView(tabBtn.getAttribute("data-axm-tab"));
               });
             });
@@ -4318,15 +2799,9 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             if (window.d3 && window.d3.OrgChart) return true;
             if (!strategicTreeLibPromise) {
               strategicTreeLibPromise = (async () => {
-                try {
-                  await loadScript("/static/vendor/d3.min.js");
+                await loadScript("/static/vendor/d3.min.js");
                   await loadScript("/static/vendor/d3-flextree.min.js");
                   await loadScript("/static/vendor/d3-org-chart.min.js");
-                } catch (_localError) {
-                  await loadScript("https://cdn.jsdelivr.net/npm/d3@7");
-                  await loadScript("https://cdn.jsdelivr.net/npm/d3-flextree@2.1.2/build/d3-flextree.js");
-                  await loadScript("https://cdn.jsdelivr.net/npm/d3-org-chart@3");
-                }
               })().catch(() => false);
             }
             const result = await strategicTreeLibPromise;
@@ -4338,12 +2813,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               await loadScript("/static/vendor/d3.min.js");
               return !!window.d3;
             } catch (_err) {
-              try {
-                await loadScript("https://cdn.jsdelivr.net/npm/d3@7");
-                return !!window.d3;
-              } catch (_err2) {
-                return false;
-              }
+              return false;
             }
           };
 
@@ -4357,11 +2827,11 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             axisModalEl.style.position = "fixed";
             axisModalEl.style.inset = "0";
             document.body.style.overflow = "hidden";
-            document.querySelectorAll("[data-axis-tab]").forEach((btn) => btn.classList.remove("active"));
+            document.querySelectorAll("[data-axis-tab]").forEach((btn) => { btn.classList.remove("active"); btn.classList.remove("tab-active"); });
             document.querySelectorAll("[data-axis-panel]").forEach((panelItem) => panelItem.classList.remove("active"));
             const firstTab = document.querySelector('[data-axis-tab="desc"]');
             const firstPanel = document.querySelector('[data-axis-panel="desc"]');
-            if (firstTab) firstTab.classList.add("active");
+            if (firstTab) { firstTab.classList.add("active"); firstTab.classList.add("tab-active"); }
             if (firstPanel) firstPanel.classList.add("active");
           };
           const closeAxisModal = () => {
@@ -4380,11 +2850,11 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             objModalEl.style.position = "fixed";
             objModalEl.style.inset = "0";
             document.body.style.overflow = "hidden";
-            document.querySelectorAll("[data-obj-tab]").forEach((btn) => btn.classList.remove("active"));
+            document.querySelectorAll("[data-obj-tab]").forEach((btn) => { btn.classList.remove("active"); btn.classList.remove("tab-active"); });
             document.querySelectorAll("[data-obj-panel]").forEach((panelItem) => panelItem.classList.remove("active"));
             const firstTab = document.querySelector('[data-obj-tab="desc"]');
             const firstPanel = document.querySelector('[data-obj-panel="desc"]');
-            if (firstTab) firstTab.classList.add("active");
+            if (firstTab) { firstTab.classList.add("active"); firstTab.classList.add("tab-active"); }
             if (firstPanel) firstPanel.classList.add("active");
           };
           const closeObjModal = () => {
@@ -4610,12 +3080,12 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               ...buildLineNodes("vision-root", "Visión", visionLines),
             ];
             if (!nodes.length || nodes.length <= 3) {
-              treeChartEl.innerHTML = '<p style="color:#64748b;padding:10px;">Sin líneas definidas. Agrega líneas en Misión/Visión.</p>';
+              treeChartEl.innerHTML = '<p>Sin líneas definidas. Agrega líneas en Misión/Visión.</p>';
               return;
             }
             ensureStrategicTreeLibrary().then((available) => {
               if (!available) {
-                treeChartEl.innerHTML = '<p style="color:#b91c1c;padding:10px;">No se pudo cargar la librería de organigrama.</p>';
+                treeChartEl.innerHTML = '<p>No se pudo cargar la librería de organigrama.</p>';
                 return;
               }
               treeChartEl.innerHTML = "";
@@ -4695,7 +3165,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                 .nodeContent((d) => {
                   const data = d?.data || {};
                   if ((data.type || "") === "root") {
-                    return '<div style="width:1px;height:1px;opacity:0;overflow:hidden;"></div>';
+                    return '<div></div>';
                   }
                   const progress = Number(data.progress || 0);
                   const status = cardStatusFromTree(data.statusKey, progress);
@@ -4725,7 +3195,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                     <div class="oc-card" data-status="${status}">
                       <div class="oc-top">
                         <div class="oc-title">
-                          <div class="oc-name" style="color:#0f172a;">${escapeHtml(data.title || "Área / Puesto")}</div>
+                          <div class="oc-name">${escapeHtml(data.title || "Área / Puesto")}</div>
                           <div class="oc-sub">
                             <span class="oc-pill">${typeBadge}</span>
                             ${owner}
@@ -4733,9 +3203,9 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                         </div>
                         <div class="oc-score">${Math.round(progress)}%</div>
                       </div>
-                      <div class="oc-progress"><div class="oc-fill" style="width:${progress}%; background:${grad};"></div></div>
+                      <div class="oc-progress"><div class="oc-fill"></div></div>
                       <div class="oc-bottom">
-                        <div class="oc-status" style="color:${status === "danger" ? "#ef4444" : (status === "warning" ? "#f59e0b" : "#16a34a")};">${statusLabel(status)}</div>
+                        <div class="oc-status"danger" ? "#ef4444" : (status === "warning" ? "#f59e0b" : "#16a34a")};">${statusLabel(status)}</div>
                         <div class="oc-kpis">${k1}${k2}</div>
                       </div>
                     </div>
@@ -4833,20 +3303,20 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                 <article class="axm-track-card"><div class="axm-track-label">Objetivos</div><div class="axm-track-value">${objectiveCount}</div></article>
                 <article class="axm-track-card"><div class="axm-track-label">Objetivos al 100%</div><div class="axm-track-value">${objectiveDone}</div></article>
               </div>
-              <div class="axm-track-bar"><div class="axm-track-fill" style="width:${globalProgress}%;"></div></div>
+              <div class="axm-track-bar"><div class="axm-track-fill"></div></div>
               <div class="axm-track-meta">
                 <span>Misión: ${missionProgress}%</span>
                 <span>Visión: ${visionProgress}%</span>
               </div>
               <div class="axm-track-hitos">
-                <div class="axm-track-hitos-chart" style="background:${milestoneChartBg};"><span>${milestonesPct}%</span></div>
+                <div class="axm-track-hitos-chart"><span>${milestonesPct}%</span></div>
                 <div class="axm-track-hitos-info">
                   <div class="axm-track-hitos-title">Hitos logrados</div>
                   <div class="axm-track-hitos-values">
                     <span>Total: <b>${milestonesTotal}</b></span>
                     <span>Logrados: <b>${milestonesDone}</b></span>
                     <span>Pendientes: <b>${milestonesPending}</b></span>
-                    <span>Atrasados: <b style="color:#b91c1c;">${milestonesOverdue}</b></span>
+                    <span>Atrasados: <b>${milestonesOverdue}</b></span>
                   </div>
                 </div>
               </div>
@@ -4958,16 +3428,16 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               overlay.style.justifyContent = "center";
               overlay.style.zIndex = "2600";
               overlay.innerHTML = `
-                <div style="width:min(820px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;padding:16px;border:1px solid rgba(148,163,184,.4);box-shadow:0 24px 40px rgba(15,23,42,.28);">
-                  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-                    <h4 id="poa-ia-suggest-title" style="margin:0;font-size:18px;color:#0f172a;">Sugerencia IA</h4>
-                    <button type="button" id="poa-ia-close" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;">Cerrar</button>
+                <div>
+                  <div>
+                    <h4 id="poa-ia-suggest-title">Sugerencia IA</h4>
+                    <button type="button" id="poa-ia-close">Cerrar</button>
                   </div>
-                  <p style="margin:0 0 8px 0;color:#64748b;font-size:13px;">Edita el texto y luego decide si lo aplicas o descartas.</p>
-                  <textarea id="poa-ia-suggest-text" style="width:100%;min-height:240px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;color:#0f172a;font-size:14px;line-height:1.45;"></textarea>
-                  <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-                    <button type="button" id="poa-ia-discard" style="border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:10px;padding:8px 12px;cursor:pointer;">Descartar</button>
-                    <button type="button" id="poa-ia-apply" style="border:1px solid #0f3d2e;background:#0f3d2e;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;">Aplicar</button>
+                  <p>Edita el texto y luego decide si lo aplicas o descartas.</p>
+                  <textarea id="poa-ia-suggest-text"></textarea>
+                  <div>
+                    <button type="button" id="poa-ia-discard">Descartar</button>
+                    <button type="button" id="poa-ia-apply">Aplicar</button>
                   </div>
                 </div>
               `;
@@ -5008,16 +3478,16 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               overlay.style.justifyContent = "center";
               overlay.style.zIndex = "2500";
               overlay.innerHTML = `
-                <div style="width:min(820px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:14px;padding:16px;border:1px solid rgba(148,163,184,.4);box-shadow:0 24px 40px rgba(15,23,42,.28);">
-                  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
-                    <h4 id="axm-ia-suggest-title" style="margin:0;font-size:18px;color:#0f172a;">Sugerencia IA</h4>
-                    <button type="button" id="axm-ia-close" style="border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;">Cerrar</button>
+                <div>
+                  <div>
+                    <h4 id="axm-ia-suggest-title">Sugerencia IA</h4>
+                    <button type="button" id="axm-ia-close">Cerrar</button>
                   </div>
-                  <p style="margin:0 0 8px 0;color:#64748b;font-size:13px;">Puedes editar el texto antes de aplicarlo.</p>
-                  <textarea id="axm-ia-suggest-text" style="width:100%;min-height:240px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;color:#0f172a;font-size:14px;line-height:1.45;"></textarea>
-                  <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-                    <button type="button" id="axm-ia-discard" style="border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:10px;padding:8px 12px;cursor:pointer;">Descartar</button>
-                    <button type="button" id="axm-ia-apply" style="border:1px solid #0f3d2e;background:#0f3d2e;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;">Aplicar</button>
+                  <p>Puedes editar el texto antes de aplicarlo.</p>
+                  <textarea id="axm-ia-suggest-text"></textarea>
+                  <div>
+                    <button type="button" id="axm-ia-discard">Descartar</button>
+                    <button type="button" id="axm-ia-apply">Aplicar</button>
                   </div>
                 </div>
               `;
@@ -5376,7 +3846,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             if (!ganttHostEl) return;
             const ok = await ensureD3Library();
             if (!ok) {
-              ganttHostEl.innerHTML = '<p style="padding:10px;color:#b91c1c;">No se pudo cargar la librería para la vista Gantt.</p>';
+              ganttHostEl.innerHTML = '<p>No se pudo cargar la librería para la vista Gantt.</p>';
               return;
             }
             renderGanttBlockFilters();
@@ -5411,7 +3881,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               });
             });
             if (!rows.length) {
-              ganttHostEl.innerHTML = '<p style="padding:10px;color:#64748b;">No hay fechas suficientes en ejes/objetivos para generar Gantt.</p>';
+              ganttHostEl.innerHTML = '<p>No hay fechas suficientes en ejes/objetivos para generar Gantt.</p>';
               return;
             }
             const planWin = getPlanWindow();
@@ -5814,9 +4284,10 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           document.querySelectorAll("[data-axis-tab]").forEach((tabBtn) => {
             tabBtn.addEventListener("click", () => {
               const tabKey = tabBtn.getAttribute("data-axis-tab");
-              document.querySelectorAll("[data-axis-tab]").forEach((btn) => btn.classList.remove("active"));
+              document.querySelectorAll("[data-axis-tab]").forEach((btn) => { btn.classList.remove("active"); btn.classList.remove("tab-active"); });
               document.querySelectorAll("[data-axis-panel]").forEach((panelItem) => panelItem.classList.remove("active"));
               tabBtn.classList.add("active");
+              tabBtn.classList.add("tab-active");
               const panelItem = document.querySelector(`[data-axis-panel="${tabKey}"]`);
               if (panelItem) panelItem.classList.add("active");
             });
@@ -5824,9 +4295,10 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           document.querySelectorAll("[data-obj-tab]").forEach((tabBtn) => {
             tabBtn.addEventListener("click", () => {
               const tabKey = tabBtn.getAttribute("data-obj-tab");
-              document.querySelectorAll("[data-obj-tab]").forEach((btn) => btn.classList.remove("active"));
+              document.querySelectorAll("[data-obj-tab]").forEach((btn) => { btn.classList.remove("active"); btn.classList.remove("tab-active"); });
               document.querySelectorAll("[data-obj-panel]").forEach((panelItem) => panelItem.classList.remove("active"));
               tabBtn.classList.add("active");
+              tabBtn.classList.add("tab-active");
               const panelItem = document.querySelector(`[data-obj-panel="${tabKey}"]`);
               if (panelItem) panelItem.classList.add("active");
             });
@@ -6341,918 +4813,6 @@ EJES_ESTRATEGICOS_HTML = dedent("""
 
 POA_LIMPIO_HTML = dedent("""
     <section class="poa-board-wrap">
-      <style>
-        .poa-board-wrap *{ box-sizing:border-box; }
-        .poa-board-wrap{
-          padding: 10px;
-          color: #0f172a;
-        }
-        .poa-board-head{
-          background: rgba(255,255,255,.92);
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 14px;
-          padding: 12px 14px;
-          margin-bottom: 10px;
-        }
-        .poa-board-head-row{
-          display:flex;
-          align-items:flex-start;
-          justify-content:space-between;
-          gap:10px;
-          flex-wrap:wrap;
-        }
-        .poa-board-head-actions{
-          display:flex;
-          gap:8px;
-          flex-wrap:wrap;
-        }
-        .poa-board-head h2{
-          margin: 0;
-          font-size: 20px;
-        }
-        .poa-board-head p{
-          margin: 6px 0 0;
-          color: #64748b;
-          font-size: 13px;
-        }
-        .poa-board-msg{
-          min-height: 20px;
-          margin: 0 2px 10px;
-          font-size: 13px;
-          color: #0f3d2e;
-        }
-        .poa-owner-chart{
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 14px;
-          background: rgba(255,255,255,.95);
-          box-shadow: 0 8px 20px rgba(15,23,42,.06);
-          padding: 12px 14px;
-          margin: 0 0 10px;
-        }
-        .poa-owner-chart-head{
-          display:flex;
-          align-items:baseline;
-          justify-content:space-between;
-          gap:10px;
-          margin-bottom:10px;
-        }
-        .poa-owner-chart-title{
-          margin:0;
-          font-size:16px;
-          line-height:1.2;
-        }
-        .poa-owner-chart-sub{
-          margin:2px 0 0;
-          font-size:12px;
-          color:#64748b;
-        }
-        .poa-owner-chart-total{
-          font-size:12px;
-          color:#334155;
-          white-space:nowrap;
-        }
-        .poa-owner-chart-empty{
-          font-size:13px;
-          color:#64748b;
-          padding:4px 0;
-        }
-        .poa-owner-chart-list{
-          display:flex;
-          flex-direction:column;
-          gap:8px;
-        }
-        .poa-owner-row{
-          display:grid;
-          grid-template-columns: minmax(150px, 220px) 1fr auto;
-          gap:10px;
-          align-items:center;
-        }
-        .poa-owner-name{
-          font-size:13px;
-          color:#0f172a;
-          overflow:hidden;
-          text-overflow:ellipsis;
-          white-space:nowrap;
-        }
-        .poa-owner-bar{
-          height:10px;
-          border-radius:999px;
-          background:#e2e8f0;
-          overflow:hidden;
-        }
-        .poa-owner-fill{
-          height:100%;
-          min-width:2px;
-          border-radius:999px;
-          background:linear-gradient(90deg,#0f3d2e,#16a34a);
-        }
-        .poa-owner-value{
-          font-size:12px;
-          color:#334155;
-          font-variant-numeric: tabular-nums;
-          white-space:nowrap;
-        }
-        .poa-board-grid{
-          display: flex;
-          align-items: stretch;
-          gap: 10px;
-          overflow: auto;
-          padding-bottom: 8px;
-        }
-        .poa-axis-col{
-          flex: 0 0 320px;
-          width: 320px;
-          border: 1px solid rgba(148,163,184,.30);
-          border-radius: 14px;
-          background: rgba(255,255,255,.95);
-          box-shadow: 0 8px 20px rgba(15,23,42,.06);
-          transition: width .18s ease, flex-basis .18s ease;
-        }
-        .poa-axis-col.collapsed{
-          flex-basis: 72px;
-          width: 72px;
-        }
-        .poa-axis-head{
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          padding: 10px;
-          border-bottom: 1px solid rgba(148,163,184,.24);
-          min-height: 48px;
-        }
-        .poa-axis-title{
-          margin: 0;
-          font-size: 18px;
-          line-height: 1.2;
-          max-width: 255px;
-        }
-        .poa-axis-col.collapsed .poa-axis-title{
-          writing-mode: vertical-rl;
-          transform: rotate(180deg);
-          font-size: 14px;
-          max-width: none;
-          white-space: nowrap;
-        }
-        .poa-axis-toggle{
-          border: 1px solid rgba(148,163,184,.30);
-          background: #fff;
-          border-radius: 8px;
-          width: 28px;
-          height: 28px;
-          font-size: 18px;
-          line-height: 1;
-          cursor: pointer;
-          color: #334155;
-          flex: 0 0 auto;
-        }
-        .poa-axis-cards{
-          padding: 10px;
-          display: grid;
-          gap: 8px;
-          align-content: start;
-        }
-        .poa-axis-col.collapsed .poa-axis-cards{
-          display: none;
-        }
-        .poa-obj-card{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 12px;
-          padding: 10px;
-          background: #fff;
-          cursor: pointer;
-          box-shadow: 0 10px 24px rgba(15,23,42,.08);
-          transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
-        }
-        .poa-obj-card:hover{
-          box-shadow: 0 16px 34px rgba(15,23,42,.14);
-          transform: translateY(-2px);
-          border-color: rgba(15,61,46,.34);
-        }
-        .poa-obj-card h4{
-          margin: 0;
-          font-size: 15px;
-          line-height: 1.3;
-        }
-        .poa-obj-card .meta{
-          margin-top: 6px;
-          font-size: 12px;
-          color: #64748b;
-        }
-        .poa-obj-card .code{
-          display: inline-block;
-          margin-top: 8px;
-          border: 1px solid rgba(15,61,46,.26);
-          border-radius: 999px;
-          padding: 2px 8px;
-          font-size: 11px;
-          font-weight: 700;
-          color: #0f3d2e;
-          background: rgba(15,61,46,.08);
-        }
-        .poa-obj-card .code-next{
-          margin-top: 4px;
-          font-size: 11px;
-          color: #64748b;
-          font-style: italic;
-        }
-        .poa-modal{
-          position: fixed;
-          inset: 0;
-          display: none;
-          align-items: center;
-          justify-content: center;
-          background: rgba(15,23,42,.44);
-          z-index: 99999;
-          padding: 16px;
-        }
-        .poa-modal.open{ display: flex; }
-        .poa-modal-dialog{
-          width: min(940px, 96vw);
-          max-height: 92vh;
-          overflow: auto;
-          border: 1px solid rgba(148,163,184,.32);
-          border-radius: 16px;
-          background: #f8fafc;
-          box-shadow: 0 22px 44px rgba(15,23,42,.26);
-          padding: 14px;
-        }
-        .poa-modal-head{
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-        .poa-branch-path{
-          margin: 0 0 8px;
-          font-size: 11px;
-          font-style: italic;
-          color: #64748b;
-          line-height: 1.35;
-        }
-        .poa-modal-close{
-          width: 32px;
-          height: 32px;
-          border: 1px solid rgba(148,163,184,.34);
-          border-radius: 10px;
-          background: #fff;
-          font-size: 20px;
-          line-height: 1;
-          cursor: pointer;
-        }
-        .poa-form-grid{
-          display: grid;
-          gap: 10px;
-          margin-bottom: 12px;
-        }
-        .poa-row{
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-        .poa-field{
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .poa-field label{
-          font-size: 12px;
-          font-weight: 700;
-          color: #475569;
-        }
-        .poa-assigned-by{
-          margin: 0 0 2px;
-          font-size: 11px;
-          font-style: italic;
-          color: #64748b;
-        }
-        .poa-input, .poa-textarea, .poa-select{
-          width: 100%;
-          border: 1px solid rgba(148,163,184,.42);
-          border-radius: 12px;
-          padding: 10px 12px;
-          font-size: 14px;
-          background: #fff;
-          color: #0f172a;
-        }
-        .poa-input.num{
-          text-align: right;
-          font-variant-numeric: tabular-nums;
-        }
-        .poa-select[multiple]{
-          min-height: 104px;
-          padding: 8px;
-        }
-        .poa-textarea{ min-height: 110px; resize: vertical; }
-        .poa-rt-wrap{
-          border: 1px solid rgba(148,163,184,.42);
-          border-radius: 12px;
-          background: #fff;
-          overflow: hidden;
-        }
-        .poa-rt-toolbar{
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-          padding: 8px;
-          border-bottom: 1px solid rgba(148,163,184,.24);
-          background: #f8fafc;
-        }
-        .poa-rt-btn{
-          border:1px solid rgba(148,163,184,.34);
-          border-radius:8px;
-          background:#fff;
-          color:#0f172a;
-          font-size:12px;
-          font-weight:700;
-          padding:5px 8px;
-          cursor:pointer;
-        }
-        .poa-rt-editor{
-          min-height: 120px;
-          padding: 10px 12px;
-          font-size: 14px;
-          line-height: 1.45;
-          color:#0f172a;
-          outline:none;
-        }
-        .poa-tabs{
-          display: flex;
-          gap: 6px;
-          border-bottom: 1px solid rgba(148,163,184,.28);
-          margin-top: 2px;
-        }
-        .poa-tab{
-          border: 1px solid rgba(148,163,184,.32);
-          border-bottom: 0;
-          border-radius: 10px 10px 0 0;
-          background: #fff;
-          padding: 8px 10px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #334155;
-          cursor: pointer;
-        }
-        .poa-tab.active{
-          background: rgba(15,61,46,.10);
-          border-color: rgba(15,61,46,.34);
-          color: #0f3d2e;
-        }
-        .poa-tab-panel{
-          display: none;
-          border: 1px solid rgba(148,163,184,.28);
-          border-top: 0;
-          border-radius: 0 0 12px 12px;
-          background: #fff;
-          padding: 12px;
-        }
-        .poa-tab-panel.active{ display: block; }
-        .poa-actions{
-          display: flex;
-          gap: 8px;
-          margin-top: 10px;
-        }
-        .poa-btn{
-          border: 1px solid rgba(148,163,184,.34);
-          border-radius: 10px;
-          padding: 9px 12px;
-          background: #fff;
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-        }
-        .poa-btn.primary{
-          background: #0f3d2e;
-          border-color: #0f3d2e;
-          color: #fff;
-        }
-        .poa-modal-msg{
-          min-height: 18px;
-          margin-top: 8px;
-          font-size: 12px;
-          color: #0f3d2e;
-        }
-        .poa-state-strip{
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 8px;
-          margin-bottom: 10px;
-        }
-        .poa-state-btn{
-          border: 1px solid rgba(148,163,184,.34);
-          border-radius: 10px;
-          padding: 8px;
-          font-size: 12px;
-          font-weight: 700;
-          background: #fff;
-          color: #334155;
-        }
-        .poa-state-btn.active{
-          border-color: rgba(15,61,46,.45);
-          background: rgba(15,61,46,.12);
-          color: #0f3d2e;
-        }
-        .poa-state-actions{
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          margin-bottom: 8px;
-        }
-        .poa-act-list-panel{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          background: #fff;
-          padding: 8px;
-          margin-bottom: 10px;
-        }
-        .poa-act-list-head{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:8px;
-          margin-bottom:8px;
-        }
-        .poa-act-list-title{
-          margin:0;
-          font-size:13px;
-          color:#334155;
-          font-weight:800;
-        }
-        .poa-act-actions{
-          display:flex;
-          gap:6px;
-          flex-wrap:wrap;
-        }
-        .poa-act-list{
-          display:grid;
-          gap:6px;
-          max-height:180px;
-          overflow:auto;
-        }
-        .poa-act-item{
-          border:1px solid rgba(148,163,184,.24);
-          border-radius:8px;
-          padding:7px 8px;
-          background:#fff;
-          cursor:pointer;
-        }
-        .poa-act-item.active{
-          border-color: rgba(15,61,46,.45);
-          background: rgba(15,61,46,.08);
-        }
-        .poa-act-item .meta{
-          margin-top:2px;
-          font-size:11px;
-          color:#64748b;
-          font-style:italic;
-        }
-        .poa-act-list-msg{
-          min-height:16px;
-          margin-top:6px;
-          font-size:12px;
-          color:#64748b;
-        }
-        .poa-modal.list-mode .poa-form-grid,
-        .poa-modal.list-mode .poa-tabs,
-        .poa-modal.list-mode .poa-tab-panel,
-        .poa-modal.list-mode .poa-actions{
-          display:none;
-        }
-        .poa-summary{
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
-          gap: 10px;
-          margin-bottom: 10px;
-        }
-        .poa-summary-item{
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          padding: 8px 10px;
-          background: #fff;
-        }
-        .poa-summary-label{
-          font-size: 11px;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: .03em;
-        }
-        .poa-summary-value{
-          margin-top: 4px;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #0f172a;
-        }
-        .poa-semaforo{
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          display: inline-block;
-          border: 1px solid rgba(15,23,42,.22);
-          background: #cbd5e1;
-        }
-        .poa-semaforo.gray{ background: #9ca3af; }
-        .poa-semaforo.yellow{ background: #eab308; }
-        .poa-semaforo.orange{ background: #f97316; }
-        .poa-semaforo.green{ background: #22c55e; }
-        .poa-semaforo.red{ background: #ef4444; }
-        .poa-sub-header{
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-        .poa-sub-list{
-          display: grid;
-          gap: 8px;
-        }
-        .poa-sub-item{
-          border: 1px solid rgba(148,163,184,.26);
-          border-radius: 10px;
-          padding: 8px;
-          background: #fff;
-        }
-        .poa-sub-item h5{
-          margin: 0;
-          font-size: 14px;
-        }
-        .poa-sub-meta{
-          margin-top: 4px;
-          font-size: 12px;
-          color: #64748b;
-          font-style: italic;
-        }
-        .poa-sub-actions{
-          margin-top: 6px;
-          display: flex;
-          gap: 6px;
-        }
-        .poa-sub-btn{
-          border: 1px solid rgba(148,163,184,.34);
-          border-radius: 8px;
-          padding: 5px 8px;
-          background: #fff;
-          font-size: 12px;
-          font-weight: 700;
-          cursor: pointer;
-        }
-        .poa-sub-btn.warn{
-          border-color: rgba(239,68,68,.28);
-          color: #b91c1c;
-          background: #fff5f5;
-        }
-        .poa-budget-form{
-          display: grid;
-          gap: 10px;
-        }
-        .poa-budget-table-wrap{
-          margin-top: 8px;
-          border: 1px solid rgba(148,163,184,.28);
-          border-radius: 10px;
-          overflow: auto;
-          background: #fff;
-        }
-        .poa-budget-table{
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 760px;
-        }
-        .poa-budget-table th,
-        .poa-budget-table td{
-          border-bottom: 1px solid rgba(148,163,184,.20);
-          padding: 8px 10px;
-          font-size: 12px;
-          color: #0f172a;
-          background: #fff;
-        }
-        .poa-budget-table th{
-          background: rgba(15,61,46,.08);
-          color: #0f3d2e;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: .02em;
-          text-align: left;
-        }
-        .poa-budget-table .num{
-          text-align: right;
-          font-variant-numeric: tabular-nums;
-          white-space: nowrap;
-        }
-        .poa-budget-total{
-          margin-top: 8px;
-          display: flex;
-          gap: 14px;
-          justify-content: flex-end;
-          color: #334155;
-          font-size: 12px;
-          font-weight: 700;
-        }
-        .poa-budget-total b{
-          color: #0f172a;
-          font-size: 13px;
-        }
-        .poa-deliv-form{
-          display:grid;
-          gap:10px;
-        }
-        .poa-deliv-row{
-          display:grid;
-          grid-template-columns: minmax(0,1fr) auto;
-          gap:8px;
-          align-items:end;
-        }
-        .poa-deliv-list{
-          border:1px solid rgba(148,163,184,.26);
-          border-radius:10px;
-          background:#fff;
-          max-height:220px;
-          overflow:auto;
-        }
-        .poa-deliv-item{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:10px;
-          padding:8px 10px;
-          border-bottom:1px solid rgba(148,163,184,.16);
-        }
-        .poa-deliv-item:last-child{ border-bottom:none; }
-        .poa-deliv-item label{
-          display:flex;
-          align-items:center;
-          gap:8px;
-          font-size:13px;
-          color:#0f172a;
-          cursor:pointer;
-        }
-        .poa-deliv-msg{
-          min-height:18px;
-          font-size:12px;
-          color:#64748b;
-        }
-        .poa-gantt-wrap{
-          background:#fff;
-          border:1px solid rgba(148,163,184,.26);
-          border-radius:12px;
-          padding:10px;
-        }
-        .poa-gantt-legend{
-          display:flex;
-          gap:10px;
-          flex-wrap:wrap;
-          margin-bottom:8px;
-          font-size:12px;
-          color:#334155;
-        }
-        .poa-gantt-chip{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          border:1px solid rgba(148,163,184,.24);
-          border-radius:999px;
-          padding:4px 8px;
-          background:#f8fafc;
-        }
-        .poa-gantt-dot{
-          width:10px;
-          height:10px;
-          border-radius:999px;
-          display:inline-block;
-        }
-        .poa-gantt-controls{
-          display:flex;
-          flex-wrap:wrap;
-          gap:10px;
-          align-items:flex-start;
-          margin-bottom:8px;
-        }
-        .poa-gantt-actions{
-          display:flex;
-          gap:8px;
-        }
-        .poa-gantt-action{
-          border:1px solid rgba(148,163,184,.30);
-          background:#fff;
-          border-radius:8px;
-          padding:6px 10px;
-          font-size:12px;
-          font-weight:700;
-          color:#0f172a;
-          cursor:pointer;
-        }
-        .poa-gantt-blocks{
-          display:flex;
-          flex-wrap:wrap;
-          gap:8px;
-          flex:1;
-        }
-        .poa-gantt-block{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          border:1px solid rgba(148,163,184,.24);
-          border-radius:999px;
-          padding:4px 8px;
-          background:#fff;
-          font-size:12px;
-          color:#334155;
-        }
-        .poa-gantt-host{
-          border:1px solid rgba(148,163,184,.22);
-          border-radius:10px;
-          background:#fff;
-          overflow:auto;
-          max-height:68vh;
-        }
-        .poa-cal-wrap{
-          background:#fff;
-          border:1px solid rgba(148,163,184,.26);
-          border-radius:12px;
-          padding:10px;
-        }
-        .poa-cal-head{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:8px;
-          margin-bottom:8px;
-        }
-        .poa-cal-nav{
-          display:flex;
-          gap:8px;
-          align-items:center;
-        }
-        .poa-cal-title{
-          font-size:16px;
-          font-weight:800;
-          color:#0f172a;
-          margin:0;
-        }
-        .poa-cal-grid{
-          display:grid;
-          grid-template-columns:repeat(7, minmax(0,1fr));
-          gap:6px;
-        }
-        .poa-cal-dow{
-          font-size:11px;
-          font-weight:800;
-          color:#64748b;
-          text-transform:uppercase;
-          letter-spacing:.03em;
-          padding:4px 6px;
-        }
-        .poa-cal-cell{
-          min-height:94px;
-          border:1px solid rgba(148,163,184,.24);
-          border-radius:10px;
-          padding:6px;
-          background:#fff;
-        }
-        .poa-cal-cell.muted{
-          background:#f8fafc;
-          opacity:.65;
-        }
-        .poa-cal-day{
-          font-size:12px;
-          font-weight:700;
-          color:#0f172a;
-          margin-bottom:4px;
-        }
-        .poa-cal-events{
-          display:grid;
-          gap:4px;
-        }
-        .poa-cal-event{
-          border:none;
-          border-radius:8px;
-          padding:3px 6px;
-          font-size:11px;
-          text-align:left;
-          color:#fff;
-          cursor:pointer;
-          overflow:hidden;
-          text-overflow:ellipsis;
-          white-space:nowrap;
-        }
-        .poa-cal-event.objective{ background:#0f3d2e; }
-        .poa-cal-event.activity{ background:#2563eb; }
-        .poa-cal-more{
-          font-size:10px;
-          color:#64748b;
-          font-style:italic;
-          padding-left:2px;
-        }
-        .poa-tree-wrap{
-          display:grid;
-          gap:10px;
-        }
-        .poa-tree-help{
-          margin:0;
-          color:#64748b;
-          font-size:12px;
-          font-style:italic;
-        }
-        .poa-tree-grid{
-          display:grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap:10px;
-        }
-        .poa-tree-axis{
-          border:1px solid rgba(148,163,184,.30);
-          border-radius:12px;
-          background:#fff;
-          padding:10px;
-          box-shadow:0 8px 18px rgba(15,23,42,.06);
-        }
-        .poa-tree-axis-head{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:8px;
-          margin-bottom:8px;
-        }
-        .poa-tree-axis h4{
-          margin:0;
-          font-size:15px;
-          color:#0f172a;
-        }
-        .poa-tree-toggle{
-          border:1px solid rgba(15,61,46,.28);
-          background:#0f3d2e;
-          color:#fff;
-          border-radius:999px;
-          font-size:11px;
-          font-weight:700;
-          padding:4px 10px;
-          cursor:pointer;
-        }
-        .poa-tree-objectives{
-          display:grid;
-          gap:8px;
-        }
-        .poa-tree-item{
-          border:1px solid rgba(148,163,184,.26);
-          border-radius:10px;
-          background:#f8fafc;
-          padding:8px;
-          position: relative;
-          overflow: hidden;
-        }
-        .poa-tree-state{
-          position:absolute;
-          top:0;
-          left:0;
-          right:0;
-          height:6px;
-          background: transparent;
-        }
-        .poa-tree-state-yellow{ background:#eab308; }
-        .poa-tree-state-orange{ background:#f97316; }
-        .poa-tree-state-red{ background:#ef4444; }
-        .poa-tree-state-green{ background:#22c55e; }
-        .poa-tree-item.has-state{
-          padding-top: 12px;
-        }
-        .poa-tree-item-head{
-          display:flex;
-          align-items:flex-start;
-          justify-content:space-between;
-          gap:8px;
-        }
-        .poa-tree-item-title{
-          margin:0;
-          font-size:13px;
-          color:#0f172a;
-        }
-        .poa-tree-item-meta{
-          margin:4px 0 0;
-          font-size:11px;
-          color:#64748b;
-          font-style:italic;
-        }
-        .poa-tree-click{
-          cursor:pointer;
-          text-decoration:underline;
-          text-decoration-style:dotted;
-        }
-        .poa-tree-children{
-          display:grid;
-          gap:6px;
-          margin-top:8px;
-          padding-left:8px;
-          border-left:2px solid rgba(148,163,184,.28);
-        }
-        .poa-tree-children .poa-tree-item{
-          background:#fff;
-        }
-        @media (max-width: 860px){
-          .poa-row{ grid-template-columns: 1fr; }
-        }
-      </style>
 
       <div class="poa-board-head">
         <div class="poa-board-head-row">
@@ -7264,13 +4824,13 @@ POA_LIMPIO_HTML = dedent("""
             <button type="button" class="poa-btn" id="poa-download-template">Descargar plantilla CSV</button>
             <button type="button" class="poa-btn" id="poa-export-xls">Exportar plan + POA XLS</button>
             <button type="button" class="poa-btn" id="poa-import-csv">Importar CSV estratégico + POA</button>
-            <input id="poa-import-csv-file" type="file" accept=".csv,text/csv" style="display:none;">
+            <input id="poa-import-csv-file" type="file" accept=".csv,text/csv">
           </div>
         </div>
       </div>
       <div class="poa-board-msg" id="poa-board-msg" aria-live="polite"></div>
-      <div class="axm-track-missing" id="poa-no-owner-msg" aria-live="polite" style="display:none;margin-top:8px;"></div>
-      <div class="axm-track-missing" id="poa-no-subowner-msg" aria-live="polite" style="display:none;margin-top:8px;"></div>
+      <div class="axm-track-missing" id="poa-no-owner-msg" aria-live="polite"></div>
+      <div class="axm-track-missing" id="poa-no-subowner-msg" aria-live="polite"></div>
       <section class="poa-owner-chart" id="poa-owner-chart">
         <div class="poa-owner-chart-head">
           <div>
@@ -7286,7 +4846,7 @@ POA_LIMPIO_HTML = dedent("""
       <div class="poa-modal" id="poa-tree-modal" role="dialog" aria-modal="true" aria-labelledby="poa-tree-title">
         <section class="poa-modal-dialog">
           <div class="poa-modal-head">
-            <h3 id="poa-tree-title" style="margin:0;font-size:18px;">Árbol de avance</h3>
+            <h3 id="poa-tree-title">Árbol de avance</h3>
             <button class="poa-modal-close" id="poa-tree-close" type="button" aria-label="Cerrar">×</button>
           </div>
           <div class="poa-tree-wrap">
@@ -7298,14 +4858,14 @@ POA_LIMPIO_HTML = dedent("""
       <div class="poa-modal" id="poa-gantt-modal" role="dialog" aria-modal="true" aria-labelledby="poa-gantt-title">
         <section class="poa-modal-dialog">
           <div class="poa-modal-head">
-            <h3 id="poa-gantt-title" style="margin:0;font-size:18px;">Vista Gantt POA</h3>
+            <h3 id="poa-gantt-title">Vista Gantt POA</h3>
             <button class="poa-modal-close" id="poa-gantt-close" type="button" aria-label="Cerrar">×</button>
           </div>
           <div class="poa-gantt-wrap">
             <div class="poa-gantt-legend">
-              <span class="poa-gantt-chip"><span class="poa-gantt-dot" style="background:#0f3d2e;"></span>Objetivo estratégico</span>
-              <span class="poa-gantt-chip"><span class="poa-gantt-dot" style="background:#2563eb;"></span>Actividad POA</span>
-              <span class="poa-gantt-chip"><span class="poa-gantt-dot" style="background:#ef4444;"></span>Hoy</span>
+              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Objetivo estratégico</span>
+              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Actividad POA</span>
+              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Hoy</span>
             </div>
             <div class="poa-gantt-controls">
               <div class="poa-gantt-actions">
@@ -7321,7 +4881,7 @@ POA_LIMPIO_HTML = dedent("""
       <div class="poa-modal" id="poa-calendar-modal" role="dialog" aria-modal="true" aria-labelledby="poa-calendar-title">
         <section class="poa-modal-dialog">
           <div class="poa-modal-head">
-            <h3 id="poa-calendar-title" style="margin:0;font-size:18px;">Vista Calendario POA</h3>
+            <h3 id="poa-calendar-title">Vista Calendario POA</h3>
             <button class="poa-modal-close" id="poa-calendar-close" type="button" aria-label="Cerrar">×</button>
           </div>
           <div class="poa-cal-wrap">
@@ -7341,8 +4901,8 @@ POA_LIMPIO_HTML = dedent("""
         <section class="poa-modal-dialog">
           <div class="poa-modal-head">
             <div>
-              <h3 id="poa-activity-title" style="margin:0;font-size:18px;">Nueva actividad</h3>
-              <p id="poa-activity-subtitle" style="margin:4px 0 0;color:#64748b;font-size:12px;"></p>
+              <h3 id="poa-activity-title">Nueva actividad</h3>
+              <p id="poa-activity-subtitle"></p>
             </div>
             <button class="poa-modal-close" id="poa-activity-close" type="button" aria-label="Cerrar">×</button>
           </div>
@@ -7364,8 +4924,8 @@ POA_LIMPIO_HTML = dedent("""
             <button type="button" class="poa-state-btn" id="poa-state-en-revision" disabled>En revisión</button>
           </div>
           <div class="poa-state-actions" id="poa-state-actions">
-            <button type="button" class="poa-btn" id="poa-approval-approve" style="display:none;">Aprobar entregable</button>
-            <button type="button" class="poa-btn" id="poa-approval-reject" style="display:none;">Rechazar entregable</button>
+            <button type="button" class="poa-btn" id="poa-approval-approve">Aprobar entregable</button>
+            <button type="button" class="poa-btn" id="poa-approval-reject">Rechazar entregable</button>
           </div>
           <section class="poa-act-list-panel">
             <div class="poa-act-list-head">
@@ -7428,7 +4988,7 @@ POA_LIMPIO_HTML = dedent("""
             <div class="poa-row">
               <div class="poa-field">
                 <label for="poa-act-recurrente">Recurrente</label>
-                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:#334155;font-size:13px;">
+                <label>
                   <input id="poa-act-recurrente" type="checkbox">
                   Habilitar recurrencia
                 </label>
@@ -7446,21 +5006,21 @@ POA_LIMPIO_HTML = dedent("""
                 </select>
               </div>
             </div>
-            <div class="poa-field" id="poa-act-every-days-wrap" style="display:none;">
+            <div class="poa-field" id="poa-act-every-days-wrap">
               <label for="poa-act-every-days">Cada xx dias</label>
               <input id="poa-act-every-days" class="poa-input" type="number" min="1" step="1" placeholder="Ej. 3">
             </div>
           </div>
 
-          <div class="poa-tabs" id="poa-tabs">
-            <button type="button" class="poa-tab active" data-poa-tab="desc">Descripción</button>
-            <button type="button" class="poa-tab" data-poa-tab="sub">Subtareas</button>
-            <button type="button" class="poa-tab" data-poa-tab="kpi">Kpis</button>
-            <button type="button" class="poa-tab" data-poa-tab="deliverables">Entregables</button>
-            <button type="button" class="poa-tab" data-poa-tab="budget">Presupuesto</button>
+          <div class="tabs tabs-lifted w-full flex-wrap poa-tabs" id="poa-tabs" role="tablist" aria-label="POA">
+            <button type="button" class="tab rounded-t-lg tab-active active poa-tab" data-poa-tab="desc">Descripción</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="sub">Subtareas</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="kpi">Kpis</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="deliverables">Entregables</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="budget">Presupuesto</button>
           </div>
           <section class="poa-tab-panel active" data-poa-panel="desc">
-            <div class="poa-field" style="margin-top:0;">
+            <div class="poa-field">
               <label for="poa-act-desc">Descripción</label>
               <textarea id="poa-act-desc" class="poa-textarea" placeholder="Descripción de la actividad"></textarea>
             </div>
@@ -7470,13 +5030,13 @@ POA_LIMPIO_HTML = dedent("""
           </section>
           <section class="poa-tab-panel" data-poa-panel="sub">
             <div class="poa-sub-header">
-              <p id="poa-sub-hint" style="margin:0;color:#64748b;font-size:13px;">Guarda primero la actividad para habilitar subtareas.</p>
+              <p id="poa-sub-hint">Guarda primero la actividad para habilitar subtareas.</p>
               <button type="button" class="poa-btn" id="poa-sub-add">Agregar subtarea</button>
             </div>
             <div class="poa-sub-list" id="poa-sub-list"></div>
           </section>
           <section class="poa-tab-panel" data-poa-panel="kpi">
-            <p style="margin:0;color:#64748b;font-size:13px;">Kpis: en construcción.</p>
+            <p>Kpis: en construcción.</p>
           </section>
           <section class="poa-tab-panel" data-poa-panel="deliverables">
             <div class="poa-deliv-form">
@@ -7488,7 +5048,7 @@ POA_LIMPIO_HTML = dedent("""
                 <button type="button" class="poa-btn" id="poa-deliv-add">Agregar</button>
               </div>
               <div class="poa-deliv-list" id="poa-deliv-list">
-                <div class="poa-sub-meta" style="padding:8px 10px;">Sin entregables registrados.</div>
+                <div class="poa-sub-meta">Sin entregables registrados.</div>
               </div>
               <div class="poa-deliv-msg" id="poa-deliv-msg" aria-live="polite"></div>
             </div>
@@ -7525,13 +5085,13 @@ POA_LIMPIO_HTML = dedent("""
               </div>
               <div class="poa-row">
                 <div class="poa-field">
-                  <label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:#334155;font-size:13px;">
+                  <label>
                     <input id="poa-budget-approved" type="checkbox">
                     Autorizado
                   </label>
                 </div>
-                <div class="poa-field" style="justify-content:flex-end;">
-                  <div class="poa-actions" style="margin-top:0;">
+                <div class="poa-field">
+                  <div class="poa-actions">
                     <button type="button" class="poa-btn primary" id="poa-budget-add">Agregar rubro</button>
                     <button type="button" class="poa-btn" id="poa-budget-cancel">Cancelar</button>
                   </div>
@@ -7551,7 +5111,7 @@ POA_LIMPIO_HTML = dedent("""
                   </tr>
                 </thead>
                 <tbody id="poa-budget-list">
-                  <tr><td colspan="6" style="color:#64748b;">Sin rubros registrados.</td></tr>
+                  <tr><td colspan="6">Sin rubros registrados.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -7579,7 +5139,7 @@ POA_LIMPIO_HTML = dedent("""
       <div class="poa-modal" id="poa-sub-modal" role="dialog" aria-modal="true" aria-labelledby="poa-sub-title">
         <section class="poa-modal-dialog">
           <div class="poa-modal-head">
-            <h3 id="poa-sub-title" style="margin:0;font-size:18px;">Subtarea</h3>
+            <h3 id="poa-sub-title">Subtarea</h3>
             <button class="poa-modal-close" id="poa-sub-close" type="button" aria-label="Cerrar">×</button>
           </div>
           <p class="poa-branch-path" id="poa-sub-branch"></p>
@@ -7613,7 +5173,7 @@ POA_LIMPIO_HTML = dedent("""
             <div class="poa-row">
               <div class="poa-field">
                 <label for="poa-sub-recurrente">Recurrente</label>
-                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:#334155;font-size:13px;">
+                <label>
                   <input id="poa-sub-recurrente" type="checkbox">
                   Habilitar recurrencia
                 </label>
@@ -7631,7 +5191,7 @@ POA_LIMPIO_HTML = dedent("""
                 </select>
               </div>
             </div>
-            <div class="poa-field" id="poa-sub-every-days-wrap" style="display:none;">
+            <div class="poa-field" id="poa-sub-every-days-wrap">
               <label for="poa-sub-every-days">Cada xx dias</label>
               <input id="poa-sub-every-days" class="poa-input" type="number" min="1" step="1" placeholder="Ej. 3">
             </div>
@@ -7865,11 +5425,7 @@ POA_LIMPIO_HTML = dedent("""
             if (window.d3) return true;
             if (!poaD3Promise) {
               poaD3Promise = (async () => {
-                try {
-                  await loadScript("/static/vendor/d3.min.js");
-                } catch (_localError) {
-                  await loadScript("https://cdn.jsdelivr.net/npm/d3@7");
-                }
+                await loadScript("/static/vendor/d3.min.js");
                 return !!window.d3;
               })().catch(() => false);
             }
@@ -7923,7 +5479,7 @@ POA_LIMPIO_HTML = dedent("""
                 <div class="poa-owner-row">
                   <div class="poa-owner-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
                   <div class="poa-owner-bar">
-                    <div class="poa-owner-fill" style="width:${pct.toFixed(2)}%;"></div>
+                    <div class="poa-owner-fill"></div>
                   </div>
                   <div class="poa-owner-value">${Number(amount || 0)} (${pct.toFixed(1)}%)</div>
                 </div>
@@ -7935,7 +5491,7 @@ POA_LIMPIO_HTML = dedent("""
                 <div class="poa-owner-row">
                   <div class="poa-owner-name" title="Otros usuarios">Otros usuarios</div>
                   <div class="poa-owner-bar">
-                    <div class="poa-owner-fill" style="width:${pct.toFixed(2)}%;"></div>
+                    <div class="poa-owner-fill"></div>
                   </div>
                   <div class="poa-owner-value">${extraCount} (${pct.toFixed(1)}%)</div>
                 </div>
@@ -8147,7 +5703,7 @@ POA_LIMPIO_HTML = dedent("""
                         avance: sub?.avance,
                       })}"></div>
                       <div class="poa-tree-item-head">
-                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-sub="${Number(sub.id || 0)}" data-tree-sub-parent="${actId}" style="margin:0;">${escapeHtml(sub.nombre || "Subtarea")}</h6>
+                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-sub="${Number(sub.id || 0)}" data-tree-sub-parent="${actId}">${escapeHtml(sub.nombre || "Subtarea")}</h6>
                       </div>
                     </div>
                   `).join("") : "";
@@ -8155,7 +5711,7 @@ POA_LIMPIO_HTML = dedent("""
                     <div class="poa-tree-item ${actTone !== "none" ? "has-state" : ""}">
                       <div class="poa-tree-state poa-tree-state-${actTone}"></div>
                       <div class="poa-tree-item-head">
-                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-activity="${actId}" data-tree-objective="${objId}" style="margin:0;">${escapeHtml(act.nombre || "Actividad")}</h6>
+                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-activity="${actId}" data-tree-objective="${objId}">${escapeHtml(act.nombre || "Actividad")}</h6>
                         ${subList.length ? `<button type="button" class="poa-tree-toggle" data-tree-toggle="act" data-tree-id="${actId}">${actOpen ? "Ocultar" : "Mostrar"}</button>` : ""}
                       </div>
                       ${subList.length ? `<p class="poa-tree-item-meta">Subactividades: ${subList.length}</p>` : ""}
@@ -8265,7 +5821,7 @@ POA_LIMPIO_HTML = dedent("""
             if (!ganttHostEl) return;
             const ok = await ensureD3Library();
             if (!ok) {
-              ganttHostEl.innerHTML = '<p style="padding:10px;color:#b91c1c;">No se pudo cargar la librería para Gantt.</p>';
+              ganttHostEl.innerHTML = '<p>No se pudo cargar la librería para Gantt.</p>';
               return;
             }
             renderPoaGanttFilters();
@@ -8308,7 +5864,7 @@ POA_LIMPIO_HTML = dedent("""
               });
             });
             if (!rows.length) {
-              ganttHostEl.innerHTML = '<p style="padding:10px;color:#64748b;">No hay fechas suficientes en objetivos/actividades para generar Gantt.</p>';
+              ganttHostEl.innerHTML = '<p>No hay fechas suficientes en objetivos/actividades para generar Gantt.</p>';
               return;
             }
             const minDate = new Date(Math.min(...rows.map((item) => item.start.getTime())));
@@ -8482,7 +6038,7 @@ POA_LIMPIO_HTML = dedent("""
             const list = normalizeDeliverables(currentDeliverables);
             currentDeliverables = list;
             if (!list.length) {
-              delivListEl.innerHTML = '<div class="poa-sub-meta" style="padding:8px 10px;">Sin entregables registrados.</div>';
+              delivListEl.innerHTML = '<div class="poa-sub-meta">Sin entregables registrados.</div>';
               return;
             }
             delivListEl.innerHTML = list.map((item, idx) => `
@@ -8575,7 +6131,7 @@ POA_LIMPIO_HTML = dedent("""
             if (budgetMonthlyTotalEl) budgetMonthlyTotalEl.textContent = formatMoney(monthlyTotal);
             if (budgetAnnualTotalEl) budgetAnnualTotalEl.textContent = formatMoney(annualTotal);
             if (!list.length) {
-              budgetListEl.innerHTML = '<tr><td colspan="6" style="color:#64748b;">Sin rubros registrados.</td></tr>';
+              budgetListEl.innerHTML = '<tr><td colspan="6">Sin rubros registrados.</td></tr>';
               return;
             }
             budgetListEl.innerHTML = list.map((item, idx) => `
@@ -8985,11 +6541,11 @@ POA_LIMPIO_HTML = dedent("""
             renderActivityList();
           };
           const activatePoaTab = (tabKey) => {
-            document.querySelectorAll("[data-poa-tab]").forEach((btn) => btn.classList.remove("active"));
+            document.querySelectorAll("[data-poa-tab]").forEach((btn) => { btn.classList.remove("active"); btn.classList.remove("tab-active"); });
             document.querySelectorAll("[data-poa-panel]").forEach((panel) => panel.classList.remove("active"));
             const tabBtn = document.querySelector(`[data-poa-tab="${tabKey}"]`);
             const panel = document.querySelector(`[data-poa-panel="${tabKey}"]`);
-            if (tabBtn) tabBtn.classList.add("active");
+            if (tabBtn) { tabBtn.classList.add("active"); tabBtn.classList.add("tab-active"); }
             if (panel) panel.classList.add("active");
           };
           const openActivityForm = async (objectiveId, options = {}) => {
@@ -9083,7 +6639,7 @@ POA_LIMPIO_HTML = dedent("""
               const level = Number(item.nivel || 1);
               const marginLeft = Math.max(0, (level - 1) * 18);
               return `
-              <article class="poa-sub-item" data-sub-id="${Number(item.id || 0)}" style="margin-left:${marginLeft}px;">
+              <article class="poa-sub-item" data-sub-id="${Number(item.id || 0)}">
                 <h5>${escapeHtml(item.nombre || "Subtarea sin nombre")}</h5>
                 <div class="poa-sub-meta">Nivel ${level} · ${escapeHtml(fmtDate(item.fecha_inicial))} - ${escapeHtml(fmtDate(item.fecha_final))} · Responsable: ${escapeHtml(item.responsable || "N/D")}</div>
                 ${canManage ? `
@@ -9816,7 +7372,7 @@ POA_LIMPIO_HTML = dedent("""
                 noSubOwnerMsgEl.innerHTML = "";
               } else {
                 const listItems = subactivitiesNoOwner.slice(0, 8)
-                  .map((item) => `<li>${escapeHtml(item.nombre)} <span style="opacity:.7;font-size:.85em">(${escapeHtml(item.activity)})</span></li>`)
+                  .map((item) => `<li>${escapeHtml(item.nombre)} <span>(${escapeHtml(item.activity)})</span></li>`)
                   .join("");
                 const extraCount = subactivitiesNoOwner.length > 8 ? `<div class="axm-track-missing-more">+${subactivitiesNoOwner.length - 8} más</div>` : "";
                 noSubOwnerMsgEl.style.display = "block";
@@ -9841,7 +7397,7 @@ POA_LIMPIO_HTML = dedent("""
             });
             const axisNames = Object.keys(grouped).sort((a, b) => a.localeCompare(b, "es"));
             if (!axisNames.length) {
-              gridEl.innerHTML = '<div class="poa-obj-card" style="min-width:320px;"><h4>Sin objetivos</h4><div class="meta">No hay objetivos disponibles para mostrar.</div></div>';
+              gridEl.innerHTML = '<div class="poa-obj-card"><h4>Sin objetivos</h4><div class="meta">No hay objetivos disponibles para mostrar.</div></div>';
               return;
             }
             gridEl.innerHTML = axisNames.map((axisName) => {
@@ -9994,23 +7550,581 @@ POA_LIMPIO_HTML = dedent("""
 @router.get("/ejes-estrategicos", response_class=HTMLResponse)
 def ejes_estrategicos_page(request: Request):
     _bind_core_symbols()
-    axis_seed_html = _build_initial_axis_list_html()
-    base_content = EJES_ESTRATEGICOS_HTML.replace(
-        '<div class="axm-list" id="axm-axis-list"></div>',
-        f'<div class="axm-list" id="axm-axis-list">{axis_seed_html}</div>',
-    )
+    base_content = dedent("""
+      <section class="grid gap-4 w-full max-w-6xl">
+        <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+          <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+              src="/templates/icon/plan.svg"
+              alt="Icono plan estratégico"
+              width="96"
+              height="96"
+              class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+              <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Plan estratégico</div>
+              <div class="block w-full text-base sm:text-lg text-base-content/70">Definir la estrategia institucional permite alinear objetivos, iniciativas y resultados.</div>
+            </div>
+          </div>
+        </div>
+        <div class="view-buttons page-view-buttons" id="planes-view-switch">
+          <button class="view-pill boton_vista active" type="button" data-planes-view="list" data-tooltip="Lista" aria-label="Lista">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+            <span class="view-pill-label boton_vista-label">List</span>
+          </button>
+          <button class="view-pill boton_vista" type="button" data-planes-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Kanban</span>
+          </button>
+          <button class="view-pill boton_vista" type="button" data-planes-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Organigrama</span>
+          </button>
+        </div>
+        <article class="card border shadow-sm rounded-[2rem]" style="background:#eff4f2;border-color:#cfd7df;">
+          <div class="card-body p-6 sm:p-8 lg:p-10" id="planes-view-list">
+            <style>
+              .dash{
+                background:#ffffff;
+                color:#1f2937;
+                padding:18px 18px 12px;
+                border-radius:18px;
+              }
+              .dash__title{
+                font-size:13.2px;
+                line-height:1.2;
+                margin:0 0 14px 0;
+                font-weight:700;
+              }
+              .dash__grid{
+                display:grid;
+                grid-template-columns:repeat(4, minmax(0, 1fr));
+                gap:16px;
+              }
+              .kpi{
+                background:#fff;
+                border:1px solid #d9dee7;
+                border-radius:18px;
+                box-shadow:0 10px 24px rgba(16, 24, 40, 0.06);
+                padding:16px 18px;
+                min-height:92px;
+                display:flex;
+                flex-direction:column;
+                justify-content:center;
+              }
+              .kpi__label{
+                font-size:8.4px;
+                letter-spacing:0.12em;
+                text-transform:uppercase;
+                color:#61708a;
+                font-weight:700;
+                margin-bottom:10px;
+              }
+              .kpi__value{
+                font-size:24px;
+                line-height:1;
+                font-weight:800;
+                color:#0f5132;
+              }
+              .dash__progress{
+                margin:14px 2px 10px;
+                height:10px;
+                background:#e5e7eb;
+                border-radius:999px;
+                overflow:hidden;
+              }
+              .dash__progress-bar{
+                height:100%;
+                width:0%;
+                background:#cbd5e1;
+                border-radius:999px;
+              }
+              .dash__foot{
+                display:flex;
+                gap:28px;
+                font-size:12px;
+                color:#374151;
+                padding:6px 0 0;
+              }
+              .dash__foot strong{ font-weight:800; }
+              .milestone-card{
+                background:#ffffff;
+                border:1px solid #d8dee8;
+                border-radius:20px;
+                box-shadow:0 10px 24px rgba(16, 24, 40, .06);
+                padding:18px 22px;
+              }
+              .milestone-card__inner{
+                display:flex;
+                align-items:center;
+                gap:22px;
+              }
+              .donut{
+                --p:0;
+                width:92px;
+                height:92px;
+                border-radius:999px;
+                background:conic-gradient(#cbd5e1 calc(var(--p) * 1%), #e4e9f1 0);
+                position:relative;
+                box-shadow:inset 0 0 0 1px rgba(15, 23, 42, .06);
+                flex:0 0 auto;
+              }
+              .donut::before{
+                content:"";
+                position:absolute;
+                inset:12px;
+                background:#ffffff;
+                border-radius:999px;
+                box-shadow:inset 0 0 0 1px rgba(15, 23, 42, .04);
+              }
+              .donut__center{
+                position:absolute;
+                inset:0;
+                display:grid;
+                place-items:center;
+                font-weight:800;
+                font-size:15.6px;
+                color:#0f172a;
+                z-index:1;
+              }
+              .milestone-info{
+                display:flex;
+                flex-direction:column;
+                gap:10px;
+                min-width:0;
+              }
+              .milestone-title{
+                font-size:12px;
+                font-weight:800;
+                letter-spacing:0.10em;
+                text-transform:uppercase;
+                color:#475569;
+              }
+              .milestone-stats{
+                display:flex;
+                flex-wrap:wrap;
+                gap:18px;
+                font-size:12px;
+                color:#334155;
+              }
+              .milestone-stats strong{
+                font-weight:800;
+                color:#0f172a;
+              }
+              .milestone-stats .is-danger{ color:#dc2626; }
+              .cards-2{
+                display:grid;
+                grid-template-columns:repeat(2, minmax(0, 1fr));
+                gap:22px;
+                align-items:start;
+              }
+              .panel{
+                background:#ffffff;
+                border:1px solid #d8dee8;
+                border-radius:20px;
+                box-shadow:0 10px 24px rgba(16, 24, 40, .06);
+                padding:18px 22px 20px;
+              }
+              .panel__head{
+                display:flex;
+                flex-direction:column;
+                gap:10px;
+                margin-bottom:8px;
+              }
+              .panel__title{
+                margin:0;
+                font-size:10px;
+                font-weight:800;
+                letter-spacing:0.10em;
+                text-transform:uppercase;
+                color:#475569;
+              }
+              .panel__meta{
+                font-size:11px;
+                color:#0f172a;
+              }
+              .panel__meta strong{ font-weight:900; }
+              .panel__list{
+                list-style:none;
+                padding:0;
+                margin:10px 0 0 0;
+                color:#334155;
+                font-size:11px;
+                line-height:1.55;
+              }
+              .panel__list li{
+                padding-left:34px;
+                position:relative;
+                margin:10px 0;
+              }
+              .panel__list li::before{
+                content:"";
+                position:absolute;
+                left:14px;
+                top:0.9em;
+                width:6px;
+                height:6px;
+                border-radius:999px;
+                background:rgba(100, 116, 139, .35);
+                transform:translateY(-50%);
+              }
+              .panel__more{
+                display:inline-block;
+                margin-top:8px;
+                color:#64748b;
+                font-style:italic;
+                font-size:10px;
+                text-decoration:none;
+              }
+              .panel__more:hover{ text-decoration:underline; }
+              @media (max-width:1100px){
+                .dash__grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+              }
+              @media (max-width:980px){
+                .cards-2{ grid-template-columns:1fr; }
+                .panel__title{ font-size:9px; }
+                .panel__meta, .panel__list{ font-size:10px; }
+              }
+              @media (max-width:520px){
+                .dash__grid{ grid-template-columns:1fr; }
+                .kpi__value{ font-size:21.6px; }
+                .dash__foot{ font-size:10.8px; gap:18px; }
+              }
+              @media (max-width:640px){
+                .milestone-card__inner{ align-items:flex-start; }
+                .milestone-stats{ font-size:10.8px; gap:12px; }
+                .milestone-title{ font-size:10.8px; }
+                .donut{ width:84px; height:84px; }
+                .donut::before{ inset:11px; }
+              }
+            </style>
+            <section class="grid gap-5">
+              <div class="tabs tabs-lifted w-full flex-wrap axm-tabs" role="tablist" aria-label="Planificación estratégica">
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="fundamentacion">
+                  <img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="identidad">
+                  <img src="/templates/icon/identidad.svg" alt="" class="tab-icon">Identidad
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg tab-active active axm-tab" data-planes-strategic-tab="ejes">
+                  <img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="objetivos">
+                  <img src="/templates/icon/objetivos.svg" alt="" class="tab-icon">Objetivos
+                </button>
+              </div>
+              <section id="planes-tab-panel-fundamentacion" class="card bg-base-100 border border-base-300 rounded-2xl hidden">
+                <div class="card-body">
+                  <h3 class="card-title">Fundamentación</h3>
+                  <p class="text-base-content/70">Contenido en transición Daisy con CSS institucional.</p>
+                </div>
+              </section>
+              <section id="planes-tab-panel-identidad" class="card bg-base-100 border border-base-300 rounded-2xl hidden">
+                <div class="card-body">
+                  <h3 class="card-title">Identidad</h3>
+                  <p class="text-base-content/70">Contenido en transición Daisy con CSS institucional.</p>
+                </div>
+              </section>
+              <div id="planes-tab-panel-ejes" class="grid gap-7">
+              <article class="card border rounded-[2rem] shadow-sm" style="background:#eff4f2;border-color:#cfd7df;">
+                <div class="card-body p-6">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div class="form-control">
+                      <label class="label pb-2">
+                        <span class="label-text text-[22px] font-semibold" style="color:#475569;">Vigencia del plan (años):</span>
+                      </label>
+                      <select id="planes-plan-years" class="select w-full text-[40px] font-medium" style="background:#f8fafc;border-color:#b8c4d3;color:#0f172a;">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3" selected>3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                      </select>
+                    </div>
+                    <div class="form-control">
+                      <label class="label pb-2">
+                        <span class="label-text text-[22px] font-semibold" style="color:#475569;">Inicio del plan:</span>
+                      </label>
+                      <input id="planes-plan-start" type="date" class="input w-full text-[40px] font-medium" style="background:#f8fafc;border-color:#b8c4d3;color:#0f172a;" value="2026-01-01">
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <div class="dash">
+                <h2 class="dash__title">Tablero de seguimiento</h2>
+                <div class="dash__grid">
+                  <div class="kpi">
+                    <div class="kpi__label">Avance global</div>
+                    <div class="kpi__value" id="planes-kpi-progress">0%</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="kpi__label">Ejes activos</div>
+                    <div class="kpi__value" id="planes-kpi-axes">0</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="kpi__label">Objetivos</div>
+                    <div class="kpi__value" id="planes-kpi-objectives">0</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="kpi__label">Objetivos al 100%</div>
+                    <div class="kpi__value" id="planes-kpi-objectives-done">0</div>
+                  </div>
+                </div>
+                <div class="dash__progress">
+                  <div class="dash__progress-bar" id="planes-progress-fill" style="width:0%"></div>
+                </div>
+                <div class="dash__foot">
+                  <span><strong>Misión:</strong> <b id="planes-mission-progress">0%</b></span>
+                  <span><strong>Visión:</strong> <b id="planes-vision-progress">0%</b></span>
+                </div>
+              </div>
+              <div class="milestone-card">
+                <div class="milestone-card__inner">
+                  <div class="donut" id="planes-milestone-donut" style="--p:0">
+                    <div class="donut__center" id="planes-milestone-chart">0%</div>
+                  </div>
+                  <div class="milestone-info">
+                    <div class="milestone-title">Hitos logrados</div>
+                    <div class="milestone-stats">
+                      <span>Total: <strong id="planes-milestone-total">0</strong></span>
+                      <span>Logrados: <strong id="planes-milestone-done">0</strong></span>
+                      <span>Pendientes: <strong id="planes-milestone-pending">0</strong></span>
+                      <span>Atrasados: <strong class="is-danger" id="planes-milestone-overdue">0</strong></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="cards-2">
+                <section class="panel">
+                  <header class="panel__head">
+                    <h3 class="panel__title">Ejes sin responsable</h3>
+                    <div class="panel__meta"><strong id="planes-axes-pending-count">0</strong> pendiente(s)</div>
+                  </header>
+                  <ul class="panel__list" id="planes-axes-pending-list">
+                    <li>Sin pendientes</li>
+                  </ul>
+                  <a class="panel__more" id="planes-axes-pending-more" href="#" aria-label="Más ejes sin responsable"></a>
+                </section>
+                <section class="panel">
+                  <header class="panel__head">
+                    <h3 class="panel__title">Objetivos sin responsable</h3>
+                    <div class="panel__meta"><strong id="planes-objectives-pending-count">0</strong> pendiente(s)</div>
+                  </header>
+                  <ul class="panel__list" id="planes-objectives-pending-list">
+                    <li>Sin pendientes</li>
+                  </ul>
+                  <a class="panel__more" id="planes-objectives-pending-more" href="#" aria-label="Más objetivos sin responsable"></a>
+                </section>
+              </div>
+              </div>
+              <section id="planes-tab-panel-objetivos" class="card bg-base-100 border border-base-300 rounded-2xl hidden">
+                <div class="card-body">
+                  <h3 class="card-title">Objetivos</h3>
+                  <p class="text-base-content/70">Contenido en transición Daisy con CSS institucional.</p>
+                </div>
+              </section>
+            </section>
+          </div>
+          <div class="card-body hidden" id="planes-view-kanban">
+            <h2 class="card-title">Vista Kanban</h2>
+            <p class="text-base-content/70">Módulo en transición DaisyUI. Esta vista confirma estructura Kanban para Plan estratégico.</p>
+          </div>
+          <div class="card-body hidden" id="planes-view-organigrama">
+            <h2 class="card-title">Vista Organigrama</h2>
+            <p class="text-base-content/70">Módulo en transición DaisyUI. Esta vista confirma estructura Organigrama para Plan estratégico.</p>
+          </div>
+        </article>
+      </section>
+      <script>
+        (function () {
+          const buttons = Array.from(document.querySelectorAll('[data-planes-view]'));
+          const panels = {
+            list: document.getElementById('planes-view-list'),
+            kanban: document.getElementById('planes-view-kanban'),
+            organigrama: document.getElementById('planes-view-organigrama'),
+          };
+          function setView(view) {
+            const target = ['list', 'kanban', 'organigrama'].includes(view) ? view : 'list';
+            Object.keys(panels).forEach((key) => {
+              const panel = panels[key];
+              if (!panel) return;
+              panel.classList.toggle('hidden', key !== target);
+            });
+            buttons.forEach((btn) => {
+              btn.classList.toggle('active', (btn.getAttribute('data-planes-view') || '') === target);
+            });
+            document.dispatchEvent(new CustomEvent('backend-view-change', { detail: { view: target } }));
+          }
+          buttons.forEach((btn) => {
+            btn.addEventListener('click', () => setView(btn.getAttribute('data-planes-view') || 'list'));
+          });
+
+          const strategicTabButtons = Array.from(document.querySelectorAll('[data-planes-strategic-tab]'));
+          const strategicTabPanels = {
+            fundamentacion: document.getElementById('planes-tab-panel-fundamentacion'),
+            identidad: document.getElementById('planes-tab-panel-identidad'),
+            ejes: document.getElementById('planes-tab-panel-ejes'),
+            objetivos: document.getElementById('planes-tab-panel-objetivos'),
+          };
+          const setStrategicTab = (tab) => {
+            const target = ['fundamentacion', 'identidad', 'ejes', 'objetivos'].includes(tab) ? tab : 'ejes';
+            Object.keys(strategicTabPanels).forEach((key) => {
+              const panel = strategicTabPanels[key];
+              if (!panel) return;
+              panel.classList.toggle('hidden', key !== target);
+            });
+            strategicTabButtons.forEach((btn) => {
+              const on = (btn.getAttribute('data-planes-strategic-tab') || '') === target;
+              btn.classList.toggle('active', on);
+              btn.classList.toggle('tab-active', on);
+            });
+          };
+          strategicTabButtons.forEach((btn) => {
+            btn.addEventListener('click', () => setStrategicTab(btn.getAttribute('data-planes-strategic-tab') || 'ejes'));
+          });
+
+          const escapeHtml = (value) => String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+          const fillList = (listEl, moreEl, items, mapper) => {
+            if (!listEl || !moreEl) return;
+            if (!Array.isArray(items) || !items.length) {
+              listEl.innerHTML = '<li>Sin pendientes</li>';
+              moreEl.textContent = '';
+              moreEl.style.display = 'none';
+              return;
+            }
+            const visible = items.slice(0, 8);
+            listEl.innerHTML = visible.map((item) => `<li>${mapper(item)}</li>`).join('');
+            const extra = items.length - visible.length;
+            moreEl.textContent = extra > 0 ? `+${extra} más` : '';
+            moreEl.style.display = extra > 0 ? 'inline-block' : 'none';
+          };
+
+          const renderPlanesTrackingBoard = (axes) => {
+            const axisList = Array.isArray(axes) ? axes : [];
+            const objectives = axisList.flatMap((axis) => Array.isArray(axis.objetivos) ? axis.objetivos : []);
+            const objectiveAxisById = {};
+            axisList.forEach((axis) => {
+              (Array.isArray(axis.objetivos) ? axis.objetivos : []).forEach((obj) => {
+                objectiveAxisById[String(obj.id)] = axis;
+              });
+            });
+
+            const axisCount = axisList.length;
+            const objectiveCount = objectives.length;
+            const globalProgress = axisCount
+              ? Math.round(axisList.reduce((sum, axis) => sum + Number(axis.avance || 0), 0) / axisCount)
+              : 0;
+            const objectiveDone = objectives.filter((obj) => Number(obj.avance || 0) >= 100).length;
+
+            const axesNoOwner = axisList.filter((axis) => !String(axis?.responsabilidad_directa || '').trim());
+            const objectivesNoOwner = objectives.filter((obj) => !String(obj?.lider || '').trim());
+
+            const missionAxes = axisList.filter((axis) => String(axis.base_code || axis.codigo || '').toLowerCase().startsWith('m'));
+            const visionAxes = axisList.filter((axis) => String(axis.base_code || axis.codigo || '').toLowerCase().startsWith('v'));
+            const missionProgress = missionAxes.length
+              ? Math.round(missionAxes.reduce((sum, axis) => sum + Number(axis.avance || 0), 0) / missionAxes.length)
+              : 0;
+            const visionProgress = visionAxes.length
+              ? Math.round(visionAxes.reduce((sum, axis) => sum + Number(axis.avance || 0), 0) / visionAxes.length)
+              : 0;
+
+            const milestones = objectives.flatMap((obj) => {
+              if (Array.isArray(obj.hitos) && obj.hitos.length) return obj.hitos;
+              return obj.hito ? [{ nombre: obj.hito, logrado: false, fecha_realizacion: '' }] : [];
+            });
+            const milestonesTotal = milestones.length;
+            const milestonesDone = milestones.filter((item) => !!item.logrado).length;
+            const milestonesPending = Math.max(0, milestonesTotal - milestonesDone);
+            const todayIso = new Date().toISOString().slice(0, 10);
+            const milestonesOverdue = milestones.filter((item) => {
+              const due = String(item?.fecha_realizacion || '');
+              return !item?.logrado && !!due && due < todayIso;
+            }).length;
+            const milestonesPct = milestonesTotal ? Math.round((milestonesDone * 100) / milestonesTotal) : 0;
+
+            const byId = (id) => document.getElementById(id);
+            const setText = (id, value) => { const el = byId(id); if (el) el.textContent = String(value); };
+
+            setText('planes-kpi-progress', `${globalProgress}%`);
+            setText('planes-kpi-axes', axisCount);
+            setText('planes-kpi-objectives', objectiveCount);
+            setText('planes-kpi-objectives-done', objectiveDone);
+            setText('planes-mission-progress', `${missionProgress}%`);
+            setText('planes-vision-progress', `${visionProgress}%`);
+            setText('planes-milestone-total', milestonesTotal);
+            setText('planes-milestone-done', milestonesDone);
+            setText('planes-milestone-pending', milestonesPending);
+            setText('planes-milestone-overdue', milestonesOverdue);
+            setText('planes-axes-pending-count', axesNoOwner.length);
+            setText('planes-objectives-pending-count', objectivesNoOwner.length);
+
+            const progressFill = byId('planes-progress-fill');
+            if (progressFill) progressFill.style.width = `${Math.max(0, Math.min(100, Number(globalProgress) || 0))}%`;
+            const milestoneChart = byId('planes-milestone-chart');
+            if (milestoneChart) milestoneChart.textContent = `${milestonesPct}%`;
+            const milestoneDonut = byId('planes-milestone-donut');
+            if (milestoneDonut) milestoneDonut.style.setProperty('--p', String(Math.max(0, Math.min(100, Number(milestonesPct) || 0))));
+
+            fillList(
+              byId('planes-axes-pending-list'),
+              byId('planes-axes-pending-more'),
+              axesNoOwner,
+              (axis) => `${escapeHtml(axis.codigo || 'Sin código')} - ${escapeHtml(axis.nombre || 'Sin nombre')}`
+            );
+            fillList(
+              byId('planes-objectives-pending-list'),
+              byId('planes-objectives-pending-more'),
+              objectivesNoOwner,
+              (obj) => {
+                const parentAxis = objectiveAxisById[String(obj.id)] || {};
+                const axisCode = String(parentAxis.codigo || '').trim();
+                const code = String(obj.codigo || '').trim();
+                const left = code || axisCode || 'Sin código';
+                return `${escapeHtml(left)} - ${escapeHtml(obj.nombre || 'Sin nombre')}`;
+              }
+            );
+          };
+
+          const loadTracking = async () => {
+            try {
+              const response = await fetch('/api/strategic-axes', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+              });
+              const payload = await response.json();
+              const axes = (payload && payload.success && Array.isArray(payload.data)) ? payload.data : [];
+              renderPlanesTrackingBoard(axes);
+            } catch (_err) {
+              renderPlanesTrackingBoard([]);
+            }
+          };
+
+          ['planes-axes-pending-more', 'planes-objectives-pending-more'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('click', (event) => event.preventDefault());
+          });
+
+          loadTracking();
+          setStrategicTab('ejes');
+          setView('list');
+        })();
+      </script>
+    """)
     return render_backend_page(
         request,
         title="Plan estratégico",
         description="Edición y administración del plan estratégico de la institución",
         content=base_content,
         hide_floating_actions=True,
-        show_page_header=True,
-        view_buttons=[
-            {"label": "Arbol estratégico", "icon": "/templates/icon/mapa.svg", "view": "arbol"},
-            {"label": "Gantt", "icon": "/templates/icon/grafica.svg", "view": "gantt"},
-            {"label": "Exportar Doc", "icon": "/icon/biblioteca.svg", "view": "export-doc"},
-        ],
+        show_page_header=False,
     )
 
 
@@ -10018,24 +8132,38 @@ def ejes_estrategicos_page(request: Request):
 @router.get("/poa/crear", response_class=HTMLResponse)
 def poa_page(request: Request):
     _bind_core_symbols()
-    poa_seed_html = _build_initial_poa_grid_html()
-    base_content = POA_LIMPIO_HTML.replace(
-        '<div class="poa-board-grid" id="poa-board-grid"></div>',
-        f'<div class="poa-board-grid" id="poa-board-grid">{poa_seed_html}</div>',
-    )
+    base_content = dedent("""
+      <section class="grid gap-4 w-full max-w-6xl">
+        <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+          <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+              src="/templates/icon/plan.svg"
+              alt="Icono POA"
+              width="96"
+              height="96"
+              class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+              <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
+              <div class="block w-full text-base sm:text-lg text-base-content/70">El Plan Operativo Anual organiza actividades, responsables y tiempos de ejecución.</div>
+            </div>
+          </div>
+        </div>
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+          <div class="card-body">
+            <h2 class="card-title">Módulo en transición DaisyUI</h2>
+            <p class="text-base-content/70">Se removió temporalmente el CSS personalizado de esta pantalla para mantener solo estilos Daisy.</p>
+          </div>
+        </article>
+      </section>
+    """)
     return render_backend_page(
         request,
         title="POA",
         description="Pantalla de trabajo POA.",
         content=base_content,
         hide_floating_actions=True,
-        show_page_header=True,
-        view_buttons=[
-            {"label": "Form", "icon": "/templates/icon/formulario.svg", "view": "form", "active": True},
-            {"label": "Árbol de avance", "icon": "/templates/icon/mapa.svg", "view": "arbol"},
-            {"label": "Gantt", "icon": "/templates/icon/grafica.svg", "view": "gantt"},
-            {"label": "Calendario", "icon": "/icon/calendario.svg", "view": "calendar"},
-        ],
+        show_page_header=False,
     )
 
 
@@ -10281,76 +8409,76 @@ def _build_poa_ia_html(payload: Dict[str, Any]) -> str:
         objs_html_parts = []
         for obj in objectives:
             lider = escape(str(obj.get("lider") or ""))
-            obj_lider_line = f"<div style='font-size:11px;color:#64748b;'>Líder: {lider}</div>" if lider else ""
+            obj_lider_line = f"<div>Líder: {lider}</div>" if lider else ""
             activities = obj.get("actividades") or []
             acts_rows = "".join(
                 "<tr>"
-                f"<td style='padding:4px 6px;'>{escape(str(a.get('codigo') or ''))}</td>"
-                f"<td style='padding:4px 6px;'>{escape(str(a.get('nombre') or ''))}</td>"
-                f"<td style='padding:4px 6px;'>{escape(str(a.get('responsable') or ''))}</td>"
-                f"<td style='padding:4px 6px;'>{escape(str(a.get('estado_calculado') or ''))}</td>"
-                f"<td style='padding:4px 6px;'>{escape(str(a.get('fecha_final') or ''))}</td>"
+                f"<td>{escape(str(a.get('codigo') or ''))}</td>"
+                f"<td>{escape(str(a.get('nombre') or ''))}</td>"
+                f"<td>{escape(str(a.get('responsable') or ''))}</td>"
+                f"<td>{escape(str(a.get('estado_calculado') or ''))}</td>"
+                f"<td>{escape(str(a.get('fecha_final') or ''))}</td>"
                 "</tr>"
                 for a in activities
-            ) or "<tr><td colspan='5' style='padding:4px 6px;color:#64748b;'>Sin actividades</td></tr>"
+            ) or "<tr><td colspan='5'>Sin actividades</td></tr>"
             acts_table = (
-                "<table style='width:100%;border-collapse:collapse;font-size:12px;'>"
-                "<thead><tr style='background:#f1f5f9;'>"
-                "<th style='padding:4px 6px;text-align:left;'>Código</th>"
-                "<th style='padding:4px 6px;text-align:left;'>Actividad</th>"
-                "<th style='padding:4px 6px;text-align:left;'>Responsable</th>"
-                "<th style='padding:4px 6px;text-align:left;'>Estado</th>"
-                "<th style='padding:4px 6px;text-align:left;'>Fecha fin</th>"
+                "<table>"
+                "<thead><tr>"
+                "<th>Código</th>"
+                "<th>Actividad</th>"
+                "<th>Responsable</th>"
+                "<th>Estado</th>"
+                "<th>Fecha fin</th>"
                 "</tr></thead>"
                 f"<tbody>{acts_rows}</tbody>"
                 "</table>"
             )
             objs_html_parts.append(
-                "<li style='margin-bottom:10px;'>"
+                "<li>"
                 f"<strong>{escape(str(obj.get('codigo') or 'OBJ'))}</strong> · "
                 f"{escape(str(obj.get('nombre') or 'Objetivo sin nombre'))}"
                 f"{obj_lider_line}"
-                f"<div style='margin-top:6px;overflow-x:auto;'>{acts_table}</div>"
+                f"<div>{acts_table}</div>"
                 "</li>"
             )
-        objs_block = "<ul style='margin:0 0 0 0;padding:0;list-style:none;'>" + "".join(objs_html_parts) + "</ul>" if objs_html_parts else "<p style='color:#64748b;'>Sin objetivos.</p>"
+        objs_block = "<ul>" + "".join(objs_html_parts) + "</ul>" if objs_html_parts else "<p>Sin objetivos.</p>"
         axes_html.append(
-            "<article style='border:1px solid #dbe4ea;border-radius:10px;padding:12px;background:#fff;'>"
-            f"<h4 style='margin:0 0 4px;'>{axis_name}</h4>"
-            f"<div style='font-size:12px;color:#475569;margin-bottom:8px;'>Código: {axis_code} · {int(axis.get('total_objetivos') or 0)} objetivos</div>"
+            "<article>"
+            f"<h4>{axis_name}</h4>"
+            f"<div>Código: {axis_code} · {int(axis.get('total_objetivos') or 0)} objetivos</div>"
             f"{objs_block}"
             "</article>"
         )
-    axes_block = "".join(axes_html) if axes_html else "<p style='color:#64748b;'>Sin ejes registrados.</p>"
+    axes_block = "".join(axes_html) if axes_html else "<p>Sin ejes registrados.</p>"
 
     return (
-        "<section style='display:grid;gap:12px;'>"
-        "<section style='border:1px solid #bfdbfe;background:#eff6ff;border-radius:12px;padding:12px;'>"
-        "<h3 style='margin:0 0 8px;'>Base IA · POA</h3>"
-        "<p style='margin:0;color:#334155;'>Fuente consolidada para consulta de IA: ejes, objetivos, actividades y avance del Plan Operativo Anual.</p>"
+        "<section>"
+        "<section>"
+        "<h3>Base IA · POA</h3>"
+        "<p>Fuente consolidada para consulta de IA: ejes, objetivos, actividades y avance del Plan Operativo Anual.</p>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#f8fafc;'>"
-        "<h4 style='margin:0 0 8px;'>Resumen</h4>"
-        f"<p style='margin:0;color:#334155;'>Ejes: <b>{int(resumen.get('total_ejes') or 0)}</b> · "
+        "<section>"
+        "<h4>Resumen</h4>"
+        f"<p>Ejes: <b>{int(resumen.get('total_ejes') or 0)}</b> · "
         f"Objetivos: <b>{int(resumen.get('total_objetivos') or 0)}</b> · "
         f"Actividades: <b>{int(resumen.get('total_actividades') or 0)}</b></p>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Avance POA</h4>"
-        f"<p style='margin:0 0 6px;color:#334155;'>Actividades: <b>{int((avance or {}).get('activities_total') or 0)}</b> · "
+        "<section>"
+        "<h4>Avance POA</h4>"
+        f"<p>Actividades: <b>{int((avance or {}).get('activities_total') or 0)}</b> · "
         f"Completadas: <b>{int((avance or {}).get('activities_completed') or 0)}</b> · "
         f"Vencidas: <b>{int((avance or {}).get('activities_overdue') or 0)}</b> · "
         f"Avance estimado: <b>{float((avance or {}).get('progress_avg') or 0):.2f}%</b></p>"
-        f"<p style='margin:0;color:#64748b;font-size:12px;'>Corte: {escape(str((avance or {}).get('generated_at') or ''))}</p>"
+        f"<p>Corte: {escape(str((avance or {}).get('generated_at') or ''))}</p>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Cron semanal (renovación automática)</h4>"
-        f"<p style='margin:0 0 6px;color:#334155;'>Intervalo: <b>{int((cron or {}).get('intervalo_dias') or _POA_BASE_IA_WEEKLY_INTERVAL_DAYS)} días</b> · "
+        "<section>"
+        "<h4>Cron semanal (renovación automática)</h4>"
+        f"<p>Intervalo: <b>{int((cron or {}).get('intervalo_dias') or _POA_BASE_IA_WEEKLY_INTERVAL_DAYS)} días</b> · "
         f"Última actualización: <b>{escape(str((cron or {}).get('ultima_actualizacion') or 'N/D'))}</b> · "
         f"Próxima: <b>{escape(str((cron or {}).get('proxima_actualizacion') or 'N/D'))}</b></p>"
-        f"<p style='margin:0 0 10px;color:#64748b;font-size:12px;'>Estado: {escape(str((cron or {}).get('estado') or 'sin_ejecucion'))}</p>"
-        "<button type='button' id='poa-base-ia-weekly-refresh' style='background:#14532d;color:#fff;border:1px solid #14532d;border-radius:10px;padding:8px 14px;cursor:pointer;'>Actualizar ahora (reemplaza contenido previo)</button>"
-        "<span id='poa-base-ia-weekly-refresh-status' style='margin-left:10px;font-size:12px;color:#475569;'></span>"
+        f"<p>Estado: {escape(str((cron or {}).get('estado') or 'sin_ejecucion'))}</p>"
+        "<button type='button' id='poa-base-ia-weekly-refresh'>Actualizar ahora (reemplaza contenido previo)</button>"
+        "<span id='poa-base-ia-weekly-refresh-status'></span>"
         "<script>"
         "(function(){"
         "  const btn=document.getElementById('poa-base-ia-weekly-refresh');"
@@ -10369,17 +8497,17 @@ def _build_poa_ia_html(payload: Dict[str, Any]) -> str:
         "})();"
         "</script>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Ejes, objetivos y actividades</h4>"
-        f"<div style='display:grid;gap:10px;'>{axes_block}</div>"
+        "<section>"
+        "<h4>Ejes, objetivos y actividades</h4>"
+        f"<div>{axes_block}</div>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Contenido adicional para IA (editable)</h4>"
-        "<p style='margin:0 0 8px;color:#475569;'>Este bloque se usa como contexto adicional en Conversaciones IA del módulo POA.</p>"
-        f"<textarea id='poa-base-ia-extra-text' style='width:100%;min-height:180px;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:13px;'>{escape(contenido_adicional_texto)}</textarea>"
-        "<div style='margin-top:10px;display:flex;gap:10px;align-items:center;'>"
-        "<button type='button' id='poa-base-ia-extra-save' style='background:#0f172a;color:#fff;border:1px solid #0f172a;border-radius:10px;padding:8px 14px;cursor:pointer;'>Guardar contenido adicional</button>"
-        "<span id='poa-base-ia-extra-status' style='font-size:12px;color:#475569;'></span>"
+        "<section>"
+        "<h4>Contenido adicional para IA (editable)</h4>"
+        "<p>Este bloque se usa como contexto adicional en Conversaciones IA del módulo POA.</p>"
+        f"<textarea id='poa-base-ia-extra-text'>{escape(contenido_adicional_texto)}</textarea>"
+        "<div>"
+        "<button type='button' id='poa-base-ia-extra-save'>Guardar contenido adicional</button>"
+        "<span id='poa-base-ia-extra-status'></span>"
         "</div>"
         "<script>"
         "(function(){"
@@ -10400,9 +8528,9 @@ def _build_poa_ia_html(payload: Dict[str, Any]) -> str:
         "})();"
         "</script>"
         "</section>"
-        "<section style='border:1px solid #dbe4ea;border-radius:12px;padding:12px;background:#fff;'>"
-        "<h4 style='margin:0 0 8px;'>Payload estructurado (JSON)</h4>"
-        f"<pre style='margin:0;white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:10px;font-size:12px;'>{escape(payload_json)}</pre>"
+        "<section>"
+        "<h4>Payload estructurado (JSON)</h4>"
+        f"<pre>{escape(payload_json)}</pre>"
         "</section>"
         "</section>"
     )
@@ -10680,15 +8808,11 @@ def export_strategic_poa_xlsx():
     finally:
         db.close()
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Plan_POA"
-    ws.append(STRATEGIC_POA_CSV_HEADERS)
-    for row in export_rows:
-        ws.append([_csv_value(row, key) for key in STRATEGIC_POA_CSV_HEADERS])
-
+    records = [{key: _csv_value(row, key) for key in STRATEGIC_POA_CSV_HEADERS} for row in export_rows]
+    df = pd.DataFrame(records, columns=STRATEGIC_POA_CSV_HEADERS)
     output = BytesIO()
-    wb.save(output)
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Plan_POA")
     output.seek(0)
     filename = f'plan_estrategico_poa_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.xlsx'
     headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
@@ -11241,26 +9365,6 @@ def export_strategic_plan_doc():
 <head>
   <meta charset="utf-8">
   <title>Plan Estratégico</title>
-  <style>
-    @page {{ margin: 2.2cm; }}
-    body {{ font-family: Arial, sans-serif; color:#0f172a; }}
-    h1 {{ font-size: 34px; margin: 0 0 8px; color:#0f3d2e; }}
-    h2 {{ font-size: 24px; margin: 0 0 10px; color:#0f3d2e; }}
-    h3 {{ font-size: 17px; margin: 12px 0 6px; }}
-    h4 {{ font-size: 15px; margin: 10px 0 4px; }}
-    h5 {{ font-size: 13px; margin: 10px 0 6px; color:#334155; text-transform: uppercase; }}
-    p, li {{ font-size: 12px; line-height: 1.5; }}
-    .cover {{ display:flex; flex-direction:column; justify-content:center; min-height: 90vh; }}
-    .subtitle {{ color:#475569; font-size:16px; }}
-    .date {{ margin-top: 16px; color:#64748b; }}
-    .page-break {{ page-break-before: always; }}
-    .rich p {{ margin: 0 0 8px; }}
-    .axis {{ margin-bottom: 20px; }}
-    .objective {{ border:1px solid #dbe4ea; border-radius:8px; padding:10px; margin:8px 0; }}
-    .kpi-table {{ width:100%; border-collapse: collapse; margin-top: 6px; }}
-    .kpi-table th, .kpi-table td {{ border:1px solid #dbe4ea; padding:6px; font-size:11px; text-align:left; vertical-align:top; }}
-    .kpi-table th {{ background:#f1f5f9; }}
-  </style>
 </head>
 <body>
   <section class="cover">
@@ -12314,6 +10418,45 @@ def notifications_summary(request: Request):
         except Exception:
             db.rollback()
 
+        # ── Alertas de KPIs fuera de umbral ───────────────────────────────────
+        try:
+            _ensure_kpi_mediciones_table(db)
+            kpi_alert_rows = db.execute(text("""
+                SELECT k.id, k.nombre, k.estandar, k.referencia,
+                       m.valor, m.periodo, m.created_at
+                FROM strategic_objective_kpis k
+                INNER JOIN kpi_mediciones m ON m.id = (
+                    SELECT id FROM kpi_mediciones
+                    WHERE kpi_id = k.id ORDER BY created_at DESC LIMIT 1
+                )
+                WHERE k.estandar != '' AND k.referencia != ''
+            """)).fetchall()
+            for krow in kpi_alert_rows:
+                kpi_id_v   = int(krow[0])
+                nombre_v   = str(krow[1] or "")
+                estandar_v = str(krow[2] or "")
+                refx_v     = str(krow[3] or "")
+                valor_v    = float(krow[4] or 0)
+                periodo_v  = str(krow[5] or "")
+                med_at_v   = str(krow[6] or "")
+                kpi_status = _kpi_evaluate_status(valor_v, estandar_v, refx_v)
+                if kpi_status in ("alert", "warning"):
+                    sev_label = "Alerta" if kpi_status == "alert" else "Advertencia"
+                    items.append({
+                        "id": f"kpi-alerta-{kpi_id_v}",
+                        "kind": "kpi_alerta",
+                        "severity": kpi_status,
+                        "title": f"{sev_label} KPI: {nombre_v}",
+                        "message": (
+                            f"Valor: {valor_v} · Meta ({estandar_v}): {refx_v}"
+                            + (f" · Período: {periodo_v}" if periodo_v else "")
+                        ),
+                        "created_at": med_at_v or now.isoformat(),
+                        "href": "/inicio/kpis",
+                    })
+        except Exception:
+            db.rollback()
+
         items.sort(key=lambda item: item.get("created_at") or "", reverse=True)
         limited_items = items[:25]
         notification_ids = [str(item.get("id") or "").strip() for item in limited_items if str(item.get("id") or "").strip()]
@@ -12340,6 +10483,8 @@ def notifications_summary(request: Request):
             "actividad_por_vencer": 0,
             "quiz_descuento": 0,
             "ia_riesgo_poa": 0,
+            "kpi_alerta": 0,
+            "kpi_advertencia": 0,
         }
         for item in limited_items:
             kind = str(item.get("kind") or "")
@@ -12352,6 +10497,12 @@ def notifications_summary(request: Request):
                     counts["actividad_atrasada"] += 1
                 elif deadline_state == "por_vencer":
                     counts["actividad_por_vencer"] += 1
+            if kind == "kpi_alerta" and is_unread:
+                severity = str(item.get("severity") or "").strip().lower()
+                if severity == "alert":
+                    counts["kpi_alerta"] += 1
+                elif severity == "warning":
+                    counts["kpi_advertencia"] += 1
         unread = sum(0 if item.get("read") else 1 for item in limited_items)
 
         return JSONResponse(
@@ -13211,5 +11362,296 @@ def poa_subactivities_without_owner(request: Request):
                 }
             )
         return JSONResponse({"success": True, "total": len(rows), "data": rows})
+    finally:
+        db.close()
+
+
+# ── KPI Mediciones ─────────────────────────────────────────────────────────────
+
+def _ensure_kpi_mediciones_table(db) -> None:
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS kpi_mediciones (
+            id          INTEGER  PRIMARY KEY AUTOINCREMENT,
+            kpi_id      INTEGER  NOT NULL,
+            valor       REAL     NOT NULL,
+            periodo     VARCHAR(50)  NOT NULL DEFAULT '',
+            notas       TEXT         NOT NULL DEFAULT '',
+            created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_by  VARCHAR(100) NOT NULL DEFAULT ''
+        )
+    """))
+    db.commit()
+
+
+def _kpi_parse_referencia(referencia: str):
+    """Parse '8%', '5-8%', '5%-8%' → (lo, hi). hi=None si no es rango."""
+    ref = re.sub(r"[%\s]", "", str(referencia or ""))
+    if "-" in ref:
+        parts = ref.split("-", 1)
+        try:
+            return float(parts[0]), float(parts[1])
+        except (ValueError, IndexError):
+            return None, None
+    try:
+        return float(ref), None
+    except ValueError:
+        return None, None
+
+
+def _kpi_evaluate_status(valor: float, estandar: str, referencia: str) -> str:
+    """Devuelve 'ok', 'warning', 'alert' o 'sin_meta'."""
+    lo, hi = _kpi_parse_referencia(referencia)
+    if lo is None:
+        return "sin_meta"
+    std = str(estandar or "").strip().lower()
+    if std == "mayor":
+        if valor >= lo:
+            return "ok"
+        margin = abs(lo * 0.10) if lo != 0 else 0.5
+        return "warning" if valor >= lo - margin else "alert"
+    elif std == "menor":
+        if valor <= lo:
+            return "ok"
+        margin = abs(lo * 0.10) if lo != 0 else 0.5
+        return "warning" if valor <= lo + margin else "alert"
+    elif std == "entre" and hi is not None:
+        if lo <= valor <= hi:
+            return "ok"
+        rng = abs(hi - lo) * 0.10 or 0.5
+        return "warning" if (lo - rng) <= valor <= (hi + rng) else "alert"
+    elif std == "igual":
+        tol = abs(lo * 0.05) if lo != 0 else 0.5
+        if abs(valor - lo) <= tol:
+            return "ok"
+        tol2 = abs(lo * 0.15) if lo != 0 else 1.0
+        return "warning" if abs(valor - lo) <= tol2 else "alert"
+    return "sin_meta"
+
+
+@router.get("/api/kpis/definiciones")
+def kpis_definiciones(request: Request):
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        _ensure_objective_kpi_table(db)
+        _ensure_kpi_mediciones_table(db)
+        rows = db.execute(text("""
+            SELECT
+                k.id, k.objective_id, k.nombre, k.proposito, k.formula,
+                k.periodicidad, k.estandar, k.referencia, k.orden,
+                o.nombre   AS obj_nombre,
+                o.codigo   AS obj_codigo,
+                a.nombre   AS axis_nombre,
+                a.codigo   AS axis_codigo
+            FROM strategic_objective_kpis k
+            LEFT JOIN strategic_objective_configs o ON o.id = k.objective_id
+            LEFT JOIN strategic_axis_configs a ON a.id = o.axis_id
+            ORDER BY a.codigo ASC, o.codigo ASC, k.orden ASC, k.id ASC
+        """)).fetchall()
+        kpi_ids = [int(r[0]) for r in rows]
+        latest_by_kpi: Dict[int, Dict[str, Any]] = {}
+        if kpi_ids:
+            placeholders = ", ".join(f":k{i}" for i in range(len(kpi_ids)))
+            params: Dict[str, Any] = {f"k{i}": v for i, v in enumerate(kpi_ids)}
+            meds = db.execute(text(f"""
+                SELECT kpi_id, valor, periodo, created_at
+                FROM kpi_mediciones
+                WHERE kpi_id IN ({placeholders})
+                ORDER BY created_at DESC
+            """), params).fetchall()
+            seen: set = set()
+            for m in meds:
+                kid = int(m[0])
+                if kid not in seen:
+                    latest_by_kpi[kid] = {
+                        "valor": float(m[1]),
+                        "periodo": str(m[2] or ""),
+                        "created_at": str(m[3] or ""),
+                    }
+                    seen.add(kid)
+        data = []
+        for r in rows:
+            kpi_id = int(r[0])
+            latest = latest_by_kpi.get(kpi_id)
+            estandar = str(r[6] or "")
+            referencia = str(r[7] or "")
+            if latest:
+                status = _kpi_evaluate_status(latest["valor"], estandar, referencia)
+            else:
+                status = "sin_medicion"
+            data.append({
+                "id": kpi_id,
+                "objective_id": int(r[1] or 0),
+                "nombre": str(r[2] or ""),
+                "proposito": str(r[3] or ""),
+                "formula": str(r[4] or ""),
+                "periodicidad": str(r[5] or ""),
+                "estandar": estandar,
+                "referencia": referencia,
+                "orden": int(r[8] or 0),
+                "obj_nombre": str(r[9] or ""),
+                "obj_codigo": str(r[10] or ""),
+                "axis_nombre": str(r[11] or ""),
+                "axis_codigo": str(r[12] or ""),
+                "ultimo_valor": latest["valor"] if latest else None,
+                "ultimo_periodo": latest["periodo"] if latest else "",
+                "ultima_medicion": latest["created_at"] if latest else "",
+                "status": status,
+            })
+        return JSONResponse({"success": True, "total": len(data), "data": data})
+    finally:
+        db.close()
+
+
+@router.get("/api/kpis/mediciones")
+def kpis_mediciones_list(request: Request):
+    _bind_core_symbols()
+    kpi_id_raw = request.query_params.get("kpi_id", "")
+    db = SessionLocal()
+    try:
+        _ensure_kpi_mediciones_table(db)
+        if kpi_id_raw:
+            rows = db.execute(text("""
+                SELECT id, kpi_id, valor, periodo, notas, created_at, created_by
+                FROM kpi_mediciones WHERE kpi_id = :kid
+                ORDER BY created_at DESC LIMIT 200
+            """), {"kid": int(kpi_id_raw)}).fetchall()
+        else:
+            rows = db.execute(text("""
+                SELECT id, kpi_id, valor, periodo, notas, created_at, created_by
+                FROM kpi_mediciones
+                ORDER BY created_at DESC LIMIT 500
+            """)).fetchall()
+        data = [
+            {
+                "id": int(r[0]), "kpi_id": int(r[1]), "valor": float(r[2]),
+                "periodo": str(r[3] or ""), "notas": str(r[4] or ""),
+                "created_at": str(r[5] or ""), "created_by": str(r[6] or ""),
+            }
+            for r in rows
+        ]
+        return JSONResponse({"success": True, "total": len(data), "data": data})
+    finally:
+        db.close()
+
+
+@router.get("/api/kpis/estadisticas")
+def kpis_estadisticas(request: Request):
+    """Estadísticas por KPI usando pandas: conteo, media, min, max, desv. estándar y tendencia."""
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        _ensure_kpi_mediciones_table(db)
+        rows = db.execute(text("""
+            SELECT m.kpi_id, m.valor, m.periodo, m.created_at,
+                   k.nombre AS kpi_nombre, k.estandar, k.referencia
+            FROM kpi_mediciones m
+            LEFT JOIN strategic_objective_kpis k ON k.id = m.kpi_id
+            ORDER BY m.kpi_id, m.created_at ASC
+        """)).fetchall()
+    finally:
+        db.close()
+
+    if not rows:
+        return JSONResponse({"success": True, "total_kpis": 0, "data": []})
+
+    df = pd.DataFrame([
+        {
+            "kpi_id": int(r[0]),
+            "valor": float(r[1]),
+            "periodo": str(r[2] or ""),
+            "created_at": str(r[3] or ""),
+            "nombre": str(r[4] or ""),
+            "estandar": str(r[5] or ""),
+            "referencia": str(r[6] or ""),
+        }
+        for r in rows
+    ])
+
+    result = []
+    for kpi_id, group in df.groupby("kpi_id"):
+        vals = group["valor"].values
+        n = int(len(vals))
+        nombre = group["nombre"].iloc[0]
+        estandar = group["estandar"].iloc[0]
+        referencia = group["referencia"].iloc[0]
+
+        # Tendencia: pendiente de regresión lineal sobre las mediciones en orden cronológico
+        if n >= 2:
+            slope = float(np.polyfit(range(n), vals, 1)[0])
+        else:
+            slope = 0.0
+
+        if abs(slope) >= 0.5:
+            trend_label = "subiendo" if slope > 0 else "bajando"
+        else:
+            trend_label = "estable"
+
+        result.append({
+            "kpi_id": int(kpi_id),
+            "nombre": nombre,
+            "estandar": estandar,
+            "referencia": referencia,
+            "n_mediciones": n,
+            "media": round(float(vals.mean()), 4),
+            "minimo": round(float(vals.min()), 4),
+            "maximo": round(float(vals.max()), 4),
+            "desv_std": round(float(vals.std()) if n > 1 else 0.0, 4),
+            "ultimo_valor": round(float(vals[-1]), 4),
+            "tendencia_pendiente": round(slope, 4),
+            "tendencia": trend_label,
+        })
+
+    return JSONResponse({"success": True, "total_kpis": len(result), "data": result})
+
+
+@router.post("/api/kpis/medicion")
+def kpi_medicion_save(request: Request, data: dict = Body(default={})):
+    _bind_core_symbols()
+    kpi_id_raw = data.get("kpi_id")
+    valor_raw = data.get("valor")
+    periodo = str(data.get("periodo") or "").strip()
+    notas = str(data.get("notas") or "").strip()
+    try:
+        kpi_id = int(kpi_id_raw)
+        valor = float(str(valor_raw).replace(",", ".").replace("%", "").strip())
+    except (TypeError, ValueError):
+        return JSONResponse({"success": False, "error": "kpi_id y valor son requeridos"}, status_code=400)
+    db = SessionLocal()
+    try:
+        _ensure_kpi_mediciones_table(db)
+        created_by = str(
+            getattr(request.state, "user_name", None)
+            or request.cookies.get("user_name")
+            or ""
+        ).strip()
+        db.execute(text("""
+            INSERT INTO kpi_mediciones (kpi_id, valor, periodo, notas, created_at, created_by)
+            VALUES (:kpi_id, :valor, :periodo, :notas, :now, :by)
+        """), {
+            "kpi_id": kpi_id, "valor": valor, "periodo": periodo,
+            "notas": notas, "now": datetime.utcnow().isoformat(), "by": created_by,
+        })
+        db.commit()
+        return JSONResponse({"success": True})
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+    finally:
+        db.close()
+
+
+@router.delete("/api/kpis/medicion/{medicion_id}")
+def kpi_medicion_delete(medicion_id: int, request: Request):
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        _ensure_kpi_mediciones_table(db)
+        db.execute(text("DELETE FROM kpi_mediciones WHERE id = :mid"), {"mid": medicion_id})
+        db.commit()
+        return JSONResponse({"success": True})
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
     finally:
         db.close()

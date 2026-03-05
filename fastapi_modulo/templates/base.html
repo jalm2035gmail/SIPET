@@ -6,8 +6,9 @@
     <link rel="shortcut icon" type="image/x-icon" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
     <title>{{ title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/dist/output.css">
+    <link rel="stylesheet" href="/static/dist/output.css?v={{ asset_version | default('dev', true) }}">
     <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/components.css">
     <style>
         :root {
             {% if colores %}
@@ -15,6 +16,12 @@
             --{{ key }}: {{ value }};
             {% endfor %}
             {% endif %}
+        }
+        /* Layout guard: prevent standalone-page CSS leaked into components.css from breaking the app layout */
+        body {
+            display: block !important;
+            padding: 0 !important;
+            background-image: none !important;
         }
     </style>
     <script>
@@ -33,6 +40,8 @@
         })();
     </script>
     {% set hide_floating_actions = hide_floating_actions | default(false) %}
+    {% set current_role = (request.state.user_role | default(request.cookies.get('user_role', ''), true) | lower | trim) %}
+    {% set is_admin_or_superadmin_effective = is_admin_or_superadmin_user if is_admin_or_superadmin_user is defined else (current_role in ['superadministrador', 'superadmin', 'administrador', 'admin']) %}
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-user">
@@ -57,50 +66,39 @@
                     <span class="sidebar-main-label">Conversaciones</span>
                 </span>
             </a>
-            {% if is_admin_or_superadmin_user or 'BSC' in (user_app_access | default([])) %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">BSC</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a href="/inicio">BSC</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/inteli-coop" data-menu-name="Inteli-coop" data-route="/inteli-coop" target="_blank" rel="noopener">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/ia.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Inteli-coop</span>
+                </span>
+            </a>
+            {% if is_admin_or_superadmin_effective or 'BSC' in (user_app_access | default([])) %}
+            <a class="sidebar-main-link" href="/inicio" data-menu-name="BSC" data-route="/inicio">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">BSC</span>
+                </span>
+            </a>
             {% endif %}
-            {% if is_admin_or_superadmin_user or 'Organización' in (user_app_access | default([])) %}
+            {% if is_admin_or_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
             <details class="sidebar-block" open>
                 <summary>
                     <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
+                        <span class="sidebar-main-icon" style="--icon-src: url('/templates/icon/boton/organigrama.svg');" aria-hidden="true"></span>
                         <span class="sidebar-main-label">Organización</span>
                     </span>
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <details class="sidebar-submenu-group">
-                        <summary>Áreas organizacionales</summary>
-                        <div class="sidebar-submenu-level3">
-                            <a href="/inicio/departamentos">Áreas organizacionales</a>
-                            <a href="/inicio/departamentos/puestos-organizacionales">Puestos organizacionales</a>
-                        </div>
-                    </details>
-                    <a href="/inicio/regiones">Regiones</a>
-                    <a href="/inicio/sucursales">Sucursales</a>
-                    <details class="sidebar-submenu-group">
-                        <summary>Colaboradores</summary>
-                        <div class="sidebar-submenu-level3">
-                            <a href="/inicio/colaboradores">Lista de colaboradores</a>
-                            <a href="/inicio/colaboradores/habilidades">Habilidades</a>
-                        </div>
-                    </details>
+                    <a class="sidebar-submenu-heading" href="/inicio/departamentos">Áreas</a>
+                    <a class="sidebar-submenu-heading" href="/inicio/regiones">Regiones</a>
+                    <a class="sidebar-submenu-heading" href="/inicio/sucursales">Sucursales</a>
+                    <a class="sidebar-submenu-heading" href="/inicio/colaboradores">Colaboradores</a>
+                    <a class="sidebar-submenu-heading" href="/inicio/colaboradores/habilidades">Habilidades</a>
                 </div>
             </details>
             {% endif %}
-            {% if is_admin_or_superadmin_user or 'Estrategia y táctica' in (user_app_access | default([])) %}
+            {% if is_admin_or_superadmin_effective or 'Estrategia y táctica' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -119,16 +117,16 @@
                             <a href="/diagnostico/percepcion-cliente">Percepción del cliente</a>
                         </div>
                     </details>
-                    <a href="/planes">Plan estratégico</a>
-                    <a href="/poa">POA</a>
-                    <a href="/planes">Tablero de control</a>
-                    {% if (request.state.user_role | default('')) in ['superadministrador', 'superadmin'] %}
+                    <a class="sidebar-submenu-heading" href="/planes">Plan estratégico</a>
+                    <a class="sidebar-submenu-heading" href="/poa">POA</a>
+                    <a class="sidebar-submenu-heading" href="/planes">Tablero de control</a>
+                    {% if current_role in ['superadministrador', 'superadmin'] %}
                     <a href="/estrategia-tactica/base-ia">Base IA estrategia</a>
                     {% endif %}
                 </div>
             </details>
             {% endif %}
-            {% if is_admin_or_superadmin_user or 'Datos financieros' in (user_app_access | default([])) %}
+            {% if is_admin_or_superadmin_effective or 'Datos financieros' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -138,7 +136,7 @@
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <a href="/proyectando">Tablero de control</a>
+                    <a class="sidebar-submenu-heading" href="/proyectando">Tablero de control</a>
                     <details class="sidebar-submenu-group">
                         <summary>Proyectando</summary>
                         <div class="sidebar-submenu-level3">
@@ -153,11 +151,11 @@
                             <a href="/proyectando/tasa-referencia">9. Tasa de referencia</a>
                         </div>
                     </details>
-                    <a href="/proyectando/presupuesto">Presupuesto</a>
+                    <a class="sidebar-submenu-heading" href="/proyectando/presupuesto">Presupuesto</a>
                 </div>
             </details>
             {% endif %}
-            {% if is_admin_or_superadmin_user or 'Control y seguimiento' in (user_app_access | default([])) %}
+            {% if is_admin_or_superadmin_effective or 'Control y seguimiento' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -167,11 +165,11 @@
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <a href="/control-seguimiento">Control y segumiento</a>
+                    <a class="sidebar-submenu-heading" href="/control-seguimiento">Control y segumiento</a>
                 </div>
             </details>
             {% endif %}
-            {% if is_admin_or_superadmin_user or 'KPIs' in (user_app_access | default([])) %}
+            {% if is_admin_or_superadmin_effective or 'KPIs' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -181,11 +179,12 @@
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <a href="/kpis">KPI's</a>
+                    <a class="sidebar-submenu-heading" href="/kpis">KPI's</a>
+                    <a class="sidebar-submenu-heading" href="/ia/predictivo">Análisis Predictivo</a>
                 </div>
             </details>
             {% endif %}
-            {% if is_admin_or_superadmin_user or 'Reportes' in (user_app_access | default([])) %}
+            {% if is_admin_or_superadmin_effective or 'Reportes' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -195,12 +194,12 @@
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <a href="/reportes">Resumen</a>
-                    <a href="/reportes/documentos">Documentos</a>
+                    <a class="sidebar-submenu-heading" href="/reportes">Resumen</a>
+                    <a class="sidebar-submenu-heading" href="/reportes/documentos">Documentos</a>
                 </div>
             </details>
             {% endif %}
-            {% if is_admin_or_superadmin_user or 'Empresa' in (user_app_access | default([])) %}
+            {% if is_admin_or_superadmin_effective or 'Empresa' in (user_app_access | default([])) %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -210,14 +209,14 @@
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <a href="/identidad-institucional">Identidad institucional</a>
-                    <a href="/empresa/base-datos">Base de datos</a>
+                    <a class="sidebar-submenu-heading" href="/identidad-institucional">Identidad institucional</a>
+                    <a class="sidebar-submenu-heading" href="/empresa/base-datos">Base de datos</a>
                     <a href="/plantillas">Plantillas</a>
-                    <a href="/plantillas/constructor">Constructor de formularios</a>
+                    <a class="sidebar-submenu-heading" href="/plantillas/constructor">Constructor de formularios</a>
                 </div>
             </details>
             {% endif %}
-            {% if (request.state.user_role | default('')) in ['superadministrador', 'superadmin'] %}
+            {% if current_role in ['superadministrador', 'superadmin'] %}
             <details class="sidebar-block">
                 <summary>
                     <span class="sidebar-main-left">
@@ -227,14 +226,18 @@
                     <span class="sidebar-main-caret">▾</span>
                 </summary>
                 <div class="sidebar-submenu">
-                    <a href="/ajustes/configuracion">Configuración</a>
-                    <a href="/ajustes/ia" style="display:inline-flex;align-items:center;gap:8px;">
+                    <a class="sidebar-submenu-heading" href="/ajustes/configuracion">Configuración</a>
+                    <a class="sidebar-submenu-heading" href="/ajustes/ia" style="display:inline-flex;align-items:center;gap:8px;">
                         <img src="/templates/icon/ia.svg" alt="" aria-hidden="true" style="width:15px;height:15px;object-fit:contain;">
                         IA
                     </a>
-                    <a href="/personalizar">Colores</a>
+                    <a class="sidebar-submenu-heading" href="/ia/predictivo" style="display:inline-flex;align-items:center;gap:8px;">
+                        <img src="/templates/icon/ia.svg" alt="" aria-hidden="true" style="width:15px;height:15px;object-fit:contain;">
+                        Análisis Predictivo
+                    </a>
+                    <a class="sidebar-submenu-heading" href="/personalizar">Colores</a>
                     <a href="/roles-permisos">Roles</a>
-                    <a href="/membresia">Membresía</a>
+                    <a class="sidebar-submenu-heading" href="/membresia">Membresía</a>
                 </div>
             </details>
             {% endif %}
@@ -293,22 +296,6 @@
     </div>
     <main class="main-content">
         <div class="content-shell">
-        {% if show_page_header | default(true) %}
-        <section class="page-header">
-            <div class="page-header-text">
-                {% if subtitle %}
-                <span class="page-header-subtitle">{{ subtitle }}</span>
-                {% endif %}
-                <h1 class="page-title">{{ page_title or title }}</h1>
-                <p class="page-description">{{ page_description or description }}</p>
-                {% if view_buttons_html %}
-                <div class="view-buttons page-view-buttons">
-                    {{ view_buttons_html | safe }}
-                </div>
-                {% endif %}
-            </div>
-        </section>
-        {% endif %}
         <section class="content-section">
             {% if section_label or section_title %}
             <!-- header de sección eliminado -->
@@ -533,7 +520,7 @@
             prepareFloatingActionTooltips();
             const shouldSkipThemedButton = (button) => (
                 button.matches(
-                    '.navbar-hamburger, .navbar-avatar, .navbar-ia-btn, .navbar-notifications-btn, .accordion-header, .sidebar-section-toggle, .floating-toggle, .sipet-section-tab, .Pestana, [data-param-tab], [data-cg-tab], .cg-view-toggle, .view-pill, [data-view], .ar-chip, [data-relacion-help], .fp-row, .fp-btn, .fp-icon, [data-scn], .pe-axis__btn, .pe-btn, .table-delete-btn, .delete-activo-fijo-row'
+                    '.navbar-hamburger, .navbar-avatar, .navbar-ia-btn, .navbar-notifications-btn, .accordion-header, .sidebar-section-toggle, .floating-toggle, .sipet-section-tab, [data-param-tab], [data-cg-tab], .cg-view-toggle, .view-pill, [data-view], .ar-chip, [data-relacion-help], .fp-row, .fp-btn, .fp-icon, [data-scn], .pe-axis__btn, .pe-btn, .table-delete-btn, .delete-activo-fijo-row'
                 ) ||
                 !!button.closest('.fp-shell, .pe-page, #usuario-view, #sucursales-view, .kpi-page, .axm-shell, .axm-wrap, .poa-board-wrap, .poa-modal, #plantillas-page')
             );
@@ -552,6 +539,7 @@
                 });
             };
             applyButtonThemeClass();
+            // Sin toggles legacy de pestanas: se usa comportamiento DaisyUI base.
             let iaStatusSnapshot = {
                 connected: false,
                 provider: '',
@@ -806,6 +794,82 @@
                     item.classList.remove('is-flyout-open');
                 });
             });
+
+            // ── Menús: enlace activo + auto-open + persistencia localStorage ──
+            (function initSidebarActiveState() {
+                const SIDEBAR_OPEN_KEY = 'sipet_sidebar_open_v2';
+
+                const saveSidebarOpenState = () => {
+                    try {
+                        const open = [];
+                        sidebarBlocks.forEach((block) => {
+                            const lbl = (block.querySelector('.sidebar-main-label')?.textContent || '').trim();
+                            if (lbl && block.hasAttribute('open')) open.push(lbl);
+                        });
+                        localStorage.setItem(SIDEBAR_OPEN_KEY, JSON.stringify(open));
+                    } catch (_) {}
+                };
+
+                const activateSidebarLink = (link) => {
+                    link.classList.add('is-active');
+                    const parentBlock = link.closest('.sidebar-block');
+                    if (parentBlock) {
+                        parentBlock.setAttribute('open', '');
+                        parentBlock.classList.add('is-active');
+                    }
+                    const parentSubGroup = link.closest('.sidebar-submenu-group');
+                    if (parentSubGroup) parentSubGroup.setAttribute('open', '');
+                    setMenuInfo(link);
+                };
+
+                const currentPath = window.location.pathname;
+                const allLinks = [
+                    ...document.querySelectorAll('.sidebar-submenu a[href]'),
+                    ...document.querySelectorAll('.sidebar-main-link[href]'),
+                ];
+
+                // coincidencia exacta primero
+                let foundActive = false;
+                for (const link of allLinks) {
+                    const href = (link.getAttribute('href') || '').split('?')[0];
+                    if (href && href !== '/' && href !== '#' && href === currentPath) {
+                        activateSidebarLink(link);
+                        foundActive = true;
+                        break;
+                    }
+                }
+
+                // fallback: prefijo más largo
+                if (!foundActive) {
+                    let best = null, bestLen = 0;
+                    for (const link of allLinks) {
+                        const href = (link.getAttribute('href') || '').split('?')[0];
+                        if (!href || href === '/' || href === '#') continue;
+                        if (currentPath.startsWith(href + '/') && href.length > bestLen) {
+                            best = link; bestLen = href.length;
+                        }
+                    }
+                    if (best) { activateSidebarLink(best); foundActive = true; }
+                }
+
+                // sin URL activa → restaurar desde localStorage
+                if (!foundActive) {
+                    try {
+                        const saved = JSON.parse(localStorage.getItem(SIDEBAR_OPEN_KEY) || '[]');
+                        if (Array.isArray(saved) && saved.length) {
+                            sidebarBlocks.forEach((block) => {
+                                const lbl = (block.querySelector('.sidebar-main-label')?.textContent || '').trim();
+                                if (lbl && saved.includes(lbl)) block.setAttribute('open', '');
+                            });
+                        }
+                    } catch (_) {}
+                }
+
+                // guardar estado al abrir/cerrar cada bloque
+                sidebarSummaryItems.forEach((summary) => {
+                    summary.addEventListener('click', () => setTimeout(saveSidebarOpenState, 50));
+                });
+            })();
 
             if (personalizarBtn && personalizarSubmenu && personalizarToggle) {
                 personalizarBtn.addEventListener('click', function(event) {
@@ -2036,14 +2100,121 @@
                     if (!builderFields.length) renderBuilderFields();
                 }
             }
+            const updateWrappedTabsState = () => {
+                const tabContainers = document.querySelectorAll('.tabs.tabs-boxed, .tabs.tabs-lifted');
+                tabContainers.forEach((container) => {
+                    const tabButtons = Array.from(container.querySelectorAll(':scope > .tab, :scope > button.tab, :scope > a.tab'))
+                        .filter((tab) => !tab.hidden);
+                    tabButtons.forEach((tab, index) => {
+                        tab.style.order = String(index * 10);
+                        tab.style.marginLeft = '';
+                    });
+                    if (tabButtons.length < 2) {
+                        container.classList.remove('tabs-has-wrap');
+                        return;
+                    }
+                    const rowsMap = new Map();
+                    tabButtons.forEach((tab) => {
+                        const top = Math.round(tab.offsetTop);
+                        if (!rowsMap.has(top)) rowsMap.set(top, []);
+                        rowsMap.get(top).push(tab);
+                    });
+                    const rowTops = Array.from(rowsMap.keys()).sort((a, b) => a - b);
+                    const hasWrap = rowTops.length > 1;
+                    container.classList.toggle('tabs-has-wrap', hasWrap);
+                    if (!hasWrap) return;
+                    const activeTab = tabButtons.find((tab) => tab.classList.contains('tab-active') || tab.classList.contains('active'));
+                    if (!activeTab) return;
+                    const firstRowTop = rowTops[0];
+                    const secondRowTop = rowTops[1];
+                    if (Math.round(activeTab.offsetTop) !== firstRowTop) return;
+                    const firstRowTabs = rowsMap.get(firstRowTop) || [];
+                    const secondRowTabs = rowsMap.get(secondRowTop) || [];
+                    if (!firstRowTabs.length || !secondRowTabs.length) return;
+                    const columnIndex = Math.max(0, firstRowTabs.indexOf(activeTab));
+                    const desiredLeft = activeTab.offsetLeft;
+                    const secondRowBaseIndex = firstRowTabs.length;
+                    const targetIndex = Math.min(secondRowBaseIndex + columnIndex, tabButtons.length - 1);
+                    activeTab.style.order = String(targetIndex * 10 - 1);
+                    window.requestAnimationFrame(() => {
+                        const currentLeft = activeTab.offsetLeft;
+                        const shift = desiredLeft - currentLeft;
+                        activeTab.style.marginLeft = shift > 0 ? `${shift}px` : '';
+                    });
+                });
+            };
+            const parseRgbColor = (colorValue) => {
+                if (!colorValue || typeof colorValue !== 'string') return null;
+                const match = colorValue.trim().match(/^rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+                if (!match) return null;
+                return {
+                    r: Math.max(0, Math.min(255, Number(match[1]))),
+                    g: Math.max(0, Math.min(255, Number(match[2]))),
+                    b: Math.max(0, Math.min(255, Number(match[3]))),
+                };
+            };
+            const applyTabAutoContrast = () => {
+                const tabs = document.querySelectorAll('.tabs .tab');
+                tabs.forEach((tab) => {
+                    const rgb = parseRgbColor(window.getComputedStyle(tab).backgroundColor || '');
+                    if (!rgb) return;
+                    const luminance = ((0.2126 * rgb.r) + (0.7152 * rgb.g) + (0.0722 * rgb.b)) / 255;
+                    tab.dataset.contrast = luminance < 0.52 ? 'light-text' : 'dark-text';
+                });
+            };
+            let wrappedTabsTick = null;
+            const scheduleWrappedTabsState = () => {
+                if (wrappedTabsTick !== null) return;
+                wrappedTabsTick = window.requestAnimationFrame(() => {
+                    wrappedTabsTick = null;
+                    updateWrappedTabsState();
+                    applyTabAutoContrast();
+                });
+            };
+            updateWrappedTabsState();
+            applyTabAutoContrast();
+            window.addEventListener('resize', scheduleWrappedTabsState);
+            document.addEventListener('click', (event) => {
+                const tabTarget = event.target && event.target.closest ? event.target.closest('.tabs .tab') : null;
+                if (!tabTarget) return;
+                scheduleWrappedTabsState();
+            });
+            document.addEventListener('mouseover', (event) => {
+                const tabTarget = event.target && event.target.closest ? event.target.closest('.tabs .tab') : null;
+                if (!tabTarget) return;
+                scheduleWrappedTabsState();
+            });
+            const wrappedTabsObserver = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    if (!(mutation.target instanceof Element)) continue;
+                    if (
+                        mutation.target.matches('.tabs .tab, .tabs.tabs-boxed, .tabs.tabs-lifted')
+                        || mutation.target.closest('.tabs.tabs-boxed, .tabs.tabs-lifted')
+                    ) {
+                        scheduleWrappedTabsState();
+                        break;
+                    }
+                }
+            });
+            wrappedTabsObserver.observe(document.body, {
+                subtree: true,
+                childList: true,
+                attributes: true,
+                attributeFilter: ['class', 'style', 'hidden'],
+            });
             const notebookTabs = document.querySelectorAll('.notebook-tabs .tab');
             const notebookPanels = document.querySelectorAll('.notebook-content .tab-panel');
             const activateNotebookTab = (name) => {
                 if (!name) return;
-                notebookTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
+                notebookTabs.forEach(tab => {
+                    const isActive = tab.dataset.tab === name;
+                    tab.classList.toggle('active', isActive);
+                    tab.classList.toggle('tab-active', isActive);
+                });
                 notebookPanels.forEach(panel => {
                     panel.hidden = panel.dataset.panel !== name;
                 });
+                scheduleWrappedTabsState();
             };
             notebookTabs.forEach(tab => tab.addEventListener('click', () => activateNotebookTab(tab.dataset.tab)));
             actionSavePersonal && actionSavePersonal.addEventListener('click', (event) => {
@@ -2203,6 +2374,7 @@
                 const categoryInput = document.getElementById('foda-category');
                 const impactInput = document.getElementById('foda-impact');
                 const addButton = document.getElementById('foda-add');
+                let editingKey = null;
                 const lists = {
                     strengths: document.getElementById('foda-list-strengths'),
                     weaknesses: document.getElementById('foda-list-weaknesses'),
@@ -2226,6 +2398,12 @@
                     medium: 'Impacto medio',
                     low: 'Impacto bajo',
                 };
+                const escapeHtml = (value) => String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
                 const renderFoda = () => {
                     Object.keys(factors).forEach((key) => {
                         const targetList = lists[key];
@@ -2233,14 +2411,30 @@
                         if (!targetList || !targetCount) return;
                         targetCount.textContent = String(factors[key].length);
                         targetList.innerHTML = factors[key].map((item, index) => `
-                            <li class="foda-item">
-                                <div>
-                                    <strong>${item.description}</strong><br>
-                                    <small>${impactLabel[item.impact] || 'Impacto medio'}</small>
+                            <li class="rounded-box border border-base-300 bg-base-100 p-3 flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <strong class="block text-sm text-base-content">${escapeHtml(item.description)}</strong>
+                                    <small class="text-xs text-base-content/70">${escapeHtml(impactLabel[item.impact] || 'Impacto medio')}</small>
                                 </div>
-                                <button type="button" data-foda-remove="${key}:${index}">Quitar</button>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="btn btn-outline btn-neutral btn-xs" data-foda-edit="${key}:${index}">Editar</button>
+                                    <button type="button" class="btn btn-outline btn-error btn-xs" data-foda-remove="${key}:${index}">Eliminar</button>
+                                </div>
                             </li>
                         `).join('');
+                    });
+                    fodaBuilder.querySelectorAll('[data-foda-edit]').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const [cat, indexRaw] = (btn.dataset.fodaEdit || '').split(':');
+                            const index = Number(indexRaw);
+                            if (!factors[cat] || Number.isNaN(index) || !factors[cat][index]) return;
+                            const selected = factors[cat][index];
+                            if (descriptionInput) descriptionInput.value = selected.description || '';
+                            if (categoryInput) categoryInput.value = cat;
+                            if (impactInput) impactInput.value = selected.impact || 'medium';
+                            editingKey = `${cat}:${index}`;
+                            if (addButton) addButton.textContent = 'Guardar cambio';
+                        });
                     });
                     fodaBuilder.querySelectorAll('[data-foda-remove]').forEach((btn) => {
                         btn.addEventListener('click', () => {
@@ -2248,6 +2442,10 @@
                             const index = Number(indexRaw);
                             if (!factors[cat] || Number.isNaN(index)) return;
                             factors[cat].splice(index, 1);
+                            if (editingKey === `${cat}:${index}`) {
+                                editingKey = null;
+                                if (addButton) addButton.textContent = 'Agregar factor';
+                            }
                             renderFoda();
                         });
                     });
@@ -2261,6 +2459,15 @@
                         return;
                     }
                     if (!factors[category]) return;
+                    if (editingKey) {
+                        const [editCategory, editIndexRaw] = editingKey.split(':');
+                        const editIndex = Number(editIndexRaw);
+                        if (factors[editCategory] && !Number.isNaN(editIndex) && factors[editCategory][editIndex]) {
+                            factors[editCategory].splice(editIndex, 1);
+                        }
+                        editingKey = null;
+                        if (addButton) addButton.textContent = 'Agregar factor';
+                    }
                     factors[category].push({ description, impact });
                     if (descriptionInput) descriptionInput.value = '';
                     renderFoda();
@@ -2274,6 +2481,7 @@
                 const factorInput = document.getElementById('pestel-factor');
                 const impactInput = document.getElementById('pestel-impact');
                 const addButton = document.getElementById('pestel-add');
+                let editingKey = null;
                 const dimensions = ['political', 'economic', 'social', 'technological', 'ecological', 'legal'];
                 const lists = {
                     political: document.getElementById('pestel-list-political'),
@@ -2304,6 +2512,12 @@
                     medium: 'Impacto medio',
                     low: 'Impacto bajo',
                 };
+                const escapeHtml = (value) => String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
                 const renderPestel = () => {
                     dimensions.forEach((key) => {
                         const targetList = lists[key];
@@ -2311,14 +2525,30 @@
                         if (!targetList || !targetCount) return;
                         targetCount.textContent = String(factors[key].length);
                         targetList.innerHTML = factors[key].map((item, index) => `
-                            <li class="pestel-item">
-                                <div>
-                                    <strong>${item.description}</strong><br>
-                                    <small>${impactLabel[item.impact] || 'Impacto medio'}</small>
+                            <li class="rounded-box border border-base-300 bg-base-100 p-3 flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <strong class="block text-sm text-base-content">${escapeHtml(item.description)}</strong>
+                                    <small class="text-xs text-base-content/70">${escapeHtml(impactLabel[item.impact] || 'Impacto medio')}</small>
                                 </div>
-                                <button type="button" data-pestel-remove="${key}:${index}">Quitar</button>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="btn btn-outline btn-neutral btn-xs" data-pestel-edit="${key}:${index}">Editar</button>
+                                    <button type="button" class="btn btn-outline btn-error btn-xs" data-pestel-remove="${key}:${index}">Eliminar</button>
+                                </div>
                             </li>
                         `).join('');
+                    });
+                    pestelBuilder.querySelectorAll('[data-pestel-edit]').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const [dimension, indexRaw] = (btn.dataset.pestelEdit || '').split(':');
+                            const index = Number(indexRaw);
+                            if (!factors[dimension] || Number.isNaN(index) || !factors[dimension][index]) return;
+                            const selected = factors[dimension][index];
+                            if (descriptionInput) descriptionInput.value = selected.description || '';
+                            if (factorInput) factorInput.value = dimension;
+                            if (impactInput) impactInput.value = selected.impact || 'medium';
+                            editingKey = `${dimension}:${index}`;
+                            if (addButton) addButton.textContent = 'Guardar cambio';
+                        });
                     });
                     pestelBuilder.querySelectorAll('[data-pestel-remove]').forEach((btn) => {
                         btn.addEventListener('click', () => {
@@ -2326,6 +2556,10 @@
                             const index = Number(indexRaw);
                             if (!factors[dimension] || Number.isNaN(index)) return;
                             factors[dimension].splice(index, 1);
+                            if (editingKey === `${dimension}:${index}`) {
+                                editingKey = null;
+                                if (addButton) addButton.textContent = 'Agregar factor';
+                            }
                             renderPestel();
                         });
                     });
@@ -2339,6 +2573,15 @@
                         return;
                     }
                     if (!factors[dimension]) return;
+                    if (editingKey) {
+                        const [editDimension, editIndexRaw] = editingKey.split(':');
+                        const editIndex = Number(editIndexRaw);
+                        if (factors[editDimension] && !Number.isNaN(editIndex) && factors[editDimension][editIndex]) {
+                            factors[editDimension].splice(editIndex, 1);
+                        }
+                        editingKey = null;
+                        if (addButton) addButton.textContent = 'Agregar factor';
+                    }
                     factors[dimension].push({ description, impact });
                     if (descriptionInput) descriptionInput.value = '';
                     renderPestel();
@@ -2352,6 +2595,7 @@
                 const forceInput = document.getElementById('porter-force');
                 const impactInput = document.getElementById('porter-impact');
                 const addButton = document.getElementById('porter-add');
+                let editingKey = null;
                 const forces = ['competitors', 'entrants', 'suppliers', 'buyers', 'substitutes'];
                 const lists = {
                     competitors: document.getElementById('porter-list-competitors'),
@@ -2379,6 +2623,12 @@
                     medium: 'Impacto medio',
                     low: 'Impacto bajo',
                 };
+                const escapeHtml = (value) => String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
                 const renderPorter = () => {
                     forces.forEach((key) => {
                         const targetList = lists[key];
@@ -2386,14 +2636,30 @@
                         if (!targetList || !targetCount) return;
                         targetCount.textContent = String(factors[key].length);
                         targetList.innerHTML = factors[key].map((item, index) => `
-                            <li class="porter-item">
-                                <div>
-                                    <strong>${item.description}</strong><br>
-                                    <small>${impactLabel[item.impact] || 'Impacto medio'}</small>
+                            <li class="rounded-box border border-base-300 bg-base-100 p-3 flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <strong class="block text-sm text-base-content">${escapeHtml(item.description)}</strong>
+                                    <small class="text-xs text-base-content/70">${escapeHtml(impactLabel[item.impact] || 'Impacto medio')}</small>
                                 </div>
-                                <button type="button" data-porter-remove="${key}:${index}">Quitar</button>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="btn btn-outline btn-neutral btn-xs" data-porter-edit="${key}:${index}">Editar</button>
+                                    <button type="button" class="btn btn-outline btn-error btn-xs" data-porter-remove="${key}:${index}">Eliminar</button>
+                                </div>
                             </li>
                         `).join('');
+                    });
+                    porterBuilder.querySelectorAll('[data-porter-edit]').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const [force, indexRaw] = (btn.dataset.porterEdit || '').split(':');
+                            const index = Number(indexRaw);
+                            if (!factors[force] || Number.isNaN(index) || !factors[force][index]) return;
+                            const selected = factors[force][index];
+                            if (descriptionInput) descriptionInput.value = selected.description || '';
+                            if (forceInput) forceInput.value = force;
+                            if (impactInput) impactInput.value = selected.impact || 'medium';
+                            editingKey = `${force}:${index}`;
+                            if (addButton) addButton.textContent = 'Guardar cambio';
+                        });
                     });
                     porterBuilder.querySelectorAll('[data-porter-remove]').forEach((btn) => {
                         btn.addEventListener('click', () => {
@@ -2401,6 +2667,10 @@
                             const index = Number(indexRaw);
                             if (!factors[force] || Number.isNaN(index)) return;
                             factors[force].splice(index, 1);
+                            if (editingKey === `${force}:${index}`) {
+                                editingKey = null;
+                                if (addButton) addButton.textContent = 'Agregar factor';
+                            }
                             renderPorter();
                         });
                     });
@@ -2414,6 +2684,15 @@
                         return;
                     }
                     if (!factors[force]) return;
+                    if (editingKey) {
+                        const [editForce, editIndexRaw] = editingKey.split(':');
+                        const editIndex = Number(editIndexRaw);
+                        if (factors[editForce] && !Number.isNaN(editIndex) && factors[editForce][editIndex]) {
+                            factors[editForce].splice(editIndex, 1);
+                        }
+                        editingKey = null;
+                        if (addButton) addButton.textContent = 'Agregar factor';
+                    }
                     factors[force].push({ description, impact });
                     if (descriptionInput) descriptionInput.value = '';
                     renderPorter();
@@ -2427,6 +2706,7 @@
                 const categoryInput = document.getElementById('percepcion-category');
                 const priorityInput = document.getElementById('percepcion-priority');
                 const addButton = document.getElementById('percepcion-add');
+                let editingKey = null;
                 const categories = ['positive', 'neutral', 'negative'];
                 const lists = {
                     positive: document.getElementById('percepcion-list-positive'),
@@ -2448,6 +2728,12 @@
                     medium: 'Prioridad media',
                     low: 'Prioridad baja',
                 };
+                const escapeHtml = (value) => String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
                 const renderPercepcion = () => {
                     categories.forEach((key) => {
                         const targetList = lists[key];
@@ -2455,14 +2741,30 @@
                         if (!targetList || !targetCount) return;
                         targetCount.textContent = String(factors[key].length);
                         targetList.innerHTML = factors[key].map((item, index) => `
-                            <li class="percepcion-item">
-                                <div>
-                                    <strong>${item.description}</strong><br>
-                                    <small>${priorityLabel[item.priority] || 'Prioridad media'}</small>
+                            <li class="rounded-box border border-base-300 bg-base-100 p-3 flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <strong class="block text-sm text-base-content">${escapeHtml(item.description)}</strong>
+                                    <small class="text-xs text-base-content/70">${escapeHtml(priorityLabel[item.priority] || 'Prioridad media')}</small>
                                 </div>
-                                <button type="button" data-percepcion-remove="${key}:${index}">Quitar</button>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="btn btn-outline btn-neutral btn-xs" data-percepcion-edit="${key}:${index}">Editar</button>
+                                    <button type="button" class="btn btn-outline btn-error btn-xs" data-percepcion-remove="${key}:${index}">Eliminar</button>
+                                </div>
                             </li>
                         `).join('');
+                    });
+                    percepcionBuilder.querySelectorAll('[data-percepcion-edit]').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            const [category, indexRaw] = (btn.dataset.percepcionEdit || '').split(':');
+                            const index = Number(indexRaw);
+                            if (!factors[category] || Number.isNaN(index) || !factors[category][index]) return;
+                            const selected = factors[category][index];
+                            if (descriptionInput) descriptionInput.value = selected.description || '';
+                            if (categoryInput) categoryInput.value = category;
+                            if (priorityInput) priorityInput.value = selected.priority || 'medium';
+                            editingKey = `${category}:${index}`;
+                            if (addButton) addButton.textContent = 'Guardar cambio';
+                        });
                     });
                     percepcionBuilder.querySelectorAll('[data-percepcion-remove]').forEach((btn) => {
                         btn.addEventListener('click', () => {
@@ -2470,6 +2772,10 @@
                             const index = Number(indexRaw);
                             if (!factors[category] || Number.isNaN(index)) return;
                             factors[category].splice(index, 1);
+                            if (editingKey === `${category}:${index}`) {
+                                editingKey = null;
+                                if (addButton) addButton.textContent = 'Agregar percepción';
+                            }
                             renderPercepcion();
                         });
                     });
@@ -2483,6 +2789,15 @@
                         return;
                     }
                     if (!factors[category]) return;
+                    if (editingKey) {
+                        const [editCategory, editIndexRaw] = editingKey.split(':');
+                        const editIndex = Number(editIndexRaw);
+                        if (factors[editCategory] && !Number.isNaN(editIndex) && factors[editCategory][editIndex]) {
+                            factors[editCategory].splice(editIndex, 1);
+                        }
+                        editingKey = null;
+                        if (addButton) addButton.textContent = 'Agregar percepción';
+                    }
                     factors[category].push({ description, priority });
                     if (descriptionInput) descriptionInput.value = '';
                     renderPercepcion();
