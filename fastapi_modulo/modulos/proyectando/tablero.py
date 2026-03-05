@@ -31,7 +31,7 @@ def proyectando_page(request: Request):
             "section_title": "",
             "content": content,
             "hide_floating_actions": True,
-            "show_page_header": True,
+            "show_page_header": False,
             "view_buttons_html": "",
             "colores": _get_colores_context(),
         },

@@ -1,174 +1,87 @@
-    <section class="foda-page pe-foda" id="foda-builder">
-        <style>
-            .pe-foda {
-                --bg: #f6f8fc;
-                --surface: rgba(255,255,255,.88);
-                --text: #0f172a;
-                --muted: #64748b;
-                --border: rgba(148,163,184,.38);
-                --shadow-soft: 0 10px 22px rgba(15,23,42,.06);
-                --primary: #0f3d2e;
-                --ok: #16a34a;
-                --warn: #f59e0b;
-                --crit: #ef4444;
-                width: 100%;
-                font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-                color: var(--text);
-                background:
-                  radial-gradient(1200px 640px at 15% 0%, rgba(15,61,46,.10), transparent 58%),
-                  radial-gradient(1000px 540px at 90% 6%, rgba(37,99,235,.10), transparent 55%),
-                  var(--bg);
-                border-radius: 18px;
-                padding: 18px 0 34px;
-            }
-            .pe-foda .foda-input-card,
-            .pe-foda .foda-quadrant {
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-radius: 22px;
-                box-shadow: var(--shadow-soft);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-            }
-            .pe-foda .foda-input-card {
-                padding: 16px;
-            }
-            .pe-foda .foda-input-card h2 {
-                margin: 0;
-                font-size: 20px;
-                letter-spacing: -0.02em;
-            }
-            .pe-foda .foda-input-card p {
-                margin: 6px 0 12px;
-                color: var(--muted);
-                font-size: 13px;
-            }
-            .pe-foda .foda-input-grid {
-                grid-template-columns: 1.4fr .8fr .8fr;
-                gap: 12px;
-            }
-            .pe-foda .foda-input-grid textarea,
-            .pe-foda .foda-input-grid select {
-                border: 1px solid var(--border);
-                border-radius: 14px;
-                background: rgba(255,255,255,.82);
-                box-shadow: 0 10px 20px rgba(15,23,42,.04);
-                padding: 12px;
-            }
-            .pe-foda .foda-input-actions button {
-                border-radius: 14px;
-                padding: 10px 14px;
-                font-weight: 800;
-                border: 1px solid rgba(15,61,46,.35);
-                background: linear-gradient(135deg, #0f3d2e, #1f6f52);
-                color: #fff;
-                cursor: pointer;
-            }
-            .pe-foda .foda-matrix {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 14px;
-                margin-top: 14px;
-            }
-            .pe-foda .foda-quadrant {
-                padding: 14px;
-            }
-            .pe-foda .foda-quadrant header {
-                margin-bottom: 10px;
-            }
-            .pe-foda .foda-quadrant header span {
-                border-radius: 999px;
-                padding: 6px 10px;
-                border: 1px solid var(--border);
-                background: rgba(255,255,255,.70);
-            }
-            .pe-foda .foda-quadrant ul {
-                min-height: 120px;
-                gap: 10px;
-            }
-            .pe-foda .foda-item {
-                border-radius: 16px;
-                border: 1px solid rgba(148,163,184,.30);
-                background: rgba(255,255,255,.82);
-                box-shadow: 0 10px 20px rgba(15,23,42,.04);
-                padding: 12px;
-            }
-            .pe-foda .foda-item button {
-                border-radius: 999px;
-                border: 1px solid var(--border);
-                background: rgba(255,255,255,.75);
-                padding: 6px 10px;
-                font-size: 12px;
-            }
-            .pe-foda .foda-strengths { border-color: rgba(22,163,74,.28); }
-            .pe-foda .foda-weaknesses { border-color: rgba(245,158,11,.30); }
-            .pe-foda .foda-opportunities { border-color: rgba(37,99,235,.30); }
-            .pe-foda .foda-threats { border-color: rgba(239,68,68,.30); }
-            @media (max-width: 1100px) {
-                .pe-foda .foda-input-grid { grid-template-columns: 1fr; }
-            }
-            @media (max-width: 640px) {
-                .pe-foda .foda-matrix { grid-template-columns: 1fr; }
-            }
-        </style>
-
-        <article class="foda-input-card">
-            <h2>Matriz FODA</h2>
-            <p>Registra factores y clasifícalos como fortalezas, debilidades, oportunidades o amenazas.</p>
-            <div class="foda-input-grid">
-                <div class="form-field">
-                    <label for="foda-description">Descripción</label>
-                    <textarea id="foda-description" placeholder="Describe el factor"></textarea>
-                </div>
-                <div class="form-field">
-                    <label for="foda-category">Categoría</label>
-                    <select id="foda-category">
+<section id="foda-builder" class="grid gap-4 w-full max-w-6xl">
+    <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+                src="/templates/icon/plan.svg"
+                alt="Icono estrategia y táctica"
+                width="96"
+                height="96"
+                class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+                <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">FODA</div>
+                <div class="block w-full text-base sm:text-lg text-base-content/70">Identifica factores internos y externos para el diagnóstico estratégico.</div>
+            </div>
+        </div>
+    </div>
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body gap-4">
+            <h2 class="card-title text-base-content">Matriz FODA</h2>
+            <p class="text-sm text-base-content/70">Registra factores y clasifícalos como fortalezas, debilidades, oportunidades o amenazas.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr_1fr] gap-3">
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Descripción</span></div>
+                    <textarea id="foda-description" class="textarea textarea-bordered w-full min-h-24" placeholder="Describe el factor"></textarea>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Categoría</span></div>
+                    <select id="foda-category" class="select select-bordered w-full">
                         <option value="strengths">Fortalezas</option>
                         <option value="weaknesses">Debilidades</option>
                         <option value="opportunities">Oportunidades</option>
                         <option value="threats">Amenazas</option>
                     </select>
-                </div>
-                <div class="form-field">
-                    <label for="foda-impact">Impacto</label>
-                    <select id="foda-impact">
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Impacto</span></div>
+                    <select id="foda-impact" class="select select-bordered w-full">
                         <option value="high">Alto</option>
                         <option value="medium">Medio</option>
                         <option value="low">Bajo</option>
                     </select>
-                </div>
+                </label>
             </div>
-            <div class="foda-input-actions">
-                <button type="button" id="foda-add">Agregar factor</button>
+            <div class="flex justify-end">
+                <button type="button" id="foda-add" class="btn btn-primary btn-sm">Agregar factor</button>
+            </div>
+        </div>
+    </article>
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base-content">Fortalezas</h3>
+                    <span id="foda-count-strengths" class="badge badge-success badge-outline">0</span>
+                </header>
+                <ul id="foda-list-strengths" class="grid gap-2"></ul>
             </div>
         </article>
-        <section class="foda-matrix">
-            <article class="foda-quadrant foda-strengths">
-                <header>
-                    <h3>Fortalezas</h3>
-                    <span id="foda-count-strengths">0</span>
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base-content">Debilidades</h3>
+                    <span id="foda-count-weaknesses" class="badge badge-warning badge-outline">0</span>
                 </header>
-                <ul id="foda-list-strengths"></ul>
-            </article>
-            <article class="foda-quadrant foda-weaknesses">
-                <header>
-                    <h3>Debilidades</h3>
-                    <span id="foda-count-weaknesses">0</span>
+                <ul id="foda-list-weaknesses" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base-content">Oportunidades</h3>
+                    <span id="foda-count-opportunities" class="badge badge-info badge-outline">0</span>
                 </header>
-                <ul id="foda-list-weaknesses"></ul>
-            </article>
-            <article class="foda-quadrant foda-opportunities">
-                <header>
-                    <h3>Oportunidades</h3>
-                    <span id="foda-count-opportunities">0</span>
+                <ul id="foda-list-opportunities" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base-content">Amenazas</h3>
+                    <span id="foda-count-threats" class="badge badge-error badge-outline">0</span>
                 </header>
-                <ul id="foda-list-opportunities"></ul>
-            </article>
-            <article class="foda-quadrant foda-threats">
-                <header>
-                    <h3>Amenazas</h3>
-                    <span id="foda-count-threats">0</span>
-                </header>
-                <ul id="foda-list-threats"></ul>
-            </article>
-        </section>
+                <ul id="foda-list-threats" class="grid gap-2"></ul>
+            </div>
+        </article>
     </section>
+</section>

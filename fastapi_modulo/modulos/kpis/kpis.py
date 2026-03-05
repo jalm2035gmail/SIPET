@@ -25,5 +25,5 @@ def kpis_page(request: Request):
         description="Gestión y seguimiento de indicadores clave de desempeño.",
         content=_load_kpis_template(),
         hide_floating_actions=True,
-        show_page_header=True,
+        show_page_header=False,
     )

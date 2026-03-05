@@ -7,189 +7,89 @@
   {% if app_favicon_url %}
   <link rel="icon" type="image/png" href="{{ app_favicon_url }}" />
   {% endif %}
+  <link rel="stylesheet" href="/static/dist/output.css?v={{ asset_version | default('dev', true) }}">
   <style>
-    :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --line: #cbd5e1;
-      --primary: #0f172a;
-      --primary-soft: #e2e8f0;
-      --ok: #166534;
-      --bad: #b91c1c;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-    .wrap {
-      max-width: 880px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
-    }
-    h1 {
-      margin: 0 0 8px;
-      font-size: 32px;
-      line-height: 1.1;
-    }
-    .description {
-      margin: 0 0 24px;
-      color: var(--muted);
-    }
-    .wizard-steps {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    .wizard-step {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 13px;
-      background: #fff;
-      color: var(--muted);
-    }
-    .wizard-step.active {
-      border-color: var(--primary);
-      background: var(--primary-soft);
-      color: var(--text);
-      font-weight: 700;
-    }
-    .field {
-      display: grid;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .field label {
-      font-weight: 700;
-      font-size: 14px;
-    }
-    .required {
-      color: var(--bad);
-      margin-left: 4px;
-    }
-    .field.field-header {
-      margin-top: 12px;
-      margin-bottom: 8px;
-    }
-    .field-header h3 {
-      margin: 0;
-      font-size: 20px;
-      color: var(--text);
-    }
-    .field.field-divider hr {
-      border: 0;
-      border-top: 1px solid var(--line);
-      margin: 4px 0;
-    }
-    .field.field-paragraph p,
-    .field.field-html .html-content {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-    input,
-    select,
-    textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 15px;
-      color: var(--text);
-      background: #fff;
-    }
-    textarea { min-height: 110px; resize: vertical; }
-    .help {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: -2px;
-    }
-    .check-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .check-wrap input { width: auto; }
-    .signature-wrap {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #fff;
-      padding: 8px;
-      display: grid;
-      gap: 8px;
-    }
-    .signature-canvas {
-      width: 100%;
-      height: 180px;
-      border: 1px dashed #94a3b8;
-      border-radius: 8px;
-      touch-action: none;
-      background: #fff;
-      cursor: crosshair;
-    }
-    .signature-actions {
-      display: flex;
-      justify-content: flex-end;
-    }
-    .signature-clear {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--text);
-      border-radius: 8px;
-      padding: 6px 10px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .actions {
-      margin-top: 10px;
-      display: flex;
-      justify-content: flex-end;
-    }
-    button {
-      border: 1px solid var(--primary);
-      border-radius: 10px;
-      padding: 10px 16px;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button:disabled {
-      opacity: .65;
-      cursor: wait;
-    }
-    .message {
-      margin-top: 14px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      display: none;
-    }
-    .message.ok {
-      display: block;
-      background: #dcfce7;
-      color: var(--ok);
-      border: 1px solid #86efac;
-    }
-    .message.error {
-      display: block;
-      background: #fee2e2;
-      color: var(--bad);
-      border: 1px solid #fca5a5;
-    }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    background: var(--color-base-200);
+    color: var(--color-base-content);
+    display: flex; justify-content: center;
+    padding: 40px 16px;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  .card {
+    background: var(--color-base-100);
+    border-radius: 16px;
+    padding: 36px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+  }
+  h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 6px; }
+  .description { font-size: .88rem; margin: 0 0 20px; opacity: .6; }
+  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+  .field label { font-size: .875rem; font-weight: 600; }
+  .field input, .field select, .field textarea {
+    padding: 9px 12px; border-radius: 8px; outline: none; width: 100%;
+    border: 1px solid var(--color-base-300);
+    background: var(--color-base-100);
+    color: var(--color-base-content); font-size: .95rem;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-primary) 20%, transparent);
+  }
+  .required { color: var(--color-error); margin-left: 2px; }
+  .help { font-size: .78rem; opacity: .5; }
+  .check-wrap { display: flex; align-items: center; gap: 8px; font-size: .9rem; cursor: pointer; }
+  .field-header h3 {
+    font-size: 1rem; font-weight: 700; padding-top: 8px;
+    border-top: 1px solid var(--color-base-300); margin: 0;
+  }
+  .field-divider hr { border: none; border-top: 1px solid var(--color-base-300); }
+  .field-paragraph p, .html-content { font-size: .9rem; opacity: .7; }
+  .wizard-steps { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .wizard-step {
+    padding: 4px 14px; border-radius: 999px; font-size: .78rem; font-weight: 600;
+    background: var(--color-base-200); color: var(--color-base-content); opacity: .45;
+  }
+  .wizard-step.active {
+    background: var(--color-primary); color: var(--color-primary-content); opacity: 1;
+  }
+  .signature-canvas {
+    width: 100%; height: 160px; border-radius: 8px; display: block;
+    border: 1px solid var(--color-base-300); background: var(--color-base-100); cursor: crosshair;
+  }
+  .signature-actions { margin-top: 6px; }
+  .signature-clear {
+    background: none; border: 1px solid var(--color-base-300);
+    border-radius: 6px; padding: 4px 12px; font-size: .8rem;
+    cursor: pointer; color: var(--color-base-content);
+  }
+  .actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+  .actions button {
+    padding: 10px 22px; border-radius: 8px; font-size: .9rem; font-weight: 700;
+    border: none; cursor: pointer; transition: opacity .15s;
+    background: var(--color-primary); color: var(--color-primary-content);
+  }
+  .actions button:hover { opacity: .87; }
+  .actions button:disabled { opacity: .38; pointer-events: none; }
+  #prev-btn, #next-btn {
+    background: var(--color-base-200); color: var(--color-base-content);
+    border: 1px solid var(--color-base-300);
+  }
+  .message { margin-top: 16px; padding: 10px 14px; border-radius: 8px; font-size: .9rem; display: none; }
+  .message.ok {
+    display: block;
+    background: color-mix(in oklch, var(--color-success) 14%, transparent);
+    color: var(--color-success); border: 1px solid var(--color-success);
+  }
+  .message.error {
+    display: block;
+    background: color-mix(in oklch, var(--color-error) 12%, transparent);
+    color: var(--color-error); border: 1px solid var(--color-error);
+  }
+  @media (max-width: 480px) { .card { padding: 22px 16px; } }
   </style>
 </head>
 <body>

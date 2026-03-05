@@ -54,6 +54,10 @@
       if (!window.Chart) {
         return;
       }
+      // Disable datalabels globally; enable selectively per chart
+      if (window.ChartDataLabels) {
+        window.Chart.defaults.set('plugins.datalabels', { display: false });
+      }
       this.destroy();
 
       const payload = this.payload || {};
@@ -102,7 +106,31 @@
             },
           ],
         },
-        options: baseOptions,
+        options: Object.assign({}, baseOptions, {
+          plugins: Object.assign({}, baseOptions.plugins, {
+            annotation: {
+              annotations: {
+                metaLine: {
+                  type: 'line',
+                  yMin: (this.state.kpis && this.state.kpis.metaGlobal) || 85,
+                  yMax: (this.state.kpis && this.state.kpis.metaGlobal) || 85,
+                  borderColor: 'rgba(239,68,68,0.65)',
+                  borderWidth: 1.5,
+                  borderDash: [6, 4],
+                  label: {
+                    display: true,
+                    content: 'Meta ' + ((this.state.kpis && this.state.kpis.metaGlobal) || 85) + '%',
+                    position: 'end',
+                    backgroundColor: 'rgba(239,68,68,0.75)',
+                    color: '#fff',
+                    font: { size: 10, weight: '600' },
+                    padding: { x: 6, y: 2 },
+                  },
+                },
+              },
+            },
+          }),
+        }),
       });
 
       this._makeChart(this._canvas("radarCanvas"), {
@@ -166,7 +194,18 @@
             },
           ],
         },
-        options: baseOptions,
+        options: Object.assign({}, baseOptions, {
+          plugins: Object.assign({}, baseOptions.plugins, {
+            datalabels: {
+              display: true,
+              anchor: 'end',
+              align: 'end',
+              color: '#334155',
+              font: { weight: '600', size: 10 },
+              formatter: v => v + '%',
+            },
+          }),
+        }),
       });
 
       this._makeChart(this._canvas("donutCanvas"), {
@@ -186,7 +225,18 @@
           responsive: true,
           maintainAspectRatio: false,
           cutout: "62%",
-          plugins: { legend: { position: "bottom" } },
+          plugins: {
+            legend: { position: "bottom" },
+            datalabels: {
+              display: true,
+              color: '#fff',
+              font: { weight: '700', size: 12 },
+              formatter: (v, ctx) => {
+                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                return total ? Math.round(v / total * 100) + '%' : '';
+              },
+            },
+          },
         },
       });
 
@@ -214,7 +264,17 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: "bottom" } },
+          plugins: {
+            legend: { position: "bottom" },
+            datalabels: {
+              display: true,
+              anchor: 'end',
+              align: 'end',
+              color: '#334155',
+              font: { weight: '600', size: 10 },
+              formatter: v => (v ? v.toLocaleString() : ''),
+            },
+          },
           scales: {
             x: { grid: { display: false }, ticks: { color: "#4b5c77" } },
             y: {

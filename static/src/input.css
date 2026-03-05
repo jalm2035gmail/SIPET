@@ -1,2 +1,117 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* ── Fuentes de clases para Tailwind v4 ──────────────────────────
+   Rutas relativas a este archivo (static/src/input.css).
+   Tailwind escaneará estos archivos en busca de clases utilitarias
+   y componentes DaisyUI usados en el proyecto.
+─────────────────────────────────────────────────────────────── */
+
+/* Templates y layouts globales */
+@source "../../templates/**/*.html";
+@source "../../fastapi_modulo/templates/**/*.html";
+
+/* Módulos del backend (HTML parciales que se inyectan en base.html) */
+@source "../../fastapi_modulo/modulos/**/*.html";
+
+/* Archivos Python con HTML embebido (main.py, módulos con f-strings HTML) */
+@source "../../fastapi_modulo/modulos/**/*.py";
+@source "../../fastapi_modulo/main.py";
+@source "../../fastapi_modulo/*.html";
+
+/* JS y CSS custom del proyecto */
+@source "../../static/js/**/*.js";
+@source "../../static/css/**/*.css";
+
+/* ── Puente DaisyUI: clases legado → componentes DaisyUI ──────────
+   Cada regla mantiene el nombre de clase original del HTML pero
+   deriva sus estilos de DaisyUI vía @apply.
+   ROADMAP: a medida que el HTML se refactoriza para usar clases
+   DaisyUI directamente, estas reglas se eliminan y el bloque
+   correspondiente en components.css también.
+─────────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* ── Cards ────────────────────────────────────────────────────── */
+  .emp-card          { @apply card bg-base-100 border border-base-300 rounded-2xl p-4 shadow-sm; }
+  .reporte-card      { @apply card bg-base-100 border border-base-300 rounded-xl p-3 cursor-pointer text-left; }
+  .kpi-sipet-card    { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
+  .reporte-detalle   { @apply card bg-base-100 border border-base-300 rounded-xl p-4; }
+  .alertas-box       { @apply card bg-base-100 border border-base-300 rounded-xl p-3 mb-3; }
+  .cp-card           { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
+  .cp-panel          { @apply card bg-base-100 border border-base-300 rounded-xl p-3 overflow-hidden; }
+  .reporte-kpi       { @apply card bg-base-200 border border-base-300 rounded-xl p-2; }
+  .reporte-bar-chart { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
+  .line-chart-wrap   { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
+
+  /* ── Tables ───────────────────────────────────────────────────── */
+  .emp-table       { @apply table table-zebra w-full text-sm; }
+  .cp-desv-table   { @apply table table-xs w-full; }
+  .cp-heat         { @apply table table-xs w-full text-center; }
+
+  /* ── Scrollable table wrappers ───────────────────────────────── */
+  .emp-table-wrap  { @apply overflow-auto rounded-xl w-full; }
+  .tabla-oficial-wrap { @apply overflow-auto; }
+
+  /* ── Buttons ─────────────────────────────────────────────────── */
+  .emp-list-btn    { @apply btn btn-ghost btn-sm btn-square; }
+  .emp-list-btn.delete { @apply btn btn-error btn-outline btn-sm btn-square; }
+  .month-toggle-btn { @apply btn btn-ghost btn-xs btn-circle align-middle; }
+  .cm-acc-close    { @apply btn btn-ghost btn-sm btn-circle; }
+  .emp-photo-action { @apply btn btn-ghost btn-xs btn-square absolute bottom-2; }
+
+  /* ── Form controls ───────────────────────────────────────────── */
+  .emp-field input,
+  .emp-field select   { @apply input input-sm w-full; }
+  .emp-field textarea { @apply textarea textarea-sm w-full; }
+  .emp-field label    { @apply label text-xs font-bold; }
+  .field input,
+  .field select       { @apply input input-sm; }
+
+  /* ── Badges / semáforos ──────────────────────────────────────── */
+  .semaforo-badge          { @apply badge text-xs font-bold; }
+  .semaforo-normal         { @apply badge-success; }
+  .semaforo-atencion       { @apply badge-warning; }
+  .semaforo-riesgo         { @apply badge-error; }
+
+  /* ── Alert items ─────────────────────────────────────────────── */
+  .alerta-item             { @apply alert text-sm py-2 px-3; }
+  .alerta-item.warn        { @apply alert-warning; }
+  .alerta-item.danger      { @apply alert-error; }
+  .alerta-item.ok          { @apply alert-success; }
+
+  /* ── Modal ───────────────────────────────────────────────────── */
+  .cm-acc-modal            { @apply modal; }
+  .cm-acc-modal.is-open    { pointer-events: auto; visibility: visible; opacity: 1; background-color: oklch(0% 0 0/.4); }
+  .cm-acc-dialog           { @apply modal-box w-11/12 max-w-5xl overflow-auto; }
+  .cm-acc-header           { @apply flex items-center justify-between gap-3 mb-3; }
+  .cm-acc-title            { @apply m-0 text-base font-black text-base-content; }
+
+  /* ── Typography helpers ──────────────────────────────────────── */
+  .emp-head                { @apply m-0 mb-3 text-base text-base-content; }
+  .emp-empty               { @apply text-base-content/50 text-sm; }
+  .emp-kanban-name         { @apply m-0 text-base font-bold leading-tight; }
+  .emp-kanban-puesto       { @apply m-0 text-sm font-medium leading-snug; }
+  .reporte-card-title      { @apply m-0 text-sm font-bold leading-tight; }
+  .alertas-title           { @apply m-0 mb-2 text-base font-black; }
+  .cp-head                 { @apply text-center font-black py-3 px-4; }
+  .cp-panel-title          { @apply m-0 mb-2 font-black; }
+  .cp-card-title           { @apply m-0 font-bold; }
+
+  /* ── Status dots (kanban) ────────────────────────────────────── */
+  .emp-kanban-status-dot           { @apply absolute top-3 right-3 w-4 h-4 rounded-full bg-warning; }
+  .emp-kanban-status-dot.activo    { @apply bg-success; }
+  .emp-kanban-status-dot.inactivo  { @apply bg-error; }
+  .emp-kanban-status-dot.pendiente { @apply bg-warning; }
+
+  /* ── Grid layouts ────────────────────────────────────────────── */
+  .reportes-grid     { @apply grid gap-3 mb-4; }
+  .reporte-kpis      { @apply grid gap-2 my-3; }
+  .kpi-sipet-grid    { @apply grid gap-3; }
+  .alertas-list      { @apply grid gap-2; }
+  .emp-list-actions  { @apply inline-flex items-center gap-2; }
+  .emp-form-grid     { @apply grid grid-cols-2 gap-3; }
+  .emp-org-node-data { @apply min-w-0 grid gap-0.5; }
+  .emp-kanban-actions { @apply mt-auto flex justify-end items-center gap-4; }
+  .control-mensual-actions { @apply flex justify-end mb-3; }
+}

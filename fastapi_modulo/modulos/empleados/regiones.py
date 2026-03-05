@@ -42,7 +42,7 @@ def inicio_regiones_page(request: Request):
         description="Registro y visualización de regiones.",
         content=_load_regiones_template(),
         hide_floating_actions=True,
-        show_page_header=True,
+        show_page_header=False,
         view_buttons=[
             {"label": "Form", "icon": "/templates/icon/formulario.svg", "view": "form", "active": True},
             {"label": "Lista", "icon": "/templates/icon/list.svg", "view": "list"},

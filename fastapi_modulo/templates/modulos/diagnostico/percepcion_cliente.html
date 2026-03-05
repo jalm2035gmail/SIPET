@@ -1,124 +1,77 @@
-    <section class="percepcion-page pe-percepcion" id="percepcion-builder">
-        <style>
-            .pe-percepcion {
-                --bg: #f6f8fc;
-                --surface: rgba(255,255,255,.88);
-                --text: #0f172a;
-                --muted: #64748b;
-                --border: rgba(148,163,184,.38);
-                --shadow-soft: 0 10px 22px rgba(15,23,42,.06);
-                width: 100%;
-                font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-                color: var(--text);
-                background:
-                  radial-gradient(1200px 640px at 15% 0%, rgba(15,61,46,.10), transparent 58%),
-                  radial-gradient(1000px 540px at 90% 6%, rgba(37,99,235,.10), transparent 55%),
-                  var(--bg);
-                border-radius: 18px;
-                padding: 18px 0 34px;
-            }
-            .pe-percepcion .percepcion-input-card,
-            .pe-percepcion .percepcion-column {
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-radius: 22px;
-                box-shadow: var(--shadow-soft);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-            }
-            .pe-percepcion .percepcion-input-card { padding: 16px; }
-            .pe-percepcion .percepcion-input-card h2 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
-            .pe-percepcion .percepcion-input-card p { margin: 6px 0 12px; color: var(--muted); font-size: 13px; }
-            .pe-percepcion .percepcion-input-grid { grid-template-columns: 1.4fr .8fr .8fr; gap: 12px; }
-            .pe-percepcion .percepcion-input-grid textarea,
-            .pe-percepcion .percepcion-input-grid select {
-                border: 1px solid var(--border);
-                border-radius: 14px;
-                background: rgba(255,255,255,.82);
-                box-shadow: 0 10px 20px rgba(15,23,42,.04);
-                padding: 12px;
-            }
-            .pe-percepcion .percepcion-input-actions button {
-                border-radius: 14px;
-                padding: 10px 14px;
-                font-weight: 800;
-                border: 1px solid rgba(15,61,46,.35);
-                background: linear-gradient(135deg, #0f3d2e, #1f6f52);
-                color: #fff;
-                cursor: pointer;
-            }
-            .pe-percepcion .percepcion-board {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-                gap: 14px;
-                margin-top: 14px;
-            }
-            .pe-percepcion .percepcion-column { padding: 14px; }
-            .pe-percepcion .percepcion-column header { margin-bottom: 10px; }
-            .pe-percepcion .percepcion-column header span {
-                border-radius: 999px;
-                padding: 6px 10px;
-                border: 1px solid var(--border);
-                background: rgba(255,255,255,.70);
-            }
-            .pe-percepcion .percepcion-column ul { min-height: 120px; gap: 10px; }
-            .pe-percepcion .percepcion-item {
-                border-radius: 16px;
-                border: 1px solid rgba(148,163,184,.30);
-                background: rgba(255,255,255,.82);
-                box-shadow: 0 10px 20px rgba(15,23,42,.04);
-                padding: 12px;
-            }
-            .pe-percepcion .percepcion-item button {
-                border-radius: 999px;
-                border: 1px solid var(--border);
-                background: rgba(255,255,255,.75);
-                padding: 6px 10px;
-                font-size: 12px;
-            }
-            @media (max-width: 1100px) { .pe-percepcion .percepcion-input-grid { grid-template-columns: 1fr; } }
-            @media (max-width: 900px) { .pe-percepcion .percepcion-board { grid-template-columns: 1fr; } }
-        </style>
-        <article class="percepcion-input-card">
-            <h2>Percepción del cliente</h2>
-            <p>Registra percepciones y clasifícalas para orientar mejoras del servicio.</p>
-            <div class="percepcion-input-grid">
-                <div class="form-field">
-                    <label for="percepcion-description">Comentario</label>
-                    <textarea id="percepcion-description" placeholder="Describe la percepción detectada"></textarea>
-                </div>
-                <div class="form-field">
-                    <label for="percepcion-category">Categoría</label>
-                    <select id="percepcion-category">
+<section id="percepcion-builder" class="grid gap-4 w-full max-w-6xl">
+    <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+                src="/templates/icon/plan.svg"
+                alt="Icono percepción del cliente"
+                width="96"
+                height="96"
+                class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+                <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Percepción del cliente</div>
+                <div class="block w-full text-base sm:text-lg text-base-content/70">Monitorea feedback para detectar fortalezas y brechas del servicio.</div>
+            </div>
+        </div>
+    </div>
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body gap-4">
+            <h2 class="card-title text-base-content">Percepción del cliente</h2>
+            <p class="text-sm text-base-content/70">Registra percepciones y clasifícalas para orientar mejoras del servicio.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr_1fr] gap-3">
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Comentario</span></div>
+                    <textarea id="percepcion-description" class="textarea textarea-bordered w-full min-h-24" placeholder="Describe la percepción detectada"></textarea>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Categoría</span></div>
+                    <select id="percepcion-category" class="select select-bordered w-full">
                         <option value="positive">Percepción positiva</option>
                         <option value="neutral">Percepción neutral</option>
                         <option value="negative">Percepción negativa</option>
                     </select>
-                </div>
-                <div class="form-field">
-                    <label for="percepcion-priority">Prioridad</label>
-                    <select id="percepcion-priority">
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Prioridad</span></div>
+                    <select id="percepcion-priority" class="select select-bordered w-full">
                         <option value="high">Alta</option>
                         <option value="medium">Media</option>
                         <option value="low">Baja</option>
                     </select>
-                </div>
+                </label>
             </div>
-            <div class="percepcion-input-actions">
-                <button type="button" id="percepcion-add">Agregar percepción</button>
+            <div class="flex justify-end">
+                <button type="button" id="percepcion-add" class="btn btn-primary btn-sm">Agregar percepción</button>
+            </div>
+        </div>
+    </article>
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base-content">Positivas</h3>
+                    <span id="percepcion-count-positive" class="badge badge-outline">0</span>
+                </header>
+                <ul id="percepcion-list-positive" class="grid gap-2"></ul>
             </div>
         </article>
-        <section class="percepcion-board">
-            <article class="percepcion-column">
-                <header><h3>Positivas</h3><span id="percepcion-count-positive">0</span></header>
-                <ul id="percepcion-list-positive"></ul>
-            </article>
-            <article class="percepcion-column">
-                <header><h3>Neutrales</h3><span id="percepcion-count-neutral">0</span></header>
-                <ul id="percepcion-list-neutral"></ul>
-            </article>
-            <article class="percepcion-column">
-                <header><h3>Negativas</h3><span id="percepcion-count-negative">0</span></header>
-                <ul id="percepcion-list-negative"></ul>
-            </article>
-        </section>
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base-content">Neutrales</h3>
+                    <span id="percepcion-count-neutral" class="badge badge-outline">0</span>
+                </header>
+                <ul id="percepcion-list-neutral" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-base-100 border border-base-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base-content">Negativas</h3>
+                    <span id="percepcion-count-negative" class="badge badge-outline">0</span>
+                </header>
+                <ul id="percepcion-list-negative" class="grid gap-2"></ul>
+            </div>
+        </article>
     </section>
+</section>

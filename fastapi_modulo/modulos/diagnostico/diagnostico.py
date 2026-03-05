@@ -50,7 +50,7 @@ def diagnostico_foda_page(request: Request):
         description='Identifica factores internos y externos para el diagnóstico estratégico.',
         content=_load_template("foda.html"),
         hide_floating_actions=True,
-        show_page_header=True,
+        show_page_header=False,
     )
 
 
@@ -63,7 +63,7 @@ def diagnostico_pestel_page(request: Request):
         description='Analiza factores externos que impactan la estrategia institucional.',
         content=_load_template("pestel.html"),
         hide_floating_actions=True,
-        show_page_header=True,
+        show_page_header=False,
     )
 
 
@@ -76,7 +76,7 @@ def diagnostico_porter_page(request: Request):
         description='Evalúa las cinco fuerzas competitivas para priorizar decisiones estratégicas.',
         content=_load_template("porter.html"),
         hide_floating_actions=True,
-        show_page_header=True,
+        show_page_header=False,
     )
 
 
@@ -89,5 +89,5 @@ def diagnostico_percepcion_cliente_page(request: Request):
         description='Monitorea feedback para detectar fortalezas y brechas del servicio.',
         content=_load_template("percepcion_cliente.html"),
         hide_floating_actions=True,
-        show_page_header=True,
+        show_page_header=False,
     )

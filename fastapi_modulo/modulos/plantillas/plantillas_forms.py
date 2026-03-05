@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
-from openpyxl import Workbook
+import pandas as pd
 from pydantic import ValidationError
 from sqlalchemy import func
 
@@ -71,156 +71,194 @@ def get_db_proxy():
 def plantillas_page(request: Request):
     _bind_core_symbols()
     plantillas_content = """
-        <section id="plantillas-page" class="plantillas-page">
-            <div class="plantillas-layout">
-                <aside class="plantillas-list-card">
-                    <h3>Plantillas</h3>
-                    <p class="plantillas-hint">Selecciona una plantilla existente o crea una nueva desde la barra flotante. "Encabezado" es la base para todos los reportes.</p>
-                    <ul id="plantillas-list" class="plantillas-list"></ul>
+        <section id="plantillas-page" class="w-full">
+            <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6 mb-4">
+                <div class="w-full flex flex-col md:flex-row items-center gap-10">
+                    <img
+                        src="/icon/empresa.svg"
+                        alt="Icono empresa"
+                        width="96"
+                        height="96"
+                        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+                    />
+                    <div class="w-full grid gap-2 content-center">
+                        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Plantillas</div>
+                        <div class="block w-full text-base sm:text-lg text-base-content/70">Crea y administra plantillas base de la organización.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+                <aside class="card border border-base-300 bg-base-100 shadow-sm xl:col-span-3">
+                    <div class="card-body gap-3">
+                        <h3 class="card-title text-base">Plantillas</h3>
+                        <p class="text-sm text-base-content/70">Selecciona una plantilla existente o crea una nueva desde la barra flotante. "Encabezado" es la base para todos los reportes.</p>
+                        <ul id="plantillas-list" class="menu bg-base-100 rounded-box"></ul>
+                    </div>
                 </aside>
-                <section class="plantillas-editor-card">
-                    <div class="form-field">
-                        <label for="template-name">Nombre de plantilla</label>
-                        <input type="text" id="template-name" placeholder="Ej: Tarjeta institucional">
+                <section class="card border border-base-300 bg-base-100 shadow-sm xl:col-span-9">
+                    <div class="card-body gap-4">
+                        <div class="form-control gap-1">
+                            <label for="template-name" class="label"><span class="label-text">Nombre de plantilla</span></label>
+                            <input type="text" id="template-name" class="input input-bordered w-full" placeholder="Ej: Tarjeta institucional">
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            <div class="form-control gap-1">
+                                <label for="template-html" class="label"><span class="label-text">HTML</span></label>
+                                <textarea id="template-html" class="textarea textarea-bordered w-full min-h-[240px] font-mono text-xs" placeholder="<section class='card'>...</section>"></textarea>
+                            </div>
+                            <div class="form-control gap-1">
+                                <label for="template-css" class="label"><span class="label-text">CSS</span></label>
+                                <textarea id="template-css" class="textarea textarea-bordered w-full min-h-[240px] font-mono text-xs" placeholder=".card { padding: 16px; border-radius: 12px; }"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <h4 class="text-sm font-semibold">Vista previa</h4>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" id="template-builder-btn" class="btn btn-sm btn-outline">Construir formulario</button>
+                                <button type="button" id="template-preview-btn" class="btn btn-sm btn-outline">Previsualizar</button>
+                            </div>
+                        </div>
+                        <div class="botones_accion">
+                            <button type="button" id="template-new-btn" class="view-pill boton_vista" data-tooltip="Nuevo" aria-label="Nuevo" title="Nuevo">
+                                <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+                                <span class="boton_vista-label">Nuevo</span>
+                            </button>
+                            <button type="button" id="template-edit-btn" class="view-pill boton_vista" data-tooltip="Editar" aria-label="Editar" title="Editar">
+                                <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/editar.svg')"></span>
+                                <span class="boton_vista-label">Editar</span>
+                            </button>
+                            <button type="button" id="template-save-btn" class="view-pill boton_vista" data-tooltip="Guardar" aria-label="Guardar" title="Guardar">
+                                <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/guardar.svg')"></span>
+                                <span class="boton_vista-label">Guardar</span>
+                            </button>
+                            <button type="button" id="template-delete-btn" class="view-pill boton_vista" data-tooltip="Eliminar" aria-label="Eliminar" title="Eliminar">
+                                <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/eliminar.svg')"></span>
+                                <span class="boton_vista-label">Eliminar</span>
+                            </button>
+                        </div>
+                        <iframe id="template-preview" class="w-full min-h-[280px] rounded-box border border-base-300 bg-base-100" title="Vista previa de plantilla"></iframe>
+                        <section id="form-builder-panel" class="hidden card border border-base-300 bg-base-100" aria-label="Constructor de formularios">
+                            <div class="card-body gap-4">
+                                <div>
+                                    <h4 class="text-base font-semibold">Constructor de formularios</h4>
+                                    <p class="text-sm text-base-content/70">Crea formularios dinámicos para usuarios finales.</p>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                                    <div class="form-control gap-1">
+                                        <label for="builder-form-select" class="label"><span class="label-text">Formularios existentes</span></label>
+                                        <select id="builder-form-select" class="select select-bordered w-full">
+                                            <option value="">Nuevo formulario</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-control gap-1">
+                                        <label for="builder-form-name" class="label"><span class="label-text">Nombre</span></label>
+                                        <input type="text" id="builder-form-name" class="input input-bordered w-full" placeholder="Ej: Solicitud de crédito">
+                                    </div>
+                                    <div class="form-control gap-1">
+                                        <label for="builder-form-slug" class="label"><span class="label-text">Slug (opcional)</span></label>
+                                        <input type="text" id="builder-form-slug" class="input input-bordered w-full" placeholder="solicitud-credito">
+                                    </div>
+                                    <div class="form-control gap-1">
+                                        <label for="builder-form-active" class="label"><span class="label-text">Estado</span></label>
+                                        <select id="builder-form-active" class="select select-bordered w-full">
+                                            <option value="true">Activo</option>
+                                            <option value="false">Inactivo</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-control gap-1">
+                                        <label for="builder-form-tenant" class="label"><span class="label-text">Tenant</span></label>
+                                        <input type="text" id="builder-form-tenant" class="input input-bordered w-full" placeholder="default">
+                                    </div>
+                                    <div class="form-control gap-1">
+                                        <label for="builder-form-roles" class="label"><span class="label-text">Roles permitidos</span></label>
+                                        <select id="builder-form-roles" class="select select-bordered w-full" multiple></select>
+                                    </div>
+                                    <div class="form-control gap-1 md:col-span-2 xl:col-span-3">
+                                        <label for="builder-form-description" class="label"><span class="label-text">Descripción</span></label>
+                                        <textarea id="builder-form-description" class="textarea textarea-bordered w-full" placeholder="Descripción del formulario"></textarea>
+                                    </div>
+                                    <div class="form-control gap-1 md:col-span-2 xl:col-span-3">
+                                        <label for="builder-form-config" class="label"><span class="label-text">Configuración (JSON)</span></label>
+                                        <textarea id="builder-form-config" class="textarea textarea-bordered w-full" placeholder='{"wizard":{"steps":[{"title":"Paso 1","fields":["nombre","email"]},{"title":"Paso 2","fields":["tipo","detalle"]}]},"notifications":{"email":{"enabled":true,"to":["equipo@empresa.com"],"cc":[],"subject":"Nuevo envio"},"webhooks":[{"url":"https://api.empresa.com/hook/forms","method":"POST"}]}}'></textarea>
+                                    </div>
+                                </div>
+                                <div class="card border border-base-300 bg-base-100">
+                                    <div class="card-body gap-3">
+                                        <h5 class="font-semibold">Agregar campo</h5>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                                            <div class="form-control gap-1">
+                                                <label for="builder-field-type" class="label"><span class="label-text">Tipo</span></label>
+                                                <select id="builder-field-type" class="select select-bordered w-full">
+                                                    <option value="text">Texto corto</option>
+                                                    <option value="textarea">Texto largo</option>
+                                                    <option value="email">Email</option>
+                                                    <option value="password">Contraseña</option>
+                                                    <option value="number">Número (decimal)</option>
+                                                    <option value="integer">Número (entero)</option>
+                                                    <option value="select">Desplegable (Dropdown)</option>
+                                                    <option value="checkboxes">Opción múltiple (Checkboxes)</option>
+                                                    <option value="radio">Opción única (Radio)</option>
+                                                    <option value="likert">Escala Likert</option>
+                                                    <option value="checkbox">Checkbox</option>
+                                                    <option value="date">Selector de fecha</option>
+                                                    <option value="time">Selector de hora</option>
+                                                    <option value="daterange">Rango de fechas</option>
+                                                    <option value="file">Carga de archivos</option>
+                                                    <option value="signature">Firma digital</option>
+                                                    <option value="url">Enlace (URL)</option>
+                                                    <option value="header">Encabezado</option>
+                                                    <option value="paragraph">Texto estático (Paragraph)</option>
+                                                    <option value="html">Texto estático (HTML)</option>
+                                                    <option value="divider">Separador</option>
+                                                    <option value="pagebreak">Salto de página</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-control gap-1">
+                                                <label for="builder-field-label" class="label"><span class="label-text">Etiqueta</span></label>
+                                                <input type="text" id="builder-field-label" class="input input-bordered w-full" placeholder="Nombre completo">
+                                            </div>
+                                            <div class="form-control gap-1">
+                                                <label for="builder-field-name" class="label"><span class="label-text">Nombre técnico</span></label>
+                                                <input type="text" id="builder-field-name" class="input input-bordered w-full" placeholder="nombre_completo">
+                                            </div>
+                                            <div class="form-control gap-1">
+                                                <label for="builder-field-placeholder" class="label"><span class="label-text">Placeholder</span></label>
+                                                <input type="text" id="builder-field-placeholder" class="input input-bordered w-full" placeholder="Escribe aquí">
+                                            </div>
+                                            <div class="form-control gap-1">
+                                                <label for="builder-field-help" class="label"><span class="label-text">Ayuda</span></label>
+                                                <input type="text" id="builder-field-help" class="input input-bordered w-full" placeholder="Texto de ayuda">
+                                            </div>
+                                            <div class="form-control gap-1">
+                                                <label for="builder-field-options" class="label"><span class="label-text">Opciones (select/radio)</span></label>
+                                                <input type="text" id="builder-field-options" class="input input-bordered w-full" placeholder="Opción A, Opción B, Opción C">
+                                            </div>
+                                            <div class="form-control gap-1">
+                                                <label for="builder-field-conditional" class="label"><span class="label-text">Condicional (JSON)</span></label>
+                                                <input type="text" id="builder-field-conditional" class="input input-bordered w-full" placeholder='{"field":"tipo","operator":"equals","value":"staff"}'>
+                                            </div>
+                                            <div class="form-control gap-2">
+                                                <label for="builder-field-required" class="label cursor-pointer justify-start gap-2">
+                                                    <input type="checkbox" id="builder-field-required" class="checkbox checkbox-sm">
+                                                    <span class="label-text">Obligatorio</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2">
+                                            <button type="button" id="builder-add-field-btn" class="btn btn-sm btn-outline">Agregar campo</button>
+                                            <button type="button" id="builder-clear-form-btn" class="btn btn-sm btn-outline">Limpiar</button>
+                                            <button type="button" id="builder-save-form-btn" class="btn btn-sm btn-primary">Guardar formulario</button>
+                                            <button type="button" id="builder-delete-form-btn" class="btn btn-sm btn-error btn-outline">Eliminar formulario</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <h5 class="font-semibold">Campos del formulario</h5>
+                                    <div id="builder-fields-list" class="space-y-2"></div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
-                    <div class="plantillas-editor-grid">
-                        <div class="form-field">
-                            <label for="template-html">HTML</label>
-                            <textarea id="template-html" class="plantilla-code" placeholder="<section class='card'>...</section>"></textarea>
-                        </div>
-                        <div class="form-field">
-                            <label for="template-css">CSS</label>
-                            <textarea id="template-css" class="plantilla-code" placeholder=".card { padding: 16px; border-radius: 12px; }"></textarea>
-                        </div>
-                    </div>
-                    <div class="plantillas-preview-head">
-                        <h4>Vista previa</h4>
-                        <div style="display:flex; gap:8px;">
-                            <button type="button" id="template-new-btn">Nuevo</button>
-                            <button type="button" id="template-edit-btn">Editar</button>
-                            <button type="button" id="template-builder-btn">Construir formulario</button>
-                            <button type="button" id="template-preview-btn">Previsualizar</button>
-                            <button type="button" id="template-save-btn">Guardar</button>
-                            <button type="button" id="template-delete-btn">Eliminar</button>
-                        </div>
-                    </div>
-                    <iframe id="template-preview" class="plantilla-preview-frame" title="Vista previa de plantilla"></iframe>
-                    <section id="form-builder-panel" class="form-builder-panel hidden" aria-label="Constructor de formularios">
-                        <div class="form-builder-head">
-                            <h4>Constructor de formularios</h4>
-                            <p>Crea formularios dinámicos para usuarios finales.</p>
-                        </div>
-                        <div class="form-builder-grid">
-                            <div class="form-field">
-                                <label for="builder-form-select">Formularios existentes</label>
-                                <select id="builder-form-select" class="campo-personalizado">
-                                    <option value="">Nuevo formulario</option>
-                                </select>
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-name">Nombre</label>
-                                <input type="text" id="builder-form-name" class="campo-personalizado" placeholder="Ej: Solicitud de crédito">
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-slug">Slug (opcional)</label>
-                                <input type="text" id="builder-form-slug" class="campo-personalizado" placeholder="solicitud-credito">
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-active">Estado</label>
-                                <select id="builder-form-active" class="campo-personalizado">
-                                    <option value="true">Activo</option>
-                                    <option value="false">Inactivo</option>
-                                </select>
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-tenant">Tenant</label>
-                                <input type="text" id="builder-form-tenant" class="campo-personalizado" placeholder="default">
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-roles">Roles permitidos</label>
-                                <select id="builder-form-roles" class="campo-personalizado" multiple>
-                                </select>
-                            </div>
-                            <div class="form-field form-builder-description">
-                                <label for="builder-form-description">Descripción</label>
-                                <textarea id="builder-form-description" class="campo-personalizado" placeholder="Descripción del formulario"></textarea>
-                            </div>
-                            <div class="form-field form-builder-description">
-                                <label for="builder-form-config">Configuración (JSON)</label>
-                                <textarea id="builder-form-config" class="campo-personalizado" placeholder='{"wizard":{"steps":[{"title":"Paso 1","fields":["nombre","email"]},{"title":"Paso 2","fields":["tipo","detalle"]}]},"notifications":{"email":{"enabled":true,"to":["equipo@empresa.com"],"cc":[],"subject":"Nuevo envio"},"webhooks":[{"url":"https://api.empresa.com/hook/forms","method":"POST"}]}}'></textarea>
-                            </div>
-                        </div>
-                        <div class="form-builder-field-editor">
-                            <h5>Agregar campo</h5>
-                            <div class="form-builder-grid field-grid">
-                                <div class="form-field">
-                                    <label for="builder-field-type">Tipo</label>
-                                    <select id="builder-field-type" class="campo-personalizado">
-                                        <option value="text">Texto corto</option>
-                                        <option value="textarea">Texto largo</option>
-                                        <option value="email">Email</option>
-                                        <option value="password">Contraseña</option>
-                                        <option value="number">Número (decimal)</option>
-                                        <option value="integer">Número (entero)</option>
-                                        <option value="select">Desplegable (Dropdown)</option>
-                                        <option value="checkboxes">Opción múltiple (Checkboxes)</option>
-                                        <option value="radio">Opción única (Radio)</option>
-                                        <option value="likert">Escala Likert</option>
-                                        <option value="checkbox">Checkbox</option>
-                                        <option value="date">Selector de fecha</option>
-                                        <option value="time">Selector de hora</option>
-                                        <option value="daterange">Rango de fechas</option>
-                                        <option value="file">Carga de archivos</option>
-                                        <option value="signature">Firma digital</option>
-                                        <option value="url">Enlace (URL)</option>
-                                        <option value="header">Encabezado</option>
-                                        <option value="paragraph">Texto estático (Paragraph)</option>
-                                        <option value="html">Texto estático (HTML)</option>
-                                        <option value="divider">Separador</option>
-                                        <option value="pagebreak">Salto de página</option>
-                                    </select>
-                                </div>
-                                <div class="form-field">
-                                    <label for="builder-field-label">Etiqueta</label>
-                                    <input type="text" id="builder-field-label" class="campo-personalizado" placeholder="Nombre completo">
-                                </div>
-                                <div class="form-field">
-                                    <label for="builder-field-name">Nombre técnico</label>
-                                    <input type="text" id="builder-field-name" class="campo-personalizado" placeholder="nombre_completo">
-                                </div>
-                                <div class="form-field">
-                                    <label for="builder-field-placeholder">Placeholder</label>
-                                    <input type="text" id="builder-field-placeholder" class="campo-personalizado" placeholder="Escribe aquí">
-                                </div>
-                                <div class="form-field">
-                                    <label for="builder-field-help">Ayuda</label>
-                                    <input type="text" id="builder-field-help" class="campo-personalizado" placeholder="Texto de ayuda">
-                                </div>
-                                <div class="form-field">
-                                    <label for="builder-field-options">Opciones (select/radio)</label>
-                                    <input type="text" id="builder-field-options" class="campo-personalizado" placeholder="Opción A, Opción B, Opción C">
-                                </div>
-                                <div class="form-field">
-                                    <label for="builder-field-conditional">Condicional (JSON)</label>
-                                    <input type="text" id="builder-field-conditional" class="campo-personalizado" placeholder='{"field":"tipo","operator":"equals","value":"staff"}'>
-                                </div>
-                                <div class="form-field form-field-inline">
-                                    <label for="builder-field-required">Obligatorio</label>
-                                    <input type="checkbox" id="builder-field-required">
-                                </div>
-                            </div>
-                            <div class="form-builder-actions">
-                                <button type="button" id="builder-add-field-btn">Agregar campo</button>
-                                <button type="button" id="builder-clear-form-btn">Limpiar</button>
-                                <button type="button" id="builder-save-form-btn">Guardar formulario</button>
-                                <button type="button" id="builder-delete-form-btn">Eliminar formulario</button>
-                            </div>
-                        </div>
-                        <div class="form-builder-list-wrap">
-                            <h5>Campos del formulario</h5>
-                            <div id="builder-fields-list" class="form-builder-fields-list"></div>
-                        </div>
-                    </section>
                 </section>
             </div>
         </section>
@@ -232,6 +270,7 @@ def plantillas_page(request: Request):
         content=plantillas_content,
         hide_floating_actions=False,
         floating_actions_screen="plantillas",
+        show_page_header=False,
     )
 
 
@@ -239,121 +278,143 @@ def plantillas_page(request: Request):
 def plantillas_constructor_page(request: Request):
     _bind_core_symbols()
     constructor_content = """
-        <section id="plantillas-page" class="plantillas-page">
-            <div class="plantillas-layout">
-                <aside class="plantillas-list-card">
-                    <h3>Constructor de formularios</h3>
-                    <p class="plantillas-hint">Pantalla dedicada para crear, editar y publicar formularios dinámicos.</p>
-                    <div class="form-builder-actions">
-                        <button type="button" id="builder-back-to-templates">Volver a plantillas</button>
+        <section id="plantillas-page" class="w-full">
+            <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6 mb-4">
+                <div class="w-full flex flex-col md:flex-row items-center gap-10">
+                    <img
+                        src="/icon/empresa.svg"
+                        alt="Icono empresa"
+                        width="96"
+                        height="96"
+                        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+                    />
+                    <div class="w-full grid gap-2 content-center">
+                        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Constructor de formularios</div>
+                        <div class="block w-full text-base sm:text-lg text-base-content/70">Diseña formularios dinámicos para procesos de la empresa.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
+                <aside class="card border border-base-300 bg-base-100 shadow-sm xl:col-span-3">
+                    <div class="card-body gap-3">
+                        <h3 class="card-title text-base">Constructor de formularios</h3>
+                        <p class="text-sm text-base-content/70">Pantalla dedicada para crear, editar y publicar formularios dinámicos.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" id="builder-back-to-templates" class="btn btn-sm btn-outline">Volver a plantillas</button>
+                        </div>
                     </div>
                 </aside>
-                <section class="plantillas-editor-card">
-                    <section id="form-builder-panel" class="form-builder-panel" aria-label="Constructor de formularios">
-                        <div class="form-builder-head">
-                            <h4>Constructor de formularios</h4>
-                            <p>Crea formularios dinámicos para usuarios finales.</p>
-                        </div>
-                        <div class="form-builder-grid">
-                            <div class="form-field">
-                                <label for="builder-form-select">Formulario</label>
-                                <select id="builder-form-select">
-                                    <option value="">Nuevo formulario</option>
-                                </select>
+                <section class="card border border-base-300 bg-base-100 shadow-sm xl:col-span-9">
+                    <div class="card-body gap-4">
+                        <section id="form-builder-panel" class="space-y-4" aria-label="Constructor de formularios">
+                            <div>
+                                <h4 class="text-base font-semibold">Constructor de formularios</h4>
+                                <p class="text-sm text-base-content/70">Crea formularios dinámicos para usuarios finales.</p>
                             </div>
-                            <div class="form-field">
-                                <label for="builder-form-name">Nombre</label>
-                                <input type="text" id="builder-form-name" placeholder="Ej: Solicitud de apoyo">
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-slug">Slug</label>
-                                <input type="text" id="builder-form-slug" placeholder="solicitud-apoyo">
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-active">Estado</label>
-                                <select id="builder-form-active">
-                                    <option value="true">Activo</option>
-                                    <option value="false">Inactivo</option>
-                                </select>
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-tenant">Tenant</label>
-                                <input type="text" id="builder-form-tenant" placeholder="default">
-                            </div>
-                            <div class="form-field">
-                                <label for="builder-form-roles">Roles permitidos</label>
-                                <select id="builder-form-roles" multiple>
-                                </select>
-                            </div>
-                            <div class="form-field form-builder-description">
-                                <label for="builder-form-description">Descripción</label>
-                                <textarea id="builder-form-description" placeholder="Describe el objetivo del formulario"></textarea>
-                            </div>
-                            <div class="form-field form-builder-description">
-                                <label for="builder-form-config">Configuración JSON (opcional)</label>
-                                <textarea id="builder-form-config" placeholder='{"submitLabel":"Enviar"}'></textarea>
-                            </div>
-                        </div>
-                        <div class="form-builder-field-editor">
-                            <h5>Campos del formulario</h5>
-                            <div class="form-builder-grid field-grid">
-                                <div class="form-field">
-                                    <label for="builder-field-type">Tipo</label>
-                                    <select id="builder-field-type">
-                                        <option value="text">Texto</option>
-                                        <option value="email">Email</option>
-                                        <option value="number">Número</option>
-                                        <option value="date">Fecha</option>
-                                        <option value="select">Selección</option>
-                                        <option value="radio">Opciones (radio)</option>
-                                        <option value="checkboxes">Opciones (checkbox)</option>
-                                        <option value="textarea">Texto largo</option>
-                                        <option value="file">Archivo</option>
-                                        <option value="password">Contraseña</option>
-                                        <option value="likert">Likert</option>
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                                <div class="form-control gap-1">
+                                    <label for="builder-form-select" class="label"><span class="label-text">Formulario</span></label>
+                                    <select id="builder-form-select" class="select select-bordered w-full">
+                                        <option value="">Nuevo formulario</option>
                                     </select>
                                 </div>
-                                <div class="form-field">
-                                    <label for="builder-field-label">Etiqueta</label>
-                                    <input type="text" id="builder-field-label" placeholder="Nombre completo">
+                                <div class="form-control gap-1">
+                                    <label for="builder-form-name" class="label"><span class="label-text">Nombre</span></label>
+                                    <input type="text" id="builder-form-name" class="input input-bordered w-full" placeholder="Ej: Solicitud de apoyo">
                                 </div>
-                                <div class="form-field">
-                                    <label for="builder-field-name">Nombre técnico</label>
-                                    <input type="text" id="builder-field-name" placeholder="nombre_completo">
+                                <div class="form-control gap-1">
+                                    <label for="builder-form-slug" class="label"><span class="label-text">Slug</span></label>
+                                    <input type="text" id="builder-form-slug" class="input input-bordered w-full" placeholder="solicitud-apoyo">
                                 </div>
-                                <div class="form-field">
-                                    <label for="builder-field-placeholder">Placeholder</label>
-                                    <input type="text" id="builder-field-placeholder" placeholder="Escribe aquí...">
+                                <div class="form-control gap-1">
+                                    <label for="builder-form-active" class="label"><span class="label-text">Estado</span></label>
+                                    <select id="builder-form-active" class="select select-bordered w-full">
+                                        <option value="true">Activo</option>
+                                        <option value="false">Inactivo</option>
+                                    </select>
                                 </div>
-                                <div class="form-field">
-                                    <label for="builder-field-help">Ayuda</label>
-                                    <input type="text" id="builder-field-help" placeholder="Texto de apoyo">
+                                <div class="form-control gap-1">
+                                    <label for="builder-form-tenant" class="label"><span class="label-text">Tenant</span></label>
+                                    <input type="text" id="builder-form-tenant" class="input input-bordered w-full" placeholder="default">
                                 </div>
-                                <div class="form-field">
-                                    <label for="builder-field-options">Opciones (coma separadas)</label>
-                                    <input type="text" id="builder-field-options" placeholder="A, B, C">
+                                <div class="form-control gap-1">
+                                    <label for="builder-form-roles" class="label"><span class="label-text">Roles permitidos</span></label>
+                                    <select id="builder-form-roles" class="select select-bordered w-full" multiple></select>
                                 </div>
-                                <div class="form-field">
-                                    <label for="builder-field-conditional">Condición JSON</label>
-                                    <input type="text" id="builder-field-conditional" placeholder='{"depends_on":"campo","equals":"valor"}'>
+                                <div class="form-control gap-1 md:col-span-2 xl:col-span-3">
+                                    <label for="builder-form-description" class="label"><span class="label-text">Descripción</span></label>
+                                    <textarea id="builder-form-description" class="textarea textarea-bordered w-full" placeholder="Describe el objetivo del formulario"></textarea>
                                 </div>
-                                <div class="form-field form-field-inline">
-                                    <input type="checkbox" id="builder-field-required">
-                                    <label for="builder-field-required">Obligatorio</label>
+                                <div class="form-control gap-1 md:col-span-2 xl:col-span-3">
+                                    <label for="builder-form-config" class="label"><span class="label-text">Configuración JSON (opcional)</span></label>
+                                    <textarea id="builder-form-config" class="textarea textarea-bordered w-full" placeholder='{"submitLabel":"Enviar"}'></textarea>
                                 </div>
                             </div>
-                            <div class="form-builder-actions">
-                                <button type="button" id="builder-add-field-btn">Agregar campo</button>
-                                <button type="button" id="builder-clear-form-btn">Limpiar</button>
-                                <button type="button" id="builder-save-form-btn">Guardar formulario</button>
-                                <button type="button" id="builder-delete-form-btn">Eliminar formulario</button>
+                            <div class="card border border-base-300 bg-base-100">
+                                <div class="card-body gap-3">
+                                    <h5 class="font-semibold">Campos del formulario</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                                        <div class="form-control gap-1">
+                                            <label for="builder-field-type" class="label"><span class="label-text">Tipo</span></label>
+                                            <select id="builder-field-type" class="select select-bordered w-full">
+                                                <option value="text">Texto</option>
+                                                <option value="email">Email</option>
+                                                <option value="number">Número</option>
+                                                <option value="date">Fecha</option>
+                                                <option value="select">Selección</option>
+                                                <option value="radio">Opciones (radio)</option>
+                                                <option value="checkboxes">Opciones (checkbox)</option>
+                                                <option value="textarea">Texto largo</option>
+                                                <option value="file">Archivo</option>
+                                                <option value="password">Contraseña</option>
+                                                <option value="likert">Likert</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-control gap-1">
+                                            <label for="builder-field-label" class="label"><span class="label-text">Etiqueta</span></label>
+                                            <input type="text" id="builder-field-label" class="input input-bordered w-full" placeholder="Nombre completo">
+                                        </div>
+                                        <div class="form-control gap-1">
+                                            <label for="builder-field-name" class="label"><span class="label-text">Nombre técnico</span></label>
+                                            <input type="text" id="builder-field-name" class="input input-bordered w-full" placeholder="nombre_completo">
+                                        </div>
+                                        <div class="form-control gap-1">
+                                            <label for="builder-field-placeholder" class="label"><span class="label-text">Placeholder</span></label>
+                                            <input type="text" id="builder-field-placeholder" class="input input-bordered w-full" placeholder="Escribe aquí...">
+                                        </div>
+                                        <div class="form-control gap-1">
+                                            <label for="builder-field-help" class="label"><span class="label-text">Ayuda</span></label>
+                                            <input type="text" id="builder-field-help" class="input input-bordered w-full" placeholder="Texto de apoyo">
+                                        </div>
+                                        <div class="form-control gap-1">
+                                            <label for="builder-field-options" class="label"><span class="label-text">Opciones (coma separadas)</span></label>
+                                            <input type="text" id="builder-field-options" class="input input-bordered w-full" placeholder="A, B, C">
+                                        </div>
+                                        <div class="form-control gap-1">
+                                            <label for="builder-field-conditional" class="label"><span class="label-text">Condición JSON</span></label>
+                                            <input type="text" id="builder-field-conditional" class="input input-bordered w-full" placeholder='{"depends_on":"campo","equals":"valor"}'>
+                                        </div>
+                                        <div class="form-control gap-2">
+                                            <label for="builder-field-required" class="label cursor-pointer justify-start gap-2">
+                                                <input type="checkbox" id="builder-field-required" class="checkbox checkbox-sm">
+                                                <span class="label-text">Obligatorio</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button type="button" id="builder-add-field-btn" class="btn btn-sm btn-outline">Agregar campo</button>
+                                        <button type="button" id="builder-clear-form-btn" class="btn btn-sm btn-outline">Limpiar</button>
+                                        <button type="button" id="builder-save-form-btn" class="btn btn-sm btn-primary">Guardar formulario</button>
+                                        <button type="button" id="builder-delete-form-btn" class="btn btn-sm btn-error btn-outline">Eliminar formulario</button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-builder-list-wrap">
-                            <h5>Campos agregados</h5>
-                            <div id="builder-fields-list" class="form-builder-fields-list"></div>
-                        </div>
-                    </section>
+                            <div class="space-y-2">
+                                <h5 class="font-semibold">Campos agregados</h5>
+                                <div id="builder-fields-list" class="space-y-2"></div>
+                            </div>
+                        </section>
+                    </div>
                 </section>
             </div>
         </section>
@@ -365,6 +426,7 @@ def plantillas_constructor_page(request: Request):
         content=constructor_content,
         hide_floating_actions=False,
         floating_actions_screen="plantillas",
+        show_page_header=False,
     )
 
 
@@ -685,22 +747,22 @@ def export_form_submissions(
         )
 
     if formato.lower() in {"excel", "xlsx"}:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Submissions"
-        ws.append(headers)
+        records = []
         for submission in submissions:
             data = submission.data if isinstance(submission.data, dict) else {}
-            row_values = [
-                submission.id,
-                submission.submitted_at.isoformat() if submission.submitted_at else "",
-                submission.ip_address or "",
-                submission.user_agent or "",
-            ]
-            row_values.extend(_normalize_submission_value(data.get(field_name)) for field_name in columns)
-            ws.append(row_values)
+            record = {
+                "submission_id": submission.id,
+                "submitted_at": submission.submitted_at.isoformat() if submission.submitted_at else "",
+                "ip_address": submission.ip_address or "",
+                "user_agent": submission.user_agent or "",
+            }
+            for field_name in columns:
+                record[field_name] = _normalize_submission_value(data.get(field_name))
+            records.append(record)
+        df = pd.DataFrame(records, columns=headers)
         output = BytesIO()
-        wb.save(output)
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Submissions")
         filename = f"{safe_slug}_submissions_{timestamp}.xlsx"
         return Response(
             content=output.getvalue(),

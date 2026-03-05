@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "build:css": "tailwindcss -c tailwind.config.js -i ./static/src/input.css -o ./static/dist/output.css --minify",
-    "watch:css": "tailwindcss -c tailwind.config.js -i ./static/src/input.css -o ./static/dist/output.css --watch"
+    "build:css": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --minify",
+    "watch:css": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.1",

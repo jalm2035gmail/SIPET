@@ -1,20 +1,35 @@
-<section class="notebook-section proyectando-scope">
-  <div class="notebook-tabs" role="tablist" aria-label="Crecimiento general">
-    <button type="button" class="tab active" data-tab="activo-total">Activo total</button>
-    <button type="button" class="tab" data-tab="pasivo-total">Pasivo total</button>
-    <button type="button" class="tab" data-tab="patrimonio">Patrimonio</button>
+<section class="p-4">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6 mb-4">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/icon/proyectando.svg"
+        alt="Icono datos financieros"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+      />
+      <div class="w-full grid gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Crecimiento general</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Análisis de evolución proyectada en activos, pasivos y patrimonio.</div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Crecimiento general">
+    <button type="button" class="tab tab-active rounded-t-lg" data-tab="activo-total">Activo total</button>
+    <button type="button" class="tab rounded-t-lg" data-tab="pasivo-total">Pasivo total</button>
+    <button type="button" class="tab rounded-t-lg" data-tab="patrimonio">Patrimonio</button>
   </div>
 
-  <div class="notebook-content">
+  <div class="-mt-px rounded-b-box border border-base-300 bg-base-100 p-4 notebook-content">
     <section class="tab-panel" data-panel="activo-total">
-      <div class="proyectando-table-wrap">
-        <table class="tabla-oficial">
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
           <thead>
             <tr>
               <th>Año</th>
-              <th class="tabla-oficial-num">Saldo</th>
-              <th class="tabla-oficial-num">Crecimiento</th>
-              <th class="tabla-oficial-num">%</th>
+              <th class="text-right">Saldo</th>
+              <th class="text-right">Crecimiento</th>
+              <th class="text-right">%</th>
             </tr>
           </thead>
           <tbody id="cg-activo-total-tbody"></tbody>
@@ -23,14 +38,14 @@
     </section>
 
     <section class="tab-panel" data-panel="pasivo-total" hidden>
-      <div class="proyectando-table-wrap">
-        <table class="tabla-oficial">
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
           <thead>
             <tr>
               <th>Rubro</th>
-              <th class="tabla-oficial-num">Y0</th>
-              <th class="tabla-oficial-num">Y1</th>
-              <th class="tabla-oficial-num">Proyección</th>
+              <th class="text-right">Y0</th>
+              <th class="text-right">Y1</th>
+              <th class="text-right">Proyección</th>
             </tr>
           </thead>
           <tbody id="cg-pasivo-total-tbody"></tbody>
@@ -39,14 +54,14 @@
     </section>
 
     <section class="tab-panel" data-panel="patrimonio" hidden>
-      <div class="proyectando-table-wrap">
-        <table class="tabla-oficial">
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
           <thead>
             <tr>
               <th>Rubro</th>
-              <th class="tabla-oficial-num">Y0</th>
-              <th class="tabla-oficial-num">Y1</th>
-              <th class="tabla-oficial-num">Proyección</th>
+              <th class="text-right">Y0</th>
+              <th class="text-right">Y1</th>
+              <th class="text-right">Proyección</th>
             </tr>
           </thead>
           <tbody id="cg-patrimonio-tbody"></tbody>
@@ -93,9 +108,9 @@
     tbodyActivo.innerHTML = rows.map(function (r) {
       return "<tr>" +
         "<td>" + esc(r.year) + "</td>" +
-        "<td class=\"tabla-oficial-num\">" + esc(num(r.saldo)) + "</td>" +
-        "<td class=\"tabla-oficial-num\">" + esc(num(r.crecimiento)) + "</td>" +
-        "<td class=\"tabla-oficial-num\">" + esc(num(r.pct)) + "</td>" +
+        "<td class=\"text-right\">" + esc(num(r.saldo)) + "</td>" +
+        "<td class=\"text-right\">" + esc(num(r.crecimiento)) + "</td>" +
+        "<td class=\"text-right\">" + esc(num(r.pct)) + "</td>" +
       "</tr>";
     }).join("");
   }
@@ -121,12 +136,12 @@
     });
     if (tbodyPasivo) {
       tbodyPasivo.innerHTML = pasivoRows.length ? pasivoRows.map(function (r) {
-        return "<tr><td>" + esc(r.rubro) + "</td><td class=\"tabla-oficial-num\">" + esc(r.y0) + "</td><td class=\"tabla-oficial-num\">" + esc(r.y1) + "</td><td class=\"tabla-oficial-num\">" + esc(r.proj) + "</td></tr>";
+        return "<tr><td>" + esc(r.rubro) + "</td><td class=\"text-right\">" + esc(r.y0) + "</td><td class=\"text-right\">" + esc(r.y1) + "</td><td class=\"text-right\">" + esc(r.proj) + "</td></tr>";
       }).join("") : '<tr><td colspan="4">Sin datos</td></tr>';
     }
     if (tbodyPatrimonio) {
       tbodyPatrimonio.innerHTML = patrimonioRows.length ? patrimonioRows.map(function (r) {
-        return "<tr><td>" + esc(r.rubro) + "</td><td class=\"tabla-oficial-num\">" + esc(r.y0) + "</td><td class=\"tabla-oficial-num\">" + esc(r.y1) + "</td><td class=\"tabla-oficial-num\">" + esc(r.proj) + "</td></tr>";
+        return "<tr><td>" + esc(r.rubro) + "</td><td class=\"text-right\">" + esc(r.y0) + "</td><td class=\"text-right\">" + esc(r.y1) + "</td><td class=\"text-right\">" + esc(r.proj) + "</td></tr>";
       }).join("") : '<tr><td colspan="4">Sin datos</td></tr>';
     }
   }

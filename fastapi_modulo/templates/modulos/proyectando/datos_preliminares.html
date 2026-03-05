@@ -1,109 +1,124 @@
-<section class="notebook-section proyectando-scope proyectando-notebook-oficial">
-  <div class="notebook-tabs" role="tablist" aria-label="Datos preliminares">
-    <button type="button" class="tab active" data-tab="datos-generales"><img src="/templates/icon/datos_generales.svg" alt="" class="tab-icon">Datos generales</button>
-    <button type="button" class="tab" data-tab="macroeconomia"><img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Macroeconomía</button>
-    <button type="button" class="tab" data-tab="sucursales"><img src="/templates/icon/sucursales.svg" alt="" class="tab-icon">Sucursales</button>
-    <button type="button" class="tab" data-tab="informacion-financiera"><img src="/templates/icon/informacion_financiera.svg" alt="" class="tab-icon">Información financiera</button>
-    <button type="button" class="tab" data-tab="activo-fijo"><img src="/templates/icon/activo_fijo.svg" alt="" class="tab-icon">Activo fijo</button>
-    <button type="button" class="tab" data-tab="gastos"><img src="/templates/icon/gastos.svg" alt="" class="tab-icon">Gastos</button>
+<section class="proyectando-scope w-full space-y-4">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/icon/proyectando.svg"
+        alt="Icono datos financieros"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+      />
+      <div class="w-full grid gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Datos preliminares</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Base de datos para proyecciones financieras y supuestos iniciales.</div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs tabs-lifted w-full overflow-x-auto flex-nowrap" role="tablist" aria-label="Datos preliminares">
+    <button type="button" class="tab tab-active gap-2 rounded-t-lg whitespace-nowrap" data-tab="datos-generales"><img src="/templates/icon/datos_generales.svg" alt="" class="w-5 h-5 shrink-0">Datos generales</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="macroeconomia"><img src="/templates/icon/macroeconomia.svg" alt="" class="w-5 h-5 shrink-0">Macroeconomía</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="sucursales"><img src="/templates/icon/sucursales.svg" alt="" class="w-5 h-5 shrink-0">Sucursales</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="informacion-financiera"><img src="/templates/icon/informacion_financiera.svg" alt="" class="w-5 h-5 shrink-0">Información financiera</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="activo-fijo"><img src="/templates/icon/activo_fijo.svg" alt="" class="w-5 h-5 shrink-0">Activo fijo</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="gastos"><img src="/templates/icon/gastos.svg" alt="" class="w-5 h-5 shrink-0">Gastos</button>
   </div>
 
-  <div class="notebook-content">
-    <section class="tab-panel" data-panel="datos-generales">
-      <div>
-      <div>
+  <div class="-mt-px rounded-b-box border border-base-300 bg-base-100 p-4 w-full space-y-4">
+    <section class="tab-panel card bg-base-100 border border-base-300 p-4" data-panel="datos-generales">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div class="space-y-1">
         <label for="dp-responsable-general">Responsable general</label>
-        <input id="dp-responsable-general" class="campo-personalizado" type="text">
+        <input id="dp-responsable-general" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-primer-anio">Primer año de proyección</label>
-        <input id="dp-primer-anio" class="campo-personalizado" type="number">
+        <input id="dp-primer-anio" class="input input-bordered w-full" type="number">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-anios">Años de proyección</label>
-        <input id="dp-anios" class="campo-personalizado" type="number">
+        <input id="dp-anios" class="input input-bordered w-full" type="number">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-moneda">Moneda</label>
-        <input id="dp-moneda" class="campo-personalizado" type="text">
+        <input id="dp-moneda" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-inflacion">Inflación estimada (%)</label>
-        <input id="dp-inflacion" class="campo-personalizado" type="text">
+        <input id="dp-inflacion" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-tasa">Tasa de crecimiento (%)</label>
-        <input id="dp-tasa" class="campo-personalizado" type="text">
+        <input id="dp-tasa" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-observaciones">Observaciones</label>
-        <input id="dp-observaciones" class="campo-personalizado" type="text">
+        <input id="dp-observaciones" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-sociedad">Sociedad</label>
-        <input id="dp-sociedad" class="campo-personalizado" type="text">
+        <input id="dp-sociedad" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-figura-juridica">Figura jurídica</label>
-        <input id="dp-figura-juridica" class="campo-personalizado" type="text">
+        <input id="dp-figura-juridica" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-calle">Calle</label>
-        <input id="dp-calle" class="campo-personalizado" type="text">
+        <input id="dp-calle" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-numero-exterior">Número exterior</label>
-        <input id="dp-numero-exterior" class="campo-personalizado" type="text">
+        <input id="dp-numero-exterior" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-numero-interior">Número interior</label>
-        <input id="dp-numero-interior" class="campo-personalizado" type="text">
+        <input id="dp-numero-interior" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-colonia">Colonia</label>
-        <input id="dp-colonia" class="campo-personalizado" type="text">
+        <input id="dp-colonia" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-ciudad">Ciudad</label>
-        <input id="dp-ciudad" class="campo-personalizado" type="text">
+        <input id="dp-ciudad" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-municipio">Municipio</label>
-        <input id="dp-municipio" class="campo-personalizado" type="text">
+        <input id="dp-municipio" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-estado">Estado</label>
-        <input id="dp-estado" class="campo-personalizado" type="text">
+        <input id="dp-estado" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-cp">CP</label>
-        <input id="dp-cp" class="campo-personalizado" type="text">
+        <input id="dp-cp" class="input input-bordered w-full" type="text">
       </div>
-      <div>
+      <div class="space-y-1">
         <label for="dp-pais">País</label>
-        <input id="dp-pais" class="campo-personalizado" type="text">
+        <input id="dp-pais" class="input input-bordered w-full" type="text">
       </div>
       </div>
     </section>
 
-    <section class="tab-panel" data-panel="macroeconomia" hidden>
+    <section class="tab-panel card bg-base-100 border border-base-300 p-4" data-panel="macroeconomia" hidden>
       <input id="dp-macro-inflacion-json" type="hidden">
       <input id="dp-macro-udi-json" type="hidden">
-      <div class="tabla-oficial-wrap">
-        <table id="dp-macro-table" class="tabla-oficial">
+      <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+        <table id="dp-macro-table" class="table table-zebra w-full text-sm">
           <thead id="dp-macro-thead"></thead>
           <tbody id="dp-macro-tbody"></tbody>
         </table>
       </div>
     </section>
 
-    <section class="tab-panel" data-panel="sucursales" hidden>
+    <section class="tab-panel card bg-base-100 border border-base-300 p-4" data-panel="sucursales" hidden>
       <p>Las sucursales se guardan en su propio store de sucursales.</p>
     </section>
 
-    <section class="tab-panel" data-panel="informacion-financiera" hidden>
-      <div class="tabla-oficial-wrap">
-        <table class="tabla-oficial">
+    <section class="tab-panel card bg-base-100 border border-base-300 p-4" data-panel="informacion-financiera" hidden>
+      <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+        <table class="table table-zebra w-full text-sm">
           <thead>
             <tr>
               <th>Concepto</th>
@@ -115,81 +130,81 @@
           <tbody>
             <tr>
               <td>Activos</td>
-              <td><input id="dp-ifb-activos-m3" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-activos-m2" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-activos-m1" class="tabla-oficial-input" type="text"></td>
+              <td><input id="dp-ifb-activos-m3" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-activos-m2" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-activos-m1" class="input input-bordered input-sm w-full text-right" type="text"></td>
             </tr>
             <tr>
               <td>Pasivos</td>
-              <td><input id="dp-ifb-pasivos-m3" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-pasivos-m2" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-pasivos-m1" class="tabla-oficial-input" type="text"></td>
+              <td><input id="dp-ifb-pasivos-m3" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-pasivos-m2" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-pasivos-m1" class="input input-bordered input-sm w-full text-right" type="text"></td>
             </tr>
             <tr>
               <td>Capital</td>
-              <td><input id="dp-ifb-capital-m3" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-capital-m2" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-capital-m1" class="tabla-oficial-input" type="text"></td>
+              <td><input id="dp-ifb-capital-m3" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-capital-m2" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-capital-m1" class="input input-bordered input-sm w-full text-right" type="text"></td>
             </tr>
             <tr>
               <td>Ingresos</td>
-              <td><input id="dp-ifb-ingresos-m3" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-ingresos-m2" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-ingresos-m1" class="tabla-oficial-input" type="text"></td>
+              <td><input id="dp-ifb-ingresos-m3" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-ingresos-m2" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-ingresos-m1" class="input input-bordered input-sm w-full text-right" type="text"></td>
             </tr>
             <tr>
               <td>Egresos</td>
-              <td><input id="dp-ifb-egresos-m3" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-egresos-m2" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-egresos-m1" class="tabla-oficial-input" type="text"></td>
+              <td><input id="dp-ifb-egresos-m3" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-egresos-m2" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-egresos-m1" class="input input-bordered input-sm w-full text-right" type="text"></td>
             </tr>
             <tr>
               <td>Resultado</td>
-              <td><input id="dp-ifb-resultado-m3" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-resultado-m2" class="tabla-oficial-input" type="text"></td>
-              <td><input id="dp-ifb-resultado-m1" class="tabla-oficial-input" type="text"></td>
+              <td><input id="dp-ifb-resultado-m3" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-resultado-m2" class="input input-bordered input-sm w-full text-right" type="text"></td>
+              <td><input id="dp-ifb-resultado-m1" class="input input-bordered input-sm w-full text-right" type="text"></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="tabla-oficial-wrap">
-        <table class="tabla-oficial">
+      <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+        <table class="table table-zebra w-full text-sm">
           <tbody>
             <tr>
               <th>ifb_rows_json</th>
-              <td><textarea id="dp-ifb-rows-json" rows="8" style="width:100%;"></textarea></td>
+              <td><textarea id="dp-ifb-rows-json" rows="8" class="textarea textarea-bordered w-full"></textarea></td>
             </tr>
             <tr>
               <th>ifb_conceptos_json</th>
-              <td><textarea id="dp-ifb-conceptos-json" rows="8" style="width:100%;"></textarea></td>
+              <td><textarea id="dp-ifb-conceptos-json" rows="8" class="textarea textarea-bordered w-full"></textarea></td>
             </tr>
             <tr>
               <th>cg_activo_total_growth_json</th>
-              <td><textarea id="dp-cg-activo-total-growth-json" rows="6" style="width:100%;"></textarea></td>
+              <td><textarea id="dp-cg-activo-total-growth-json" rows="6" class="textarea textarea-bordered w-full"></textarea></td>
             </tr>
             <tr>
               <th>cg_activo_total_rows_json</th>
-              <td><textarea id="dp-cg-activo-total-rows-json" rows="6" style="width:100%;"></textarea></td>
+              <td><textarea id="dp-cg-activo-total-rows-json" rows="6" class="textarea textarea-bordered w-full"></textarea></td>
             </tr>
             <tr>
               <th>cg_financiamiento_rows_json</th>
-              <td><textarea id="dp-cg-financiamiento-rows-json" rows="6" style="width:100%;"></textarea></td>
+              <td><textarea id="dp-cg-financiamiento-rows-json" rows="6" class="textarea textarea-bordered w-full"></textarea></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="tabla-oficial-wrap">
-        <table class="tabla-oficial" id="dp-ifb-detalle-table">
+      <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+        <table class="table table-zebra w-full text-sm" id="dp-ifb-detalle-table">
           <thead id="dp-ifb-detalle-thead"></thead>
           <tbody id="dp-ifb-detalle-tbody"></tbody>
         </table>
       </div>
     </section>
 
-    <section class="tab-panel" data-panel="activo-fijo" hidden>
+    <section class="tab-panel card bg-base-100 border border-base-300 p-4" data-panel="activo-fijo" hidden>
       <input id="dp-activo-fijo-json" type="hidden">
-      <div class="tabla-oficial-wrap">
-        <table class="tabla-oficial" id="dp-activo-fijo-table">
+      <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+        <table class="table table-zebra w-full text-sm" id="dp-activo-fijo-table">
           <thead>
             <tr>
               <th>Rubro</th>
@@ -201,18 +216,18 @@
       </div>
     </section>
 
-    <section class="tab-panel" data-panel="gastos" hidden>
+    <section class="tab-panel card bg-base-100 border border-base-300 p-4" data-panel="gastos" hidden>
       <div>
         <label for="dp-gastos-rows-json">gastos_rows_json</label>
-        <textarea id="dp-gastos-rows-json" rows="12"></textarea>
+        <textarea id="dp-gastos-rows-json" rows="12" class="textarea textarea-bordered w-full"></textarea>
       </div>
     </section>
   </div>
 
-  <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
-    <button type="button" id="dp-save-btn">Guardar</button>
-    <button type="button" id="dp-clear-btn">Limpiar</button>
-    <span id="dp-msg"></span>
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <button type="button" id="dp-save-btn" class="btn btn-primary">Guardar</button>
+    <button type="button" id="dp-clear-btn" class="btn btn-outline">Limpiar</button>
+    <span id="dp-msg" class="text-sm text-base-content/70"></span>
   </div>
 </section>
 
@@ -320,7 +335,7 @@
         "<td>" + label + "</td>" +
         years.map(function (y) {
           var val = mapObj[y] != null ? String(mapObj[y]) : "";
-          return "<td><input class=\"tabla-oficial-input\" data-macro-row=\"" + rowKey + "\" data-year=\"" + y + "\" placeholder=\"" + placeholder + "\" value=\"" +
+          return "<td><input class=\"input input-bordered input-sm w-full text-right\" data-macro-row=\"" + rowKey + "\" data-year=\"" + y + "\" placeholder=\"" + placeholder + "\" value=\"" +
             val.replace(/&/g, "&amp;").replace(/\"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;") +
             "\"></td>";
         }).join("") +
@@ -390,8 +405,8 @@
       var rubro = String(row.rubro || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
       var anios = String(row.anios || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
       return "<tr>" +
-        "<td><input class=\"tabla-oficial-input\" data-af-row=\"" + idx + "\" data-af-col=\"rubro\" value=\"" + rubro + "\"></td>" +
-        "<td><input class=\"tabla-oficial-input\" data-af-row=\"" + idx + "\" data-af-col=\"anios\" value=\"" + anios + "\"></td>" +
+        "<td><input class=\"input input-bordered input-sm w-full text-right\" data-af-row=\"" + idx + "\" data-af-col=\"rubro\" value=\"" + rubro + "\"></td>" +
+        "<td><input class=\"input input-bordered input-sm w-full text-right\" data-af-row=\"" + idx + "\" data-af-col=\"anios\" value=\"" + anios + "\"></td>" +
       "</tr>";
     }).join("");
     activoFijoTbody.querySelectorAll("input[data-af-row]").forEach(function (input) {
@@ -430,7 +445,7 @@
     for (var i = 0; i < maxVals; i++) cols.push(labels[i] || ("Col " + (i + 1)));
     ifbDetalleThead.innerHTML =
       "<tr><th>Cod</th><th>Rubro</th>" +
-      cols.map(function (c) { return "<th class=\"tabla-oficial-num\">" + c + "</th>"; }).join("") +
+      cols.map(function (c) { return "<th class=\"text-right\">" + c + "</th>"; }).join("") +
       "</tr>";
     ifbDetalleTbody.innerHTML = rows.map(function (row) {
       var vals = Array.isArray(row && row.values) ? row.values : [];
@@ -439,7 +454,7 @@
         "<td>" + String(row && row.rubro != null ? row.rubro : "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</td>" +
         cols.map(function (_, idx) {
           var v = vals[idx] != null ? String(vals[idx]) : "";
-          return "<td class=\"tabla-oficial-num\">" + v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</td>";
+          return "<td class=\"text-right\">" + v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</td>";
         }).join("") +
       "</tr>";
     }).join("");

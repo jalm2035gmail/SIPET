@@ -9,9 +9,10 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 openpyxl==3.1.2  # Para exportar a Excel
 pandas==2.2.3
+numpy>=1.26.0         # Cómputo numérico (Fase 2: modelos ML)
+scikit-learn>=1.4.0   # Clasificadores y scoring (Fase 2: churn/morosidad)
+joblib>=1.3.0         # Serialización de modelos entrenados
 reportlab==4.0.4  # Para generar PDFs
-celery==5.3.4  # Para tareas asíncronas
-redis==5.0.1  # Para cache y Celery
 httpx==0.27.2  # Cliente HTTP asíncrono
 jinja2==3.1.4
 Pillow>=10.0.0  # Optimización y redimensionado de imágenes
