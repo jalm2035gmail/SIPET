@@ -39,6 +39,7 @@
     </script>
 </head>
 <body>
+    <div class="sidebar-mobile-backdrop" id="sidebar-mobile-backdrop" hidden></div>
     <script>
         (function() {
             var colors = window.__sipet_server_colors || {};
@@ -51,8 +52,9 @@
     </script>
     {% set hide_floating_actions = hide_floating_actions | default(false) %}
     {% set current_role = (request.state.user_role | default(request.cookies.get('user_role', ''), true) | lower | trim) %}
-    {% set is_admin_or_superadmin_effective = is_admin_or_superadmin_user if is_admin_or_superadmin_user is defined else (current_role in ['superadministrador', 'superadmin', 'administrador', 'admin']) %}
+    {% set is_superadmin_effective = current_role in ['superadministrador', 'superadmin'] %}
     <div class="sidebar" id="sidebar">
+        <button type="button" class="sidebar-mobile-close" id="sidebar-mobile-close" aria-label="Cerrar menú">×</button>
         <div class="sidebar-section-title">Navegacion</div>
         <nav>
             <a class="sidebar-main-link" href="/web" data-menu-name="Frontend" data-route="/web" target="_blank" rel="noopener">
@@ -79,27 +81,13 @@
                     <span class="sidebar-main-label">Intelicoop</span>
                 </span>
             </a>
-            <details class="sidebar-block">
-                <summary data-menu-name="BRUJULA" data-route="/brujula">
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/brujula.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Brújula</span>
-                    </span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a href="/inicio" data-menu-name="BRUJULA" data-route="/inicio">Dashboard = BSC</a>
-                    <a href="/brujula/solidez-financiera" data-menu-name="BRUJULA" data-route="/brujula/solidez-financiera">Solidez Financiera</a>
-                    <a href="/brujula/liquidez" data-menu-name="BRUJULA" data-route="/brujula/liquidez">Liquidez</a>
-                    <a href="/brujula/rentabilidad" data-menu-name="BRUJULA" data-route="/brujula/rentabilidad">Rentabilidad</a>
-                    <a href="/brujula/crecimiento" data-menu-name="BRUJULA" data-route="/brujula/crecimiento">Crecimiento</a>
-                    <a href="/brujula/liderazgo" data-menu-name="BRUJULA" data-route="/brujula/liderazgo">Liderazgo</a>
-                    <a href="/brujula/productividad" data-menu-name="BRUJULA" data-route="/brujula/productividad">Productividad</a>
-                    <a href="/brujula/balance-social" data-menu-name="BRUJULA" data-route="/brujula/balance-social">Balance Social</a>
-                    <a href="/brujula/reportes" data-menu-name="BRUJULA" data-route="/brujula/reportes">Reportes</a>
-                    <a href="/brujula/configuracion" data-menu-name="BRUJULA" data-route="/brujula/configuracion">Configuración</a>
-                </div>
-            </details>
-            {% if is_admin_or_superadmin_effective or 'CRM' in (user_app_access | default([])) %}
+            <a class="sidebar-main-link" href="/inicio" data-menu-name="BRUJULA" data-route="/inicio" data-route-match="exact">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/brujula.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Brújula</span>
+                </span>
+            </a>
+            {% if is_superadmin_effective or 'CRM' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/crm" data-menu-name="CRM" data-route="/crm">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/crm.svg');" aria-hidden="true"></span>
@@ -107,7 +95,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Auditoria' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Auditoria' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/auditoria" data-menu-name="Auditoría" data-route="/auditoria">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/auditoria.svg');" aria-hidden="true"></span>
@@ -115,7 +103,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'ActivoFijo' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'ActivoFijo' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/activo-fijo" data-menu-name="Gestión de Activo Fijo" data-route="/activo-fijo">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/activo_fijo.svg');" aria-hidden="true"></span>
@@ -123,7 +111,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Multiempresa' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Multiempresa' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/multiempresa" data-menu-name="Multiempresa" data-route="/multiempresa">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/ia.svg');" aria-hidden="true"></span>
@@ -131,7 +119,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'BSC' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'BSC' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/inicio" data-menu-name="BSC" data-route="/inicio">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
@@ -139,7 +127,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/inicio/departamentos" data-menu-name="Organización" data-route="/inicio/departamentos">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/templates/icon/boton/organigrama.svg');" aria-hidden="true"></span>
@@ -147,7 +135,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Estrategia y táctica' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Estrategia y táctica' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/planes" data-menu-name="Estrategia y táctica" data-route="/planes">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/plan.svg');" aria-hidden="true"></span>
@@ -155,7 +143,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Datos financieros' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Datos financieros' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/proyectando" data-menu-name="Datos financieros" data-route="/proyectando">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/proyectando.svg');" aria-hidden="true"></span>
@@ -163,7 +151,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Control y seguimiento' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Control y seguimiento' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/control-seguimiento" data-menu-name="Control y seguimiento" data-route="/control-seguimiento">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
@@ -171,7 +159,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'KPIs' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'KPIs' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/kpis" data-menu-name="KPI's" data-route="/kpis">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/kpi.svg');" aria-hidden="true"></span>
@@ -179,7 +167,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Reportes' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Reportes' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/reportes" data-menu-name="Reportes" data-route="/reportes">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/reporte.svg');" aria-hidden="true"></span>
@@ -187,7 +175,7 @@
                 </span>
             </a>
             {% endif %}
-            {% if is_admin_or_superadmin_effective or 'Empresa' in (user_app_access | default([])) %}
+            {% if is_superadmin_effective or 'Empresa' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/identidad-institucional" data-menu-name="Empresa" data-route="/identidad-institucional">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/empresa.svg');" aria-hidden="true"></span>
@@ -292,6 +280,8 @@
         document.addEventListener('DOMContentLoaded', async function() {
             const hamburger = document.querySelector('.navbar-hamburger');
             const sidebarElem = document.getElementById('sidebar');
+            const sidebarMobileBackdrop = document.getElementById('sidebar-mobile-backdrop');
+            const sidebarMobileClose = document.getElementById('sidebar-mobile-close');
             const navbar = document.querySelector('.navbar');
             const mainContent = document.querySelector('.main-content');
             const personalizarBtn = document.getElementById('personalizar-btn');
@@ -443,7 +433,7 @@
                     { href: "/control-interno/reportes", label: "Control interno (COSO): Reportes" },
                 ],
                 "BRUJULA": [
-                    { href: "/inicio", label: "Dashboard = BSC" },
+                    { href: "/inicio", label: "Dashboard = BSC", exact: true },
                     { href: "/brujula/solidez-financiera", label: "Solidez Financiera" },
                     { href: "/brujula/liquidez", label: "Liquidez" },
                     { href: "/brujula/rentabilidad", label: "Rentabilidad" },
@@ -770,8 +760,9 @@
                     items.forEach((item) => {
                         const href = normalizeRoutePath(item && item.href ? item.href : '');
                         if (!href) return;
+                        const exactOnly = !!(item && item.exact);
                         const exact = href === normalizedPath;
-                        const prefix = href !== '/' && normalizedPath.startsWith(`${href}/`);
+                        const prefix = !exactOnly && href !== '/' && normalizedPath.startsWith(`${href}/`);
                         if (!exact && !prefix) return;
                         const score = href.length + (exact ? 10000 : 0);
                         if (score > bestScore) {
@@ -884,24 +875,42 @@
                 navbarRoute.setAttribute('aria-hidden', 'false');
             };
 
+            const isMobileSidebarViewport = () => window.matchMedia('(max-width: 900px)').matches;
+            const getModernSidebarWidth = () => {
+                if (!sidebarElem) return 0;
+                return Math.round(sidebarElem.getBoundingClientRect().width || 0);
+            };
+
             const setSidebarState = (open) => {
-                const width = open ? expandedWidth : collapsedWidth;
-                const isMobile = window.matchMedia('(max-width: 900px)').matches;
+                const isMobile = isMobileSidebarViewport();
                 const modernSidebar = document.documentElement.classList.contains('ui-sidebar-modern');
+                const modernSidebarWidth = getModernSidebarWidth();
                 sidebarElem.classList.toggle('is-collapsed', !open);
                 navbar.style.marginLeft = '0';
                 navbar.style.width = '100%';
-                mainContent.style.marginLeft = modernSidebar && open && !isMobile ? '420px' : '0';
-                mainContent.style.width = modernSidebar && open && !isMobile ? 'calc(100% - 420px)' : '100%';
+                mainContent.style.marginLeft = '0';
+                mainContent.style.width = '100%';
+                if (modernSidebar && open && !isMobile && modernSidebarWidth > 0) {
+                    mainContent.style.paddingRight = (32 + modernSidebarWidth + 16) + 'px';
+                } else {
+                    mainContent.style.paddingRight = '';
+                }
                 if (!open) {
                     sidebarBlocks.forEach((item) => {
                         item.removeAttribute('open');
                         item.classList.remove('is-flyout-open');
                     });
                 }
+                if (sidebarMobileBackdrop) {
+                    sidebarMobileBackdrop.hidden = !(open && isMobile);
+                    sidebarMobileBackdrop.classList.toggle('is-visible', open && isMobile);
+                }
                 if (hamburger) {
                     hamburger.classList.toggle('is-open', open);
                     hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                }
+                if (sidebarMobileClose) {
+                    sidebarMobileClose.setAttribute('aria-hidden', isMobile && open ? 'false' : 'true');
                 }
                 isSidebarOpen = open;
                 updateRouteVisibility();
@@ -911,6 +920,12 @@
 
             if (hamburger) {
                 hamburger.addEventListener('click', toggleSidebar);
+            }
+            if (sidebarMobileClose) {
+                sidebarMobileClose.addEventListener('click', () => setSidebarState(false));
+            }
+            if (sidebarMobileBackdrop) {
+                sidebarMobileBackdrop.addEventListener('click', () => setSidebarState(false));
             }
 
             sidebarSummaryItems.forEach((summary) => {
@@ -1001,6 +1016,11 @@
             // ── Menús: enlace activo + auto-open + persistencia localStorage ──
             (function initSidebarActiveState() {
                 const SIDEBAR_OPEN_KEY = 'sipet_sidebar_open_v2';
+                const clearSidebarActiveState = () => {
+                    document.querySelectorAll('.sidebar .is-active').forEach((node) => {
+                        node.classList.remove('is-active');
+                    });
+                };
 
                 const saveSidebarOpenState = () => {
                     try {
@@ -1014,6 +1034,7 @@
                 };
 
                 const activateSidebarLink = (link) => {
+                    clearSidebarActiveState();
                     link.classList.add('is-active');
                     const parentBlock = link.closest('.sidebar-block');
                     if (parentBlock) {
@@ -1035,6 +1056,8 @@
                 let foundActive = false;
                 for (const link of allLinks) {
                     const href = (link.getAttribute('href') || '').split('?')[0];
+                    const exactOnly = String(link.dataset.routeMatch || '').trim() === 'exact';
+                    if (exactOnly && href !== currentPath) continue;
                     if (href && href !== '/' && href !== '#' && href === currentPath) {
                         activateSidebarLink(link);
                         foundActive = true;
@@ -1047,7 +1070,9 @@
                     let best = null, bestLen = 0;
                     for (const link of allLinks) {
                         const href = (link.getAttribute('href') || '').split('?')[0];
+                        const exactOnly = String(link.dataset.routeMatch || '').trim() === 'exact';
                         if (!href || href === '/' || href === '#') continue;
+                        if (exactOnly) continue;
                         if (currentPath.startsWith(href + '/') && href.length > bestLen) {
                             best = link; bestLen = href.length;
                         }
@@ -1211,9 +1236,10 @@
                 let bestLen = -1;
                 Array.from(links || []).forEach((link) => {
                     const href = normalizeRoutePath(link.getAttribute('href'));
+                    const exactOnly = String(link.dataset.routeMatch || '').trim() === 'exact';
                     if (!href || href === '#') return;
                     const exact = href === currentPath;
-                    const prefix = href !== '/' && currentPath.startsWith(`${href}/`);
+                    const prefix = !exactOnly && href !== '/' && currentPath.startsWith(`${href}/`);
                     if (!exact && !prefix) return;
                     const score = href.length + (exact ? 10000 : 0);
                     if (score > bestLen) {
@@ -1228,6 +1254,13 @@
             const activeSidebarMainLink = pickBestRouteMatch(sidebarMainLinks, currentSidebarPath);
             const activeNavbarOrgLink = pickBestRouteMatch(navbarOrgLinks, currentSidebarPath);
             const activeCatalogMenu = resolveMenuFromCatalogByPath(currentSidebarPath);
+            const markSidebarMainLinkActiveByMenu = (menuName) => {
+                const target = Array.from(sidebarMainLinks).find((link) => String(link.dataset.menuName || '').trim() === String(menuName || '').trim());
+                if (!target) return false;
+                document.querySelectorAll('.sidebar .is-active').forEach((node) => node.classList.remove('is-active'));
+                target.classList.add('is-active');
+                return true;
+            };
             if (activeSidebarLink) {
                 const block = activeSidebarLink.closest('.sidebar-block');
                 if (block) block.open = true;
@@ -1235,6 +1268,7 @@
             } else if (activeNavbarOrgLink) {
                 setMenuInfo(activeNavbarOrgLink);
             } else if (activeCatalogMenu) {
+                markSidebarMainLinkActiveByMenu(activeCatalogMenu.menuName);
                 setNavbarMenu(activeCatalogMenu.menuName, activeCatalogMenu.subLabel, activeCatalogMenu.href);
             } else if (activeSidebarMainLink) {
                 setMenuInfo(activeSidebarMainLink);
@@ -1259,8 +1293,23 @@
                     }
                 }
             } catch (e) {}
-            setSidebarState(true);
+            window.setTimeout(() => {
+                const resolvedPath = normalizeRoutePath(window.location.pathname);
+                const resolvedCatalogMenu = resolveMenuFromCatalogByPath(resolvedPath);
+                const resolvedSidebarMainLink = pickBestRouteMatch(sidebarMainLinks, resolvedPath);
+                if (resolvedCatalogMenu) {
+                    markSidebarMainLinkActiveByMenu(resolvedCatalogMenu.menuName);
+                    setNavbarMenu(resolvedCatalogMenu.menuName, resolvedCatalogMenu.subLabel, resolvedCatalogMenu.href);
+                } else if (resolvedSidebarMainLink) {
+                    setMenuInfo(resolvedSidebarMainLink);
+                }
+            }, 0);
+            setSidebarState(!isMobileSidebarViewport());
             window.addEventListener('resize', () => {
+                if (!isMobileSidebarViewport() && !isSidebarOpen) {
+                    setSidebarState(true);
+                    return;
+                }
                 setSidebarState(isSidebarOpen);
             });
             setFloatingScreen(floatingDefaultScreen);
