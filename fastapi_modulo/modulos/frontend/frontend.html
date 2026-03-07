@@ -843,9 +843,39 @@
   function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   /* API */
-  function apiPages(){ return fetch('/api/frontend/pages',{credentials:'include'}).then(function(r){return r.json();}).then(function(j){return j.data||[];}); }
-  function apiSave(page){ return fetch('/api/frontend/pages',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(page)}).then(function(r){return r.json();}); }
-  function apiDelete(id){ return fetch('/api/frontend/pages',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id:id})}).then(function(r){return r.json();}); }
+  function _readJSONResponse(r){
+    return r.text().then(function(text){
+      var data = null;
+      try { data = text ? JSON.parse(text) : {}; } catch(err) {}
+      if(!r.ok){
+        var message = (data && (data.error || data.message)) || ('HTTP ' + r.status);
+        throw new Error(message);
+      }
+      if(data) return data;
+      throw new Error('Respuesta inválida del servidor');
+    });
+  }
+  function apiPages(){
+    return fetch('/api/frontend/pages',{credentials:'include'})
+      .then(_readJSONResponse)
+      .then(function(j){ return j.data || []; });
+  }
+  function apiSave(page){
+    return fetch('/api/frontend/pages',{
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(page)
+    }).then(_readJSONResponse);
+  }
+  function apiDelete(id){
+    return fetch('/api/frontend/pages',{
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'delete',id:id})
+    }).then(_readJSONResponse);
+  }
 
   /* GrapesJS init */
   function initEditor(){
@@ -1685,22 +1715,53 @@
     _saving = true;
     var btn = document.getElementById('wb-save-btn');
     var origHTML = btn ? btn.innerHTML : '';
-    if(btn) btn.innerHTML = '⏳ Guardando…';
-    page.title  = (document.getElementById('wb-page-title').value || '').trim() || page.title;
-    page.slug   = (document.getElementById('wb-page-slug').value  || '').trim() || page.slug;
-    page.status = document.getElementById('wb-status-sel').value;
-    if(_editor){ page.gjs_html = _editor.getHtml(); page.gjs_css = _editor.getCss(); }
-    page.meta = {
-      title:       (document.getElementById('seo-meta-title').value || '').trim(),
-      description: (document.getElementById('seo-meta-desc').value  || '').trim(),
-      og_image:    (document.getElementById('seo-og-image').value   || '').trim(),
-    };
-    return apiSave(page).then(function(j){
-      if(j.success){ if(j.data) _pages = j.data; renderPageSelect(); renderPagesModal(); toast('Guardado ✓'); _setDirty(false); }
-      else toast('Error al guardar', false);
-    }).catch(function(){ toast('Error de red', false); }).finally(function(){
+    if(btn){
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Guardando…';
+    }
+    try {
+      page.title  = (document.getElementById('wb-page-title').value || '').trim() || page.title;
+      page.slug   = slugify((document.getElementById('wb-page-slug').value || '').trim() || page.slug);
+      page.status = document.getElementById('wb-status-sel').value;
+      if(_editor){
+        page.gjs_html = _editor.getHtml();
+        page.gjs_css = _editor.getCss();
+      }
+      page.meta = {
+        title:       (document.getElementById('seo-meta-title').value || '').trim(),
+        description: (document.getElementById('seo-meta-desc').value  || '').trim(),
+        og_image:    (document.getElementById('seo-og-image').value   || '').trim(),
+      };
+    } catch(err){
       _saving = false;
-      if(btn) btn.innerHTML = origHTML;
+      if(btn){
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+      }
+      toast('Error preparando guardado: ' + (err && err.message ? err.message : 'desconocido'), false);
+      return Promise.resolve();
+    }
+    return apiSave(page).then(function(j){
+      if(!j || !j.success) throw new Error((j && j.error) || 'Error al guardar');
+      if(j.data) _pages = j.data;
+      if(j.page){
+        _currentPageId = j.page.id || _currentPageId;
+        document.getElementById('wb-page-title').value = j.page.title || '';
+        document.getElementById('wb-page-slug').value = j.page.slug || '';
+        document.getElementById('wb-status-sel').value = j.page.status || 'draft';
+      }
+      renderPageSelect();
+      renderPagesModal();
+      toast('Guardado ✓');
+      _setDirty(false);
+    }).catch(function(err){
+      toast('Error al guardar: ' + (err && err.message ? err.message : 'red'), false);
+    }).finally(function(){
+      _saving = false;
+      if(btn){
+        btn.disabled = false;
+        btn.innerHTML = origHTML;
+      }
     });
   };
 

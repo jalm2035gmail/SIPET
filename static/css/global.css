@@ -756,7 +756,7 @@ body {
 .sidebar nav {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -814,8 +814,8 @@ body {
     font-size: var(--sidebar-block-title-size);
     font-weight: 700;
     letter-spacing: 0.2px;
-    padding: 10px 4px;
-    min-height: 82px;
+    padding: 8px 4px;
+    min-height: 76px;
     text-decoration: none;
     text-align: center;
     border-radius: 14px;
@@ -873,7 +873,7 @@ body {
     overflow: visible;
     text-overflow: clip;
     text-align: center;
-    line-height: 1.15;
+    line-height: 1;
     color: color-mix(in srgb, var(--sidebar-text, #ffffff) 95%, transparent);
     transition: transform 0.18s ease, color 0.18s ease;
 }
@@ -914,10 +914,10 @@ body {
     text-align: left;
     font-size: 12.5px;
     font-weight: 500;
-    padding: 6px 8px 6px 10px;
+    padding: 4px 8px 4px 10px;
     color: color-mix(in srgb, var(--sidebar-text, #ffffff) 82%, transparent);
     border-radius: 6px;
-    line-height: 1.35;
+    line-height: 1.2;
     white-space: normal;
     overflow-wrap: anywhere;
     transition: background 0.16s ease, color 0.16s ease, padding-left 0.15s ease;
@@ -949,13 +949,13 @@ body {
     cursor: pointer;
     display: block;
     text-align: left;
-    padding: 6px 24px 6px 10px;
+    padding: 4px 24px 4px 10px;
     border-radius: 6px;
     color: color-mix(in srgb, var(--sidebar-text, #ffffff) 82%, transparent);
     font-size: 12.5px;
     font-weight: 500;
     position: relative;
-    line-height: 1.35;
+    line-height: 1.2;
     white-space: normal;
     overflow-wrap: anywhere;
     transition: background 0.16s ease, color 0.16s ease, padding-left 0.15s ease;
@@ -1010,13 +1010,13 @@ body {
     display: block;
     font-size: 12.5px !important;
     font-weight: 400;
-    padding: 5px 8px 5px 12px;
+    padding: 4px 8px 4px 12px;
     margin-right: 0;
     border-radius: 6px;
     color: color-mix(in srgb, var(--sidebar-text, #ffffff) 68%, transparent);
     text-align: left;
     font-style: italic;
-    line-height: 1.35;
+    line-height: 1.2;
     white-space: normal;
     overflow-wrap: anywhere;
     transition: background 0.16s ease, color 0.16s ease, padding-left 0.15s ease;
@@ -3458,7 +3458,7 @@ html.ui-sidebar-modern .main-content {
 html.ui-sidebar-modern .sidebar nav {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     margin-top: 6px;
     padding: 0;
     overflow: visible;
@@ -3466,7 +3466,7 @@ html.ui-sidebar-modern .sidebar nav {
 html.ui-sidebar-modern .sidebar-main-link,
 html.ui-sidebar-modern .sidebar-block > summary {
     justify-content: flex-start;
-    min-height: 34px;
+    min-height: 32px;
     padding: 0 12px;
     border-radius: 16px;
     color: #56657d;
@@ -3503,8 +3503,8 @@ html.ui-sidebar-modern .sidebar-main-icon {
     background-color: #5a6678;
 }
 html.ui-sidebar-modern .sidebar-main-label {
-    font-size: 0.69rem;
-    line-height: 1.1;
+    font-size: 0.828rem;
+    line-height: 0.92;
     text-align: left;
     white-space: normal;
     color: currentColor;
@@ -3522,14 +3522,15 @@ html.ui-sidebar-modern .sidebar-section-title {
 html.ui-sidebar-modern .sidebar-submenu {
     margin-left: 14px;
     margin-top: 2px;
-    gap: 2px;
+    gap: 1px;
 }
 html.ui-sidebar-modern .sidebar-submenu a,
 html.ui-sidebar-modern .sidebar-submenu-group > summary,
 html.ui-sidebar-modern .sidebar-submenu a.sidebar-submenu-heading,
 html.ui-sidebar-modern .sidebar-submenu-level3 a {
     border-radius: 10px;
-    font-size: 0.72rem;
+    font-size: 0.864rem;
+    line-height: 1.05;
     transition: all 0.2s ease;
 }
 html.ui-sidebar-modern .sidebar-submenu a:hover,
