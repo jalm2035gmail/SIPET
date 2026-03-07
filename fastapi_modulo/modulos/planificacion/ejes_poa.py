@@ -1806,7 +1806,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                 <button type="button" id="axm-tree-fit" class="axm-org-fit">Ajustar</button>
               </div>
             </div>
-            <div id="axm-tree-chart" class="axm-org-chart-wrap"></div>
+            <div id="axm-tree-chart" class="axm-org-chart-wrap departamentos-page"></div>
           </section>
         </section>
       </div>
@@ -2721,6 +2721,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           const entryOpenTarget = String(entryParams.get("open") || "").toLowerCase();
           const entryTabTarget = String(entryParams.get("tab") || "").toLowerCase();
           const entryAxisIdRaw = entryParams.get("axis_id");
+          const entryObjectiveIdRaw = entryParams.get("objective_id");
           let entryIntentDone = false;
           const PLAN_STORAGE_KEY = "sipet_plan_macro_v1";
           const toId = (value) => {
@@ -2922,16 +2923,17 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               closeGanttModal();
             }
           });
-          const centerStrategicTreeScroll = () => {
-            if (!treeChartEl) return;
-            const maxLeft = Math.max(0, treeChartEl.scrollWidth - treeChartEl.clientWidth);
-            const maxTop = Math.max(0, treeChartEl.scrollHeight - treeChartEl.clientHeight);
-            treeChartEl.scrollLeft = Math.round(maxLeft / 2);
-            treeChartEl.scrollTop = Math.round(maxTop / 2);
+          const centerStrategicTreeScroll = (hostEl = treeChartEl) => {
+            if (!hostEl) return;
+            const maxLeft = Math.max(0, hostEl.scrollWidth - hostEl.clientWidth);
+            const maxTop = Math.max(0, hostEl.scrollHeight - hostEl.clientHeight);
+            hostEl.scrollLeft = Math.round(maxLeft / 2);
+            hostEl.scrollTop = Math.round(maxTop / 2);
           };
 
-          const renderStrategicTree = () => {
-            if (!treeChartEl) return;
+          const renderStrategicTree = (hostEl = treeChartEl, options = {}) => {
+            const inlineMode = !!options.inline;
+            if (!hostEl) return;
             const statusFromProgress = (p) => {
               if (Number(p || 0) >= 85) return "ok";
               if (Number(p || 0) >= 60) return "warning";
@@ -3085,17 +3087,17 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               ...buildLineNodes("vision-root", "Visión", visionLines),
             ];
             if (!nodes.length || nodes.length <= 3) {
-              treeChartEl.innerHTML = '<p>Sin líneas definidas. Agrega líneas en Misión/Visión.</p>';
+              hostEl.innerHTML = '<p class="text-sm text-base-content/60">Sin líneas definidas. Agrega líneas en Misión/Visión.</p>';
               return;
             }
             ensureStrategicTreeLibrary().then((available) => {
               if (!available) {
-                treeChartEl.innerHTML = '<p>No se pudo cargar la librería de organigrama.</p>';
+                hostEl.innerHTML = '<p class="text-sm text-base-content/60">No se pudo cargar la librería de organigrama.</p>';
                 return;
               }
-              treeChartEl.innerHTML = "";
+              hostEl.innerHTML = "";
               strategicTreeChart = new window.d3.OrgChart()
-                .container(treeChartEl)
+                .container(hostEl)
                 .data(nodes)
                 .nodeWidth((d) => ((d?.data?.type || "") === "root" ? 2 : 340))
                 .nodeHeight((d) => ((d?.data?.type || "") === "root" ? 2 : 160))
@@ -3125,7 +3127,8 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                 .onNodeClick(async (d) => {
                   const data = d?.data || {};
                   if (data.type === "mission" || data.type === "vision" || data.type === "line") {
-                    closeTreeModal();
+                    if (!inlineMode) closeTreeModal();
+                    setView("list");
                     applyTabView("identidad");
                     const missionAcc = document.querySelector("#axm-identidad-panel details:nth-of-type(1)");
                     const visionAcc = document.querySelector("#axm-identidad-panel details:nth-of-type(2)");
@@ -3139,16 +3142,18 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                     return;
                   }
                   if (data.type === "axis" && data.axisId) {
-                    closeTreeModal();
+                    if (!inlineMode) closeTreeModal();
                     selectedAxisId = toId(data.axisId);
+                    setView("list");
                     renderAll();
                     openAxisModal();
                     return;
                   }
                   if (data.type === "objective" && data.objectiveId) {
-                    closeTreeModal();
+                    if (!inlineMode) closeTreeModal();
                     selectedAxisId = toId(data.axisId) || selectedAxisId;
                     selectedObjectiveId = toId(data.objectiveId);
+                    setView("list");
                     renderAll();
                     try { await loadCollaborators(); } catch (_err) {}
                     openObjModal();
@@ -3219,7 +3224,7 @@ EJES_ESTRATEGICOS_HTML = dedent("""
                 .render();
               if (strategicTreeChart && typeof strategicTreeChart.expandAll === "function") strategicTreeChart.expandAll();
               if (strategicTreeChart && typeof strategicTreeChart.fit === "function") strategicTreeChart.fit();
-              setTimeout(centerStrategicTreeScroll, 30);
+              setTimeout(() => centerStrategicTreeScroll(hostEl), 30);
             });
           };
           if (treeZoomInBtn) {
@@ -4558,6 +4563,13 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             if (desiredAxisId && axes.some((axis) => toId(axis.id) === desiredAxisId)) {
               selectedAxisId = desiredAxisId;
             }
+            const desiredObjectiveId = toId(entryObjectiveIdRaw);
+            if (desiredObjectiveId) {
+              const axis = selectedAxis();
+              if (axis && (Array.isArray(axis.objetivos) ? axis.objetivos : []).some((obj) => toId(obj.id) === desiredObjectiveId)) {
+                selectedObjectiveId = desiredObjectiveId;
+              }
+            }
             renderAll();
 
             entryIntentDone = true;
@@ -4565,8 +4577,12 @@ EJES_ESTRATEGICOS_HTML = dedent("""
               window.history.replaceState({}, "", window.location.pathname);
             }
 
-            if (entryOpenTarget === "objective" && addObjBtn) {
-              setTimeout(() => addObjBtn.click(), 0);
+            if (entryOpenTarget === "objective") {
+              if (selectedObjectiveId) {
+                setTimeout(() => openObjModal(), 0);
+              } else if (addObjBtn) {
+                setTimeout(() => addObjBtn.click(), 0);
+              }
             }
           };
 
@@ -4848,8 +4864,871 @@ EJES_ESTRATEGICOS_HTML = dedent("""
     </section>
 """)
 
+
+AXM_EDITOR_STYLE = dedent("""
+<style>
+  .axm-shell{
+    width:100%;
+    max-width:72rem;
+    display:grid;
+    gap:1rem;
+  }
+  .axm-wrap{
+    display:grid;
+    gap:1rem;
+    width:100%;
+  }
+  .axm-intro,
+  .axm-grid{
+    display:grid;
+    gap:1rem;
+  }
+  .axm-track,
+  .axm-card,
+  .axm-foundacion,
+  .axm-identidad,
+  .axm-tab-panel{
+    background:#ffffff;
+    border:1px solid #d8dee8;
+    border-radius:24px;
+    box-shadow:0 10px 24px rgba(16,24,40,.06);
+  }
+  .axm-track,
+  .axm-card,
+  .axm-foundacion,
+  .axm-tab-panel{
+    padding:1.25rem 1.5rem;
+  }
+  .axm-track h4,
+  .axm-card h2,
+  .axm-card h3,
+  .axm-card h4,
+  .axm-foundacion h3{
+    margin:0 0 .75rem;
+    color:#0f172a;
+    font-weight:800;
+  }
+  .axm-track-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:1rem;
+  }
+  .axm-track-card{
+    border:1px solid #d8dee8;
+    border-radius:18px;
+    background:#f8fafc;
+    padding:1rem;
+  }
+  .panel{
+    background:#ffffff;
+    border:1px solid #d8dee8;
+    border-radius:20px;
+    box-shadow:0 10px 24px rgba(16,24,40,.06);
+    padding:18px 22px 20px;
+  }
+  .panel__head{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .panel__title{
+    margin:0;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    color:#475569;
+  }
+  .panel__meta{
+    font-size:11px;
+    color:#0f172a;
+    font-weight:900;
+  }
+  .panel__list{
+    list-style:none;
+    padding:0;
+    margin:10px 0 0 0;
+    color:#334155;
+    font-size:11px;
+    line-height:1.55;
+  }
+  .panel__list li{
+    padding-left:34px;
+    position:relative;
+    margin:10px 0;
+  }
+  .panel__list li::before{
+    content:"";
+    position:absolute;
+    left:14px;
+    top:.9em;
+    width:6px;
+    height:6px;
+    border-radius:999px;
+    background:rgba(100,116,139,.35);
+    transform:translateY(-50%);
+  }
+  .panel__list-item{
+    display:grid;
+    grid-template-columns:auto minmax(0, 1fr);
+    gap:10px;
+    align-items:start;
+  }
+  .panel__list-code{
+    color:#475569;
+    font-weight:800;
+    white-space:nowrap;
+    font-size:11px;
+    line-height:1.55;
+  }
+  .panel__list-name{
+    color:#334155;
+    min-width:0;
+    font-size:11px;
+    line-height:1.55;
+  }
+  .panel__list-name span{
+    color:#64748b;
+    font-style:italic;
+  }
+  .panel__more{
+    display:inline-block;
+    margin-top:8px;
+    color:#64748b;
+    font-style:italic;
+    font-size:10px;
+    text-decoration:none;
+  }
+  .axm-track-label{
+    font-size:.8rem;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:.4rem;
+  }
+  .axm-track-value{
+    font-size:1.5rem;
+    font-weight:800;
+    color:#0f5132;
+  }
+  .axm-row,
+  .axm-obj-main-row,
+  .axm-axis-main-row,
+  .axm-kpi-form{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:1rem;
+  }
+  .axm-base-grid,
+  .axm-obj-layout{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:1rem;
+  }
+  .axm-field,
+  .axm-kpi-form .full{
+    display:grid;
+    gap:.45rem;
+  }
+  .axm-field.full{
+    grid-column:1 / -1;
+  }
+  .axm-field label{
+    font-size:.82rem;
+    font-weight:700;
+    color:#475569;
+  }
+  .axm-input,
+  .axm-textarea,
+  .axm-base-preview,
+  .axm-foundacion-source,
+  .axm-foundacion-editor{
+    width:100%;
+    border:1px solid #cbd5e1;
+    border-radius:16px;
+    background:#f8fafc;
+    color:#0f172a;
+    padding:.85rem 1rem;
+    font-size:.98rem;
+    line-height:1.35;
+  }
+  .axm-textarea{
+    min-height:120px;
+    resize:vertical;
+  }
+  .axm-foundacion-editor{
+    min-height:140px;
+  }
+  .axm-actions,
+  .axm-foundacion-actions,
+  .axm-id-actions,
+  .axm-kpi-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.75rem;
+    align-items:center;
+    margin-top:1rem;
+  }
+  .axm-btn{
+    border:1px solid #cbd5e1;
+    background:#ffffff;
+    color:#0f172a;
+    border-radius:999px;
+    padding:.72rem 1rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .axm-btn.primary{
+    background:#0b1f57;
+    border-color:#0b1f57;
+    color:#ffffff;
+  }
+  .axm-list,
+  .axm-obj-list,
+  .axm-obj-axis-list,
+  .axm-axis-objectives,
+  .axm-kpi-list,
+  .axm-obj-acts{
+    display:grid;
+    gap:.75rem;
+  }
+  .axm-obj-btn{
+    width:100%;
+    text-align:left;
+    border:1px solid #d8dee8;
+    background:#f8fafc;
+    border-radius:18px;
+    padding:1rem;
+    cursor:pointer;
+  }
+  .axm-obj-btn.active{
+    background:#eef6f1;
+    border-color:#86b39c;
+  }
+  .axm-obj-code,
+  .axm-obj-sub,
+  .axm-sub,
+  .axm-msg,
+  .axm-global-msg,
+  .axm-foundacion-msg,
+  .axm-id-msg,
+  .axm-kpi-hint{
+    color:#64748b;
+  }
+  .axm-tabs,
+  .axm-axis-tabs,
+  .axm-obj-tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.5rem;
+    margin:.25rem 0 1rem;
+  }
+  .axm-tab,
+  .axm-axis-tab,
+  .axm-obj-tab{
+    border:1px solid #cbd5e1;
+    background:#f8fafc;
+    color:#334155;
+    border-radius:999px;
+    padding:.65rem 1rem;
+    font-weight:700;
+    font-size:.9rem;
+    line-height:1.2;
+    cursor:pointer;
+  }
+  .axm-tab.active,
+  .axm-tab.tab-active,
+  .axm-axis-tab.active,
+  .axm-axis-tab.tab-active,
+  .axm-obj-tab.active,
+  .axm-obj-tab.tab-active{
+    background:#0b1f57;
+    color:#fff;
+    border-color:#0b1f57;
+  }
+  .axm-axis-panel,
+  .axm-obj-panel{
+    display:none;
+  }
+  .axm-axis-panel.active,
+  .axm-obj-panel.active{
+    display:block;
+  }
+  .axm-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.42);
+    padding:1.25rem;
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+  }
+  .axm-modal.open{
+    display:flex;
+  }
+  .axm-modal-dialog{
+    width:min(1100px, 100%);
+    max-height:90vh;
+    overflow:auto;
+    background:#fff;
+    border-radius:28px;
+    border:1px solid #d8dee8;
+    box-shadow:0 24px 60px rgba(15,23,42,.18);
+    padding:1.5rem;
+  }
+  .axm-modal-dialog .axm-title{
+    font-size:1.1rem;
+    line-height:1.2;
+  }
+  .axm-modal-dialog .axm-sub{
+    font-size:.88rem;
+    line-height:1.4;
+  }
+  .axm-modal-dialog .axm-field label{
+    font-size:.78rem;
+  }
+  .axm-modal-dialog .axm-input,
+  .axm-modal-dialog .axm-textarea,
+  .axm-modal-dialog select.axm-input{
+    font-size:.88rem;
+    line-height:1.3;
+    padding:.72rem .9rem;
+  }
+  .axm-modal-dialog .axm-textarea{
+    min-height:96px;
+  }
+  .axm-modal-dialog .axm-obj-tab,
+  .axm-modal-dialog .axm-axis-tab{
+    font-size:.84rem;
+    padding:.58rem .9rem;
+  }
+  .axm-modal-dialog .axm-btn,
+  .axm-modal-dialog .action-button{
+    font-size:.84rem;
+  }
+  .axm-modal-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:1rem;
+  }
+  .axm-close{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:999px;
+    background:#eff4f2;
+    font-size:1.6rem;
+    line-height:1;
+    cursor:pointer;
+  }
+  .axm-identidad{
+    overflow:hidden;
+    padding:0;
+  }
+  .axm-id-acc{
+    border-bottom:1px solid #e2e8f0;
+  }
+  .axm-id-acc:last-of-type{
+    border-bottom:none;
+  }
+  .axm-id-acc > summary{
+    padding:1rem 1.4rem;
+    cursor:pointer;
+    font-weight:800;
+    color:#0f172a;
+    list-style:none;
+  }
+  .axm-id-acc > summary::-webkit-details-marker{
+    display:none;
+  }
+  .axm-id-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:1rem;
+    padding:0 1.4rem 1.4rem;
+  }
+  .axm-id-lines{
+    display:grid;
+    gap:.75rem;
+  }
+  .axm-id-row{
+    display:grid;
+    grid-template-columns:110px minmax(0, 1fr) auto;
+    gap:.75rem;
+    align-items:center;
+    padding:.8rem .9rem;
+    border-radius:16px;
+    border:1px solid #d8dee8;
+    background:#f8fafc;
+  }
+  .axm-id-code{
+    border:none;
+    background:transparent;
+    font-weight:800;
+    color:#0f172a;
+  }
+  .axm-id-input{
+    border:1px solid #cbd5e1;
+    border-radius:14px;
+    padding:.8rem .95rem;
+    background:#f8fafc;
+    color:#14532d;
+  }
+  .axm-id-right{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    border-radius:22px;
+    background:#fff;
+    box-shadow:0 16px 34px rgba(15,23,42,.12), 0 4px 12px rgba(15,23,42,.07);
+    padding:1.4rem 1.5rem;
+  }
+  .axm-id-full{
+    color:#334155;
+    line-height:1.75;
+    white-space:pre-wrap;
+  }
+  .poa-owner-chart{
+    background:linear-gradient(180deg,#ffffff 0%, #f8fbfa 100%);
+    border:1px solid #d8dee8;
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.08);
+    padding:20px 22px;
+  }
+  .poa-owner-chart-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:14px;
+  }
+  .poa-owner-chart-title{
+    margin:0;
+    font-size:1.1rem;
+    font-weight:800;
+    color:#0f172a;
+  }
+  .poa-owner-chart-sub{
+    margin:6px 0 0 0;
+    font-size:.92rem;
+    color:#64748b;
+    max-width:46rem;
+  }
+  .poa-owner-chart-total{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:130px;
+    padding:10px 14px;
+    border-radius:999px;
+    background:#0b1f57;
+    color:#fff;
+    font-size:.9rem;
+    font-weight:800;
+    box-shadow:0 10px 22px rgba(11,31,87,.18);
+  }
+  .poa-owner-chart-empty{
+    padding:16px 18px;
+    border-radius:18px;
+    background:#f8fafc;
+    border:1px dashed #cbd5e1;
+    color:#64748b;
+    font-size:.92rem;
+  }
+  .poa-owner-chart-list{
+    display:grid;
+    gap:12px;
+  }
+  .poa-owner-row{
+    display:grid;
+    grid-template-columns:minmax(180px, 240px) minmax(0,1fr) auto;
+    gap:14px;
+    align-items:center;
+    padding:14px 16px;
+    border-radius:18px;
+    border:1px solid #e2e8f0;
+    background:#ffffff;
+    box-shadow:0 8px 20px rgba(15,23,42,.05);
+  }
+  .poa-owner-name{
+    font-size:.96rem;
+    font-weight:700;
+    color:#0f172a;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .poa-owner-bar{
+    position:relative;
+    height:12px;
+    border-radius:999px;
+    overflow:hidden;
+    background:#e2e8f0;
+  }
+  .poa-owner-fill{
+    position:absolute;
+    inset:0 auto 0 0;
+    width:0%;
+    border-radius:999px;
+    background:linear-gradient(90deg,#16a34a 0%, #34d399 100%);
+    box-shadow:0 2px 8px rgba(22,163,74,.22);
+  }
+  .poa-owner-value{
+    font-size:.9rem;
+    font-weight:800;
+    color:#0f3d2e;
+    white-space:nowrap;
+  }
+  @media (max-width: 980px){
+    .poa-owner-chart-head{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .poa-owner-row{
+      grid-template-columns:1fr;
+    }
+    .poa-owner-value{
+      justify-self:flex-start;
+    }
+  }
+  @media (max-width: 980px){
+    .axm-track-grid,
+    .axm-row,
+    .axm-obj-main-row,
+    .axm-axis-main-row,
+    .axm-base-grid,
+    .axm-obj-layout,
+    .axm-id-grid,
+    .axm-kpi-form{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+""")
+
 POA_LIMPIO_HTML = dedent("""
     <section class="poa-board-wrap">
+      <style>
+        .poa-board-grid{
+          display:grid;
+          grid-auto-flow:column;
+          grid-auto-columns:minmax(340px, 380px);
+          gap:22px;
+          align-items:start;
+          overflow-x:auto;
+          overflow-y:hidden;
+          padding-bottom:8px;
+          scroll-snap-type:x proximity;
+        }
+        .poa-axis-col{
+          background:#ffffff;
+          border:1px solid #d8dee8;
+          border-radius:24px;
+          box-shadow:0 10px 24px rgba(16, 24, 40, .06);
+          padding:20px 22px;
+          min-height:100%;
+          scroll-snap-align:start;
+        }
+        .poa-axis-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:14px;
+          margin-bottom:14px;
+        }
+        .poa-axis-title{
+          margin:0;
+          font-size:19px;
+          font-weight:800;
+          line-height:1.25;
+          color:#1f2937;
+        }
+        .poa-axis-toggle{
+          width:40px;
+          height:40px;
+          border-radius:999px;
+          border:1px solid #d8dee8;
+          background:#f8fafc;
+          color:#334155;
+          font-size:24px;
+          line-height:1;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          cursor:pointer;
+          transition:all .18s ease;
+        }
+        .poa-axis-toggle:hover{
+          background:#eef4f2;
+          border-color:#bfd2cb;
+          color:#0f3d2e;
+        }
+        .poa-axis-cards{
+          display:grid;
+          gap:14px;
+        }
+        .poa-obj-card{
+          background:#f8fbfa;
+          border:1px solid #cfddd7;
+          border-radius:22px;
+          padding:18px 20px;
+          box-shadow:0 8px 18px rgba(16, 24, 40, .05);
+          transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+        .poa-obj-card:hover{
+          transform:translateY(-1px);
+          border-color:#9bb7ae;
+          box-shadow:0 14px 26px rgba(16, 24, 40, .08);
+        }
+        .poa-obj-card h4{
+          margin:0 0 10px 0;
+          font-size:20px;
+          line-height:1.3;
+          font-weight:800;
+          color:#0f172a;
+        }
+        .poa-obj-card .meta{
+          margin:0 0 6px 0;
+          font-size:14px;
+          line-height:1.45;
+          color:#53657f;
+        }
+        .poa-obj-card .code{
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          margin-top:10px;
+          padding:6px 14px;
+          border-radius:999px;
+          border:1px solid #a7c4b8;
+          background:#ffffff;
+          color:#0f5132;
+          font-size:13px;
+          font-weight:700;
+        }
+        .poa-obj-card .code-next{
+          margin-top:8px;
+          font-size:12px;
+          color:#7b8a9d;
+        }
+        .poa-axis-col.collapsed .poa-axis-cards{
+          display:none;
+        }
+        .poa-modal-dialog{
+          background:linear-gradient(180deg,#ffffff 0%, #f8fbfa 100%);
+          border:1px solid #d8dee8;
+          border-radius:28px;
+          box-shadow:0 26px 60px rgba(15,23,42,.18);
+          padding:22px 24px;
+        }
+        .poa-modal-head{
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:16px;
+          margin-bottom:14px;
+        }
+        .poa-modal-head h3{
+          margin:0;
+          font-size:1.5rem;
+          line-height:1.2;
+          font-weight:800;
+          color:#0f172a;
+        }
+        .poa-modal-head p{
+          margin:6px 0 0 0;
+          color:#64748b;
+          font-size:.95rem;
+          line-height:1.45;
+        }
+        .poa-modal-close{
+          width:44px;
+          height:44px;
+          border:none;
+          border-radius:999px;
+          background:#eff4f2;
+          color:#0f172a;
+          font-size:1.8rem;
+          line-height:1;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          cursor:pointer;
+          box-shadow:0 8px 20px rgba(15,23,42,.08);
+        }
+        .poa-tree-wrap,
+        .poa-gantt-wrap,
+        .poa-cal-wrap{
+          border:1px solid #d8dee8;
+          border-radius:22px;
+          background:#ffffff;
+          box-shadow:0 10px 24px rgba(15,23,42,.06);
+          padding:18px 20px;
+        }
+        .poa-tree-help{
+          margin:0 0 12px 0;
+          color:#64748b;
+          font-size:.92rem;
+        }
+        .poa-gantt-legend,
+        .poa-gantt-controls,
+        .poa-cal-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:14px;
+          flex-wrap:wrap;
+        }
+        .poa-gantt-chip{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          padding:8px 12px;
+          border-radius:999px;
+          border:1px solid #d8dee8;
+          background:#f8fafc;
+          color:#334155;
+          font-size:.88rem;
+          font-weight:700;
+        }
+        .poa-gantt-action{
+          border:1px solid #cbd5e1;
+          background:#ffffff;
+          color:#0f172a;
+          border-radius:999px;
+          padding:.68rem 1rem;
+          font-weight:700;
+          cursor:pointer;
+        }
+        .poa-cal-title{
+          margin:0;
+          font-size:1rem;
+          font-weight:800;
+          color:#0f172a;
+        }
+        .poa-summary{
+          display:grid;
+          grid-template-columns:repeat(2, minmax(0,1fr));
+          gap:14px;
+          margin-bottom:14px;
+        }
+        .poa-summary-item,
+        .poa-act-list-panel{
+          border:1px solid #d8dee8;
+          border-radius:22px;
+          background:#ffffff;
+          box-shadow:0 10px 24px rgba(15,23,42,.06);
+          padding:16px 18px;
+        }
+        .poa-summary-label{
+          font-size:.82rem;
+          font-weight:800;
+          letter-spacing:.08em;
+          text-transform:uppercase;
+          color:#475569;
+          margin-bottom:8px;
+        }
+        .poa-summary-value{
+          font-size:1.35rem;
+          font-weight:800;
+          color:#0f5132;
+        }
+        .poa-state-strip{
+          display:flex;
+          flex-wrap:wrap;
+          gap:10px;
+          margin:0 0 14px 0;
+        }
+        .poa-state-btn{
+          border:1px solid #cbd5e1;
+          background:#f8fafc;
+          color:#334155;
+          border-radius:999px;
+          padding:.72rem 1rem;
+          font-weight:700;
+          cursor:pointer;
+        }
+        .poa-state-btn.active{
+          background:#0b1f57;
+          border-color:#0b1f57;
+          color:#ffffff;
+        }
+        .poa-state-actions{
+          display:flex;
+          flex-wrap:wrap;
+          gap:10px;
+          margin:0 0 16px 0;
+        }
+        .poa-act-list-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:14px;
+          margin-bottom:12px;
+        }
+        .poa-act-list-title{
+          margin:0;
+          font-size:1rem;
+          font-weight:800;
+          color:#475569;
+          letter-spacing:.08em;
+          text-transform:uppercase;
+        }
+        @media (max-width: 980px){
+          .poa-summary{
+            grid-template-columns:1fr;
+          }
+        }
+        @media (max-width: 980px){
+          .poa-board-grid{
+            grid-auto-columns:minmax(285px, 88vw);
+          }
+          .poa-axis-col{
+            padding:18px;
+          }
+          .poa-axis-title{
+            font-size:18px;
+          }
+          .poa-obj-card h4{
+            font-size:18px;
+          }
+        }
+      </style>
+      <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+          <img
+            src="/templates/icon/plan.svg"
+            alt="Icono POA"
+            width="96"
+            height="96"
+            class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+          />
+          <div class="w-full grid gap-2 content-center">
+            <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
+            <div class="block w-full text-base sm:text-lg text-base-content/70">El Plan Operativo Anual organiza actividades, responsables y tiempos de ejecución.</div>
+          </div>
+        </div>
+      </div>
+      <div class="view-buttons page-view-buttons" id="poa-view-switch">
+        <button class="view-pill boton_vista" type="button" data-view="arbol" data-tooltip="Arbol" aria-label="Arbol de avance">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/arbol.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Arbol</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-view="gantt" data-tooltip="Gantt" aria-label="Vista Gantt">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/gantt.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Gantt</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-view="calendar" data-tooltip="Calendario" aria-label="Vista calendario">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/calendario.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Calendario</span>
+        </button>
+      </div>
 
       <div class="poa-board-head">
         <div class="poa-board-head-row">
@@ -4857,17 +5736,19 @@ POA_LIMPIO_HTML = dedent("""
             <h2>Tablero POA por eje</h2>
             <p>Cada columna corresponde a un eje y contiene las tarjetas de sus objetivos.</p>
           </div>
-          <div class="poa-board-head-actions">
-            <button type="button" class="poa-btn" id="poa-download-template">Descargar plantilla CSV</button>
-            <button type="button" class="poa-btn" id="poa-export-xls">Exportar plan + POA XLS</button>
-            <button type="button" class="poa-btn" id="poa-import-csv">Importar CSV estratégico + POA</button>
+          <div class="view-buttons planes-action-row poa-board-head-actions">
+            <button type="button" class="boton_vista boton_vista-eliptico" id="poa-download-template">Descargar plantilla CSV</button>
+            <button type="button" class="boton_vista boton_vista-eliptico" id="poa-export-xls">Exportar plan + POA XLS</button>
+            <button type="button" class="boton_vista boton_vista-eliptico" id="poa-import-csv">Importar CSV estratégico + POA</button>
             <input id="poa-import-csv-file" type="file" accept=".csv,text/csv">
           </div>
         </div>
       </div>
       <div class="poa-board-msg" id="poa-board-msg" aria-live="polite"></div>
-      <div class="axm-track-missing" id="poa-no-owner-msg" aria-live="polite"></div>
-      <div class="axm-track-missing" id="poa-no-subowner-msg" aria-live="polite"></div>
+      <div class="cards-2">
+        <div class="axm-track-missing" id="poa-no-owner-msg" aria-live="polite"></div>
+        <div class="axm-track-missing" id="poa-no-subowner-msg" aria-live="polite"></div>
+      </div>
       <section class="poa-owner-chart" id="poa-owner-chart">
         <div class="poa-owner-chart-head">
           <div>
@@ -4880,60 +5761,6 @@ POA_LIMPIO_HTML = dedent("""
         <div class="poa-owner-chart-list" id="poa-owner-chart-list"></div>
       </section>
       <div class="poa-board-grid" id="poa-board-grid"></div>
-      <div class="poa-modal" id="poa-tree-modal" role="dialog" aria-modal="true" aria-labelledby="poa-tree-title">
-        <section class="poa-modal-dialog">
-          <div class="poa-modal-head">
-            <h3 id="poa-tree-title">Árbol de avance</h3>
-            <button class="poa-modal-close" id="poa-tree-close" type="button" aria-label="Cerrar">×</button>
-          </div>
-          <div class="poa-tree-wrap">
-            <p class="poa-tree-help">Vista compactada por defecto. Usa "Mostrar" para abrir solo el bloque siguiente.</p>
-            <div class="poa-tree-grid" id="poa-tree-host"></div>
-          </div>
-        </section>
-      </div>
-      <div class="poa-modal" id="poa-gantt-modal" role="dialog" aria-modal="true" aria-labelledby="poa-gantt-title">
-        <section class="poa-modal-dialog">
-          <div class="poa-modal-head">
-            <h3 id="poa-gantt-title">Vista Gantt POA</h3>
-            <button class="poa-modal-close" id="poa-gantt-close" type="button" aria-label="Cerrar">×</button>
-          </div>
-          <div class="poa-gantt-wrap">
-            <div class="poa-gantt-legend">
-              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Objetivo estratégico</span>
-              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Actividad POA</span>
-              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Hoy</span>
-            </div>
-            <div class="poa-gantt-controls">
-              <div class="poa-gantt-actions">
-                <button type="button" class="poa-gantt-action" id="poa-gantt-show-all">Mostrar bloques</button>
-                <button type="button" class="poa-gantt-action" id="poa-gantt-hide-all">Ocultar bloques</button>
-              </div>
-              <div class="poa-gantt-blocks" id="poa-gantt-blocks"></div>
-            </div>
-            <div class="poa-gantt-host" id="poa-gantt-host"></div>
-          </div>
-        </section>
-      </div>
-      <div class="poa-modal" id="poa-calendar-modal" role="dialog" aria-modal="true" aria-labelledby="poa-calendar-title">
-        <section class="poa-modal-dialog">
-          <div class="poa-modal-head">
-            <h3 id="poa-calendar-title">Vista Calendario POA</h3>
-            <button class="poa-modal-close" id="poa-calendar-close" type="button" aria-label="Cerrar">×</button>
-          </div>
-          <div class="poa-cal-wrap">
-            <div class="poa-cal-head">
-              <div class="poa-cal-nav">
-                <button type="button" class="poa-gantt-action" id="poa-calendar-prev">◀</button>
-                <button type="button" class="poa-gantt-action" id="poa-calendar-today">Hoy</button>
-                <button type="button" class="poa-gantt-action" id="poa-calendar-next">▶</button>
-              </div>
-              <h4 class="poa-cal-title" id="poa-calendar-month"></h4>
-            </div>
-            <div class="poa-cal-grid" id="poa-calendar-grid"></div>
-          </div>
-        </section>
-      </div>
       <div class="poa-modal" id="poa-activity-modal" role="dialog" aria-modal="true" aria-labelledby="poa-activity-title">
         <section class="poa-modal-dialog">
           <div class="poa-modal-head">
@@ -5516,7 +6343,7 @@ POA_LIMPIO_HTML = dedent("""
                 <div class="poa-owner-row">
                   <div class="poa-owner-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
                   <div class="poa-owner-bar">
-                    <div class="poa-owner-fill"></div>
+                    <div class="poa-owner-fill" style="width:${pct.toFixed(1)}%"></div>
                   </div>
                   <div class="poa-owner-value">${Number(amount || 0)} (${pct.toFixed(1)}%)</div>
                 </div>
@@ -5528,7 +6355,7 @@ POA_LIMPIO_HTML = dedent("""
                 <div class="poa-owner-row">
                   <div class="poa-owner-name" title="Otros usuarios">Otros usuarios</div>
                   <div class="poa-owner-bar">
-                    <div class="poa-owner-fill"></div>
+                    <div class="poa-owner-fill" style="width:${pct.toFixed(1)}%"></div>
                   </div>
                   <div class="poa-owner-value">${extraCount} (${pct.toFixed(1)}%)</div>
                 </div>
@@ -6473,14 +7300,22 @@ POA_LIMPIO_HTML = dedent("""
               `;
             }).join("");
             actListEl.querySelectorAll("[data-poa-activity-id]").forEach((node) => {
-              node.addEventListener("click", () => {
-                selectedListActivityId = Number(node.getAttribute("data-poa-activity-id") || 0);
+              node.style.cursor = "pointer";
+              node.addEventListener("click", async () => {
+                const activityId = Number(node.getAttribute("data-poa-activity-id") || 0);
+                selectedListActivityId = activityId;
                 renderActivityList();
-                showActListMsg("Actividad seleccionada. Usa 'Editar' para cargarla.");
+                if (!currentObjective || !activityId) {
+                  showActListMsg("No se pudo abrir la actividad seleccionada.", true);
+                  return;
+                }
+                await openActivityForm(Number(currentObjective.id || 0), { activityId });
+                activatePoaTab("sub");
+                showActListMsg("Mostrando subtareas de la actividad seleccionada.");
               });
             });
             if (!selectedListActivityId) {
-              showActListMsg(canManage ? "Selecciona una actividad de la lista o usa 'Nuevo'." : "Selecciona una actividad de la lista.");
+              showActListMsg(canManage ? "Selecciona una actividad para abrir sus subtareas o usa 'Nuevo'." : "Selecciona una actividad para abrir sus subtareas.");
             }
           };
           const loadSelectedActivityInForm = () => {
@@ -7140,22 +7975,13 @@ POA_LIMPIO_HTML = dedent("""
           subPeriodicidadEl && subPeriodicidadEl.addEventListener("change", syncSubRecurringFields);
           openGanttBtn && openGanttBtn.addEventListener("click", async () => {
             if (!poaPermissions.can_view_gantt) return;
-            if (!ganttModalEl) return;
-            ganttModalEl.classList.add("open");
-            document.body.style.overflow = "hidden";
-            await renderPoaGantt();
+            window.location.href = "/poa/gantt";
           });
           openTreeBtn && openTreeBtn.addEventListener("click", () => {
-            if (!treeModalEl) return;
-            treeModalEl.classList.add("open");
-            document.body.style.overflow = "hidden";
-            renderPoaAdvanceTree();
+            window.location.href = "/poa/arbol";
           });
           openCalendarBtn && openCalendarBtn.addEventListener("click", () => {
-            if (!calendarModalEl) return;
-            calendarModalEl.classList.add("open");
-            document.body.style.overflow = "hidden";
-            renderPoaCalendar();
+            window.location.href = "/poa/calendario";
           });
           treeCloseBtn && treeCloseBtn.addEventListener("click", closeTreeModal);
           ganttCloseBtn && ganttCloseBtn.addEventListener("click", closeGanttModal);
@@ -7342,9 +8168,7 @@ POA_LIMPIO_HTML = dedent("""
               can_view_gantt: !!payload?.permissions?.can_view_gantt,
             };
             const diagnostics = payload?.diagnostics || {};
-            showMsg(
-              `Permisos: ${poaPermissions.can_manage_content ? "edicion" : "solo lectura"} · acceso ${poaPermissions.poa_access_level} · rol ${String(diagnostics.role_detected || diagnostics.role_normalized || diagnostics.role_raw || "n/d")}`
-            );
+            showMsg("");
             applyPoaPermissionsUI();
             const objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
             const activities = Array.isArray(payload.activities) ? payload.activities : [];
@@ -7387,11 +8211,15 @@ POA_LIMPIO_HTML = dedent("""
                 noOwnerMsgEl.innerHTML = "";
               } else {
                 const listItems = activitiesNoOwner.slice(0, 8)
-                  .map((item) => `<li>${escapeHtml(item.codigo ? item.codigo + " - " + (item.nombre || "Sin nombre") : (item.nombre || "Sin nombre"))}</li>`)
+                  .map((item) => {
+                    const code = String(item.codigo || "").trim() || "Sin código";
+                    const name = String(item.nombre || "Sin nombre");
+                    return `<li><span class="panel__list-item"><span class="panel__list-code">${escapeHtml(code)}</span><span class="panel__list-name">${escapeHtml(name)}</span></span></li>`;
+                  })
                   .join("");
-                const extraCount = activitiesNoOwner.length > 8 ? `<div class="axm-track-missing-more">+${activitiesNoOwner.length - 8} más</div>` : "";
+                const extraCount = activitiesNoOwner.length > 8 ? `<a href="#" class="panel__more">+${activitiesNoOwner.length - 8} más</a>` : "";
                 noOwnerMsgEl.style.display = "block";
-                noOwnerMsgEl.innerHTML = `<article class="axm-track-missing-card"><h5 class="axm-track-missing-title">Actividades sin responsable</h5><div class="axm-track-missing-sub">${activitiesNoOwner.length} pendiente(s)</div><ul class="axm-track-missing-list">${listItems}</ul>${extraCount}</article>`;
+                noOwnerMsgEl.innerHTML = `<article class="panel"><header class="panel__head"><h5 class="panel__title">Actividades sin responsable</h5><div class="panel__meta"><strong>${activitiesNoOwner.length}</strong> pendiente(s)</div></header><ul class="panel__list">${listItems}</ul>${extraCount}</article>`;
               }
             }
             const subactivitiesNoOwner = activities.flatMap((item) => {
@@ -7409,11 +8237,11 @@ POA_LIMPIO_HTML = dedent("""
                 noSubOwnerMsgEl.innerHTML = "";
               } else {
                 const listItems = subactivitiesNoOwner.slice(0, 8)
-                  .map((item) => `<li>${escapeHtml(item.nombre)} <span>(${escapeHtml(item.activity)})</span></li>`)
+                  .map((item) => `<li><span class="panel__list-item"><span class="panel__list-code">Subtarea</span><span class="panel__list-name">${escapeHtml(item.nombre)} <span class="text-base-content/60">(${escapeHtml(item.activity)})</span></span></span></li>`)
                   .join("");
-                const extraCount = subactivitiesNoOwner.length > 8 ? `<div class="axm-track-missing-more">+${subactivitiesNoOwner.length - 8} más</div>` : "";
+                const extraCount = subactivitiesNoOwner.length > 8 ? `<a href="#" class="panel__more">+${subactivitiesNoOwner.length - 8} más</a>` : "";
                 noSubOwnerMsgEl.style.display = "block";
-                noSubOwnerMsgEl.innerHTML = `<article class="axm-track-missing-card"><h5 class="axm-track-missing-title">Subtareas sin responsable</h5><div class="axm-track-missing-sub">${subactivitiesNoOwner.length} pendiente(s)</div><ul class="axm-track-missing-list">${listItems}</ul>${extraCount}</article>`;
+                noSubOwnerMsgEl.innerHTML = `<article class="panel"><header class="panel__head"><h5 class="panel__title">Subtareas sin responsable</h5><div class="panel__meta"><strong>${subactivitiesNoOwner.length}</strong> pendiente(s)</div></header><ul class="panel__list">${listItems}</ul>${extraCount}</article>`;
               }
             }
             if (currentActivityId && currentObjective) {
@@ -7812,12 +8640,56 @@ def ejes_estrategicos_page(request: Request):
               }
               .dash__foot{
                 display:flex;
-                gap:28px;
+                flex-wrap:wrap;
+                gap:12px;
                 font-size:12px;
                 color:#374151;
-                padding:6px 0 0;
+                padding:10px 0 0;
               }
               .dash__foot strong{ font-weight:800; }
+              .dash__chip{
+                display:inline-flex;
+                align-items:center;
+                gap:8px;
+                padding:8px 12px;
+                border-radius:999px;
+                border:1px solid #d5dde7;
+                background:#f8fafc;
+                color:#334155;
+                box-shadow:0 4px 12px rgba(15, 23, 42, 0.04);
+              }
+              .dash__chip-label{
+                font-size:11px;
+                letter-spacing:.06em;
+                text-transform:uppercase;
+                color:#64748b;
+                font-weight:800;
+              }
+              .dash__chip-value{
+                font-size:14px;
+                font-weight:900;
+                color:#0f5132;
+              }
+              #planes-dashboard-areas svg{
+                width:16px !important;
+                height:16px !important;
+                min-width:16px !important;
+                min-height:16px !important;
+                max-width:16px !important;
+                max-height:16px !important;
+                display:inline-block !important;
+                vertical-align:middle !important;
+                overflow:hidden !important;
+              }
+              #planes-dashboard-areas img[src$=".svg"]{
+                width:16px !important;
+                height:16px !important;
+                min-width:16px !important;
+                min-height:16px !important;
+                max-width:16px !important;
+                max-height:16px !important;
+                object-fit:contain !important;
+              }
               .milestone-card{
                 background:#ffffff;
                 border:1px solid #d8dee8;
@@ -7883,6 +8755,28 @@ def ejes_estrategicos_page(request: Request):
                 color:#0f172a;
               }
               .milestone-stats .is-danger{ color:#dc2626; }
+              .milestone-stat{
+                display:inline-flex;
+                align-items:center;
+                gap:6px;
+                padding:8px 12px;
+                border-radius:999px;
+                background:#f8fafc;
+                border:1px solid #dde5ee;
+              }
+              .milestone-stat-label{
+                font-size:11px;
+                color:#64748b;
+                font-weight:700;
+              }
+              .milestone-stat-value{
+                font-size:13px;
+                font-weight:900;
+                color:#0f172a;
+              }
+              .milestone-stat-value.is-danger{
+                color:#dc2626;
+              }
               .cards-2{
                 display:grid;
                 grid-template-columns:repeat(2, minmax(0, 1fr));
@@ -7927,6 +8821,51 @@ def ejes_estrategicos_page(request: Request):
                 padding-left:34px;
                 position:relative;
                 margin:10px 0;
+              }
+              .panel__list-item{
+                display:grid;
+                grid-template-columns:auto minmax(0, 1fr);
+                gap:10px;
+                align-items:start;
+              }
+              .panel__list-code{
+                color:#475569;
+                font-weight:800;
+                white-space:nowrap;
+                font-size:11px;
+                line-height:1.55;
+              }
+              .panel__list-name{
+                color:#334155;
+                min-width:0;
+                font-size:11px;
+                line-height:1.55;
+              }
+              #planes-axes-pending-list .panel__list-item,
+              #planes-objectives-pending-list .panel__list-item{
+                display:grid !important;
+                grid-template-columns:auto minmax(0, 1fr) !important;
+                gap:10px !important;
+                align-items:start !important;
+              }
+              #planes-axes-pending-list svg,
+              #planes-axes-pending-list img,
+              #planes-objectives-pending-list svg,
+              #planes-objectives-pending-list img{
+                width:14px !important;
+                height:14px !important;
+                min-width:14px !important;
+                min-height:14px !important;
+                max-width:14px !important;
+                max-height:14px !important;
+                object-fit:contain;
+                vertical-align:middle;
+                overflow:hidden !important;
+                flex:0 0 14px !important;
+              }
+              #planes-axes-pending-list svg *,
+              #planes-objectives-pending-list svg *{
+                vector-effect:non-scaling-stroke;
               }
               .panel__list li::before{
                 content:"";
@@ -8069,9 +9008,92 @@ def ejes_estrategicos_page(request: Request):
                 background:#f8fafc;
               }
               .axm-textarea:not([readonly]){ background:#fff; border-color:#94a3b8; }
+              .axm-id-lines{
+                display:grid;
+                gap:10px;
+              }
+              .axm-id-row{
+                display:grid;
+                grid-template-columns:110px minmax(0,1fr) auto;
+                gap:10px;
+                align-items:center;
+                padding:10px 12px;
+                border-radius:16px;
+                border:1px solid rgba(203, 213, 225, 0.9);
+                background:rgba(248, 250, 252, 0.7);
+                transition:background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+              }
+              .axm-id-row:hover{
+                background:#eef6f1;
+                border-color:#86b39c;
+                box-shadow:0 10px 24px rgba(15, 23, 42, 0.08);
+                transform:translateY(-1px);
+              }
+              .axm-id-code{
+                width:100%;
+                border:none;
+                background:transparent;
+                color:#0f172a;
+                font-weight:800;
+                font-size:1.05rem;
+                letter-spacing:.01em;
+                padding:0 2px;
+                box-shadow:none;
+              }
+              .axm-id-code:focus{
+                outline:none;
+              }
+              .axm-id-input{
+                width:100%;
+                min-width:0;
+                border:1px solid #cbd5e1;
+                border-radius:14px;
+                padding:12px 14px;
+                font-size:1rem;
+                line-height:1.45;
+                color:#14532d;
+                background:#f8fafc;
+                transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+              }
+              .axm-id-input:focus{
+                outline:none;
+                border-color:#16a34a;
+                background:#ffffff;
+                box-shadow:0 0 0 3px rgba(22, 163, 74, 0.12);
+              }
+              .axm-id-input[readonly]{
+                cursor:default;
+              }
+              .axm-id-row:hover .axm-id-input[readonly]{
+                background:#ffffff;
+              }
               .axm-id-actions{ display:flex; gap:6px; margin-top:8px; }
-              .axm-id-right h4{ font-size:.875rem; font-weight:700; color:#0f172a; margin:0 0 6px; }
-              .axm-id-full{ font-size:.875rem; color:#334155; line-height:1.7; white-space:pre-wrap; }
+              .axm-id-right{
+                display:flex;
+                flex-direction:column;
+                justify-content:center;
+                align-items:center;
+                text-align:center;
+                border-radius:22px;
+                background:#ffffff;
+                box-shadow:0 16px 34px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.07);
+                padding:22px 24px;
+              }
+              .axm-id-right h4{
+                font-size:1.15rem;
+                font-weight:800;
+                color:#0f172a;
+                margin:0 0 12px;
+                letter-spacing:.01em;
+              }
+              .axm-id-full{
+                font-size:1rem;
+                color:#334155;
+                line-height:1.75;
+                white-space:pre-wrap;
+                max-width:40rem;
+                margin:0 auto;
+              }
               .axm-id-msg{ font-size:.82rem; padding:6px 22px 12px; min-height:1.2em; }
               .planes-obj-layout{
                 display:grid;
@@ -8146,6 +9168,21 @@ def ejes_estrategicos_page(request: Request):
                 border-radius:16px;
                 background:#f7faf9;
                 padding:14px 16px;
+                width:100%;
+                text-align:left;
+                cursor:pointer;
+                transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+              }
+              .planes-obj-item:hover{
+                background:#ffffff;
+                border-color:#8da6bf;
+                box-shadow:0 12px 28px rgba(15, 23, 42, 0.08);
+                transform:translateY(-1px);
+              }
+              .planes-obj-item:focus-visible{
+                outline:none;
+                border-color:#2563eb;
+                box-shadow:0 0 0 3px rgba(37, 99, 235, 0.18);
               }
               .planes-obj-item h5{
                 margin:0;
@@ -8223,8 +9260,8 @@ def ejes_estrategicos_page(request: Request):
                   <div class="dash__progress-bar" id="planes-progress-fill" style="width:0%"></div>
                 </div>
                 <div class="dash__foot">
-                  <span><strong>Misión:</strong> <b id="planes-mission-progress">0%</b></span>
-                  <span><strong>Visión:</strong> <b id="planes-vision-progress">0%</b></span>
+                  <span class="dash__chip"><span class="dash__chip-label">Misión</span><span class="dash__chip-value" id="planes-mission-progress">0%</span></span>
+                  <span class="dash__chip"><span class="dash__chip-label">Visión</span><span class="dash__chip-value" id="planes-vision-progress">0%</span></span>
                 </div>
               </div>
 
@@ -8237,10 +9274,10 @@ def ejes_estrategicos_page(request: Request):
                   <div class="milestone-info">
                     <div class="milestone-title">Hitos logrados</div>
                     <div class="milestone-stats">
-                      <span>Total: <strong id="planes-milestone-total">0</strong></span>
-                      <span>Logrados: <strong id="planes-milestone-done">0</strong></span>
-                      <span>Pendientes: <strong id="planes-milestone-pending">0</strong></span>
-                      <span>Atrasados: <strong class="is-danger" id="planes-milestone-overdue">0</strong></span>
+                      <span class="milestone-stat"><span class="milestone-stat-label">Total</span><strong class="milestone-stat-value" id="planes-milestone-total">0</strong></span>
+                      <span class="milestone-stat"><span class="milestone-stat-label">Logrados</span><strong class="milestone-stat-value" id="planes-milestone-done">0</strong></span>
+                      <span class="milestone-stat"><span class="milestone-stat-label">Pendientes</span><strong class="milestone-stat-value" id="planes-milestone-pending">0</strong></span>
+                      <span class="milestone-stat"><span class="milestone-stat-label">Atrasados</span><strong class="milestone-stat-value is-danger" id="planes-milestone-overdue">0</strong></span>
                     </div>
                   </div>
                 </div>
@@ -8323,7 +9360,8 @@ def ejes_estrategicos_page(request: Request):
                   <summary>Misión</summary>
                   <div class="axm-id-grid">
                     <div class="axm-id-left">
-                      <textarea id="planes-identidad-mision-text" class="axm-textarea" rows="5" placeholder="Escribe la misión (una línea por elemento)" readonly></textarea>
+                      <div class="axm-id-lines" id="planes-identidad-mision-lines"></div>
+                      <button type="button" class="axm-id-add" id="planes-identidad-mision-add">Agregar línea</button>
                       <div class="axm-id-actions">
                         <button type="button" class="action-button" id="planes-identidad-mision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
                           <img src="/icon/boton/editar.svg" alt="Editar">
@@ -8338,6 +9376,7 @@ def ejes_estrategicos_page(request: Request):
                           <span class="action-label">Eliminar</span>
                         </button>
                       </div>
+                      <div id="planes-identidad-mision-hidden"></div>
                     </div>
                     <div class="axm-id-right">
                       <h4>Misión</h4>
@@ -8349,7 +9388,8 @@ def ejes_estrategicos_page(request: Request):
                   <summary>Visión</summary>
                   <div class="axm-id-grid">
                     <div class="axm-id-left">
-                      <textarea id="planes-identidad-vision-text" class="axm-textarea" rows="5" placeholder="Escribe la visión (una línea por elemento)" readonly></textarea>
+                      <div class="axm-id-lines" id="planes-identidad-vision-lines"></div>
+                      <button type="button" class="axm-id-add" id="planes-identidad-vision-add">Agregar línea</button>
                       <div class="axm-id-actions">
                         <button type="button" class="action-button" id="planes-identidad-vision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
                           <img src="/icon/boton/editar.svg" alt="Editar">
@@ -8364,6 +9404,7 @@ def ejes_estrategicos_page(request: Request):
                           <span class="action-label">Eliminar</span>
                         </button>
                       </div>
+                      <div id="planes-identidad-vision-hidden"></div>
                     </div>
                     <div class="axm-id-right">
                       <h4>Visión</h4>
@@ -8415,7 +9456,8 @@ def ejes_estrategicos_page(request: Request):
           </div>
           <div class="card-body hidden" id="planes-view-organigrama">
             <h2 class="card-title">Vista Organigrama</h2>
-            <p class="text-base-content/70">Módulo en transición DaisyUI. Esta vista confirma estructura Organigrama para Plan estratégico.</p>
+            <p class="text-base-content/70">Visualiza la relación entre misión, visión, líneas, ejes y objetivos.</p>
+            <div id="planes-organigrama-host" class="departamentos-page w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3"></div>
           </div>
         </article>
       </section>
@@ -8437,6 +9479,9 @@ def ejes_estrategicos_page(request: Request):
             buttons.forEach((btn) => {
               btn.classList.toggle('active', (btn.getAttribute('data-planes-view') || '') === target);
             });
+            if (target === 'organigrama') {
+              renderStrategicTree(planesOrganigramaHostEl, { inline: true });
+            }
             document.dispatchEvent(new CustomEvent('backend-view-change', { detail: { view: target } }));
           }
           buttons.forEach((btn) => {
@@ -8502,6 +9547,7 @@ def ejes_estrategicos_page(request: Request):
             ejes: document.getElementById('planes-tab-panel-ejes'),
             objetivos: document.getElementById('planes-tab-panel-objetivos'),
           };
+          const planesOrganigramaHostEl = document.getElementById('planes-organigrama-host');
           const setStrategicTab = (tab, shouldScroll = false) => {
             const target = ['fundamentacion', 'identidad', 'ejes', 'objetivos'].includes(tab) ? tab : 'ejes';
             Object.keys(strategicTabPanels).forEach((key) => {
@@ -8641,13 +9687,17 @@ def ejes_estrategicos_page(request: Request):
 
           const identityPanelEl = document.getElementById('planes-tab-panel-identidad');
           const identityMsgEl = document.getElementById('planes-identidad-msg');
-          const missionTextEl = document.getElementById('planes-identidad-mision-text');
+          const missionLinesEl = document.getElementById('planes-identidad-mision-lines');
+          const missionHiddenEl = document.getElementById('planes-identidad-mision-hidden');
           const missionFullEl = document.getElementById('planes-identidad-mision-full');
+          const missionAddBtn = document.getElementById('planes-identidad-mision-add');
           const missionEditBtn = document.getElementById('planes-identidad-mision-edit');
           const missionSaveBtn = document.getElementById('planes-identidad-mision-save');
           const missionDeleteBtn = document.getElementById('planes-identidad-mision-delete');
-          const visionTextEl = document.getElementById('planes-identidad-vision-text');
+          const visionLinesEl = document.getElementById('planes-identidad-vision-lines');
+          const visionHiddenEl = document.getElementById('planes-identidad-vision-hidden');
           const visionFullEl = document.getElementById('planes-identidad-vision-full');
+          const visionAddBtn = document.getElementById('planes-identidad-vision-add');
           const visionEditBtn = document.getElementById('planes-identidad-vision-edit');
           const visionSaveBtn = document.getElementById('planes-identidad-vision-save');
           const visionDeleteBtn = document.getElementById('planes-identidad-vision-delete');
@@ -8656,48 +9706,119 @@ def ejes_estrategicos_page(request: Request):
             identityMsgEl.textContent = text || '';
             identityMsgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
           };
-          const normalizeLineText = (line) => {
-            if (line == null) return '';
-            if (typeof line === 'string') return line.trim();
-            if (typeof line === 'object') {
-              const code = String(line.code || '').trim();
-              const text = String(line.text || '').trim();
-              if (code && text) return `${code} - ${text}`;
-              return text || code;
-            }
-            return String(line).trim();
-          };
-          const linesToTextarea = (lines) => (Array.isArray(lines) ? lines.map(normalizeLineText).filter(Boolean).join('\\n') : '');
-          const textareaToLines = (rawValue, prefix) => {
-            const chunks = String(rawValue || '').split('\\n').map((item) => item.trim()).filter(Boolean);
-            return chunks.map((row, idx) => {
-              const dashPos = row.indexOf(' - ');
-              if (dashPos > 0) {
-                const codeRaw = row.slice(0, dashPos).trim();
-                const textRaw = row.slice(dashPos + 3).trim();
-                return { code: codeRaw || `${prefix}-${String(idx + 1).padStart(2, '0')}`, text: textRaw || row };
-              }
-              return { code: `${prefix}-${String(idx + 1).padStart(2, '0')}`, text: row };
+          const setupIdentityComposer = (prefix, linesHost, hiddenHost, fullHost, addBtn) => {
+            if (!linesHost || !hiddenHost || !fullHost || !addBtn) return null;
+            let lines = [{ code: `${prefix}1`, text: '' }];
+            let editable = false;
+            const cleanCode = (value, idx) => {
+              const raw = String(value || '').trim();
+              return raw || `${prefix}${idx + 1}`;
+            };
+            const getLines = () => lines.map((item, idx) => ({
+              code: cleanCode(item.code, idx),
+              text: String(item.text || '').trim(),
+            }));
+            const syncOutputs = () => {
+              const safe = getLines();
+              hiddenHost.innerHTML = '';
+              safe.forEach((item, idx) => {
+                const codeInput = document.createElement('input');
+                codeInput.type = 'hidden';
+                codeInput.name = `${prefix}${idx + 1}_code`;
+                codeInput.value = item.code;
+                hiddenHost.appendChild(codeInput);
+                const textInput = document.createElement('input');
+                textInput.type = 'hidden';
+                textInput.name = `${prefix}${idx + 1}`;
+                textInput.value = item.text;
+                hiddenHost.appendChild(textInput);
+              });
+              fullHost.textContent = safe.map((item) => item.text).filter(Boolean).join(' | ');
+            };
+            const render = () => {
+              linesHost.innerHTML = '';
+              const safeLines = lines.length ? lines : [{ code: `${prefix}1`, text: '' }];
+              safeLines.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'axm-id-row';
+                const codeEl = document.createElement('input');
+                codeEl.type = 'text';
+                codeEl.className = 'axm-id-code';
+                codeEl.placeholder = `${prefix}${idx + 1}`;
+                codeEl.value = cleanCode(item.code, idx);
+                codeEl.readOnly = !editable;
+                codeEl.addEventListener('input', () => {
+                  lines[idx].code = codeEl.value;
+                  syncOutputs();
+                });
+                const textEl = document.createElement('input');
+                textEl.type = 'text';
+                textEl.className = 'axm-id-input';
+                textEl.placeholder = 'Texto';
+                textEl.value = String(item.text || '');
+                textEl.readOnly = !editable;
+                textEl.addEventListener('input', () => {
+                  lines[idx].text = textEl.value;
+                  syncOutputs();
+                });
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'axm-id-action delete';
+                removeBtn.setAttribute('aria-label', 'Eliminar línea');
+                removeBtn.innerHTML = '<img src="/icon/eliminar.svg" alt="">';
+                removeBtn.disabled = !editable;
+                removeBtn.addEventListener('click', () => {
+                  if (!editable) return;
+                  lines.splice(idx, 1);
+                  if (!lines.length) lines = [{ code: `${prefix}1`, text: '' }];
+                  render();
+                });
+                row.appendChild(codeEl);
+                row.appendChild(textEl);
+                row.appendChild(removeBtn);
+                linesHost.appendChild(row);
+              });
+              addBtn.disabled = !editable;
+              syncOutputs();
+            };
+            addBtn.addEventListener('click', () => {
+              if (!editable) return;
+              lines.push({ code: `${prefix}${lines.length + 1}`, text: '' });
+              render();
             });
+            render();
+            return {
+              getLines,
+              setEditable(flag) {
+                editable = !!flag;
+                render();
+              },
+              setLines(next) {
+                const rows = Array.isArray(next) ? next : [];
+                lines = rows.length
+                  ? rows.map((item, idx) => ({
+                      code: cleanCode(item && item.code, idx),
+                      text: String((item && item.text) || ''),
+                    }))
+                  : [{ code: `${prefix}1`, text: '' }];
+                render();
+              },
+              clear() {
+                lines = [{ code: `${prefix}1`, text: '' }];
+                render();
+              }
+            };
           };
-          const updateIdentityPreview = () => {
-            if (missionFullEl && missionTextEl) missionFullEl.textContent = missionTextEl.value.split('\\n').map((s) => s.trim()).filter(Boolean).join(' | ');
-            if (visionFullEl && visionTextEl) visionFullEl.textContent = visionTextEl.value.split('\\n').map((s) => s.trim()).filter(Boolean).join(' | ');
-          };
-          const setIdentityEditable = (textareaEl, enabled) => {
-            if (!textareaEl) return;
-            textareaEl.readOnly = !enabled;
-            if (enabled) textareaEl.focus();
-          };
+          const missionComposer = setupIdentityComposer('m', missionLinesEl, missionHiddenEl, missionFullEl, missionAddBtn);
+          const visionComposer = setupIdentityComposer('v', visionLinesEl, visionHiddenEl, visionFullEl, visionAddBtn);
           const loadIdentityForPlanes = async () => {
             const response = await fetch('/api/strategic-identity', { method: 'GET', credentials: 'same-origin' });
             const data = await response.json().catch(() => ({}));
             if (!response.ok || data?.success === false) {
               throw new Error(data?.error || data?.detail || 'No se pudo cargar Identidad.');
             }
-            if (missionTextEl) missionTextEl.value = linesToTextarea(data?.data?.mision);
-            if (visionTextEl) visionTextEl.value = linesToTextarea(data?.data?.vision);
-            updateIdentityPreview();
+            if (missionComposer) missionComposer.setLines(data?.data?.mision);
+            if (visionComposer) visionComposer.setLines(data?.data?.vision);
           };
           const saveIdentityBlock = async (block, lines) => {
             const response = await fetch(`/api/strategic-identity/${encodeURIComponent(block)}`, {
@@ -8722,20 +9843,16 @@ def ejes_estrategicos_page(request: Request):
             }
           };
           if (identityPanelEl) {
-            setIdentityEditable(missionTextEl, false);
-            setIdentityEditable(visionTextEl, false);
-            missionTextEl && missionTextEl.addEventListener('input', updateIdentityPreview);
-            visionTextEl && visionTextEl.addEventListener('input', updateIdentityPreview);
             missionEditBtn && missionEditBtn.addEventListener('click', () => {
-              setIdentityEditable(missionTextEl, true);
+              if (!missionComposer) return;
+              missionComposer.setEditable(true);
               setIdentityMsg('Modo edición habilitado para Misión.');
             });
             missionSaveBtn && missionSaveBtn.addEventListener('click', async () => {
               try {
-                const lines = textareaToLines(missionTextEl ? missionTextEl.value : '', 'm');
+                const lines = missionComposer ? missionComposer.getLines() : [];
                 await saveIdentityBlock('mision', lines);
-                setIdentityEditable(missionTextEl, false);
-                updateIdentityPreview();
+                if (missionComposer) missionComposer.setEditable(false);
                 setIdentityMsg('Misión guardada.');
               } catch (error) {
                 setIdentityMsg(error?.message || 'No se pudo guardar Misión.', true);
@@ -8744,24 +9861,25 @@ def ejes_estrategicos_page(request: Request):
             missionDeleteBtn && missionDeleteBtn.addEventListener('click', async () => {
               try {
                 await clearIdentityBlock('mision');
-                if (missionTextEl) missionTextEl.value = '';
-                setIdentityEditable(missionTextEl, false);
-                updateIdentityPreview();
+                if (missionComposer) {
+                  missionComposer.clear();
+                  missionComposer.setEditable(false);
+                }
                 setIdentityMsg('Misión limpiada.');
               } catch (error) {
                 setIdentityMsg(error?.message || 'No se pudo limpiar Misión.', true);
               }
             });
             visionEditBtn && visionEditBtn.addEventListener('click', () => {
-              setIdentityEditable(visionTextEl, true);
+              if (!visionComposer) return;
+              visionComposer.setEditable(true);
               setIdentityMsg('Modo edición habilitado para Visión.');
             });
             visionSaveBtn && visionSaveBtn.addEventListener('click', async () => {
               try {
-                const lines = textareaToLines(visionTextEl ? visionTextEl.value : '', 'v');
+                const lines = visionComposer ? visionComposer.getLines() : [];
                 await saveIdentityBlock('vision', lines);
-                setIdentityEditable(visionTextEl, false);
-                updateIdentityPreview();
+                if (visionComposer) visionComposer.setEditable(false);
                 setIdentityMsg('Visión guardada.');
               } catch (error) {
                 setIdentityMsg(error?.message || 'No se pudo guardar Visión.', true);
@@ -8770,9 +9888,10 @@ def ejes_estrategicos_page(request: Request):
             visionDeleteBtn && visionDeleteBtn.addEventListener('click', async () => {
               try {
                 await clearIdentityBlock('vision');
-                if (visionTextEl) visionTextEl.value = '';
-                setIdentityEditable(visionTextEl, false);
-                updateIdentityPreview();
+                if (visionComposer) {
+                  visionComposer.clear();
+                  visionComposer.setEditable(false);
+                }
                 setIdentityMsg('Visión limpiada.');
               } catch (error) {
                 setIdentityMsg(error?.message || 'No se pudo limpiar Visión.', true);
@@ -8804,6 +9923,12 @@ def ejes_estrategicos_page(request: Request):
             moreEl.textContent = extra > 0 ? `+${extra} más` : '';
             moreEl.style.display = extra > 0 ? 'inline-block' : 'none';
           };
+          const renderPendingLabel = (code, name) => `
+            <span class="panel__list-item">
+              <span class="panel__list-code">${escapeHtml(code || 'Sin código')}</span>
+              <span class="panel__list-name">${escapeHtml(name || 'Sin nombre')}</span>
+            </span>
+          `;
 
           const renderPlanesTrackingBoard = (axes) => {
             const axisList = Array.isArray(axes) ? axes : [];
@@ -8875,7 +10000,7 @@ def ejes_estrategicos_page(request: Request):
               byId('planes-axes-pending-list'),
               byId('planes-axes-pending-more'),
               axesNoOwner,
-              (axis) => `${escapeHtml(axis.codigo || 'Sin código')} - ${escapeHtml(axis.nombre || 'Sin nombre')}`
+              (axis) => renderPendingLabel(axis.codigo || 'Sin código', axis.nombre || 'Sin nombre')
             );
             fillList(
               byId('planes-objectives-pending-list'),
@@ -8886,7 +10011,7 @@ def ejes_estrategicos_page(request: Request):
                 const axisCode = String(parentAxis.codigo || '').trim();
                 const code = String(obj.codigo || '').trim();
                 const left = code || axisCode || 'Sin código';
-                return `${escapeHtml(left)} - ${escapeHtml(obj.nombre || 'Sin nombre')}`;
+                return renderPendingLabel(left, obj.nombre || 'Sin nombre');
               }
             );
           };
@@ -8982,13 +10107,22 @@ def ejes_estrategicos_page(request: Request):
               const fechaInicio = escapeHtml(obj?.fecha_inicio || obj?.inicio || 'N/D');
               const fechaFin = escapeHtml(obj?.fecha_fin || obj?.fin || 'N/D');
               return `
-                <article class="planes-obj-item">
+                <button type="button" class="planes-obj-item" data-planes-objective-id="${String(obj?.id || '')}" data-planes-objective-axis-id="${String(selectedAxis?.id || '')}">
                   <h5>${name}</h5>
                   <div class="planes-obj-code">${code}</div>
                   <div class="planes-obj-meta">Hito: ${hito} · Avance: ${avance}% · Fecha inicial: ${fechaInicio} · Fecha final: ${fechaFin}</div>
-                </article>
+                </button>
               `;
             }).join('');
+            host.querySelectorAll('[data-planes-objective-id]').forEach((button) => {
+              button.addEventListener('click', () => {
+                const objectiveId = String(button.getAttribute('data-planes-objective-id') || '').trim();
+                if (!objectiveId) return;
+                const qs = new URLSearchParams();
+                qs.set('objective_id', objectiveId);
+                window.location.href = `/poa?${qs.toString()}`;
+              });
+            });
           };
 
           const loadTracking = async () => {
@@ -9032,12 +10166,169 @@ def ejes_estrategicos_page(request: Request):
     )
 
 
+@router.get("/ejes-estrategicos/editor", response_class=HTMLResponse)
+def ejes_estrategicos_editor_page(request: Request):
+    query = str(request.url.query or "").strip()
+    target = "/ejes-estrategicos"
+    if query:
+        target = f"{target}?{query}"
+    return RedirectResponse(url=target, status_code=302)
+
+
 @router.get("/poa", response_class=HTMLResponse)
 @router.get("/poa/crear", response_class=HTMLResponse)
 def poa_page(request: Request):
     _bind_core_symbols()
-    base_content = dedent("""
+    base_content = AXM_EDITOR_STYLE + POA_LIMPIO_HTML
+    return render_backend_page(
+        request,
+        title="POA",
+        description="Pantalla de trabajo POA.",
+        content=base_content,
+        hide_floating_actions=True,
+        show_page_header=False,
+    )
+
+
+@router.get("/poa/arbol", response_class=HTMLResponse)
+def poa_tree_page(request: Request):
+    _bind_core_symbols()
+    base_content = AXM_EDITOR_STYLE + dedent("""
       <section class="grid gap-4 w-full max-w-6xl">
+        <style>
+          .poa-tree-page-card{
+            background:#ffffff;
+            border:1px solid #d8dee8;
+            border-radius:28px;
+            box-shadow:0 16px 36px rgba(15,23,42,.08);
+            padding:22px 24px;
+          }
+          .poa-tree-page-head{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:14px;
+          }
+          .poa-tree-page-title{
+            margin:0;
+            font-size:1.55rem;
+            line-height:1.2;
+            font-weight:800;
+            color:#0f172a;
+          }
+          .poa-tree-page-sub{
+            margin:8px 0 0 0;
+            color:#64748b;
+            font-size:.95rem;
+            line-height:1.45;
+          }
+          .poa-tree-page-close{
+            width:44px;
+            height:44px;
+            border:none;
+            border-radius:999px;
+            background:#eff4f2;
+            color:#0f172a;
+            font-size:1.8rem;
+            line-height:1;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            text-decoration:none;
+            box-shadow:0 8px 20px rgba(15,23,42,.08);
+          }
+          .poa-tree-wrap{
+            border:1px solid #d8dee8;
+            border-radius:22px;
+            background:#f8fbfa;
+            box-shadow:0 10px 24px rgba(15,23,42,.06);
+            padding:18px 20px;
+          }
+          .poa-tree-help{
+            margin:0 0 12px 0;
+            color:#64748b;
+            font-size:.92rem;
+          }
+          .poa-tree-grid{
+            display:grid;
+            gap:16px;
+          }
+          .poa-tree-axis{
+            border:1px solid #d8dee8;
+            border-radius:20px;
+            background:#ffffff;
+            box-shadow:0 8px 18px rgba(15,23,42,.05);
+            padding:16px 18px;
+          }
+          .poa-tree-axis-head,
+          .poa-tree-item-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+          }
+          .poa-tree-axis h4,
+          .poa-tree-item-title{
+            margin:0;
+            color:#0f172a;
+            font-weight:800;
+          }
+          .poa-tree-objectives,
+          .poa-tree-children{
+            display:grid;
+            gap:12px;
+            margin-top:12px;
+            padding-left:14px;
+            border-left:2px solid #e2e8f0;
+          }
+          .poa-tree-item{
+            position:relative;
+            border:1px solid #d8dee8;
+            border-radius:18px;
+            background:#f8fafc;
+            padding:14px 16px 14px 18px;
+          }
+          .poa-tree-item-meta{
+            margin:6px 0 0 0;
+            color:#64748b;
+            font-size:.88rem;
+          }
+          .poa-tree-click{
+            cursor:pointer;
+          }
+          .poa-tree-click:hover{
+            color:#0f5132;
+          }
+          .poa-tree-toggle{
+            border:1px solid #cbd5e1;
+            background:#ffffff;
+            color:#0f172a;
+            border-radius:999px;
+            padding:.45rem .8rem;
+            font-size:.82rem;
+            font-weight:700;
+            cursor:pointer;
+          }
+          .poa-tree-state{
+            position:absolute;
+            left:0;
+            top:14px;
+            bottom:14px;
+            width:6px;
+            border-radius:999px;
+            background:#cbd5e1;
+          }
+          .poa-tree-state-green{ background:#16a34a; }
+          .poa-tree-state-yellow{ background:#eab308; }
+          .poa-tree-state-orange{ background:#f97316; }
+          .poa-tree-state-red{ background:#dc2626; }
+          #poa-tree-page-msg{
+            min-height:1.5rem;
+            color:#64748b;
+            font-size:.92rem;
+          }
+        </style>
         <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
           <div class="w-full flex flex-col md:flex-row items-center gap-10">
             <img
@@ -9049,306 +10340,986 @@ def poa_page(request: Request):
             />
             <div class="w-full grid gap-2 content-center">
               <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
-              <div class="block w-full text-base sm:text-lg text-base-content/70">El Plan Operativo Anual organiza actividades, responsables y tiempos de ejecución.</div>
+              <div class="block w-full text-base sm:text-lg text-base-content/70">Vista separada del árbol de avance para navegar ejes, objetivos, actividades y subactividades.</div>
             </div>
           </div>
         </div>
-        <div class="view-buttons page-view-buttons" id="poa-view-switch">
-          <button class="view-pill boton_vista active" type="button" data-poa-view="list" data-tooltip="Lista" aria-label="Lista">
-            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
-            <span class="view-pill-label boton_vista-label">List</span>
-          </button>
-          <button class="view-pill boton_vista" type="button" data-poa-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
-            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
-            <span class="view-pill-label boton_vista-label">Kanban</span>
-          </button>
-          <button class="view-pill boton_vista" type="button" data-poa-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
-            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
-            <span class="view-pill-label boton_vista-label">Organigrama</span>
-          </button>
+        <div class="poa-tree-page-card">
+          <div class="poa-tree-page-head">
+            <div>
+              <h2 class="poa-tree-page-title">Árbol de avance</h2>
+              <p class="poa-tree-page-sub">Vista compactada por defecto. Usa "Mostrar" para abrir solo el bloque siguiente.</p>
+            </div>
+            <a href="/poa" class="poa-tree-page-close" aria-label="Cerrar">×</a>
+          </div>
+          <div id="poa-tree-page-msg" aria-live="polite"></div>
+          <div class="poa-tree-wrap">
+            <div class="poa-tree-grid" id="poa-tree-page-host"></div>
+          </div>
         </div>
-        <article class="card border border-base-300 shadow-sm rounded-[2rem]" style="background:#eff4f2;">
-          <div class="card-body p-6 sm:p-8">
-            <h2 class="text-3xl sm:text-4xl font-semibold text-base-content">Tablero POA por eje</h2>
-            <p class="text-lg sm:text-2xl text-base-content/70">Cada columna corresponde a un eje y contiene las tarjetas de sus objetivos.</p>
-            <div class="flex flex-wrap gap-3 pt-2">
-              <a href="/api/planificacion/plantilla-plan-poa.csv" class="btn btn-lg bg-base-100 border border-base-300 text-base-content hover:bg-base-200 normal-case">Descargar plantilla CSV</a>
-              <a href="/api/planificacion/exportar-plan-poa.xlsx" class="btn btn-lg bg-base-100 border border-base-300 text-base-content hover:bg-base-200 normal-case">Exportar plan + POA XLS</a>
-              <button type="button" id="poa-import-csv-btn" class="btn btn-lg bg-base-100 border border-base-300 text-base-content hover:bg-base-200 normal-case">Importar CSV estratégico + POA</button>
-              <input id="poa-import-csv-file" type="file" accept=".csv,text/csv" class="hidden">
-            </div>
-            <div id="poa-import-csv-msg" class="text-sm sm:text-base pt-1 min-h-[1.5rem] text-base-content/70"></div>
-          </div>
-        </article>
-        <article class="card border border-base-300 shadow-sm rounded-[2rem]" style="background:#eff4f2;">
-          <div class="card-body p-6 sm:p-8">
-            <div class="poa-small-muted">Permisos: edicion · acceso todas_tareas · rol administrador</div>
-
-            <div class="cards-2 mb-4">
-              <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
-                <header class="panel__head">
-                  <h3 class="panel__title">Actividades sin responsable</h3>
-                  <div class="panel__meta"><strong>149</strong> pendiente(s)</div>
-                </header>
-                <ul class="panel__list">
-                  <li>Diseño del Plan Integral de Crecimiento Social 2026</li>
-                  <li>Implementación de Campaña Institucional de Captación Territorial</li>
-                  <li>Profesionalización y Fortalecimiento del Equipo Comercial</li>
-                  <li>Implementación de Sistema de Seguimiento Comercial (CRM o Control Mensual)</li>
-                  <li>Estrategia Digital Complementaria de Afiliación</li>
-                  <li>Implementación de Programa de Incentivos por Captación</li>
-                  <li>Diseño y estructuración del Producto Financiero Juvenil</li>
-                  <li>Diseño del Programa de Educación Financiera Juvenil</li>
-                </ul>
-                <a href="#" class="panel__more">+141 más</a>
-              </section>
-              <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
-                <header class="panel__head">
-                  <h3 class="panel__title">Subtareas sin responsable</h3>
-                  <div class="panel__meta"><strong>18</strong> pendiente(s)</div>
-                </header>
-                <ul class="panel__list">
-                  <li>Análisis de Crecimiento histórico. <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
-                  <li>Análisis de Penetración territorial <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
-                  <li>Análisis de Competencia (fintech, sofipos, crédito comercial). <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
-                  <li>Análisis de Segmentación demográfica. <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
-                  <li>Establecer Calendario mensual de activaciones. <span class="text-base-content/60">(Implementación de Campaña Institucional de Captación Territorial)</span></li>
-                  <li>Establecer programa Presencia en ferias, tianguis y eventos locales. <span class="text-base-content/60">(Implementación de Campaña Institucional de Captación Territorial)</span></li>
-                  <li>Documentar Jornadas de afiliación simplificada. <span class="text-base-content/60">(Implementación de Campaña Institucional de Captación Territorial)</span></li>
-                  <li>Programa de Taller intensivo de captación. <span class="text-base-content/60">(Profesionalización y Fortalecimiento del Equipo Comercial)</span></li>
-                </ul>
-                <a href="#" class="panel__more">+10 más</a>
-              </section>
-            </div>
-
-            <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
-              <div class="poa-summary">
-                <div>
-                  <h4>Concentración de actividades por usuario</h4>
-                  <p>Distribución de actividades POA asignadas por responsable.</p>
-                </div>
-                <div class="poa-summary-total">Total asignadas: 1</div>
-              </div>
-            </section>
-          </div>
-        </article>
-        <article class="card border border-base-300 shadow-sm rounded-[2rem]" style="background:#eff4f2;">
-          <div class="card-body p-6 sm:p-8">
-            <div class="poa-summary mb-3">
-              <div>
-                <h4 class="!text-3xl">Concentración de actividades por usuario</h4>
-                <p>Distribución de actividades POA asignadas por responsable.</p>
-              </div>
-              <div class="poa-summary-total" id="poa-user-total">Total asignadas: 0</div>
-            </div>
-            <div id="poa-user-bars" class="grid gap-3"></div>
-            <div class="cards-2 mt-5" id="poa-axis-columns"></div>
-          </div>
-        </article>
       </section>
-      <dialog id="poa-objective-modal" class="modal">
-        <div class="modal-box w-11/12 max-w-6xl rounded-3xl">
-          <form method="dialog">
-            <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" aria-label="Cerrar">✕</button>
-          </form>
-          <h3 class="font-bold text-3xl" id="poa-modal-title">Actividades del objetivo</h3>
-          <p class="text-lg text-base-content/70 mt-1 mb-3" id="poa-modal-subtitle"></p>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <div class="card bg-base-100 border border-base-300 rounded-2xl p-4">
-              <div class="panel__title !text-base !tracking-normal">Estatus</div>
-              <div id="poa-modal-status" class="text-2xl font-semibold">No iniciado</div>
-            </div>
-            <div class="card bg-base-100 border border-base-300 rounded-2xl p-4">
-              <div class="panel__title !text-base !tracking-normal">Avance</div>
-              <div id="poa-modal-progress" class="text-2xl font-semibold">0%</div>
-            </div>
-          </div>
-          <div class="card bg-base-100 border border-base-300 rounded-2xl p-4">
-            <div class="panel__title !text-2xl !tracking-normal !mb-2">Actividades del objetivo</div>
-            <div id="poa-modal-activities" class="grid gap-2 max-h-[60vh] overflow-auto"></div>
-          </div>
-        </div>
-        <form method="dialog" class="modal-backdrop">
-          <button>Cerrar</button>
-        </form>
-      </dialog>
       <script>
-        (function () {
-          const importBtn = document.getElementById('poa-import-csv-btn');
-          const fileInput = document.getElementById('poa-import-csv-file');
-          const msgEl = document.getElementById('poa-import-csv-msg');
-          const axisColumnsEl = document.getElementById('poa-axis-columns');
-          const userBarsEl = document.getElementById('poa-user-bars');
-          const userTotalEl = document.getElementById('poa-user-total');
-          const objectiveModal = document.getElementById('poa-objective-modal');
-          const modalTitleEl = document.getElementById('poa-modal-title');
-          const modalSubtitleEl = document.getElementById('poa-modal-subtitle');
-          const modalStatusEl = document.getElementById('poa-modal-status');
-          const modalProgressEl = document.getElementById('poa-modal-progress');
-          const modalActivitiesEl = document.getElementById('poa-modal-activities');
-          const setMsg = (text, isError) => {
-            if (!msgEl) return;
-            msgEl.textContent = text || '';
-            msgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
-          };
-          if (!importBtn || !fileInput) return;
-          importBtn.addEventListener('click', () => fileInput.click());
-          fileInput.addEventListener('change', async () => {
-            const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
-            if (!file) return;
-            try {
-              setMsg('Importando archivo...', false);
-              const formData = new FormData();
-              formData.append('file', file);
-              const response = await fetch('/api/planificacion/importar-plan-poa', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-              });
-              const data = await response.json().catch(() => ({}));
-              if (!response.ok || data?.success === false) {
-                throw new Error(data?.error || data?.detail || 'No se pudo importar el archivo.');
-              }
-              setMsg('Importación completada correctamente.', false);
-            } catch (error) {
-              setMsg(error?.message || 'No se pudo importar el archivo.', true);
-            } finally {
-              fileInput.value = '';
-            }
-          });
+        (() => {
+          const hostEl = document.getElementById("poa-tree-page-host");
+          const msgEl = document.getElementById("poa-tree-page-msg");
+          const poaTreeVisibility = {};
+          let objectives = [];
+          let activities = [];
 
-          const esc = (v) => String(v == null ? '' : v)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-          const statusRank = (s) => {
-            const key = String(s || '').toLowerCase();
-            if (key.includes('revision')) return 4;
-            if (key.includes('termin')) return 3;
-            if (key.includes('proceso')) return 2;
-            return 1;
+          const escapeHtml = (value) => String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+          const todayIso = () => {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, "0");
+            const d = String(now.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
           };
-          const buildSubTree = (subs, parentId, depth) => {
-            const list = (subs || []).filter((s) => Number(s.parent_subactivity_id || 0) === Number(parentId || 0));
-            if (!list.length) return '';
-            const items = list.map((s) => {
-              const margin = Math.min(10, depth * 14);
-              return `
-                <li style="margin-left:${margin}px">
-                  <span class="text-base-content/70">Nivel ${Number(s.nivel || 1)}:</span>
-                  ${esc(s.nombre || 'Subtarea sin nombre')}
-                  ${buildSubTree(subs, s.id, depth + 1)}
-                </li>
-              `;
-            }).join('');
-            return `<ul class="list-disc pl-6 text-base-content/80 text-sm mt-1">${items}</ul>`;
+
+          const showMsg = (text, isError = false) => {
+            if (!msgEl) return;
+            msgEl.textContent = text || "";
+            msgEl.style.color = isError ? "#b91c1c" : "#64748b";
           };
-          const openObjectiveModal = (objective, activities) => {
-            if (!objectiveModal || !modalActivitiesEl) return;
-            const activityList = Array.isArray(activities) ? activities : [];
-            const progress = activityList.length
-              ? Math.round(activityList.reduce((s, a) => s + Number(a.avance || 0), 0) / activityList.length)
-              : 0;
-            const topStatus = activityList.length
-              ? activityList.slice().sort((a, b) => statusRank(b.status) - statusRank(a.status))[0].status || 'No iniciado'
-              : 'No iniciado';
-            if (modalTitleEl) modalTitleEl.textContent = 'Actividades del objetivo';
-            if (modalSubtitleEl) modalSubtitleEl.textContent = `${objective.codigo || 'sin código'} · ${objective.nombre || 'Objetivo'}`;
-            if (modalStatusEl) modalStatusEl.textContent = topStatus;
-            if (modalProgressEl) modalProgressEl.textContent = `${progress}%`;
-            modalActivitiesEl.innerHTML = activityList.length ? activityList.map((a) => `
-              <article class="border border-base-300 rounded-2xl p-4">
-                <h4 class="text-2xl font-semibold">${esc(a.nombre || 'Actividad sin nombre')}</h4>
-                <div class="text-base-content/60 italic">${esc(a.codigo || 'sin código')} · ${esc(a.responsable || 'Sin responsable')}</div>
-                ${buildSubTree(a.subactivities || [], 0, 1)}
-              </article>
-            `).join('') : '<p class="text-base-content/70">No hay actividades registradas para este objetivo.</p>';
-            if (typeof objectiveModal.showModal === 'function') objectiveModal.showModal();
+
+          const treeKey = (kind, id) => `${kind}:${Number(id || 0)}`;
+          const isTreeOpen = (kind, id) => !!poaTreeVisibility[treeKey(kind, id)];
+          const setTreeOpen = (kind, id, value) => {
+            poaTreeVisibility[treeKey(kind, id)] = !!value;
           };
-          const renderPoaAxisBoard = (payload) => {
-            if (!axisColumnsEl) return;
-            const objectives = Array.isArray(payload?.objectives) ? payload.objectives : [];
-            const activities = Array.isArray(payload?.activities) ? payload.activities : [];
-            const groupedByAxis = {};
+
+          const poaStateTone = ({ status, entregaEstado, fechaInicial, fechaFinal, avance }) => {
+            const st = String(status || "").trim().toLowerCase();
+            const de = String(entregaEstado || "").trim().toLowerCase();
+            const start = String(fechaInicial || "").trim();
+            const end = String(fechaFinal || "").trim();
+            const progress = Number(avance || 0);
+            const today = todayIso();
+            if (de === "pendiente" || st.includes("revisión") || st.includes("revision")) return "orange";
+            if (de === "aprobada" || st.includes("terminad") || st.includes("hecho") || progress >= 100) return "green";
+            if (st.includes("atras")) return "red";
+            if (st.includes("no inici")) return "none";
+            if (end && today > end && progress < 100) return "red";
+            if (st.includes("proceso")) return "yellow";
+            if (start && today >= start && progress < 100) return "yellow";
+            return "none";
+          };
+
+          const aggregatePoaStateTone = (tones) => {
+            const list = Array.isArray(tones) ? tones : [];
+            if (!list.length) return "none";
+            if (list.includes("red")) return "red";
+            if (list.includes("orange")) return "orange";
+            if (list.includes("yellow")) return "yellow";
+            if (list.includes("green")) return "green";
+            return "none";
+          };
+
+          const renderTree = () => {
+            if (!hostEl) return;
+            if (!objectives.length) {
+              hostEl.innerHTML = '<div class="poa-tree-axis"><p class="poa-tree-help">Sin datos para mostrar.</p></div>';
+              return;
+            }
+            const grouped = {};
             objectives.forEach((obj) => {
-              const axisName = String(obj.axis_name || 'Sin eje').trim() || 'Sin eje';
-              if (!groupedByAxis[axisName]) groupedByAxis[axisName] = [];
-              groupedByAxis[axisName].push(obj);
+              const axisName = String(obj.axis_name || "Sin eje").trim() || "Sin eje";
+              if (!grouped[axisName]) grouped[axisName] = [];
+              grouped[axisName].push(obj);
             });
-            const axisNames = Object.keys(groupedByAxis).sort((a, b) => a.localeCompare(b, 'es'));
-            axisColumnsEl.innerHTML = axisNames.map((axisName) => {
-              const items = groupedByAxis[axisName] || [];
-              const cards = items.map((obj) => {
-                const actCount = activities.filter((a) => Number(a.objective_id || 0) === Number(obj.id || 0)).length;
-                const hito = Array.isArray(obj.hitos) && obj.hitos.length ? String(obj.hitos[0].nombre || '') : (obj.hito || 'N/D');
+            const axisNames = Object.keys(grouped).sort((a, b) => a.localeCompare(b, "es"));
+            hostEl.innerHTML = axisNames.map((axisName) => {
+              const axisOpen = !!poaTreeVisibility[`axis:${axisName}`];
+              const objectivesHtml = axisOpen ? (grouped[axisName] || []).map((obj) => {
+                const objId = Number(obj.id || 0);
+                const objOpen = isTreeOpen("obj", objId);
+                const objActs = activities.filter((act) => Number(act.objective_id || 0) === objId);
+                const objectiveTone = aggregatePoaStateTone(
+                  objActs.map((act) => poaStateTone({
+                    status: act?.status,
+                    entregaEstado: act?.entrega_estado,
+                    fechaInicial: act?.fecha_inicial,
+                    fechaFinal: act?.fecha_final,
+                    avance: act?.avance,
+                  }))
+                );
+                const actsHtml = objOpen ? objActs.map((act) => {
+                  const actId = Number(act.id || 0);
+                  const actOpen = isTreeOpen("act", actId);
+                  const actTone = poaStateTone({
+                    status: act?.status,
+                    entregaEstado: act?.entrega_estado,
+                    fechaInicial: act?.fecha_inicial,
+                    fechaFinal: act?.fecha_final,
+                    avance: act?.avance,
+                  });
+                  const subList = Array.isArray(act.subactivities) ? act.subactivities : [];
+                  const subsHtml = actOpen ? subList.map((sub) => `
+                    <div class="poa-tree-item">
+                      <div class="poa-tree-state poa-tree-state-${poaStateTone({
+                        status: sub?.status,
+                        entregaEstado: "",
+                        fechaInicial: sub?.fecha_inicial,
+                        fechaFinal: sub?.fecha_final,
+                        avance: sub?.avance,
+                      })}"></div>
+                      <div class="poa-tree-item-head">
+                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-sub="${Number(sub.id || 0)}" data-tree-sub-parent="${actId}">${escapeHtml(sub.nombre || "Subtarea")}</h6>
+                      </div>
+                    </div>
+                  `).join("") : "";
+                  return `
+                    <div class="poa-tree-item">
+                      <div class="poa-tree-state poa-tree-state-${actTone}"></div>
+                      <div class="poa-tree-item-head">
+                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-activity="${actId}" data-tree-objective="${objId}">${escapeHtml(act.nombre || "Actividad")}</h6>
+                        ${subList.length ? `<button type="button" class="poa-tree-toggle" data-tree-toggle="act" data-tree-id="${actId}">${actOpen ? "Ocultar" : "Mostrar"}</button>` : ""}
+                      </div>
+                      ${subList.length ? `<p class="poa-tree-item-meta">Subactividades: ${subList.length}</p>` : ""}
+                      ${subsHtml ? `<div class="poa-tree-children">${subsHtml}</div>` : ""}
+                    </div>
+                  `;
+                }).join("") : "";
                 return `
-                  <article class="poa-objective-card card bg-base-100 border border-base-300 rounded-2xl shadow-sm p-4" data-poa-objective-id="${Number(obj.id || 0)}">
-                    <div class="text-3xl font-semibold">${esc(obj.codigo || '')} ${esc(obj.nombre || 'Objetivo')}</div>
-                    <div class="text-base-content/70">Hito: ${esc(hito || 'N/D')}</div>
-                    <div class="text-base-content/70">Fecha inicial: ${esc(obj.fecha_inicial || 'N/D')}</div>
-                    <div class="text-base-content/70">Fecha final: ${esc(obj.fecha_final || 'N/D')}</div>
-                    <div class="text-base-content/70">Actividades: ${actCount}</div>
-                    <div class="badge badge-outline mt-2">${esc(obj.codigo || 'sin-codigo')}</div>
-                  </article>
-                `;
-              }).join('');
-              return `
-                <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
-                  <header class="panel__head">
-                    <h3 class="text-2xl font-semibold text-base-content">${esc(axisName)}</h3>
-                  </header>
-                  <div class="grid gap-3">${cards || '<div class="text-base-content/60">Sin objetivos</div>'}</div>
-                </section>
-              `;
-            }).join('');
-            axisColumnsEl.querySelectorAll('.poa-objective-card').forEach((card) => {
-              card.style.cursor = 'pointer';
-              card.addEventListener('click', () => {
-                const objectiveId = Number(card.getAttribute('data-poa-objective-id') || 0);
-                const objective = objectives.find((o) => Number(o.id || 0) === objectiveId);
-                const objectiveActivities = activities.filter((a) => Number(a.objective_id || 0) === objectiveId);
-                openObjectiveModal(objective || {}, objectiveActivities);
-              });
-            });
-            if (userBarsEl) {
-              const byUser = {};
-              activities.forEach((a) => {
-                const user = String(a.responsable || 'Sin responsable').trim() || 'Sin responsable';
-                byUser[user] = (byUser[user] || 0) + 1;
-              });
-              const total = activities.length;
-              if (userTotalEl) userTotalEl.textContent = `Total asignadas: ${total}`;
-              const users = Object.keys(byUser).sort((a, b) => byUser[b] - byUser[a]).slice(0, 8);
-              userBarsEl.innerHTML = users.length ? users.map((u) => {
-                const count = byUser[u];
-                const pct = total ? Math.round((count * 1000) / total) / 10 : 0;
-                return `
-                  <div class="grid grid-cols-[minmax(220px,1fr)_3fr_auto] gap-3 items-center">
-                    <div class="text-xl">${esc(u)}</div>
-                    <progress class="progress progress-success w-full" value="${pct}" max="100"></progress>
-                    <div class="text-xl">${count} (${pct}%)</div>
+                  <div class="poa-tree-item">
+                    <div class="poa-tree-state poa-tree-state-${objectiveTone}"></div>
+                    <div class="poa-tree-item-head">
+                      <h5 class="poa-tree-item-title poa-tree-click" data-tree-objective="${objId}">${escapeHtml(obj.codigo || "xx-yy-zz")} - ${escapeHtml(obj.nombre || "Objetivo")}</h5>
+                      ${objActs.length ? `<button type="button" class="poa-tree-toggle" data-tree-toggle="obj" data-tree-id="${objId}">${objOpen ? "Ocultar" : "Mostrar"}</button>` : ""}
+                    </div>
+                    <p class="poa-tree-item-meta">Actividades: ${objActs.length}</p>
+                    ${actsHtml ? `<div class="poa-tree-children">${actsHtml}</div>` : ""}
                   </div>
                 `;
-              }).join('') : '<div class="text-base-content/60">Sin actividades asignadas.</div>';
-            }
+              }).join("") : "";
+              return `
+                <section class="poa-tree-axis">
+                  <div class="poa-tree-axis-head">
+                    <h4>${escapeHtml(axisName)}</h4>
+                    <button type="button" class="poa-tree-toggle" data-tree-toggle="axis" data-tree-axis="${escapeHtml(axisName)}">${axisOpen ? "Ocultar" : "Mostrar"}</button>
+                  </div>
+                  ${objectivesHtml ? `<div class="poa-tree-objectives">${objectivesHtml}</div>` : ""}
+                </section>
+              `;
+            }).join("");
+
+            hostEl.querySelectorAll("[data-tree-toggle='axis']").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const axisName = String(btn.getAttribute("data-tree-axis") || "");
+                poaTreeVisibility[`axis:${axisName}`] = !poaTreeVisibility[`axis:${axisName}`];
+                renderTree();
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-toggle='obj']").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const id = Number(btn.getAttribute("data-tree-id") || 0);
+                setTreeOpen("obj", id, !isTreeOpen("obj", id));
+                renderTree();
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-toggle='act']").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const id = Number(btn.getAttribute("data-tree-id") || 0);
+                setTreeOpen("act", id, !isTreeOpen("act", id));
+                renderTree();
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-objective]").forEach((node) => {
+              node.addEventListener("click", () => {
+                const objectiveId = Number(node.getAttribute("data-tree-objective") || 0);
+                if (objectiveId) window.location.href = `/poa?objective_id=${objectiveId}`;
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-activity]").forEach((node) => {
+              node.addEventListener("click", () => {
+                const objectiveId = Number(node.getAttribute("data-tree-objective") || 0);
+                const activityId = Number(node.getAttribute("data-tree-activity") || 0);
+                if (objectiveId && activityId) window.location.href = `/poa?objective_id=${objectiveId}&activity_id=${activityId}`;
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-sub]").forEach((node) => {
+              node.addEventListener("click", () => {
+                const subId = Number(node.getAttribute("data-tree-sub") || 0);
+                const parentId = Number(node.getAttribute("data-tree-sub-parent") || 0);
+                if (subId && parentId) window.location.href = `/poa?activity_id=${parentId}&subactivity_id=${subId}`;
+              });
+            });
           };
-          const loadPoaBoard = async () => {
+
+          const loadBoard = async () => {
+            showMsg("Cargando árbol POA...");
             try {
-              const response = await fetch('/api/poa/board-data', { method: 'GET', credentials: 'same-origin' });
+              const response = await fetch("/api/poa/board-data", {
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+              });
               const payload = await response.json().catch(() => ({}));
-              if (!response.ok || payload?.success === false) throw new Error(payload?.error || payload?.detail || 'No se pudo cargar tablero POA.');
-              renderPoaAxisBoard(payload);
+              if (!response.ok || payload?.success === false) throw new Error(payload?.error || "No se pudo cargar árbol POA.");
+              objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
+              activities = Array.isArray(payload.activities) ? payload.activities : [];
+              showMsg("");
+              renderTree();
             } catch (error) {
-              if (axisColumnsEl) axisColumnsEl.innerHTML = `<div class="panel text-error">${esc(error?.message || 'No se pudo cargar tablero POA.')}</div>`;
+              showMsg(error?.message || "No se pudo cargar árbol POA.", true);
             }
           };
-          loadPoaBoard();
+
+          loadBoard();
         })();
       </script>
     """)
     return render_backend_page(
         request,
-        title="POA",
-        description="Pantalla de trabajo POA.",
+        title="Árbol POA",
+        description="Vista separada del árbol de avance POA.",
+        content=base_content,
+        hide_floating_actions=True,
+        show_page_header=False,
+    )
+
+
+@router.get("/poa/gantt", response_class=HTMLResponse)
+def poa_gantt_page(request: Request):
+    _bind_core_symbols()
+    base_content = AXM_EDITOR_STYLE + dedent("""
+      <section class="grid gap-4 w-full max-w-6xl">
+        <style>
+          .poa-gantt-page-card{
+            background:#ffffff;
+            border:1px solid #d8dee8;
+            border-radius:28px;
+            box-shadow:0 16px 36px rgba(15,23,42,.08);
+            padding:22px 24px;
+          }
+          .poa-gantt-page-head{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:14px;
+          }
+          .poa-gantt-page-title{
+            margin:0;
+            font-size:1.55rem;
+            line-height:1.2;
+            font-weight:800;
+            color:#0f172a;
+          }
+          .poa-gantt-page-sub{
+            margin:8px 0 0 0;
+            color:#64748b;
+            font-size:.95rem;
+            line-height:1.45;
+          }
+          .poa-gantt-page-close{
+            width:44px;
+            height:44px;
+            border:none;
+            border-radius:999px;
+            background:#eff4f2;
+            color:#0f172a;
+            font-size:1.8rem;
+            line-height:1;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            text-decoration:none;
+            box-shadow:0 8px 20px rgba(15,23,42,.08);
+          }
+          .poa-gantt-wrap{
+            border:1px solid #d8dee8;
+            border-radius:22px;
+            background:#ffffff;
+            box-shadow:0 10px 24px rgba(15,23,42,.06);
+            padding:18px 20px;
+          }
+          .poa-gantt-legend,
+          .poa-gantt-controls{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:14px;
+            flex-wrap:wrap;
+            margin-bottom:14px;
+          }
+          .poa-gantt-chip{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 12px;
+            border-radius:999px;
+            border:1px solid #d8dee8;
+            background:#f8fafc;
+            color:#334155;
+            font-size:.88rem;
+            font-weight:700;
+          }
+          .poa-gantt-dot{
+            width:10px;
+            height:10px;
+            border-radius:999px;
+            background:#0f3d2e;
+            display:inline-block;
+          }
+          .poa-gantt-chip:nth-child(2) .poa-gantt-dot{ background:#2563eb; }
+          .poa-gantt-chip:nth-child(3) .poa-gantt-dot{ background:#ef4444; }
+          .poa-gantt-actions{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+          }
+          .poa-gantt-action{
+            border:1px solid #cbd5e1;
+            background:#ffffff;
+            color:#0f172a;
+            border-radius:999px;
+            padding:.68rem 1rem;
+            font-weight:700;
+            cursor:pointer;
+          }
+          .poa-gantt-blocks{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+          }
+          .poa-gantt-block{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 12px;
+            border-radius:999px;
+            border:1px solid #d8dee8;
+            background:#f8fafc;
+            color:#334155;
+            font-size:.88rem;
+          }
+          .poa-gantt-host{
+            overflow:auto;
+            border:1px solid #e2e8f0;
+            border-radius:18px;
+            background:#f8fafc;
+            min-height:360px;
+          }
+          #poa-gantt-page-msg{
+            min-height:1.5rem;
+            color:#64748b;
+            font-size:.92rem;
+          }
+        </style>
+        <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+          <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+              src="/templates/icon/plan.svg"
+              alt="Icono POA"
+              width="96"
+              height="96"
+              class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+              <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
+              <div class="block w-full text-base sm:text-lg text-base-content/70">Vista separada del cronograma Gantt para objetivos y actividades del POA.</div>
+            </div>
+          </div>
+        </div>
+        <div class="poa-gantt-page-card">
+          <div class="poa-gantt-page-head">
+            <div>
+              <h2 class="poa-gantt-page-title">Vista Gantt POA</h2>
+            </div>
+            <a href="/poa" class="poa-gantt-page-close" aria-label="Cerrar">×</a>
+          </div>
+          <div id="poa-gantt-page-msg" aria-live="polite"></div>
+          <div class="poa-gantt-wrap">
+            <div class="poa-gantt-legend">
+              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Objetivo estratégico</span>
+              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Actividad POA</span>
+              <span class="poa-gantt-chip"><span class="poa-gantt-dot"></span>Hoy</span>
+            </div>
+            <div class="poa-gantt-controls">
+              <div class="poa-gantt-actions">
+                <button type="button" class="poa-gantt-action" id="poa-gantt-page-show-all">Mostrar bloques</button>
+                <button type="button" class="poa-gantt-action" id="poa-gantt-page-hide-all">Ocultar bloques</button>
+              </div>
+              <div class="poa-gantt-blocks" id="poa-gantt-page-blocks"></div>
+            </div>
+            <div class="poa-gantt-host" id="poa-gantt-page-host"></div>
+          </div>
+        </div>
+      </section>
+      <script>
+        (() => {
+          const hostEl = document.getElementById("poa-gantt-page-host");
+          const blocksEl = document.getElementById("poa-gantt-page-blocks");
+          const showAllBtn = document.getElementById("poa-gantt-page-show-all");
+          const hideAllBtn = document.getElementById("poa-gantt-page-hide-all");
+          const msgEl = document.getElementById("poa-gantt-page-msg");
+          let poaD3Promise = null;
+          let objectives = [];
+          let activities = [];
+          let visibility = {};
+
+          const escapeHtml = (value) => String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+          const loadScript = (src) => new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) return resolve();
+            const script = document.createElement("script");
+            script.src = src;
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+            document.head.appendChild(script);
+          });
+
+          const ensureD3Library = async () => {
+            if (window.d3) return true;
+            if (!poaD3Promise) {
+              poaD3Promise = (async () => {
+                await loadScript("/static/vendor/d3.min.js");
+                return !!window.d3;
+              })().catch(() => false);
+            }
+            return !!(await poaD3Promise);
+          };
+
+          const showMsg = (text, isError = false) => {
+            if (!msgEl) return;
+            msgEl.textContent = text || "";
+            msgEl.style.color = isError ? "#b91c1c" : "#64748b";
+          };
+
+          const axisKey = (objective) => String(objective?.axis_name || "Sin eje").trim() || "Sin eje";
+
+          const syncVisibility = () => {
+            const keys = new Set((Array.isArray(objectives) ? objectives : []).map((obj) => axisKey(obj)));
+            const next = {};
+            Array.from(keys).forEach((key) => {
+              next[key] = Object.prototype.hasOwnProperty.call(visibility, key) ? !!visibility[key] : true;
+            });
+            visibility = next;
+          };
+
+          const renderFilters = () => {
+            if (!blocksEl) return;
+            const list = Array.from(new Set((Array.isArray(objectives) ? objectives : []).map((obj) => axisKey(obj)))).sort((a, b) => a.localeCompare(b, "es"));
+            if (!list.length) {
+              blocksEl.innerHTML = "";
+              return;
+            }
+            syncVisibility();
+            blocksEl.innerHTML = list.map((axisName) => {
+              const checked = visibility[axisName] !== false ? "checked" : "";
+              return `<label class="poa-gantt-block"><input type="checkbox" data-poa-gantt-axis="${escapeHtml(axisName)}" ${checked}><span>${escapeHtml(axisName)}</span></label>`;
+            }).join("");
+            blocksEl.querySelectorAll("input[data-poa-gantt-axis]").forEach((checkbox) => {
+              checkbox.addEventListener("change", async () => {
+                const key = String(checkbox.getAttribute("data-poa-gantt-axis") || "");
+                if (!key) return;
+                visibility[key] = !!checkbox.checked;
+                await renderGantt();
+              });
+            });
+          };
+
+          const renderGantt = async () => {
+            if (!hostEl) return;
+            const ok = await ensureD3Library();
+            if (!ok) {
+              hostEl.innerHTML = "<p>No se pudo cargar la librería para Gantt.</p>";
+              return;
+            }
+            renderFilters();
+            syncVisibility();
+            const activitiesByObj = {};
+            activities.forEach((item) => {
+              const key = Number(item?.objective_id || 0);
+              if (!key) return;
+              if (!activitiesByObj[key]) activitiesByObj[key] = [];
+              activitiesByObj[key].push(item);
+            });
+            const rows = [];
+            objectives.forEach((obj) => {
+              const aKey = axisKey(obj);
+              if (visibility[aKey] === false) return;
+              const objStart = String(obj?.fecha_inicial || "");
+              const objEnd = String(obj?.fecha_final || "");
+              if (objStart && objEnd) {
+                rows.push({
+                  level: 0,
+                  type: "objective",
+                  label: `${obj.codigo || "xx-yy-zz"} · ${obj.nombre || "Objetivo"}`,
+                  start: new Date(`${objStart}T00:00:00`),
+                  end: new Date(`${objEnd}T00:00:00`),
+                });
+              }
+              (activitiesByObj[Number(obj.id || 0)] || []).forEach((act) => {
+                const start = String(act?.fecha_inicial || "");
+                const end = String(act?.fecha_final || "");
+                if (!start || !end) return;
+                rows.push({
+                  level: 1,
+                  type: "activity",
+                  label: `${act.codigo || "ACT"} · ${act.nombre || "Actividad"}`,
+                  start: new Date(`${start}T00:00:00`),
+                  end: new Date(`${end}T00:00:00`),
+                });
+              });
+            });
+            if (!rows.length) {
+              hostEl.innerHTML = "<p>No hay fechas suficientes en objetivos/actividades para generar Gantt.</p>";
+              return;
+            }
+            const minDate = new Date(Math.min(...rows.map((item) => item.start.getTime())));
+            const maxDate = new Date(Math.max(...rows.map((item) => item.end.getTime())));
+            const margin = { top: 44, right: 24, bottom: 30, left: 430 };
+            const rowH = 32;
+            const chartW = Math.max(920, (hostEl.clientWidth || 920) + 260);
+            const width = margin.left + chartW + margin.right;
+            const height = margin.top + (rows.length * rowH) + margin.bottom;
+            hostEl.innerHTML = "";
+            const svg = window.d3.select(hostEl).append("svg")
+              .attr("width", width)
+              .attr("height", height)
+              .style("min-width", `${width}px`)
+              .style("display", "block");
+            const x = window.d3.scaleTime().domain([minDate, maxDate]).range([margin.left, margin.left + chartW]);
+            const y = (idx) => margin.top + (idx * rowH);
+            svg.append("g")
+              .attr("transform", `translate(0, ${margin.top - 10})`)
+              .call(window.d3.axisTop(x).ticks(window.d3.timeMonth.every(1)).tickSize(-rows.length * rowH).tickFormat(window.d3.timeFormat("%b %Y")))
+              .call((g) => g.selectAll("text").attr("fill", "#475569").attr("font-size", 11))
+              .call((g) => g.selectAll("line").attr("stroke", "rgba(148,163,184,.28)"))
+              .call((g) => g.select(".domain").attr("stroke", "rgba(148,163,184,.35)"));
+            rows.forEach((row, idx) => {
+              const yy = y(idx);
+              if (idx % 2 === 0) {
+                svg.append("rect")
+                  .attr("x", margin.left)
+                  .attr("y", yy)
+                  .attr("width", chartW)
+                  .attr("height", rowH)
+                  .attr("fill", "rgba(248,250,252,.70)");
+              }
+              svg.append("text")
+                .attr("x", margin.left - 10 - (row.level ? 16 : 0))
+                .attr("y", yy + (rowH / 2) + 4)
+                .attr("text-anchor", "end")
+                .attr("fill", row.level ? "#334155" : "#0f172a")
+                .attr("font-size", row.level ? 12 : 12.5)
+                .attr("font-style", row.level ? "italic" : "normal")
+                .attr("font-weight", row.level ? 500 : 700)
+                .text(row.label);
+              const startX = x(row.start);
+              const endX = x(row.end);
+              const barW = Math.max(3, endX - startX);
+              svg.append("rect")
+                .attr("x", startX)
+                .attr("y", yy + 7)
+                .attr("width", barW)
+                .attr("height", rowH - 14)
+                .attr("rx", 6)
+                .attr("fill", row.type === "objective" ? "#0f3d2e" : "#2563eb")
+                .attr("opacity", row.type === "objective" ? 0.92 : 0.86);
+            });
+            const today = new Date();
+            if (today >= minDate && today <= maxDate) {
+              const xx = x(today);
+              svg.append("line")
+                .attr("x1", xx).attr("x2", xx)
+                .attr("y1", margin.top - 12).attr("y2", height - margin.bottom + 4)
+                .attr("stroke", "#ef4444")
+                .attr("stroke-width", 1.6)
+                .attr("stroke-dasharray", "4,4");
+            }
+          };
+
+          showAllBtn && showAllBtn.addEventListener("click", async () => {
+            syncVisibility();
+            Object.keys(visibility).forEach((key) => { visibility[key] = true; });
+            renderFilters();
+            await renderGantt();
+          });
+
+          hideAllBtn && hideAllBtn.addEventListener("click", async () => {
+            syncVisibility();
+            Object.keys(visibility).forEach((key) => { visibility[key] = false; });
+            renderFilters();
+            await renderGantt();
+          });
+
+          const loadBoard = async () => {
+            showMsg("Cargando Gantt POA...");
+            try {
+              const response = await fetch("/api/poa/board-data", {
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+              });
+              const payload = await response.json().catch(() => ({}));
+              if (!response.ok || payload?.success === false) throw new Error(payload?.error || "No se pudo cargar Gantt POA.");
+              objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
+              activities = Array.isArray(payload.activities) ? payload.activities : [];
+              showMsg("");
+              await renderGantt();
+            } catch (error) {
+              showMsg(error?.message || "No se pudo cargar Gantt POA.", true);
+            }
+          };
+
+          loadBoard();
+        })();
+      </script>
+    """)
+    return render_backend_page(
+        request,
+        title="Gantt POA",
+        description="Vista separada del cronograma Gantt POA.",
+        content=base_content,
+        hide_floating_actions=True,
+        show_page_header=False,
+    )
+
+
+@router.get("/poa/calendario", response_class=HTMLResponse)
+def poa_calendar_page(request: Request):
+    _bind_core_symbols()
+    base_content = AXM_EDITOR_STYLE + dedent("""
+      <section class="grid gap-4 w-full max-w-6xl">
+        <style>
+          .poa-cal-page-card{
+            background:#ffffff;
+            border:1px solid #d8dee8;
+            border-radius:28px;
+            box-shadow:0 16px 36px rgba(15,23,42,.08);
+            padding:22px 24px;
+          }
+          .poa-cal-page-head{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:14px;
+          }
+          .poa-cal-page-title{
+            margin:0;
+            font-size:1.55rem;
+            line-height:1.2;
+            font-weight:800;
+            color:#0f172a;
+          }
+          .poa-cal-page-close{
+            width:44px;
+            height:44px;
+            border:none;
+            border-radius:999px;
+            background:#eff4f2;
+            color:#0f172a;
+            font-size:1.8rem;
+            line-height:1;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            text-decoration:none;
+            box-shadow:0 8px 20px rgba(15,23,42,.08);
+          }
+          .poa-cal-wrap{
+            border:1px solid #d8dee8;
+            border-radius:22px;
+            background:#ffffff;
+            box-shadow:0 10px 24px rgba(15,23,42,.06);
+            padding:18px 20px;
+          }
+          .poa-cal-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:14px;
+            flex-wrap:wrap;
+            margin-bottom:14px;
+          }
+          .poa-cal-nav{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+          }
+          .poa-cal-nav-btn{
+            border:1px solid #cbd5e1;
+            background:#ffffff;
+            color:#0f172a;
+            border-radius:999px;
+            padding:.68rem 1rem;
+            font-weight:700;
+            cursor:pointer;
+          }
+          .poa-cal-title{
+            margin:0;
+            font-size:1rem;
+            font-weight:800;
+            color:#0f172a;
+          }
+          .poa-cal-grid{
+            display:grid;
+            grid-template-columns:repeat(7, minmax(0, 1fr));
+            gap:10px;
+          }
+          .poa-cal-dow{
+            font-size:.82rem;
+            font-weight:800;
+            text-transform:uppercase;
+            letter-spacing:.08em;
+            color:#64748b;
+            text-align:center;
+            padding-bottom:4px;
+          }
+          .poa-cal-cell{
+            min-height:132px;
+            border:1px solid #d8dee8;
+            border-radius:18px;
+            background:#f8fafc;
+            padding:10px;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+          }
+          .poa-cal-cell.muted{
+            opacity:.45;
+          }
+          .poa-cal-day{
+            font-size:.9rem;
+            font-weight:800;
+            color:#0f172a;
+          }
+          .poa-cal-events{
+            display:grid;
+            gap:6px;
+          }
+          .poa-cal-event{
+            border:none;
+            border-radius:12px;
+            padding:8px 10px;
+            text-align:left;
+            font-size:.8rem;
+            line-height:1.35;
+            cursor:pointer;
+            color:#ffffff;
+          }
+          .poa-cal-event.objective{
+            background:#0f3d2e;
+          }
+          .poa-cal-event.activity{
+            background:#2563eb;
+          }
+          .poa-cal-more{
+            font-size:.78rem;
+            color:#64748b;
+            font-weight:700;
+          }
+          #poa-cal-page-msg{
+            min-height:1.5rem;
+            color:#64748b;
+            font-size:.92rem;
+          }
+          @media (max-width: 980px){
+            .poa-cal-grid{
+              grid-template-columns:repeat(2, minmax(0, 1fr));
+            }
+          }
+        </style>
+        <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+          <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+              src="/templates/icon/plan.svg"
+              alt="Icono POA"
+              width="96"
+              height="96"
+              class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+              <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
+              <div class="block w-full text-base sm:text-lg text-base-content/70">Vista separada del calendario POA para navegar actividades y objetivos por fecha.</div>
+            </div>
+          </div>
+        </div>
+        <div class="poa-cal-page-card">
+          <div class="poa-cal-page-head">
+            <h2 class="poa-cal-page-title">Vista Calendario POA</h2>
+            <a href="/poa" class="poa-cal-page-close" aria-label="Cerrar">×</a>
+          </div>
+          <div id="poa-cal-page-msg" aria-live="polite"></div>
+          <div class="poa-cal-wrap">
+            <div class="poa-cal-head">
+              <div class="poa-cal-nav">
+                <button type="button" class="poa-cal-nav-btn" id="poa-cal-page-prev">◀</button>
+                <button type="button" class="poa-cal-nav-btn" id="poa-cal-page-today">Hoy</button>
+                <button type="button" class="poa-cal-nav-btn" id="poa-cal-page-next">▶</button>
+              </div>
+              <h4 class="poa-cal-title" id="poa-cal-page-month"></h4>
+            </div>
+            <div class="poa-cal-grid" id="poa-cal-page-grid"></div>
+          </div>
+        </div>
+      </section>
+      <script>
+        (() => {
+          const msgEl = document.getElementById("poa-cal-page-msg");
+          const monthEl = document.getElementById("poa-cal-page-month");
+          const gridEl = document.getElementById("poa-cal-page-grid");
+          const prevBtn = document.getElementById("poa-cal-page-prev");
+          const todayBtn = document.getElementById("poa-cal-page-today");
+          const nextBtn = document.getElementById("poa-cal-page-next");
+          let objectives = [];
+          let activities = [];
+          let cursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+          const escapeHtml = (value) => String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+          const showMsg = (text, isError = false) => {
+            if (!msgEl) return;
+            msgEl.textContent = text || "";
+            msgEl.style.color = isError ? "#b91c1c" : "#64748b";
+          };
+
+          const toIsoDate = (date) => {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, "0");
+            const d = String(date.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+          };
+
+          const shiftMonth = (delta) => {
+            cursor = new Date(cursor.getFullYear(), cursor.getMonth() + Number(delta || 0), 1);
+          };
+
+          const buildEvents = () => {
+            const out = [];
+            objectives.forEach((obj) => {
+              const start = String(obj?.fecha_inicial || "");
+              const end = String(obj?.fecha_final || "");
+              if (!start || !end) return;
+              out.push({
+                type: "objective",
+                objectiveId: Number(obj.id || 0),
+                label: `${obj.codigo || "OBJ"} · ${obj.nombre || "Objetivo"}`,
+                start,
+                end,
+              });
+            });
+            activities.forEach((act) => {
+              const start = String(act?.fecha_inicial || "");
+              const end = String(act?.fecha_final || "");
+              if (!start || !end) return;
+              out.push({
+                type: "activity",
+                objectiveId: Number(act.objective_id || 0),
+                activityId: Number(act.id || 0),
+                label: `${act.codigo || "ACT"} · ${act.nombre || "Actividad"}`,
+                start,
+                end,
+              });
+            });
+            return out;
+          };
+
+          const renderCalendar = () => {
+            if (!gridEl || !monthEl) return;
+            const monthStart = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+            const monthEnd = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+            const gridStart = new Date(monthStart);
+            gridStart.setDate(monthStart.getDate() - monthStart.getDay());
+            const gridEnd = new Date(monthEnd);
+            gridEnd.setDate(monthEnd.getDate() + (6 - monthEnd.getDay()));
+            const totalDays = Math.round((gridEnd - gridStart) / 86400000) + 1;
+            const dows = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            const events = buildEvents();
+            monthEl.textContent = monthStart.toLocaleDateString("es-CR", { month: "long", year: "numeric" });
+            let html = dows.map((dow) => `<div class="poa-cal-dow">${dow}</div>`).join("");
+            for (let i = 0; i < totalDays; i += 1) {
+              const day = new Date(gridStart);
+              day.setDate(gridStart.getDate() + i);
+              const dayIso = toIsoDate(day);
+              const inMonth = day >= monthStart && day <= monthEnd;
+              const dayEvents = events.filter((item) => item.start <= dayIso && item.end >= dayIso);
+              const visible = dayEvents.slice(0, 2);
+              const extra = dayEvents.length - visible.length;
+              html += `
+                <div class="poa-cal-cell ${inMonth ? "" : "muted"}" data-cal-day="${dayIso}">
+                  <div class="poa-cal-day">${day.getDate()}</div>
+                  <div class="poa-cal-events">
+                    ${visible.map((event, idx) => `<button type="button" class="poa-cal-event ${event.type}" data-cal-event-day="${dayIso}" data-cal-event-idx="${idx}" title="${escapeHtml(event.label)}">${escapeHtml(event.label)}</button>`).join("")}
+                    ${extra > 0 ? `<div class="poa-cal-more">+${extra} más</div>` : ""}
+                  </div>
+                </div>
+              `;
+            }
+            gridEl.innerHTML = html;
+            gridEl.querySelectorAll("[data-cal-event-day]").forEach((node) => {
+              node.addEventListener("click", () => {
+                const dayIso = String(node.getAttribute("data-cal-event-day") || "");
+                const idx = Number(node.getAttribute("data-cal-event-idx") || -1);
+                const dayEvents = events.filter((item) => item.start <= dayIso && item.end >= dayIso);
+                const event = dayEvents[idx];
+                if (!event) return;
+                if (event.type === "activity" && event.objectiveId && event.activityId) {
+                  window.location.href = `/poa?objective_id=${event.objectiveId}&activity_id=${event.activityId}`;
+                } else if (event.objectiveId) {
+                  window.location.href = `/poa?objective_id=${event.objectiveId}`;
+                }
+              });
+            });
+          };
+
+          prevBtn && prevBtn.addEventListener("click", () => {
+            shiftMonth(-1);
+            renderCalendar();
+          });
+          todayBtn && todayBtn.addEventListener("click", () => {
+            cursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            renderCalendar();
+          });
+          nextBtn && nextBtn.addEventListener("click", () => {
+            shiftMonth(1);
+            renderCalendar();
+          });
+
+          const loadBoard = async () => {
+            showMsg("Cargando calendario POA...");
+            try {
+              const response = await fetch("/api/poa/board-data", {
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+              });
+              const payload = await response.json().catch(() => ({}));
+              if (!response.ok || payload?.success === false) throw new Error(payload?.error || "No se pudo cargar calendario POA.");
+              objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
+              activities = Array.isArray(payload.activities) ? payload.activities : [];
+              showMsg("");
+              renderCalendar();
+            } catch (error) {
+              showMsg(error?.message || "No se pudo cargar calendario POA.", true);
+            }
+          };
+
+          loadBoard();
+        })();
+      </script>
+    """)
+    return render_backend_page(
+        request,
+        title="Calendario POA",
+        description="Vista separada del calendario POA.",
         content=base_content,
         hide_floating_actions=True,
         show_page_header=False,
