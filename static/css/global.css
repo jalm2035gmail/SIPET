@@ -3678,9 +3678,10 @@ html.ui-sidebar-modern .sidebar.is-collapsed ~ .main-content {
     html.ui-sidebar-modern .navbar-hamburger {
         top: 12px;
         left: 20px;
-        width: 66px;
-        height: 66px;
-        padding: 0 14px;
+        width: 33px;
+        height: 33px;
+        padding: 0 7px;
+        border-radius: 8px;
     }
     html.ui-sidebar-modern .sidebar-mobile-close {
         position: absolute;

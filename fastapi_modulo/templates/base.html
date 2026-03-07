@@ -57,10 +57,10 @@
         <button type="button" class="sidebar-mobile-close" id="sidebar-mobile-close" aria-label="Cerrar menú">×</button>
         <div class="sidebar-section-title">Navegacion</div>
         <nav>
-            <a class="sidebar-main-link" href="/web" data-menu-name="Frontend" data-route="/web" target="_blank" rel="noopener">
+            <a class="sidebar-main-link" href="/web" data-menu-name="Web" data-route="/web" target="_blank" rel="noopener">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/web.svg');" aria-hidden="true"></span>
-                    <span class="sidebar-main-label">Frontend</span>
+                    <span class="sidebar-main-label">Web</span>
                 </span>
             </a>
             <a class="sidebar-main-link" href="/mi-tablero" data-menu-name="Mi tablero" data-route="/mi-tablero">
@@ -75,6 +75,14 @@
                     <span class="sidebar-main-label">Conversaciones</span>
                 </span>
             </a>
+            {% if is_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
+            <a class="sidebar-main-link" href="/inicio/departamentos" data-menu-name="Organización" data-route="/inicio/departamentos">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/templates/icon/boton/organigrama.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Organización</span>
+                </span>
+            </a>
+            {% endif %}
             <a class="sidebar-main-link" href="/inicio/intelicoop" data-menu-name="Intelicoop" data-route="/inicio/intelicoop">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/inteligencia.svg');" aria-hidden="true"></span>
@@ -124,14 +132,6 @@
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
                     <span class="sidebar-main-label">BSC</span>
-                </span>
-            </a>
-            {% endif %}
-            {% if is_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
-            <a class="sidebar-main-link" href="/inicio/departamentos" data-menu-name="Organización" data-route="/inicio/departamentos">
-                <span class="sidebar-main-left">
-                    <span class="sidebar-main-icon" style="--icon-src: url('/templates/icon/boton/organigrama.svg');" aria-hidden="true"></span>
-                    <span class="sidebar-main-label">Organización</span>
                 </span>
             </a>
             {% endif %}
