@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import uuid as _uuid
 import shutil
 from datetime import datetime
@@ -339,6 +340,27 @@ def _brand_css_vars() -> str:
         return ""
 
 
+def _resolve_frontend_logo_url() -> str:
+    brand = _load_brand()
+    brand_logo = str(brand.get("logo_url") or "").strip()
+    if brand_logo:
+        return brand_logo
+    return _resolve_identidad_logo_url()
+
+
+def _inject_frontend_logo(html: str) -> str:
+    logo_url = _resolve_frontend_logo_url()
+    if not logo_url or 'data-sipet-logo' not in (html or ''):
+        return html
+    logo_markup = (
+        f'<img src="{_esc(logo_url)}" '
+        'style="height:38px;width:auto;object-fit:contain;display:block;" '
+        'alt="Logo" data-sipet-logo="1">'
+    )
+    pattern = re.compile(r'(<[^>]*data-sipet-logo="1"[^>]*>)(.*?)(</[^>]+>)', re.IGNORECASE | re.DOTALL)
+    return pattern.sub(lambda m: f"{m.group(1)}{logo_markup}{m.group(3)}", html)
+
+
 def _render_page_html(page: dict) -> HTMLResponse:
     title = _esc(page.get("title", ""))
     meta  = page.get("meta") or {}
@@ -348,10 +370,10 @@ def _render_page_html(page: dict) -> HTMLResponse:
     gjs_html = page.get("gjs_html") or ""
     gjs_css  = page.get("gjs_css")  or ""
     if gjs_html:
-        body_content = gjs_html
+        body_content = _inject_frontend_logo(gjs_html)
         extra_style  = f"<style>{gjs_css}</style>" if gjs_css else ""
     else:
-        body_content = _render_blocks(page.get("blocks", []))
+        body_content = _inject_frontend_logo(_render_blocks(page.get("blocks", [])))
         extra_style  = ""
     og_image_tag = f'<meta property="og:image" content="{og_image}">' if og_image else ""
     # Inject form-widget script only when needed
@@ -623,6 +645,7 @@ async def api_brand_save(request: Request):
     brand = _load_brand()
     brand.update({k: v for k, v in body.items() if isinstance(v, str)})
     _save_brand(brand)
+    clear_all_page_cache()
     return {"success": True, "data": brand}
 
 

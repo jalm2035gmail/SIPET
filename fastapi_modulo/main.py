@@ -6497,6 +6497,25 @@ def control_seguimiento_page(request: Request):
     )
 
 
+@app.get("/mi-tablero", response_class=HTMLResponse)
+def mi_tablero_page(request: Request):
+    no_access_content = """
+    <section style="width:100%;min-height:70vh;background:#ffffff;border-radius:16px;padding:24px;box-sizing:border-box;">
+        <div style="min-height:56vh;display:flex;align-items:center;justify-content:center;text-align:center;color:#0f172a;font-size:28px;font-weight:700;padding:16px;">
+            No tiene acceso
+        </div>
+    </section>
+    """
+    return render_backend_page(
+        request,
+        title="Mi tablero",
+        description="",
+        content=no_access_content,
+        hide_floating_actions=True,
+        show_page_header=False,
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def root():
     return RedirectResponse(url="/web", status_code=307)

@@ -61,6 +61,12 @@
                     <span class="sidebar-main-label">Frontend</span>
                 </span>
             </a>
+            <a class="sidebar-main-link" href="/mi-tablero" data-menu-name="Mi tablero" data-route="/mi-tablero">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/templates/icon/tablero.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Mi tablero</span>
+                </span>
+            </a>
             <a class="sidebar-main-link" href="/notificaciones" data-menu-name="Conversaciones" data-route="/notificaciones">
                 <span class="sidebar-main-left">
                     <span class="sidebar-main-icon" style="--icon-src: url('/icon/notificaciones.svg');" aria-hidden="true"></span>
@@ -748,6 +754,39 @@
                 return subLabel ? `${mainLabel}/${subLabel}` : mainLabel;
             };
 
+            const normalizeRoutePath = (value) => {
+                const raw = String(value || '').split('?')[0].split('#')[0].trim();
+                if (!raw) return '/';
+                const normalized = raw.replace(/\/+$/, '');
+                return normalized || '/';
+            };
+
+            const resolveMenuFromCatalogByPath = (path) => {
+                const normalizedPath = normalizeRoutePath(path);
+                let best = null;
+                let bestScore = -1;
+                Object.keys(NAVBAR_SUBMENU_CATALOG).forEach((menuName) => {
+                    const items = Array.isArray(NAVBAR_SUBMENU_CATALOG[menuName]) ? NAVBAR_SUBMENU_CATALOG[menuName] : [];
+                    items.forEach((item) => {
+                        const href = normalizeRoutePath(item && item.href ? item.href : '');
+                        if (!href) return;
+                        const exact = href === normalizedPath;
+                        const prefix = href !== '/' && normalizedPath.startsWith(`${href}/`);
+                        if (!exact && !prefix) return;
+                        const score = href.length + (exact ? 10000 : 0);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            best = {
+                                menuName,
+                                subLabel: String(item && item.label ? item.label : '').trim(),
+                                href: href || '/',
+                            };
+                        }
+                    });
+                });
+                return best;
+            };
+
             const setMenuInfo = (source) => {
                 if (!source) return;
                 const fromSubmenu = source.matches && source.matches('.sidebar-submenu a');
@@ -774,6 +813,13 @@
                 const routeHref = explicitHref && explicitHref !== '#'
                     ? explicitHref
                     : (source.dataset.route || fallbackRoute);
+                const catalogMenu = resolveMenuFromCatalogByPath(routeHref || fallbackRoute);
+                if (catalogMenu) {
+                    mainLabel = catalogMenu.menuName || mainLabel;
+                    if (!subLabel || fromSubmenu || explicitHref) {
+                        subLabel = catalogMenu.subLabel || subLabel;
+                    }
+                }
                 setNavbarMenu(mainLabel || 'BSC', subLabel, routeHref || '/');
             };
 
@@ -783,7 +829,18 @@
                     navbarRoute.textContent = formatRouteLabel(mainLabel || 'BSC', subLabel || '');
                     navbarRoute.href = routeHref || '/';
                 }
+                try {
+                    const key = String(mainLabel || '').trim();
+                    if (key && Array.isArray(NAVBAR_SUBMENU_CATALOG[key])) {
+                        window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, key);
+                    }
+                } catch (e) {}
                 renderActiveSubmenus(mainLabel || '');
+            };
+
+            const hasCatalogRoutePriority = (path) => {
+                const menu = resolveMenuFromCatalogByPath(path);
+                return !!(menu && normalizeRoutePath(menu.href) === normalizeRoutePath(path));
             };
 
             const renderActiveSubmenus = (mainLabel) => {
@@ -810,7 +867,7 @@
                         seen.add(label);
                         const normHref = href.replace(/\/+$/, '') || '/';
                         const isActive = normHref === currentPath || (normHref !== '/' && currentPath.startsWith(normHref + '/'));
-                        return `<a class="navbar-section-link${isActive ? ' is-active' : ''}" href="${href}">${label}</a>`;
+                        return `<a class="navbar-section-link${isActive ? ' is-active' : ''}" href="${href}" data-menu-name="${key}">${label}</a>`;
                     })
                     .filter(Boolean);
                 if (!items.length) { sectionMenu.style.display = 'none'; return; }
@@ -1039,8 +1096,9 @@
                 });
                 const currentPath = window.location.pathname;
                 const inicioLinks = inicioSubmenu.querySelectorAll('a[href]');
+                const skipLegacyInicioMenu = hasCatalogRoutePriority(currentPath) && currentPath !== '/inicio';
                 const shouldOpenInicio = Array.from(inicioLinks).some(link => link.getAttribute('href') === currentPath);
-                if (shouldOpenInicio) {
+                if (!skipLegacyInicioMenu && shouldOpenInicio) {
                     const accordion = inicioBtn.closest('.accordion');
                     accordion && accordion.classList.add('open');
                     inicioSubmenu.style.display = 'flex';
@@ -1049,7 +1107,7 @@
                     if (activeInicioLink) {
                         setMenuInfo(activeInicioLink);
                     }
-                } else if (currentPath === '/inicio') {
+                } else if (!skipLegacyInicioMenu && currentPath === '/inicio') {
                     setMenuInfo(inicioBtn);
                 }
             }
@@ -1148,13 +1206,6 @@
             }
 
             // Eliminado: los links ahora navegan normalmente
-
-            const normalizeRoutePath = (value) => {
-                const raw = String(value || '').split('?')[0].split('#')[0].trim();
-                if (!raw) return '/';
-                const normalized = raw.replace(/\/+$/, '');
-                return normalized || '/';
-            };
             const pickBestRouteMatch = (links, currentPath) => {
                 let best = null;
                 let bestLen = -1;
@@ -1176,30 +1227,6 @@
             const activeSidebarLink = pickBestRouteMatch(sidebarSubmenuLinks, currentSidebarPath);
             const activeSidebarMainLink = pickBestRouteMatch(sidebarMainLinks, currentSidebarPath);
             const activeNavbarOrgLink = pickBestRouteMatch(navbarOrgLinks, currentSidebarPath);
-            const resolveMenuFromCatalogByPath = (path) => {
-                let best = null;
-                let bestScore = -1;
-                Object.keys(NAVBAR_SUBMENU_CATALOG).forEach((menuName) => {
-                    const items = Array.isArray(NAVBAR_SUBMENU_CATALOG[menuName]) ? NAVBAR_SUBMENU_CATALOG[menuName] : [];
-                    items.forEach((item) => {
-                        const href = normalizeRoutePath(item && item.href ? item.href : '');
-                        if (!href) return;
-                        const exact = href === path;
-                        const prefix = href !== '/' && path.startsWith(`${href}/`);
-                        if (!exact && !prefix) return;
-                        const score = href.length + (exact ? 10000 : 0);
-                        if (score > bestScore) {
-                            bestScore = score;
-                            best = {
-                                menuName,
-                                subLabel: String(item && item.label ? item.label : '').trim(),
-                                href: href || '/',
-                            };
-                        }
-                    });
-                });
-                return best;
-            };
             const activeCatalogMenu = resolveMenuFromCatalogByPath(currentSidebarPath);
             if (activeSidebarLink) {
                 const block = activeSidebarLink.closest('.sidebar-block');
@@ -3047,6 +3074,14 @@
                 });
                 document.addEventListener('keydown', (event) => {
                     if (event.key === 'Escape') closeSectionDropdown();
+                });
+                _sectionDropdownEl.addEventListener('click', (event) => {
+                    const link = event.target.closest('a[data-menu-name]');
+                    if (!link) return;
+                    try {
+                        const menuName = String(link.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
                 });
             }
             if (navbarAvatarBtn && userDropdown) {
