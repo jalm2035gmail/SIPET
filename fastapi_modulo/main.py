@@ -2023,6 +2023,23 @@ def _is_dark_color(value: str) -> bool:
     return True
 
 
+def _is_public_frontend_page_path(path: str) -> bool:
+    if not path.startswith("/web/"):
+        return False
+    slug = (path[len("/web/"):] or "").strip().strip("/")
+    if not slug or "/" in slug:
+        return False
+    if slug in {"descripcion", "funcionalidades", "login", "404", "passkey"}:
+        return False
+    try:
+        from fastapi_modulo.modulos.frontend.frontend_store import get_page_by_slug
+
+        page = get_page_by_slug(slug, published_only=True)
+        return bool(page)
+    except Exception:
+        return False
+
+
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
     path = request.url.path
@@ -2057,6 +2074,7 @@ async def enforce_backend_login(request: Request, call_next):
     if (
         request.method == "OPTIONS"
         or path in public_paths
+        or _is_public_frontend_page_path(path)
         or path.startswith("/api/public/")
         or path.startswith("/web/passkey/")
         or path.startswith("/identidad-institucional")
