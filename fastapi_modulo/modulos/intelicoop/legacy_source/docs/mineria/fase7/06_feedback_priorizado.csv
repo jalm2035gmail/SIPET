@@ -1,0 +1,4 @@
+feedback,valor,esfuerzo,prioridad,responsable
+Explicar factores clave en scoring para casos en evaluacion,Alto,Medio,P1,analitica_backend
+Panel rapido de alertas altas por gestor de cobranza,Alto,Bajo,P1,analitica_frontend
+Comparador de segmentos historicos para campanas,Medio,Medio,P2,equipo_comercial_datos

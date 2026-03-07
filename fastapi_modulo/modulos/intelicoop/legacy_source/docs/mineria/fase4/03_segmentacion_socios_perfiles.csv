@@ -1,0 +1,4 @@
+fecha_ejecucion,model_version,segmento,socios,cobertura_pct,saldo_promedio,mov_total_promedio,mov_count_promedio,dias_promedio,creditos_promedio
+2026-02-18,segmentacion_socios_v1,hormiga,1,100.00,400.00,120.00,1.00,0.00,1.00
+2026-02-18,segmentacion_socios_v1,gran_ahorrador,0,0.00,0.00,0.00,0.00,0.00,0.00
+2026-02-18,segmentacion_socios_v1,inactivo,0,0.00,0.00,0.00,0.00,0.00,0.00

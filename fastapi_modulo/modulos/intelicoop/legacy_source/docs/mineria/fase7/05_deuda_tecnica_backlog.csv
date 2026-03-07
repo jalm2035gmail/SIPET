@@ -1,0 +1,4 @@
+item,prioridad,estado,responsable
+Automatizar ejecucion periodica de pruebas con cobertura historica,Alta,Pendiente,equipo_backend
+Definir calendario mensual de actualizacion controlada de dependencias,Media,Pendiente,equipo_plataforma
+Agregar checklist de actualizacion documental por cada cambio de fase,Media,Pendiente,equipo_analitica

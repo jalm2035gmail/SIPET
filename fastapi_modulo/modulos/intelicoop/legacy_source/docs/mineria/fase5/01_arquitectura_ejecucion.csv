@@ -1,0 +1,6 @@
+flujo,tipo_ejecucion,ventana,dependencias,salida
+scoring_originacion,tiempo_real,on-demand,auth -> validacion -> fastapi_scoring -> persistencia_scoring,resultado_scoring + recomendacion
+mora_temprana,batch,diario_02:15,creditos + historial_pagos -> features_mora -> alertas_30_60_90 -> publicacion,resultados_mora_temprana
+segmentacion_socios,batch,mensual_dia_1_02:30,socios + cuentas + transacciones -> features_segmentacion -> segmentacion -> perfiles,resultados_segmentacion_socios + perfiles
+reglas_asociacion,batch,semanal_domingo_03:00,cestas_productos -> reglas_apriori -> filtro_soporte_confianza_lift -> publicacion,reglas_asociacion_productos
+integracion_validacion,batch,diario_04:00,resultados_submodulos -> resumen_integracion -> validacion_funcional_tecnica,reportes_05_06_fase4

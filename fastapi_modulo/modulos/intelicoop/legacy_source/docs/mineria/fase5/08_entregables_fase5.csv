@@ -1,0 +1,5 @@
+entregable,evidencia,estado
+Pipelines automáticos en producción con monitoreo activo,02_orquestacion_pipelines.* + 05_monitoreo_alertamiento.*,Cumplido
+Contratos API versionados y publicados,04_openapi_v1.json + 04_integracion_consumidores.csv,Cumplido
+Tablero operativo de salud técnica y de datos,05_monitoreo_alertamiento.* + alertas_monitoreo,Cumplido
+Manual operativo (runbook) y protocolo de contingencia,07_runbook_operativo.csv + 07_continuidad_recuperacion.csv,Cumplido

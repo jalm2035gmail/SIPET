@@ -1,0 +1,8 @@
+dimension,metrica,valor,umbral,estado
+configuracion,total_muestras,0,>=1,En revision
+ab_test,delta_impacto_vs_baseline,0.00,>=0.00,Cumple
+ab_test,delta_riesgo_alto_vs_baseline_pct,0.00,<=2.00,Cumple
+shadow_mode,delta_impacto_vs_baseline,0.00,>=0.00,Cumple
+shadow_mode,delta_riesgo_alto_vs_baseline_pct,0.00,<=2.00,Cumple
+gobierno,decision,mantener_baseline_sin_muestras,promover_o_rollback,Cumple
+gobierno,rollback_preparado,no,si_hay_desempeno_inferior,Cumple

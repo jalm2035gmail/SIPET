@@ -1,0 +1,6 @@
+area,criterio,valor,umbral,estado
+cobranzas,alertas_accionables_pct,0.00,>=40.00,En revision
+riesgo,scoring_explicable_pct,0.00,>=90.00,En revision
+comercial,segmentacion_interpretable_pct,0.00,>=66.00,En revision
+comercial,reglas_accionables_total,0,>=1,En revision
+comercial,lift_promedio_reglas,0.0000,>=1.0000,En revision

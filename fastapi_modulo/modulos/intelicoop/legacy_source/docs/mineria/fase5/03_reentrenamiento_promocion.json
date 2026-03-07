@@ -1,0 +1,7 @@
+{
+  "promoted_at": "2026-02-18T13:41:39.002627+00:00",
+  "promoted_version": "scoring_mvp_20260218",
+  "source_model": "/Users/jalm/Dropbox/Apps/intelicoop/backend/fastapi_service/app/core/modelo_scoring.pkl",
+  "train_report": "/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase5/03_reentrenamiento_entrenamiento.md",
+  "eval_report": "/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase5/03_reentrenamiento_evaluacion.md"
+}

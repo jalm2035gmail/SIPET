@@ -1,0 +1,4 @@
+rutina,frecuencia,responsable,kpi,estado
+revision_diaria_alertas_mora,diaria,equipo_cobranzas,alertas_altas_gestionadas_pct,Activa
+revision_scoring_originacion,diaria,equipo_riesgo,tiempo_respuesta_scoring,Activa
+revision_oportunidades_comerciales,semanal,equipo_comercial,conversion_campanas_pct,Activa

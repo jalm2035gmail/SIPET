@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-02-18T14:43:51.534795+00:00",
+  "window_7d_samples": 0,
+  "window_30d_samples": 0,
+  "drift_abs_score": 0.0,
+  "approval_rate_pct": 0.0,
+  "high_risk_rate_pct": 0.0,
+  "thresholds": {
+    "approve_if_score_gte": 0.77,
+    "reject_if_score_lt": 0.58
+  },
+  "recalibrated": true,
+  "recalibration_reason": [
+    "aprobacion_baja"
+  ],
+  "retrain_required": false,
+  "retrain_action": "no_disparado"
+}

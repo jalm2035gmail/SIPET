@@ -1,0 +1,5 @@
+kpi,valor,formula,estado
+imor_pct,0.00,cartera_vencida_estimada / cartera_total * 100,Cumple
+mora_temprana_pct,0.00,alertas_media_alta / total_alertas * 100,Cumple
+mora_max_historica_pct,0.00,max(prob_mora_90d) * 100,Cumple
+cobertura_pct,0.00,pagos_90d / cartera_vencida_estimada * 100,En revision

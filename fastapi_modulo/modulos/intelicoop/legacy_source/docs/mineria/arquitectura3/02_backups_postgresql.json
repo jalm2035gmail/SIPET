@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-02-18T17:37:50.042607+00:00",
+  "database": {
+    "alias": "default",
+    "vendor": "sqlite"
+  },
+  "retention_days": 7,
+  "cron_schedule": "15 2 * * *",
+  "summary": {
+    "total_controles": 6,
+    "configurados": 5,
+    "pendientes": 1
+  },
+  "rows": [
+    {
+      "control": "script_backup",
+      "estado": "Configurado",
+      "detalle": "/Users/jalm/Dropbox/Apps/intelicoop/docker/scripts/pg_backup.sh"
+    },
+    {
+      "control": "script_restore_verify",
+      "estado": "Configurado",
+      "detalle": "/Users/jalm/Dropbox/Apps/intelicoop/docker/scripts/pg_restore_verify.sh"
+    },
+    {
+      "control": "motor_db_postgresql",
+      "estado": "Pendiente",
+      "detalle": "db_alias=default;vendor=sqlite"
+    },
+    {
+      "control": "retencion_dias",
+      "estado": "Configurado",
+      "detalle": "7"
+    },
+    {
+      "control": "directorio_backups",
+      "estado": "Configurado",
+      "detalle": "/Users/jalm/Dropbox/Apps/intelicoop/.run/backups/postgres"
+    },
+    {
+      "control": "cron_programado",
+      "estado": "Configurado",
+      "detalle": "15 2 * * *"
+    }
+  ],
+  "artifacts": {
+    "backup_script": "/Users/jalm/Dropbox/Apps/intelicoop/docker/scripts/pg_backup.sh",
+    "verify_script": "/Users/jalm/Dropbox/Apps/intelicoop/docker/scripts/pg_restore_verify.sh",
+    "cron_example": "/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/arquitectura3/02_cron_backup_postgresql.example"
+  }
+}

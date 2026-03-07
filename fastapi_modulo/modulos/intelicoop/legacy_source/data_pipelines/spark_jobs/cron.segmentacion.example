@@ -1,0 +1,2 @@
+# Ejecutar segmentación diaria a las 02:10 AM
+10 2 * * * /Users/jalm/Dropbox/Apps/intelicoop/data_pipelines/spark_jobs/run_segmentacion_diaria.sh

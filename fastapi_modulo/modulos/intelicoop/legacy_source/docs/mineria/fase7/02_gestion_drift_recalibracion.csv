@@ -1,0 +1,8 @@
+dimension,metrica,valor,umbral,estado
+drift,drift_abs_score_7d_vs_30d,0.0000,<=0.1500,Cumple
+calibracion,approval_rate_30d_pct,0.00,20.00-80.00,En revision
+calibracion,high_risk_rate_30d_pct,0.00,<=40.00,Cumple
+calibracion,threshold_approve,0.7700,ajuste_dinamico,Cumple
+calibracion,threshold_reject,0.5800,ajuste_dinamico,Cumple
+reentrenamiento,retrain_required,no,si_hay_drift_o_riesgo_alto,Cumple
+reentrenamiento,retrain_action,no_disparado,dry_run_o_ejecucion,Cumple

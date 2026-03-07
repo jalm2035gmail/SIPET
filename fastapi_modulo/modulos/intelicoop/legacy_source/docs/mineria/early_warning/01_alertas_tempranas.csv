@@ -1,0 +1,2 @@
+tipo_alerta,dimension,entidad_id,valor,umbral,severidad,semaforo,canal_sugerido,detalle
+deterioro_cobertura,cartera,global,0.00,50.00,critical,Rojo,email,Cobertura por debajo del minimo esperado

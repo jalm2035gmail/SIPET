@@ -1,0 +1,6 @@
+dimension,control,valor,umbral,estado
+calidad_codigo,pruebas_unitarias_disponibles,51,>=45,Cumple
+calidad_codigo,comandos_operativos_disponibles,42,>=35,Cumple
+dependencias,dependencias_con_rango_controlado,"9/9 lower, 9/9 upper",100% con >= y <,Cumple
+documentacion,comandos_fase7_documentados,5,>=4,Cumple
+documentacion,evidencias_fase7_presentes,4/4,4/4,Cumple

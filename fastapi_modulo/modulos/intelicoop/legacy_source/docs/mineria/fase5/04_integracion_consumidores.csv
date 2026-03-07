@@ -1,0 +1,7 @@
+consumidor,endpoint,metodo,estado_compatibilidad,notas
+originacion_credito,/api/v1/analitica/ml/scoring/evaluar/,POST,compatible,Preview y persistencia de scoring en flujo de credito.
+cobranzas,/api/v1/analitica/ml/mora-temprana/,GET,compatible,Consulta de alertas historicas para priorizacion de gestion.
+cobranzas,/api/v1/analitica/ml/mora-temprana/evaluar/,POST,compatible,Evaluacion puntual de riesgo de mora por credito.
+dashboard_riesgo,/api/v1/analitica/ml/scoring/resumen/,GET,compatible,KPIs agregados de scoring para monitoreo operativo.
+dashboard_comercial,/api/v1/analitica/ml/segmentacion-socios/perfiles/,GET,compatible,Perfiles descriptivos por segmento para acciones comerciales.
+campanas_cross_sell,/api/v1/analitica/ml/reglas-asociacion/resumen/,GET,compatible,Reglas vigentes priorizadas para cross-sell.

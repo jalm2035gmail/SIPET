@@ -1,0 +1,5 @@
+submodulo,total_registros,model_version,usa_socio
+scoring,0,weighted_score_v1,si
+mora_temprana,1,mora_temprana_v1,si
+segmentacion_socios,1,segmentacion_socios_v1,si
+reglas_asociacion,6,asociacion_productos_v1,no

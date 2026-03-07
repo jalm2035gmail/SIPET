@@ -129,7 +129,9 @@ def _allowed_role_assignments(viewer_role: str) -> set[str]:
     if role == "superadministrdor":
         role = "superadministrador"
     if role == "superadministrador":
-        return {"superadministrador", "administrador", "usuario", "autoridades", "departamento"}
+        return {"superadministrador", "administrador_multiempresa", "administrador", "usuario", "autoridades", "departamento"}
+    if role in {"administrador_multiempresa", "admin_multiempresa"}:
+        return {"administrador", "usuario", "autoridades", "departamento"}
     if role == "administrador":
         return {"administrador", "usuario", "autoridades", "departamento"}
     return set()
@@ -354,7 +356,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
     poa_access_level = _normalize_poa_access_level(data.get("poa_access_level"))
     raw_app_access = data.get("app_access")
     app_access: List[str] = []
-    _VALID_APPS = {'BSC','Organización','Estrategia y táctica','Datos financieros','Control y seguimiento','KPIs','Reportes','Empresa'}
+    _VALID_APPS = {'BSC','Organización','Estrategia y táctica','Datos financieros','Control y seguimiento','KPIs','Reportes','Empresa','Intelicoop','CRM','Auditoria','ActivoFijo','Multiempresa'}
     if isinstance(raw_app_access, list):
         app_access = [str(a).strip() for a in raw_app_access if str(a).strip() in _VALID_APPS]
     raw_web_roles = data.get("web_roles")

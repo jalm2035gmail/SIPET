@@ -1,0 +1,5 @@
+kpi,valor,formula,estado
+tiempo_respuesta_credito_horas,0.00,avg(fecha_scoring - fecha_creacion_credito) en horas,Cumple
+eficiencia_cobranza_pct,0.00,gestiones_con_ratio_pago_90d>=0.60 / gestiones_total * 100,En revision
+recuperacion_por_gestion,0.00,pagos_ult_90d / gestiones_total,En revision
+prioridad_alerta_alta_pct,0.00,alertas_alta / gestiones_total * 100,Cumple

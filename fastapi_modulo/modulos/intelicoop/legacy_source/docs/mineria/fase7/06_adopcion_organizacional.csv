@@ -1,0 +1,10 @@
+dimension,item,detalle,estado
+entrenamiento,interpretacion_scoring,audiencia=riesgo y originacion;duracion_horas=2;objetivo=interpretar score/recomendacion y excepciones,Programado
+entrenamiento,gestion_alertas_mora,audiencia=cobranzas;duracion_horas=2;objetivo=priorizar alertas media/alta y medir recuperacion,Programado
+entrenamiento,segmentacion_y_reglas,audiencia=comercial;duracion_horas=1.5;objetivo=usar segmentos y reglas para campanas,Programado
+rutina_operativa,revision_diaria_alertas_mora,frecuencia=diaria;responsable=equipo_cobranzas;kpi=alertas_altas_gestionadas_pct,Activa
+rutina_operativa,revision_scoring_originacion,frecuencia=diaria;responsable=equipo_riesgo;kpi=tiempo_respuesta_scoring,Activa
+rutina_operativa,revision_oportunidades_comerciales,frecuencia=semanal;responsable=equipo_comercial;kpi=conversion_campanas_pct,Activa
+feedback_priorizado,Explicar factores clave en scoring para casos en evaluacion,valor=Alto;esfuerzo=Medio;prioridad=P1;responsable=analitica_backend,Priorizado
+feedback_priorizado,Panel rapido de alertas altas por gestor de cobranza,valor=Alto;esfuerzo=Bajo;prioridad=P1;responsable=analitica_frontend,Priorizado
+feedback_priorizado,Comparador de segmentos historicos para campanas,valor=Medio;esfuerzo=Medio;prioridad=P2;responsable=equipo_comercial_datos,Priorizado

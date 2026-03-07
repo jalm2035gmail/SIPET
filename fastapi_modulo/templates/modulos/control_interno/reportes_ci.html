@@ -1,0 +1,391 @@
+<!-- ── Reportes de Control Interno — Fase 6 ─────────────────────────── -->
+<section id="rp-root" class="grid gap-5 w-full max-w-6xl">
+
+  <!-- Encabezado -->
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-6">
+      <img src="/templates/icon/plan.svg" alt="Reportes"
+           width="72" height="72"
+           class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+           onerror="this.style.display='none'">
+      <div class="w-full grid gap-1 content-center">
+        <div class="text-3xl sm:text-4xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">
+          Reportes de control interno
+        </div>
+        <div class="text-base text-base-content/70">
+          Generación y exportación de reportes COSO — Fase 6
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de filtros y exportación -->
+  <article class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-5 gap-5">
+      <h3 class="font-bold text-base">Parámetros del reporte</h3>
+
+      <div class="flex flex-wrap gap-4 items-end">
+
+        <!-- Tipo de reporte -->
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Tipo de reporte</span></div>
+          <select id="rp-tipo" class="select select-bordered select-sm w-full">
+            <option value="completo">Informe completo</option>
+            <option value="controles">Catálogo de controles</option>
+            <option value="programa">Programa anual</option>
+            <option value="evidencias">Evidencias</option>
+            <option value="hallazgos">Hallazgos y acciones</option>
+          </select>
+        </label>
+
+        <!-- Año -->
+        <label class="form-control w-28">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Año</span></div>
+          <input type="number" id="rp-anio" min="2020" max="2040"
+                 class="input input-bordered input-sm w-full" placeholder="2026">
+        </label>
+
+        <!-- Componente COSO -->
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Componente COSO</span></div>
+          <select id="rp-coso" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Entorno de control</option>
+            <option>Evaluación de riesgos</option>
+            <option>Actividades de control</option>
+            <option>Información y comunicación</option>
+            <option>Monitoreo</option>
+          </select>
+        </label>
+
+        <!-- Nivel de riesgo -->
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Riesgo hallazgo</span></div>
+          <select id="rp-riesgo" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Bajo</option>
+            <option>Medio</option>
+            <option>Alto</option>
+            <option>Crítico</option>
+          </select>
+        </label>
+
+        <!-- Estado hallazgo -->
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Estado hallazgo</span></div>
+          <select id="rp-estado-hz" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Abierto</option>
+            <option>En atención</option>
+            <option>Subsanado</option>
+            <option>Cerrado</option>
+          </select>
+        </label>
+
+        <!-- Resultado evidencia -->
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Resultado evidencia</span></div>
+          <select id="rp-resultado-ev" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Cumple</option>
+            <option>Cumple parcialmente</option>
+            <option>No cumple</option>
+            <option>Por evaluar</option>
+          </select>
+        </label>
+
+        <!-- Fecha desde -->
+        <label class="form-control w-40">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Desde</span></div>
+          <input type="date" id="rp-fecha-desde" class="input input-bordered input-sm w-full">
+        </label>
+
+        <!-- Fecha hasta -->
+        <label class="form-control w-40">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Hasta</span></div>
+          <input type="date" id="rp-fecha-hasta" class="input input-bordered input-sm w-full">
+        </label>
+
+        <!-- Buscar texto -->
+        <label class="form-control flex-1 min-w-[180px]">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Buscar</span></div>
+          <input type="text" id="rp-q" placeholder="Texto libre…"
+                 class="input input-bordered input-sm w-full">
+        </label>
+
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex flex-wrap gap-3 pt-1">
+        <button type="button" id="rp-btn-previsualizar"
+                class="btn btn-primary btn-sm gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          Previsualizar
+        </button>
+        <button type="button" id="rp-btn-excel"
+                class="btn btn-success btn-sm gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          </svg>
+          Exportar Excel
+        </button>
+        <button type="button" id="rp-btn-html"
+                class="btn btn-outline btn-sm gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+               viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Imprimir / HTML
+        </button>
+        <button type="button" id="rp-btn-limpiar"
+                class="btn btn-ghost btn-sm">
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <!-- Área de previsualización -->
+  <div id="rp-preview" class="hidden grid gap-4">
+    <!-- Controles -->
+    <div id="rp-sec-controles" class="hidden">
+      <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-4 gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-base">Catálogo de controles</h3>
+            <span class="badge badge-neutral text-xs" id="rp-cnt-controles">0</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table table-xs w-full" id="rp-tbl-controles">
+              <thead class="bg-base-200"><tr id="rp-head-controles"></tr></thead>
+              <tbody id="rp-body-controles"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Actividades -->
+    <div id="rp-sec-actividades" class="hidden">
+      <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-4 gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-base">Programa anual — Actividades</h3>
+            <span class="badge badge-neutral text-xs" id="rp-cnt-actividades">0</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table table-xs w-full">
+              <thead class="bg-base-200"><tr id="rp-head-actividades"></tr></thead>
+              <tbody id="rp-body-actividades"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Evidencias -->
+    <div id="rp-sec-evidencias" class="hidden">
+      <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-4 gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-base">Evidencias de control</h3>
+            <span class="badge badge-neutral text-xs" id="rp-cnt-evidencias">0</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table table-xs w-full">
+              <thead class="bg-base-200"><tr id="rp-head-evidencias"></tr></thead>
+              <tbody id="rp-body-evidencias"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Hallazgos -->
+    <div id="rp-sec-hallazgos" class="hidden">
+      <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-4 gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-base">Hallazgos</h3>
+            <span class="badge badge-neutral text-xs" id="rp-cnt-hallazgos">0</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table table-xs w-full">
+              <thead class="bg-base-200"><tr id="rp-head-hallazgos"></tr></thead>
+              <tbody id="rp-body-hallazgos"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Acciones correctivas -->
+    <div id="rp-sec-acciones" class="hidden">
+      <article class="card bg-base-100 border border-base-300 shadow-sm">
+        <div class="card-body p-4 gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-base">Acciones correctivas</h3>
+            <span class="badge badge-neutral text-xs" id="rp-cnt-acciones">0</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table table-xs w-full">
+              <thead class="bg-base-200"><tr id="rp-head-acciones"></tr></thead>
+              <tbody id="rp-body-acciones"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="rp-loading" class="hidden flex items-center justify-center py-10">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+    <span class="ml-3 text-base-content/60">Generando reporte…</span>
+  </div>
+
+  <!-- Vacío -->
+  <div id="rp-empty"
+       class="card bg-base-100 border border-base-300 shadow-sm hidden">
+    <div class="card-body items-center text-center py-12">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-base-content/20 mb-2"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      <p class="text-base-content/50">Selecciona los filtros y haz clic en <strong>Previsualizar</strong> para generar el reporte.</p>
+    </div>
+  </div>
+
+</section>
+
+<script>
+(function () {
+
+const API_DATOS = "/api/ci-reporte/datos";
+const API_EXCEL = "/api/ci-reporte/excel";
+const API_HTML  = "/api/ci-reporte/html";
+
+/* ── helpers ────────────────────────────────────────────────────────────── */
+
+function _qs(id)  { return document.getElementById(id); }
+function _val(id) { return (_qs(id) || {}).value || ""; }
+
+function _params() {
+  const p = new URLSearchParams();
+  const add = (k, id) => { const v = _val(id); if (v) p.set(k, v); };
+  add("tipo",            "rp-tipo");
+  add("anio",            "rp-anio");
+  add("componente_coso", "rp-coso");
+  add("nivel_riesgo",    "rp-riesgo");
+  add("estado_hallazgo", "rp-estado-hz");
+  add("resultado_ev",    "rp-resultado-ev");
+  add("fecha_desde",     "rp-fecha-desde");
+  add("fecha_hasta",     "rp-fecha-hasta");
+  add("q",               "rp-q");
+  return p;
+}
+
+/* ── renderizado de tabla genérica ─────────────────────────────────────── */
+
+function _renderSeccion(secId, headId, bodyId, cntId, filas) {
+  const sec  = _qs(secId);
+  const head = _qs(headId);
+  const body = _qs(bodyId);
+  const cnt  = _qs(cntId);
+  if (!filas || !filas.length) {
+    sec.classList.add("hidden");
+    return;
+  }
+  sec.classList.remove("hidden");
+  cnt.textContent = filas.length;
+  const cols = Object.keys(filas[0]);
+  head.innerHTML = cols.map(c => `<th class="text-xs">${c}</th>`).join("");
+  body.innerHTML = filas.map(row =>
+    `<tr class="hover">${cols.map(c => `<td class="text-xs max-w-xs truncate">${row[c] ?? ""}</td>`).join("")}</tr>`
+  ).join("");
+}
+
+/* ── previsualizar ─────────────────────────────────────────────────────── */
+
+async function previsualizar() {
+  _qs("rp-loading").classList.remove("hidden");
+  _qs("rp-preview").classList.add("hidden");
+  _qs("rp-empty").classList.add("hidden");
+
+  try {
+    const r = await fetch(`${API_DATOS}?${_params()}`);
+    if (!r.ok) throw new Error("Error al obtener datos.");
+    const d = await r.json();
+
+    _renderSeccion("rp-sec-controles",  "rp-head-controles",  "rp-body-controles",  "rp-cnt-controles",  d.controles  || null);
+    _renderSeccion("rp-sec-actividades","rp-head-actividades","rp-body-actividades","rp-cnt-actividades", d.actividades|| null);
+    _renderSeccion("rp-sec-evidencias", "rp-head-evidencias", "rp-body-evidencias", "rp-cnt-evidencias",  d.evidencias || null);
+    _renderSeccion("rp-sec-hallazgos",  "rp-head-hallazgos",  "rp-body-hallazgos",  "rp-cnt-hallazgos",  d.hallazgos  || null);
+    _renderSeccion("rp-sec-acciones",   "rp-head-acciones",   "rp-body-acciones",   "rp-cnt-acciones",   d.acciones   || null);
+
+    const tieneDatos = ["controles","actividades","evidencias","hallazgos","acciones"]
+      .some(k => (d[k] || []).length > 0);
+
+    _qs("rp-preview").classList.remove("hidden");
+    if (!tieneDatos) _qs("rp-empty").classList.remove("hidden");
+  } catch (e) {
+    alert(e.message);
+    _qs("rp-empty").classList.remove("hidden");
+  } finally {
+    _qs("rp-loading").classList.add("hidden");
+  }
+}
+
+/* ── exportar Excel ────────────────────────────────────────────────────── */
+
+function exportarExcel() {
+  window.location.href = `${API_EXCEL}?${_params()}`;
+}
+
+/* ── imprimir HTML ─────────────────────────────────────────────────────── */
+
+function imprimirHTML() {
+  const url = `${API_HTML}?${_params()}`;
+  window.open(url, "_blank");
+}
+
+/* ── limpiar filtros ────────────────────────────────────────────────────── */
+
+function limpiar() {
+  ["rp-tipo","rp-anio","rp-coso","rp-riesgo","rp-estado-hz",
+   "rp-resultado-ev","rp-fecha-desde","rp-fecha-hasta","rp-q"]
+    .forEach(id => {
+      const el = _qs(id);
+      if (!el) return;
+      if (el.tagName === "SELECT" && el.options.length) {
+        el.selectedIndex = 0;
+      } else {
+        el.value = "";
+      }
+    });
+  _qs("rp-preview").classList.add("hidden");
+  _qs("rp-empty").classList.remove("hidden");
+}
+
+/* ── event listeners ────────────────────────────────────────────────────── */
+
+_qs("rp-btn-previsualizar").addEventListener("click", previsualizar);
+_qs("rp-btn-excel").addEventListener("click",         exportarExcel);
+_qs("rp-btn-html").addEventListener("click",          imprimirHTML);
+_qs("rp-btn-limpiar").addEventListener("click",       limpiar);
+
+// mostrar estado inicial
+_qs("rp-empty").classList.remove("hidden");
+
+})();
+</script>

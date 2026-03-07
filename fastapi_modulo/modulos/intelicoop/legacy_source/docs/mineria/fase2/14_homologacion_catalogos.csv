@@ -1,0 +1,6 @@
+catalogo,total_registros,actualizaciones_planeadas,actualizaciones_aplicadas,valores_invalidos,modo
+creditos.estado,0,0,0,0,dry-run
+socios.segmento,0,0,0,0,dry-run
+authentication.userprofile.rol,2,0,0,0,dry-run
+ahorros.cuenta.tipo,0,0,0,0,dry-run
+ahorros.transaccion.tipo,0,0,0,0,dry-run

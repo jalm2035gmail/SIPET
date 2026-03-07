@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-02-18T17:34:43.685899+00:00",
+  "database": {
+    "alias": "default",
+    "vendor": "sqlite"
+  },
+  "summary": {
+    "total": 3,
+    "configurados": 0,
+    "pendientes_o_omitidos": 3
+  },
+  "rows": [
+    {
+      "schema": "raw",
+      "db_alias": "default",
+      "db_vendor": "sqlite",
+      "estado": "Pendiente",
+      "detalle": "requiere_postgresql",
+      "fecha_ejecucion_utc": "2026-02-18T17:34:43.685899+00:00"
+    },
+    {
+      "schema": "clean",
+      "db_alias": "default",
+      "db_vendor": "sqlite",
+      "estado": "Pendiente",
+      "detalle": "requiere_postgresql",
+      "fecha_ejecucion_utc": "2026-02-18T17:34:43.685899+00:00"
+    },
+    {
+      "schema": "analytics",
+      "db_alias": "default",
+      "db_vendor": "sqlite",
+      "estado": "Pendiente",
+      "detalle": "requiere_postgresql",
+      "fecha_ejecucion_utc": "2026-02-18T17:34:43.685899+00:00"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+control,valor,criterio,estado
+socio_id_unico,0,sin_duplicados_pk,Cumple
+credito_socio_fk_consistente,invalidos=0,invalidos=0,Cumple
+sucursal_id_cobertura_socios_pct,0.00,100.00,En revision
+producto_id_cobertura_base,0/3,3/3,En revision

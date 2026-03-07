@@ -1,0 +1,7 @@
+control,estado,detalle
+script_backup,Configurado,/Users/jalm/Dropbox/Apps/intelicoop/docker/scripts/pg_backup.sh
+script_restore_verify,Configurado,/Users/jalm/Dropbox/Apps/intelicoop/docker/scripts/pg_restore_verify.sh
+motor_db_postgresql,Pendiente,db_alias=default;vendor=sqlite
+retencion_dias,Configurado,7
+directorio_backups,Configurado,/Users/jalm/Dropbox/Apps/intelicoop/.run/backups/postgres
+cron_programado,Configurado,15 2 * * *

@@ -1,0 +1,5 @@
+entregable,evidencia,estado
+Tablero permanente de monitoreo tecnico/analitico/negocio,01_monitoreo_continuo_desempeno.*,Cumplido
+Plan de mejora continua con backlog priorizado,05_deuda_tecnica_backlog.csv + 07_roadmap_trimestral.csv,Cumplido
+Evidencia retraining/recalibracion y resultados comparativos,02_recalibracion_umbral_scoring.json + 02_gestion_drift_recalibracion.md + 04_experimentacion_controlada.md,Cumplido
+Reporte ejecutivo periodico de valor generado,08_entregables_fase7.md (resumen ejecutivo),Cumplido

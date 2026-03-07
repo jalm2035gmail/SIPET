@@ -1,0 +1,3 @@
+modelo,brier,acc,auc,params
+benchmark,0.435419,0.153846,0.047619,"{'max_antiguedad': 120.0, 'peso_disponibilidad': 0.7, 'peso_antiguedad': 0.3, 'bias': 0.0}"
+candidate,0.405636,0.288462,0.138393,"{'max_antiguedad': 120.0, 'peso_disponibilidad': 0.55, 'peso_antiguedad': 0.44999999999999996, 'bias': -0.12}"

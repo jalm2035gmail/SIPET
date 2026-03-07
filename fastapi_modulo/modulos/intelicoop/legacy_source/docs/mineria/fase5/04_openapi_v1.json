@@ -1,0 +1,40 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Intellicoop API v1",
+    "version": "v1",
+    "description": "Contrato minimo versionado para consumidores internos."
+  },
+  "paths": {
+    "/api/v1/analitica/ml/scoring/evaluar/": {
+      "post": {
+        "summary": "Evaluar scoring"
+      }
+    },
+    "/api/v1/analitica/ml/mora-temprana/": {
+      "get": {
+        "summary": "Listar alertas mora"
+      }
+    },
+    "/api/v1/analitica/ml/mora-temprana/evaluar/": {
+      "post": {
+        "summary": "Evaluar mora puntual"
+      }
+    },
+    "/api/v1/analitica/ml/scoring/resumen/": {
+      "get": {
+        "summary": "Resumen scoring"
+      }
+    },
+    "/api/v1/analitica/ml/segmentacion-socios/perfiles/": {
+      "get": {
+        "summary": "Perfiles segmentacion"
+      }
+    },
+    "/api/v1/analitica/ml/reglas-asociacion/resumen/": {
+      "get": {
+        "summary": "Resumen reglas asociacion"
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+credito_id,socio_id,fecha_corte,prob_mora_30d,prob_mora_60d,prob_mora_90d,alerta,model_version,fuente
+1,1,2026-02-18,0.2947,0.3467,0.3883,media,mora_temprana_v1,batch

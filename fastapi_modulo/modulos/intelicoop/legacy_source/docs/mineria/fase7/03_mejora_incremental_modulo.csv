@@ -1,0 +1,15 @@
+dimension,criterio,valor,referencia,estado
+features_internas,cobertura_recurrencia_transaccional_pct,0.00,>=60.00,En revision
+fuente_externa,integracion_contexto_economico,stress_index=0.3500,json_contexto_generado,Cumple
+baseline_vigente,avg_score,0.0000,comparativo,Cumple
+baseline_vigente,approval_rate_pct,0.00,comparativo,Cumple
+baseline_vigente,high_risk_rate_pct,0.00,comparativo,Cumple
+baseline_vigente,business_proxy,0.00,maximizar,Cumple
+variante_feature_interna,avg_score,0.0000,comparativo,Cumple
+variante_feature_interna,approval_rate_pct,0.00,comparativo,Cumple
+variante_feature_interna,high_risk_rate_pct,0.00,comparativo,Cumple
+variante_feature_interna,business_proxy,0.00,maximizar,Cumple
+variante_hibrida_fuente_externa,avg_score,0.0000,comparativo,Cumple
+variante_hibrida_fuente_externa,approval_rate_pct,0.00,comparativo,Cumple
+variante_hibrida_fuente_externa,high_risk_rate_pct,0.00,comparativo,Cumple
+variante_hibrida_fuente_externa,business_proxy,0.00,maximizar,Cumple

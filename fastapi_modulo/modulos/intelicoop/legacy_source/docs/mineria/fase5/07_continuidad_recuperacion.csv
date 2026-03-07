@@ -1,0 +1,5 @@
+escenario,deteccion,rollback,rto_objetivo,rpo_objetivo,responsable
+falla_modelo_scoring,error_rate_api > 5% o respuestas invalidas,restaurar backup modelo_scoring.pkl previo,30_min,1_hora,equipo_modelo
+falla_pipeline_batch,estado=error en EjecucionPipeline,reintentar job con run_id nuevo y revisar idempotencia,60_min,24_horas,equipo_datos
+degradacion_db_o_cache,latencia API sostenida o timeout redis/postgres,failover a instancia standby y reinicio controlado de servicios,45_min,15_min,equipo_plataforma
+incidente_seguridad_api,patrones anómalos auth/rate-limit o acceso no autorizado,"rotar credenciales, bloquear tokens y restringir rutas sensibles",30_min,inmediato,seguridad_ti

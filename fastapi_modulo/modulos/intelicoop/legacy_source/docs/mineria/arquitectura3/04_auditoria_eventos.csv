@@ -1,0 +1,6 @@
+control,estado,detalle
+modelo_evento_auditoria,Configurado,apps.analitica.models.EventoAuditoria
+helper_registro_auditoria,Configurado,apps.analitica.auditoria.registrar_evento_auditoria
+auditoria_auth_operaciones_criticas,Configurado,register/profile/users CRUD/2fa
+endpoint_consulta_auditoria,Configurado,/api/auth/audit/events/
+eventos_registrados,Pendiente,0

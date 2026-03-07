@@ -1,0 +1,25 @@
+{
+  "version": "canales_crm_v1",
+  "providers": {
+    "telefono": {
+      "sistema": "crm_callcenter",
+      "canal": "llamada"
+    },
+    "sms": {
+      "sistema": "sms_gateway",
+      "canal": "sms"
+    },
+    "email": {
+      "sistema": "email_gateway",
+      "canal": "email"
+    },
+    "app": {
+      "sistema": "crm_app_push",
+      "canal": "push"
+    }
+  },
+  "default_provider": {
+    "sistema": "crm_default",
+    "canal": "general"
+  }
+}

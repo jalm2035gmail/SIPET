@@ -1,0 +1,6 @@
+control,estado,detalle
+nginx_tls_conf,Configurado,/Users/jalm/Dropbox/Apps/intelicoop/docker/nginx.gateway.tls.conf
+compose_tls_override,Configurado,/Users/jalm/Dropbox/Apps/intelicoop/docker/docker-compose.tls.yml
+cert_fullchain,Pendiente,/Users/jalm/Dropbox/Apps/intelicoop/certs/fullchain.pem
+cert_privkey,Pendiente,/Users/jalm/Dropbox/Apps/intelicoop/certs/privkey.pem
+hsts_header,Configurado,header_hsts_en_nginx_tls_conf

@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-02-18T17:55:03.459190+00:00",
+  "summary": {
+    "total_controles": 5,
+    "configurados": 4,
+    "pendientes": 1,
+    "eventos_totales": 0,
+    "modulos_detectados": []
+  },
+  "rows": [
+    {
+      "control": "modelo_evento_auditoria",
+      "estado": "Configurado",
+      "detalle": "apps.analitica.models.EventoAuditoria"
+    },
+    {
+      "control": "helper_registro_auditoria",
+      "estado": "Configurado",
+      "detalle": "apps.analitica.auditoria.registrar_evento_auditoria"
+    },
+    {
+      "control": "auditoria_auth_operaciones_criticas",
+      "estado": "Configurado",
+      "detalle": "register/profile/users CRUD/2fa"
+    },
+    {
+      "control": "endpoint_consulta_auditoria",
+      "estado": "Configurado",
+      "detalle": "/api/auth/audit/events/"
+    },
+    {
+      "control": "eventos_registrados",
+      "estado": "Pendiente",
+      "detalle": "0"
+    }
+  ]
+}

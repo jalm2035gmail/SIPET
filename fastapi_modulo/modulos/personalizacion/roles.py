@@ -19,7 +19,8 @@ class Rol(Base):
 
 DEFAULT_SYSTEM_ROLES = [
     ("superadministrador", "Acceso total a todo el módulo"),
-    ("administrador", "Acceso a todo menos a Personalización"),
+    ("administrador_multiempresa", "Acceso a todas las empresas del sistema"),
+    ("administrador", "Acceso completo a su empresa"),
     ("autoridades", "Acceso al tablero de control"),
     ("departamento", "Acceso a su departamento"),
     ("usuario", "Acceso solo a sus datos"),
@@ -29,6 +30,10 @@ DEFAULT_SYSTEM_ROLES = [
 ROLE_ALIASES = {
     "super_admin": "superadministrador",
     "superadministrador": "superadministrador",
+    "administrador_multiempresa": "administrador_multiempresa",
+    "admin_multiempresa": "administrador_multiempresa",
+    "multiempresa_admin": "administrador_multiempresa",
+    "administrador_multi": "administrador_multiempresa",
     "admin": "administrador",
     "administrador": "administrador",
     "administador": "administrador",

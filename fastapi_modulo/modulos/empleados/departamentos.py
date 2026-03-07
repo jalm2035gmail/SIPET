@@ -265,7 +265,6 @@ def puestos_laborales_page(request: Request):
         </div>
     </div>
 </div>
-<p style="margin:0 0 8px;font-size:.95rem;font-weight:700;color:var(--color-base-content,#0f172a);">este es el lugar</p>
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3" style="margin:10px 0 14px;">
     <button class="view-pill boton_vista" id="pl-btn-new-short" type="button" data-tooltip="Nuevo" aria-label="Nuevo">
       <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>

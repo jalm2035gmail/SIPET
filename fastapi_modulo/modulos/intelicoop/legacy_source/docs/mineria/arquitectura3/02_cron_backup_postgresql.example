@@ -1,0 +1,3 @@
+# Cron ejemplo - backup diario PostgreSQL (UTC)
+# Ajustar variables de entorno segun servidor.
+15 2 * * * cd /Users/jalm/Dropbox/Apps/intelicoop && POSTGRES_HOST=${POSTGRES_HOST} POSTGRES_PORT=${POSTGRES_PORT} POSTGRES_USER=${POSTGRES_USER} POSTGRES_PASSWORD=${POSTGRES_PASSWORD} POSTGRES_DB=${POSTGRES_DB} BACKUP_DIR=/Users/jalm/Dropbox/Apps/intelicoop/.run/backups/postgres RETENTION_DAYS=7 /Users/jalm/Dropbox/Apps/intelicoop/docker/scripts/pg_backup.sh >> /Users/jalm/Dropbox/Apps/intelicoop/.run/backups/postgres/backup.log 2>&1

@@ -1,0 +1,5 @@
+entregable,evidencia,estado
+Informe de validacion tecnica y funcional firmado,01_validacion_tecnica_modelos.md + 02_validacion_funcional_negocio.md,Cumplido
+Matriz de riesgos de seguridad y plan de mitigacion,04_seguridad_informacion.*,Cumplido
+Evidencia de auditoria de inferencias y versiones de modelos,06_auditoria_trazabilidad_extremo_extremo.* + 06_auditoria_aprobaciones_modelo.csv,Cumplido
+Plan formal de cumplimiento y controles operativos,05_cumplimiento_privacidad.md + 07_gobierno_cambios_modulo.md,Cumplido

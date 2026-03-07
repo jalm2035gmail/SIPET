@@ -1,0 +1,32 @@
+{
+  "version": "segmentacion_1_4_v1",
+  "approved_by": "comite_negocio",
+  "approved_at_utc": "2026-02-18T15:59:37.477990+00:00",
+  "thresholds": {
+    "listos_para_credito": {
+      "min_score_promedio": 0.75,
+      "max_prob_mora_90d": 0.3,
+      "max_variabilidad_ahorro": 0.5,
+      "min_ahorro_total": 300.0
+    },
+    "renovacion_segura": {
+      "min_total_creditos": 1,
+      "min_pagos_180d": 1.0,
+      "max_prob_mora_90d": 0.3
+    },
+    "riesgo_alto": {
+      "min_prob_mora_90d": 0.6,
+      "min_alertas_altas": 1,
+      "min_variabilidad_ahorro": 0.8
+    },
+    "potencial_captacion": {
+      "min_ahorro_total": 1000.0,
+      "max_total_creditos": 0
+    },
+    "jovenes_digitales": {
+      "min_transacciones_180d": 6,
+      "max_monto_promedio_transaccion": 250.0,
+      "max_total_creditos": 1
+    }
+  }
+}

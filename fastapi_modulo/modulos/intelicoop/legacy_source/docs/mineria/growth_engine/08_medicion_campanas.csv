@@ -1,0 +1,5 @@
+campania_id,campania_nombre,lista,contactos,conversiones,tasa_conversion_pct,monto_colocado_total
+1,GE Preaprobados Sucursal,preaprobados,0,0,0.00,0.00
+2,GE Renovacion Segura,renovacion,0,0,0.00,0.00
+3,GE Alerta Baja Ahorro,baja_ahorro,0,0,0.00,0.00
+4,GE Retencion Abandono,abandono,0,0,0.00,0.00

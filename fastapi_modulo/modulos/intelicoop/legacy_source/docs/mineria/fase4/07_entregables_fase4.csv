@@ -1,0 +1,5 @@
+entregable,evidencia,estado
+Modelo de mora temprana en operacion con alertas historicas,resultados_mora_temprana + 02_mora_temprana_alertas.*,Condicionado
+Segmentacion mensual de socios con perfiles descriptivos,resultados_segmentacion_socios + 03_segmentacion_socios_perfiles.*,Condicionado
+Repositorio de reglas de asociacion priorizadas,reglas_asociacion_productos + 04_reglas_asociacion_productos.*,Condicionado
+Informe de impacto inicial por submodulo (riesgo y comercial),05_integracion_submodulos.* + 06_validacion_funcional_tecnica.*,Cumplido

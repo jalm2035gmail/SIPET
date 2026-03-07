@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-02-18T15:27:47.816363+00:00",
+  "summary": {
+    "total": 5,
+    "configurados": 0,
+    "pendientes": 5
+  },
+  "connectors": [
+    {
+      "conector": "postgresql",
+      "tipo": "database",
+      "estado": "Pendiente",
+      "detalle": "configurar POSTGRES_HOST y POSTGRES_DB"
+    },
+    {
+      "conector": "mysql",
+      "tipo": "database",
+      "estado": "Pendiente",
+      "detalle": "configurar MYSQL_HOST y MYSQL_DB"
+    },
+    {
+      "conector": "api_rest",
+      "tipo": "api",
+      "estado": "Pendiente",
+      "detalle": "configurar EXTERNAL_API_BASE_URL"
+    },
+    {
+      "conector": "sftp",
+      "tipo": "file_transfer",
+      "estado": "Pendiente",
+      "detalle": "configurar SFTP_HOST y SFTP_USER"
+    },
+    {
+      "conector": "archivos",
+      "tipo": "file",
+      "estado": "Pendiente",
+      "detalle": "input_dir=/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/incoming"
+    }
+  ]
+}

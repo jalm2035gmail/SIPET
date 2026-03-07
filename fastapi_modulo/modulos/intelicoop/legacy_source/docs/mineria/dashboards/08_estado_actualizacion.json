@@ -1,0 +1,10 @@
+{
+  "modulo": "dashboards_1_8",
+  "estado": "ok",
+  "fuente_ejecucion": "uat",
+  "ultima_actualizacion_utc": "2026-02-18T17:02:38.129554+00:00",
+  "inicio_utc": "2026-02-18T17:02:38.084277+00:00",
+  "duracion_ms": 45,
+  "frecuencia_sugerida": "cada 60 minutos",
+  "siguiente_paso": "Programar en cron: 0 * * * * <python> manage.py actualizar_dashboards_programado_1_8"
+}

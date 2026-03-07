@@ -1,0 +1,5 @@
+proceso,frecuencia,accion,responsable,escalamiento
+salud_api_scoring,cada_5_min,verificar /api/health y /api/v1/analitica/ml/scoring/resumen/,equipo_plataforma,oncall_plataforma_15min
+ejecucion_batch_diaria,diario_02:15_04:00,ejecutar orquestar_pipelines_fase5 y validar estado en EjecucionPipeline,equipo_datos,oncall_datos_30min
+monitoreo_alertas,diario_05:00,ejecutar monitorear_alertamiento_fase5 y clasificar alertas activas,equipo_modelo,comite_riesgo_2h
+reentrenamiento_programado,semanal,ejecutar automatizar_reentrenamiento_fase5 y revisar promocion,equipo_modelo,arquitectura_datos_24h

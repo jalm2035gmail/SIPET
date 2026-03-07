@@ -1,0 +1,8 @@
+control,resultado,detalle,severidad
+JWT habilitado en DRF,Cumple,DEFAULT_AUTHENTICATION_CLASSES configurado,Alta
+Roles definidos (auditor/jefe/admin/superadmin),Cumple,roles_detectados=4,Alta
+Perfiles activos,Cumple,"activos=2, total=2",Media
+2FA disponible y usuarios con 2FA,Cumple,usuarios_2fa=0,Media
+Cache configurado para soporte 2FA/OTP,Cumple,django.core.cache.backends.locmem.LocMemCache,Media
+Superadministrador semilla existente,Cumple,superadmins=1,Alta
+Logging de aplicacion configurado,Cumple,log_level=INFO,Media

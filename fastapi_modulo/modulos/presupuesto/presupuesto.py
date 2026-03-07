@@ -171,6 +171,26 @@ def _control_mensual_rows_html(df: pd.DataFrame) -> str:
     return "".join(rows)
 
 
+def _presupuesto_table_rows_html(df: pd.DataFrame) -> str:
+    rows = []
+    for row in df.itertuples(index=False):
+        cod = escape(str(getattr(row, "cod", "") or ""))
+        tipo = escape(str(getattr(row, "tipo", "") or ""))
+        rubro = escape(str(getattr(row, "rubro", "") or ""))
+        monto = escape(str(getattr(row, "monto", "") or "0"))
+        mensual = escape(str(getattr(row, "mensual", "") or "0"))
+        rows.append(
+            "<tr>"
+            f'<td class="cod-col" style="display:none;">{cod}</td>'
+            f'<td class="tipo-col" style="display:none;">{tipo}</td>'
+            f'<td class="rubro-col">{rubro}</td>'
+            f'<td class="tabla-oficial-num"><input class="tabla-oficial-input presupuesto-num-input num" type="text" value="{monto}" inputmode="numeric"></td>'
+            f'<td class="tabla-oficial-num presupuesto-mensual">{mensual}</td>'
+            "</tr>"
+        )
+    return "".join(rows)
+
+
 def _build_presupuesto_csv_response() -> Response:
     df = _load_presupuesto_dataframe()
     rubros = [
@@ -611,31 +631,17 @@ async def guardar_control_mensual(data: dict = Body(default={})):
 @router.get("/presupuesto", response_class=HTMLResponse)
 def proyectando_presupuesto_page(request: Request):
     """Página de proyección de presupuesto con shell oficial."""
-    content = dedent("""
-    <section class="grid gap-4 w-full max-w-6xl">
-      <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
-        <div class="w-full flex flex-col md:flex-row items-center gap-10">
-          <img
-            src="/icon/proyectando.svg"
-            alt="Icono datos financieros"
-            width="96"
-            height="96"
-            class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
-          />
-          <div class="w-full grid gap-2 content-center">
-            <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Presupuesto</div>
-            <div class="block w-full text-base sm:text-lg text-base-content/70">Control y planeación presupuestaria en modo base DaisyUI.</div>
-          </div>
-        </div>
-      </div>
-      <article class="card bg-base-100 border border-base-300 shadow-sm">
-        <div class="card-body">
-          <h2 class="card-title">Módulo en transición DaisyUI</h2>
-          <p class="text-base-content/70">Se removió temporalmente el CSS personalizado de esta pantalla para mantener solo estilos Daisy.</p>
-        </div>
-      </article>
-    </section>
-    """)
+    df = _load_presupuesto_dataframe()
+    presupuesto_table_rows = _presupuesto_table_rows_html(df)
+    control_mensual_header_top, control_mensual_header_bottom = _control_mensual_header_html()
+    control_mensual_rows = _control_mensual_rows_html(df)
+    template = request.app.state.templates.env.get_template("modulos/presupuesto/presupuesto.html")
+    content = template.render(
+        presupuesto_table_rows=presupuesto_table_rows,
+        control_mensual_header_top=control_mensual_header_top,
+        control_mensual_header_bottom=control_mensual_header_bottom,
+        control_mensual_rows=control_mensual_rows,
+    )
 
     return request.app.state.templates.TemplateResponse(
         "base.html",

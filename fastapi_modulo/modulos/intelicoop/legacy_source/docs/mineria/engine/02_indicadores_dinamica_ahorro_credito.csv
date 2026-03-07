@@ -1,0 +1,5 @@
+kpi,valor,formula,estado
+rotacion_creditos_180d,0.00,creditos_ult_180d / socios_con_credito,En revision
+frecuencia_renovacion_pct,0.00,socios_con_2omas_creditos / socios_con_credito * 100,En revision
+relacion_ahorro_credito_pct,0.00,ahorro_total / cartera_total * 100,En revision
+estabilidad_ahorro_pct,0.00,(1 - coef_variacion_saldos) * 100,En revision

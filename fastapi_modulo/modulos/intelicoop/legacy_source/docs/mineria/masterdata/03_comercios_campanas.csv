@@ -1,0 +1,4 @@
+tipo,comercio_id,comercio_nombre,categoria,canal,campania_id,campania_nombre,campania_tipo,campania_estado
+catalogo_comercio,COM-001,Farmacia Cooperativa,salud,sucursal,,,,
+catalogo_comercio,COM-002,Agroinsumos Aliados,agro,territorial,,,,
+catalogo_comercio,COM-003,Electro Hogar Local,retail,digital,,,,

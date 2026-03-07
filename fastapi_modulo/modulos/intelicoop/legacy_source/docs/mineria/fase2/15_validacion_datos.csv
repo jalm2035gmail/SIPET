@@ -1,0 +1,13 @@
+tabla,regla,violaciones,severidad,estado
+socios,nombre no vacio,0,Alta,Cumple
+socios,email no vacio,0,Alta,Cumple
+creditos,monto > 0,0,Alta,Cumple
+creditos,plazo > 0,0,Alta,Cumple
+creditos,ingreso_mensual > 0,0,Alta,Cumple
+creditos,deuda_actual >= 0,0,Alta,Cumple
+creditos,deuda_actual <= ingreso_mensual,0,Media,Cumple
+creditos,antiguedad_meses >= 0,0,Media,Cumple
+historial_pagos,monto > 0,0,Alta,Cumple
+historial_pagos,fecha <= hoy,0,Baja,Cumple
+cuentas,saldo >= 0,0,Media,Cumple
+transacciones,monto > 0,0,Alta,Cumple

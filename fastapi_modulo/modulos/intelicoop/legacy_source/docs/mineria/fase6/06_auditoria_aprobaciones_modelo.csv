@@ -1,0 +1,4 @@
+fecha,modelo,version,decision,estado,aprobador,fuente
+2026-02-18T14:31:45.496605+00:00,scoring_mvp,weighted_score_v1,mantener_modelo_desplegado,Aprobado,comite_tecnico_funcional,/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase3/04_evaluacion_seleccion_modelo.md
+2026-02-18T14:31:45.497107+00:00,scoring_reentrenado,candidato_vigente,mantener_modelo_desplegado,Aprobado,riesgo_y_analitica,/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase5/03_reentrenamiento_evaluacion.md
+2026-02-18T13:41:39.002627+00:00,scoring_mvp,scoring_mvp_20260218,promover_version,Aprobado,mlops,/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase5/03_reentrenamiento_promocion.json

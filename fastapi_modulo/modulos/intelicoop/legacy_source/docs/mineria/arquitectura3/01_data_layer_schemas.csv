@@ -1,0 +1,4 @@
+schema,db_alias,db_vendor,estado,detalle,fecha_ejecucion_utc
+raw,default,sqlite,Pendiente,requiere_postgresql,2026-02-18T17:34:43.685899+00:00
+clean,default,sqlite,Pendiente,requiere_postgresql,2026-02-18T17:34:43.685899+00:00
+analytics,default,sqlite,Pendiente,requiere_postgresql,2026-02-18T17:34:43.685899+00:00

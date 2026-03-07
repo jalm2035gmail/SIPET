@@ -1,0 +1,4 @@
+orden_prioridad,submodulo,impacto_negocio,disponibilidad_datos,score_prioridad,objetivo_primario,alcance_mvp
+1,mora_temprana,0.9500,0.0000,0.5700,Riesgo y cobranzas,alertas 30/60/90 con clasificacion bajo/medio/alto por credito
+2,segmentacion_socios,0.7800,0.0000,0.4680,Comercial y retencion,segmentacion mensual y perfil descriptivo por socio
+3,reglas_asociacion,0.7200,0.0000,0.4320,Cross-sell y campanas,top reglas soporte/confianza/lift para oportunidades comerciales

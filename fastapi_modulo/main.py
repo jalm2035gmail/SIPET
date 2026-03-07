@@ -42,10 +42,22 @@ from fastapi_modulo.modulos.proyectando.crecimiento_general import router as pro
 from fastapi_modulo.modulos.proyectando.sucursales import router as proyectando_sucursales_router
 from fastapi_modulo.modulos.proyectando.no_acceso import router as proyectando_no_acceso_router
 from fastapi_modulo.modulos.planificacion.ejes_poa import router as ejes_poa_router
+from fastapi_modulo.modulos.control_interno.control import router as control_interno_router
+from fastapi_modulo.modulos.control_interno.programa import router as ci_programa_router
+from fastapi_modulo.modulos.control_interno.evidencia import router as ci_evidencia_router
+from fastapi_modulo.modulos.control_interno.hallazgos import router as ci_hallazgos_router
+from fastapi_modulo.modulos.control_interno.tablero import router as ci_tablero_router
+from fastapi_modulo.modulos.control_interno.reportes_ci import router as ci_reportes_router
 from fastapi_modulo.modulos.plantillas.plantillas_forms import router as plantillas_forms_router
 from fastapi_modulo.modulos.diagnostico.diagnostico import router as diagnostico_router
 from fastapi_modulo.modulos.kpis.kpis import router as kpis_router
 from fastapi_modulo.modulos.frontend.frontend import router as frontend_router
+from fastapi_modulo.modulos.intelicoop.intelicoop import router as intelicoop_router
+from fastapi_modulo.modulos.crm.crm import router as crm_router
+from fastapi_modulo.modulos.auditoria.auditoria import router as auditoria_router
+from fastapi_modulo.modulos.activo_fijo.activo_fijo import router as activo_fijo_router
+from fastapi_modulo.modulos.multiempresa.multiempresa import router as multiempresa_router
+from fastapi_modulo.modulos.brujula.brujuia import router as brujula_router
 from fastapi_modulo.ajustes_ia import router as ajustes_ia_router
 from fastapi_modulo.modulos.ia_router import ia_router
 from fastapi import Response, Form, Body
@@ -270,6 +282,8 @@ def normalize_role_name(role_name: Optional[str]) -> str:
         return "usuario"
     if normalized in {"superadmin", "super_admin", "super_administrador", "superadministrador", "superadministrdor"}:
         return "superadministrador"
+    if normalized in {"administrador_multiempresa", "admin_multiempresa", "multiempresa_admin", "administrador_multi"}:
+        return "administrador_multiempresa"
     if normalized in {"admin", "administrador", "administador", "administrdor", "admnistrador"}:
         return "administrador"
     return ROLE_ALIASES.get(normalized, normalized)
@@ -379,8 +393,12 @@ def is_admin(request: Request) -> bool:
     return get_current_role(request) == "administrador"
 
 
+def is_multiempresa_admin(request: Request) -> bool:
+    return get_current_role(request) == "administrador_multiempresa"
+
+
 def is_admin_or_superadmin(request: Request) -> bool:
-    return is_superadmin(request) or is_admin(request)
+    return is_superadmin(request) or is_multiempresa_admin(request) or is_admin(request)
 
 
 def require_superadmin(request: Request) -> None:
@@ -1890,8 +1908,20 @@ app.include_router(proyectando_crecimiento_general_router)
 app.include_router(proyectando_sucursales_router)
 app.include_router(proyectando_no_acceso_router)
 app.include_router(ejes_poa_router)
+app.include_router(control_interno_router)
+app.include_router(ci_programa_router)
+app.include_router(ci_evidencia_router)
+app.include_router(ci_hallazgos_router)
+app.include_router(ci_tablero_router)
+app.include_router(ci_reportes_router)
 app.include_router(plantillas_forms_router)
 app.include_router(diagnostico_router)
+app.include_router(intelicoop_router)
+app.include_router(crm_router)
+app.include_router(auditoria_router)
+app.include_router(activo_fijo_router)
+app.include_router(multiempresa_router)
+app.include_router(brujula_router)
 
 app.include_router(reportes_router)
 app.include_router(ajustes_ia_router)
@@ -6920,6 +6950,49 @@ def _render_identidad_institucional_page(request: Request) -> HTMLResponse:
                         <input type="file" id="fondo_movil" name="fondo_movil" accept="image/*">
                     </div>
                     {saved_message}
+                    <section class="id-card id-card--pad" style="margin-bottom:14px;">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <h2 style="margin:0;font-size:18px;">Estilo visual del sistema</h2>
+                                <p style="margin:6px 0 0;color:var(--muted);font-size:13px;">Elige entre estilo original o estilo moderno para sidebar y contenedor principal.</p>
+                            </div>
+                            <label class="label cursor-pointer gap-3">
+                                <span id="identity-sidebar-style-label" class="font-semibold text-sm" style="color:#0f3d2e;">Original</span>
+                                <input id="identity-sidebar-style-switch" type="checkbox" class="toggle toggle-success">
+                            </label>
+                        </div>
+                    </section>
+                    <script>
+                        (function () {{
+                            var apply = function (variant) {{
+                                var modern = variant === 'modern';
+                                document.documentElement.classList.toggle('ui-sidebar-modern', modern);
+                                var sw = document.getElementById('identity-sidebar-style-switch');
+                                var label = document.getElementById('identity-sidebar-style-label');
+                                if (sw) sw.checked = modern;
+                                if (label) label.textContent = modern ? 'Moderno' : 'Original';
+                            }};
+                            var bind = function () {{
+                                var sw = document.getElementById('identity-sidebar-style-switch');
+                                if (!sw) return;
+                                try {{
+                                    apply(window.localStorage.getItem('sipet_sidebar_style_variant') || 'original');
+                                }} catch (e) {{
+                                    apply('original');
+                                }}
+                                sw.addEventListener('change', function () {{
+                                    var variant = sw.checked ? 'modern' : 'original';
+                                    apply(variant);
+                                    try {{ window.localStorage.setItem('sipet_sidebar_style_variant', variant); }} catch (e) {{}}
+                                }});
+                            }};
+                            if (document.readyState === 'loading') {{
+                                document.addEventListener('DOMContentLoaded', bind);
+                            }} else {{
+                                bind();
+                            }}
+                        }})();
+                    </script>
                     <section class="id-stats">
                         <article class="id-stat">
                             <div class="id-stat__k">Nombre corto</div>

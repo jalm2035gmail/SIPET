@@ -1,0 +1,6 @@
+fuente,raw_path,standardized_path,raw_records,standardized_records,estado,actor,dataset_version,fecha_ejecucion_utc
+socios,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/raw/socios.jsonl,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/standardized/socios.jsonl,0,0,Sin datos,sistema_ingesta,intake_v1,2026-02-18T15:30:57.025570+00:00
+creditos,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/raw/creditos.jsonl,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/standardized/creditos.jsonl,0,0,Sin datos,sistema_ingesta,intake_v1,2026-02-18T15:30:57.025570+00:00
+captacion,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/raw/captacion.jsonl,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/standardized/captacion.jsonl,0,0,Sin datos,sistema_ingesta,intake_v1,2026-02-18T15:30:57.025570+00:00
+cobranza,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/raw/cobranza.jsonl,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/standardized/cobranza.jsonl,0,0,Sin datos,sistema_ingesta,intake_v1,2026-02-18T15:30:57.025570+00:00
+contabilidad,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/raw/contabilidad.jsonl,/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/standardized/contabilidad.jsonl,0,0,Sin datos,sistema_ingesta,intake_v1,2026-02-18T15:30:57.025570+00:00

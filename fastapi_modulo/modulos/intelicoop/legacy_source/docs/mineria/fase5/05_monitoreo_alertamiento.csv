@@ -1,0 +1,9 @@
+ambito,metrica,valor,umbral,estado,escalamiento
+tecnico,availability_pct,100.0000,>=95.0,cumple,equipo_plataforma
+tecnico,error_rate_pct,0.0000,<=5.0,cumple,equipo_plataforma
+tecnico,avg_duration_ms,22.5000,observacional,cumple,equipo_plataforma
+datos,freshness_mora_h,9999.0000,<=48.0,alerta,equipo_datos
+datos,freshness_segmentacion_h,9999.0000,<=48.0,alerta,equipo_datos
+datos,freshness_reglas_h,9999.0000,<=48.0,alerta,equipo_datos
+datos,cobertura_segmentacion_pct,0.0000,>=60.0,alerta,equipo_comercial
+modelo,drift_score_promedio,0.0000,<=0.15,cumple,equipo_modelo

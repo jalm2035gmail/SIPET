@@ -27,6 +27,16 @@
     <script>
         window.__sipet_server_colors = {{ colores | default({}, true) | tojson }};
     </script>
+    <script>
+        (function() {
+            try {
+                var variant = window.localStorage.getItem('sipet_sidebar_style_variant');
+                if (variant !== 'original') {
+                    document.documentElement.classList.add('ui-sidebar-modern');
+                }
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body>
     <script>
@@ -43,16 +53,7 @@
     {% set current_role = (request.state.user_role | default(request.cookies.get('user_role', ''), true) | lower | trim) %}
     {% set is_admin_or_superadmin_effective = is_admin_or_superadmin_user if is_admin_or_superadmin_user is defined else (current_role in ['superadministrador', 'superadmin', 'administrador', 'admin']) %}
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-user">
-                <img
-                    id="sidebar-user-img"
-                    src="{{ login_logo_url | default('/templates/icon/usuario.png', true) }}"
-                    data-default="{{ login_logo_url | default('/templates/icon/usuario.png', true) }}"
-                    alt="Usuario"
-                />
-            </div>
-        </div>
+        <div class="sidebar-section-title">Navegacion</div>
         <nav>
             <a class="sidebar-main-link" href="/web" data-menu-name="Frontend" data-route="/web" target="_blank" rel="noopener">
                 <span class="sidebar-main-left">
@@ -66,12 +67,64 @@
                     <span class="sidebar-main-label">Conversaciones</span>
                 </span>
             </a>
-            <a class="sidebar-main-link" href="/inteli-coop" data-menu-name="Inteli-coop" data-route="/inteli-coop" target="_blank" rel="noopener">
+            <a class="sidebar-main-link" href="/inicio/intelicoop" data-menu-name="Intelicoop" data-route="/inicio/intelicoop">
                 <span class="sidebar-main-left">
-                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/ia.svg');" aria-hidden="true"></span>
-                    <span class="sidebar-main-label">Inteli-coop</span>
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/inteligencia.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Intelicoop</span>
                 </span>
             </a>
+            <details class="sidebar-block">
+                <summary data-menu-name="BRUJULA" data-route="/brujula">
+                    <span class="sidebar-main-left">
+                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/brujula.svg');" aria-hidden="true"></span>
+                        <span class="sidebar-main-label">Brújula</span>
+                    </span>
+                </summary>
+                <div class="sidebar-submenu">
+                    <a href="/inicio" data-menu-name="BRUJULA" data-route="/inicio">Dashboard = BSC</a>
+                    <a href="/brujula/solidez-financiera" data-menu-name="BRUJULA" data-route="/brujula/solidez-financiera">Solidez Financiera</a>
+                    <a href="/brujula/liquidez" data-menu-name="BRUJULA" data-route="/brujula/liquidez">Liquidez</a>
+                    <a href="/brujula/rentabilidad" data-menu-name="BRUJULA" data-route="/brujula/rentabilidad">Rentabilidad</a>
+                    <a href="/brujula/crecimiento" data-menu-name="BRUJULA" data-route="/brujula/crecimiento">Crecimiento</a>
+                    <a href="/brujula/liderazgo" data-menu-name="BRUJULA" data-route="/brujula/liderazgo">Liderazgo</a>
+                    <a href="/brujula/productividad" data-menu-name="BRUJULA" data-route="/brujula/productividad">Productividad</a>
+                    <a href="/brujula/balance-social" data-menu-name="BRUJULA" data-route="/brujula/balance-social">Balance Social</a>
+                    <a href="/brujula/reportes" data-menu-name="BRUJULA" data-route="/brujula/reportes">Reportes</a>
+                    <a href="/brujula/configuracion" data-menu-name="BRUJULA" data-route="/brujula/configuracion">Configuración</a>
+                </div>
+            </details>
+            {% if is_admin_or_superadmin_effective or 'CRM' in (user_app_access | default([])) %}
+            <a class="sidebar-main-link" href="/crm" data-menu-name="CRM" data-route="/crm">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/crm.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">CRM</span>
+                </span>
+            </a>
+            {% endif %}
+            {% if is_admin_or_superadmin_effective or 'Auditoria' in (user_app_access | default([])) %}
+            <a class="sidebar-main-link" href="/auditoria" data-menu-name="Auditoría" data-route="/auditoria">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/auditoria.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Auditoría</span>
+                </span>
+            </a>
+            {% endif %}
+            {% if is_admin_or_superadmin_effective or 'ActivoFijo' in (user_app_access | default([])) %}
+            <a class="sidebar-main-link" href="/activo-fijo" data-menu-name="Gestión de Activo Fijo" data-route="/activo-fijo">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/boton/activo_fijo.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Gestión de Activo Fijo</span>
+                </span>
+            </a>
+            {% endif %}
+            {% if is_admin_or_superadmin_effective or 'Multiempresa' in (user_app_access | default([])) %}
+            <a class="sidebar-main-link" href="/multiempresa" data-menu-name="Multiempresa" data-route="/multiempresa">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/ia.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Multiempresa</span>
+                </span>
+            </a>
+            {% endif %}
             {% if is_admin_or_superadmin_effective or 'BSC' in (user_app_access | default([])) %}
             <a class="sidebar-main-link" href="/inicio" data-menu-name="BSC" data-route="/inicio">
                 <span class="sidebar-main-left">
@@ -81,165 +134,68 @@
             </a>
             {% endif %}
             {% if is_admin_or_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
-            <details class="sidebar-block" open>
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/templates/icon/boton/organigrama.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Organización</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a class="sidebar-submenu-heading" href="/inicio/departamentos">Áreas</a>
-                    <a class="sidebar-submenu-heading" href="/inicio/regiones">Regiones</a>
-                    <a class="sidebar-submenu-heading" href="/inicio/sucursales">Sucursales</a>
-                    <a class="sidebar-submenu-heading" href="/inicio/colaboradores">Colaboradores</a>
-                    <a class="sidebar-submenu-heading" href="/inicio/colaboradores/habilidades">Habilidades</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/inicio/departamentos" data-menu-name="Organización" data-route="/inicio/departamentos">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/templates/icon/boton/organigrama.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Organización</span>
+                </span>
+            </a>
             {% endif %}
             {% if is_admin_or_superadmin_effective or 'Estrategia y táctica' in (user_app_access | default([])) %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/plan.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Estrategia y táctica</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <details class="sidebar-submenu-group">
-                        <summary>Diagnóstico</summary>
-                        <div class="sidebar-submenu-level3">
-                            <a href="/diagnostico/foda">FODA</a>
-                            <a href="/diagnostico/pestel">PESTEL</a>
-                            <a href="/diagnostico/porter">PORTER</a>
-                            <a href="/diagnostico/percepcion-cliente">Percepción del cliente</a>
-                        </div>
-                    </details>
-                    <a class="sidebar-submenu-heading" href="/planes">Plan estratégico</a>
-                    <a class="sidebar-submenu-heading" href="/poa">POA</a>
-                    <a class="sidebar-submenu-heading" href="/planes">Tablero de control</a>
-                    {% if current_role in ['superadministrador', 'superadmin'] %}
-                    <a href="/estrategia-tactica/base-ia">Base IA estrategia</a>
-                    {% endif %}
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/planes" data-menu-name="Estrategia y táctica" data-route="/planes">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/plan.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Estrategia y táctica</span>
+                </span>
+            </a>
             {% endif %}
             {% if is_admin_or_superadmin_effective or 'Datos financieros' in (user_app_access | default([])) %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/proyectando.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Datos financieros</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a class="sidebar-submenu-heading" href="/proyectando">Tablero de control</a>
-                    <details class="sidebar-submenu-group">
-                        <summary>Proyectando</summary>
-                        <div class="sidebar-submenu-level3">
-                            <a href="/proyectando/datos-preliminares">1. Preliminares</a>
-                            <a href="/proyectando/crecimiento-general">2. Crecimiento general</a>
-                            <a href="/proyectando/activo-fijo">3. Activo fijo</a>
-                            <a href="/proyectando/otras-cuentas-activo">4. Otras cuentas de activo</a>
-                            <a href="/proyectando/cartera-prestamos">5. Cartera de préstamos</a>
-                            <a href="/proyectando/recursos-liquidos">6. Liquidez</a>
-                            <a href="/proyectando/pasivos">7. Pasivos</a>
-                            <a href="/proyectando/gastos">8. Gastos</a>
-                            <a href="/proyectando/tasa-referencia">9. Tasa de referencia</a>
-                        </div>
-                    </details>
-                    <a class="sidebar-submenu-heading" href="/proyectando/presupuesto">Presupuesto</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/proyectando" data-menu-name="Datos financieros" data-route="/proyectando">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/proyectando.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Datos financieros</span>
+                </span>
+            </a>
             {% endif %}
             {% if is_admin_or_superadmin_effective or 'Control y seguimiento' in (user_app_access | default([])) %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Control y segumiento</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a class="sidebar-submenu-heading" href="/control-seguimiento">Control y segumiento</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/control-seguimiento" data-menu-name="Control y seguimiento" data-route="/control-seguimiento">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/inicio.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Control y segumiento</span>
+                </span>
+            </a>
             {% endif %}
             {% if is_admin_or_superadmin_effective or 'KPIs' in (user_app_access | default([])) %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/kpi.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">KPI's</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a class="sidebar-submenu-heading" href="/kpis">KPI's</a>
-                    <a class="sidebar-submenu-heading" href="/ia/predictivo">Análisis Predictivo</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/kpis" data-menu-name="KPI's" data-route="/kpis">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/kpi.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">KPI's</span>
+                </span>
+            </a>
             {% endif %}
             {% if is_admin_or_superadmin_effective or 'Reportes' in (user_app_access | default([])) %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/reporte.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Reportes</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a class="sidebar-submenu-heading" href="/reportes">Resumen</a>
-                    <a class="sidebar-submenu-heading" href="/reportes/documentos">Documentos</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/reportes" data-menu-name="Reportes" data-route="/reportes">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/reporte.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Reportes</span>
+                </span>
+            </a>
             {% endif %}
             {% if is_admin_or_superadmin_effective or 'Empresa' in (user_app_access | default([])) %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/empresa.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Empresa</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a class="sidebar-submenu-heading" href="/identidad-institucional">Identidad institucional</a>
-                    <a class="sidebar-submenu-heading" href="/empresa/base-datos">Base de datos</a>
-                    <a href="/plantillas">Plantillas</a>
-                    <a class="sidebar-submenu-heading" href="/plantillas/constructor">Constructor de formularios</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/identidad-institucional" data-menu-name="Empresa" data-route="/identidad-institucional">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/empresa.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Empresa</span>
+                </span>
+            </a>
             {% endif %}
             {% if current_role in ['superadministrador', 'superadmin'] %}
-            <details class="sidebar-block">
-                <summary>
-                    <span class="sidebar-main-left">
-                        <span class="sidebar-main-icon" style="--icon-src: url('/icon/settings.svg');" aria-hidden="true"></span>
-                        <span class="sidebar-main-label">Ajustes</span>
-                    </span>
-                    <span class="sidebar-main-caret">▾</span>
-                </summary>
-                <div class="sidebar-submenu">
-                    <a class="sidebar-submenu-heading" href="/ajustes/configuracion">Configuración</a>
-                    <a class="sidebar-submenu-heading" href="/ajustes/ia" style="display:inline-flex;align-items:center;gap:8px;">
-                        <img src="/templates/icon/ia.svg" alt="" aria-hidden="true" style="width:15px;height:15px;object-fit:contain;">
-                        IA
-                    </a>
-                    <a class="sidebar-submenu-heading" href="/ia/predictivo" style="display:inline-flex;align-items:center;gap:8px;">
-                        <img src="/templates/icon/ia.svg" alt="" aria-hidden="true" style="width:15px;height:15px;object-fit:contain;">
-                        Análisis Predictivo
-                    </a>
-                    <a class="sidebar-submenu-heading" href="/personalizar">Colores</a>
-                    <a href="/roles-permisos">Roles</a>
-                    <a class="sidebar-submenu-heading" href="/membresia">Membresía</a>
-                </div>
-            </details>
+            <a class="sidebar-main-link" href="/ajustes/configuracion" data-menu-name="Ajustes" data-route="/ajustes/configuracion">
+                <span class="sidebar-main-left">
+                    <span class="sidebar-main-icon" style="--icon-src: url('/icon/settings.svg');" aria-hidden="true"></span>
+                    <span class="sidebar-main-label">Ajustes</span>
+                </span>
+            </a>
             {% endif %}
         </nav>
         <div class="sidebar-notifications-panel" id="sidebar-notifications-panel" aria-hidden="true">
@@ -268,6 +224,16 @@
                 <div class="navbar-title">
                     <span class="navbar-menu-name">{{ page_title or title or "BSC" }}</span>
                     <a class="navbar-route" href="{{ request.url.path | default('/inicio') }}">{{ request.url.path | default('/inicio') }}</a>
+                </div>
+                <div class="navbar-section-menu" id="navbar-section-menu" style="display:none;">
+                    <button class="navbar-section-btn" id="navbar-section-btn" type="button"
+                            aria-haspopup="true" aria-expanded="false" aria-label="Menú de sección">
+                        <span class="navbar-section-btn-label" id="navbar-section-btn-label"></span>
+                        <span class="navbar-section-caret" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                    </button>
+                    <div class="navbar-section-dropdown" id="navbar-section-dropdown" role="menu"></div>
                 </div>
             </div>
             <div class="navbar-user-menu">
@@ -346,14 +312,48 @@
             const sidebarSummaryItems = document.querySelectorAll('.sidebar-block > summary');
             const sidebarSubmenuLinks = document.querySelectorAll('.sidebar-submenu a');
             const sidebarMainLinks = document.querySelectorAll('.sidebar-main-link');
+            const navbarOrgLinks = document.querySelectorAll('.navbar-org-dropdown a');
+            const navbarOrgSummaries = document.querySelectorAll('.navbar-org-menu > summary');
             const navbarMenuName = document.querySelector('.navbar-menu-name');
             const navbarRoute = document.querySelector('.navbar-route');
+            const navbarActiveSubmenus = null; /* replaced by navbar-section-menu dropdown */
             const floatingActions = document.querySelector('.floating-actions');
             const floatingGroups = document.querySelectorAll('.floating-actions-group');
             const floatingToggle = document.getElementById('floating-toggle');
             const floatingActionsWrapper = document.querySelector('.floating-actions-wrapper');
             const usuarioPanel = document.getElementById('usuario-panel');
             const identityForm = document.getElementById('identity-form');
+            const identitySidebarStyleSwitch = document.getElementById('identity-sidebar-style-switch');
+            const identitySidebarStyleLabel = document.getElementById('identity-sidebar-style-label');
+            const applySidebarStyleVariant = (variant) => {
+                const modern = variant === 'modern';
+                document.documentElement.classList.toggle('ui-sidebar-modern', modern);
+                if (identitySidebarStyleSwitch) {
+                    identitySidebarStyleSwitch.checked = modern;
+                }
+                if (identitySidebarStyleLabel) {
+                    identitySidebarStyleLabel.textContent = modern ? 'Moderno' : 'Original';
+                }
+            };
+            try {
+                applySidebarStyleVariant(window.localStorage.getItem('sipet_sidebar_style_variant') || 'modern');
+            } catch (e) {
+                applySidebarStyleVariant('modern');
+            }
+            if (identitySidebarStyleSwitch) {
+                identitySidebarStyleSwitch.addEventListener('change', () => {
+                    const variant = identitySidebarStyleSwitch.checked ? 'modern' : 'original';
+                    applySidebarStyleVariant(variant);
+                    requestAnimationFrame(() => {
+                        if (typeof setSidebarState === 'function') {
+                            setSidebarState(isSidebarOpen);
+                        }
+                    });
+                    try {
+                        window.localStorage.setItem('sipet_sidebar_style_variant', variant);
+                    } catch (e) {}
+                });
+            }
             const actionSavePersonal = document.getElementById('action-save-personal');
             const actionResetPersonal = document.getElementById('action-reset-personal');
             const actionCreateUser = document.getElementById('action-create-user');
@@ -379,6 +379,93 @@
             const logoutLink = document.getElementById('logout-link');
             const sidebarUserImg = document.getElementById('sidebar-user-img');
             const USER_LOGO_CACHE_KEY = 'sipet_logo_usuario_url';
+            const ACTIVE_MAIN_MENU_KEY = 'sipet_active_main_menu_name';
+            const NAVBAR_SUBMENU_CATALOG = {
+                "Organización": [
+                    { href: "/inicio/departamentos", label: "Áreas" },
+                    { href: "/inicio/regiones", label: "Regiones" },
+                    { href: "/inicio/sucursales", label: "Sucursales" },
+                    { href: "/inicio/colaboradores", label: "Colaboradores" },
+                    { href: "/inicio/colaboradores/habilidades", label: "Habilidades" },
+                ],
+                "Estrategia y táctica": [
+                    { href: "/diagnostico/foda", label: "FODA" },
+                    { href: "/diagnostico/pestel", label: "PESTEL" },
+                    { href: "/diagnostico/porter", label: "PORTER" },
+                    { href: "/diagnostico/percepcion-cliente", label: "Percepción del cliente" },
+                    { href: "/planes", label: "Plan estratégico" },
+                    { href: "/poa", label: "POA" },
+                    { href: "/planes", label: "Tablero de control" },
+                    {% if current_role in ['superadministrador', 'superadmin'] %}
+                    { href: "/estrategia-tactica/base-ia", label: "Base IA estrategia" },
+                    {% endif %}
+                ],
+                "Datos financieros": [
+                    { href: "/proyectando", label: "Tablero de control" },
+                    { href: "/proyectando/datos-preliminares", label: "1. Preliminares" },
+                    { href: "/proyectando/crecimiento-general", label: "2. Crecimiento general" },
+                    { href: "/proyectando/activo-fijo", label: "3. Activo fijo" },
+                    { href: "/proyectando/otras-cuentas-activo", label: "4. Otras cuentas de activo" },
+                    { href: "/proyectando/cartera-prestamos", label: "5. Cartera de préstamos" },
+                    { href: "/proyectando/recursos-liquidos", label: "6. Liquidez" },
+                    { href: "/proyectando/pasivos", label: "7. Pasivos" },
+                    { href: "/proyectando/gastos", label: "8. Gastos" },
+                    { href: "/proyectando/tasa-referencia", label: "9. Tasa de referencia" },
+                    { href: "/proyectando/presupuesto", label: "Presupuesto" },
+                ],
+                "KPI's": [
+                    { href: "/kpis", label: "KPI's" },
+                    { href: "/ia/predictivo", label: "Análisis Predictivo" },
+                ],
+                "Reportes": [
+                    { href: "/reportes", label: "Resumen" },
+                    { href: "/reportes/documentos", label: "Documentos" },
+                ],
+                "Empresa": [
+                    { href: "/identidad-institucional", label: "Identidad institucional" },
+                    { href: "/empresa/base-datos", label: "Base de datos" },
+                    { href: "/plantillas", label: "Plantillas" },
+                    { href: "/plantillas/constructor", label: "Constructor de formularios" },
+                ],
+                "Control y seguimiento": [
+                    { href: "/control-seguimiento", label: "Control y seguimiento" },
+                    { href: "/control-interno", label: "Control interno (COSO): Catálogo de controles" },
+                    { href: "/control-interno/programa-anual", label: "Control interno (COSO): Programa anual" },
+                    { href: "/control-interno/evidencias", label: "Control interno (COSO): Evidencias" },
+                    { href: "/control-interno/hallazgos", label: "Control interno (COSO): Hallazgos" },
+                    { href: "/control-interno/tablero", label: "Control interno (COSO): Tablero de KPIs" },
+                    { href: "/control-interno/reportes", label: "Control interno (COSO): Reportes" },
+                ],
+                "BRUJULA": [
+                    { href: "/inicio", label: "Dashboard = BSC" },
+                    { href: "/brujula/solidez-financiera", label: "Solidez Financiera" },
+                    { href: "/brujula/liquidez", label: "Liquidez" },
+                    { href: "/brujula/rentabilidad", label: "Rentabilidad" },
+                    { href: "/brujula/crecimiento", label: "Crecimiento" },
+                    { href: "/brujula/liderazgo", label: "Liderazgo" },
+                    { href: "/brujula/productividad", label: "Productividad" },
+                    { href: "/brujula/balance-social", label: "Balance Social" },
+                    { href: "/brujula/reportes", label: "Reportes" },
+                    { href: "/brujula/configuracion", label: "Configuración" },
+                ],
+                "Control y segumiento": [
+                    { href: "/control-seguimiento", label: "Control y seguimiento" },
+                    { href: "/control-interno", label: "Control interno (COSO): Catálogo de controles" },
+                    { href: "/control-interno/programa-anual", label: "Control interno (COSO): Programa anual" },
+                    { href: "/control-interno/evidencias", label: "Control interno (COSO): Evidencias" },
+                    { href: "/control-interno/hallazgos", label: "Control interno (COSO): Hallazgos" },
+                    { href: "/control-interno/tablero", label: "Control interno (COSO): Tablero de KPIs" },
+                    { href: "/control-interno/reportes", label: "Control interno (COSO): Reportes" },
+                ],
+                "Ajustes": [
+                    { href: "/ajustes/configuracion", label: "Configuración" },
+                    { href: "/ajustes/ia", label: "IA" },
+                    { href: "/ia/predictivo", label: "Análisis Predictivo" },
+                    { href: "/personalizar", label: "Colores" },
+                    { href: "/roles-permisos", label: "Roles" },
+                    { href: "/membresia", label: "Membresía" },
+                ],
+            };
             const CURRENT_USERNAME = String({{ (request.state.user_name | default('', true) | tojson) | safe }} || '').trim().toLowerCase();
             let hasUserAvatarFromColaborador = false;
             try {
@@ -643,8 +730,8 @@
             };
             refreshUsuarioFloating();
 
-            const collapsedWidth = '72px';
-            const expandedWidth = '220px';
+            const collapsedWidth = '0px';
+            const expandedWidth = '88px';
             let isSidebarOpen = true;
 
             const slugify = (value) => {
@@ -668,6 +755,8 @@
 
                 let mainLabel = source.dataset.menuName || source.textContent.trim();
                 let subLabel = '';
+                const directSubLabel = (source.dataset.submenuName || '').trim();
+                if (directSubLabel) subLabel = directSubLabel;
 
                 if (fromSubmenu) {
                     const parentSummary = source.closest('.sidebar-block')?.querySelector('.sidebar-main-label');
@@ -685,10 +774,51 @@
                 const routeHref = explicitHref && explicitHref !== '#'
                     ? explicitHref
                     : (source.dataset.route || fallbackRoute);
+                setNavbarMenu(mainLabel || 'BSC', subLabel, routeHref || '/');
+            };
 
-                navbarMenuName.textContent = mainLabel || 'BSC';
-                navbarRoute.textContent = formatRouteLabel(mainLabel || 'BSC', subLabel);
-                navbarRoute.href = routeHref || '/';
+            const setNavbarMenu = (mainLabel, subLabel = '', routeHref = '/') => {
+                if (navbarMenuName) navbarMenuName.textContent = mainLabel || 'BSC';
+                if (navbarRoute) {
+                    navbarRoute.textContent = formatRouteLabel(mainLabel || 'BSC', subLabel || '');
+                    navbarRoute.href = routeHref || '/';
+                }
+                renderActiveSubmenus(mainLabel || '');
+            };
+
+            const renderActiveSubmenus = (mainLabel) => {
+                const sectionMenu = document.getElementById('navbar-section-menu');
+                const sectionBtn = document.getElementById('navbar-section-btn');
+                const sectionBtnLabel = document.getElementById('navbar-section-btn-label');
+                const sectionDropdown = document.getElementById('navbar-section-dropdown');
+                if (!sectionMenu) return;
+                const key = String(mainLabel || '').trim();
+                const links = Array.isArray(NAVBAR_SUBMENU_CATALOG[key]) ? NAVBAR_SUBMENU_CATALOG[key] : [];
+                if (!links.length) {
+                    sectionMenu.style.display = 'none';
+                    if (sectionDropdown) { sectionDropdown.innerHTML = ''; sectionDropdown.classList.remove('open'); }
+                    if (sectionBtn) sectionBtn.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+                const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+                const seen = new Set();
+                const items = links
+                    .map((item) => {
+                        const label = String(item?.label || '').trim();
+                        const href = String(item?.href || '').trim();
+                        if (!label || !href || seen.has(label)) return '';
+                        seen.add(label);
+                        const normHref = href.replace(/\/+$/, '') || '/';
+                        const isActive = normHref === currentPath || (normHref !== '/' && currentPath.startsWith(normHref + '/'));
+                        return `<a class="navbar-section-link${isActive ? ' is-active' : ''}" href="${href}">${label}</a>`;
+                    })
+                    .filter(Boolean);
+                if (!items.length) { sectionMenu.style.display = 'none'; return; }
+                if (sectionDropdown) { sectionDropdown.innerHTML = items.join(''); sectionDropdown.classList.remove('open'); }
+                if (sectionBtnLabel) sectionBtnLabel.textContent = key;
+                if (sectionBtn) sectionBtn.setAttribute('aria-expanded', 'false');
+                sectionMenu.style.display = 'flex';
+                sectionMenu.style.alignItems = 'center';
             };
 
             const updateRouteVisibility = () => {
@@ -700,18 +830,12 @@
             const setSidebarState = (open) => {
                 const width = open ? expandedWidth : collapsedWidth;
                 const isMobile = window.matchMedia('(max-width: 900px)').matches;
+                const modernSidebar = document.documentElement.classList.contains('ui-sidebar-modern');
                 sidebarElem.classList.toggle('is-collapsed', !open);
-                if (isMobile) {
-                    navbar.style.marginLeft = '0';
-                    navbar.style.width = '100%';
-                    mainContent.style.marginLeft = '0';
-                    mainContent.style.width = '100%';
-                } else {
-                    navbar.style.marginLeft = width;
-                    navbar.style.width = open ? `calc(100vw - ${expandedWidth})` : `calc(100vw - ${collapsedWidth})`;
-                    mainContent.style.marginLeft = width;
-                    mainContent.style.width = open ? `calc(100vw - ${expandedWidth})` : `calc(100vw - ${collapsedWidth})`;
-                }
+                navbar.style.marginLeft = '0';
+                navbar.style.width = '100%';
+                mainContent.style.marginLeft = modernSidebar && open && !isMobile ? '420px' : '0';
+                mainContent.style.width = modernSidebar && open && !isMobile ? 'calc(100% - 420px)' : '100%';
                 if (!open) {
                     sidebarBlocks.forEach((item) => {
                         item.removeAttribute('open');
@@ -778,12 +902,34 @@
             sidebarMainLinks.forEach((link) => {
                 link.addEventListener('click', () => {
                     setMenuInfo(link);
+                    try {
+                        const menuName = String(link.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
                     if (!isSidebarOpen) {
                         sidebarBlocks.forEach((item) => {
                             item.removeAttribute('open');
                             item.classList.remove('is-flyout-open');
                         });
                     }
+                });
+            });
+            navbarOrgLinks.forEach((link) => {
+                link.addEventListener('click', () => {
+                    setMenuInfo(link);
+                    try {
+                        const menuName = String(link.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
+                });
+            });
+            navbarOrgSummaries.forEach((summary) => {
+                summary.addEventListener('click', () => {
+                    setMenuInfo(summary);
+                    try {
+                        const menuName = String(summary.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
                 });
             });
             document.addEventListener('click', (event) => {
@@ -1009,21 +1155,60 @@
                 const normalized = raw.replace(/\/+$/, '');
                 return normalized || '/';
             };
+            const pickBestRouteMatch = (links, currentPath) => {
+                let best = null;
+                let bestLen = -1;
+                Array.from(links || []).forEach((link) => {
+                    const href = normalizeRoutePath(link.getAttribute('href'));
+                    if (!href || href === '#') return;
+                    const exact = href === currentPath;
+                    const prefix = href !== '/' && currentPath.startsWith(`${href}/`);
+                    if (!exact && !prefix) return;
+                    const score = href.length + (exact ? 10000 : 0);
+                    if (score > bestLen) {
+                        bestLen = score;
+                        best = link;
+                    }
+                });
+                return best;
+            };
             const currentSidebarPath = normalizeRoutePath(window.location.pathname);
-            const activeSidebarLink = Array.from(sidebarSubmenuLinks).find((link) => {
-                const href = normalizeRoutePath(link.getAttribute('href'));
-                if (href === currentSidebarPath) return true;
-                return href !== '/' && currentSidebarPath.startsWith(`${href}/`);
-            });
-            const activeSidebarMainLink = Array.from(sidebarMainLinks).find((link) => {
-                const href = normalizeRoutePath(link.getAttribute('href'));
-                if (href === currentSidebarPath) return true;
-                return href !== '/' && currentSidebarPath.startsWith(`${href}/`);
-            });
+            const activeSidebarLink = pickBestRouteMatch(sidebarSubmenuLinks, currentSidebarPath);
+            const activeSidebarMainLink = pickBestRouteMatch(sidebarMainLinks, currentSidebarPath);
+            const activeNavbarOrgLink = pickBestRouteMatch(navbarOrgLinks, currentSidebarPath);
+            const resolveMenuFromCatalogByPath = (path) => {
+                let best = null;
+                let bestScore = -1;
+                Object.keys(NAVBAR_SUBMENU_CATALOG).forEach((menuName) => {
+                    const items = Array.isArray(NAVBAR_SUBMENU_CATALOG[menuName]) ? NAVBAR_SUBMENU_CATALOG[menuName] : [];
+                    items.forEach((item) => {
+                        const href = normalizeRoutePath(item && item.href ? item.href : '');
+                        if (!href) return;
+                        const exact = href === path;
+                        const prefix = href !== '/' && path.startsWith(`${href}/`);
+                        if (!exact && !prefix) return;
+                        const score = href.length + (exact ? 10000 : 0);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            best = {
+                                menuName,
+                                subLabel: String(item && item.label ? item.label : '').trim(),
+                                href: href || '/',
+                            };
+                        }
+                    });
+                });
+                return best;
+            };
+            const activeCatalogMenu = resolveMenuFromCatalogByPath(currentSidebarPath);
             if (activeSidebarLink) {
                 const block = activeSidebarLink.closest('.sidebar-block');
                 if (block) block.open = true;
                 setMenuInfo(activeSidebarLink);
+            } else if (activeNavbarOrgLink) {
+                setMenuInfo(activeNavbarOrgLink);
+            } else if (activeCatalogMenu) {
+                setNavbarMenu(activeCatalogMenu.menuName, activeCatalogMenu.subLabel, activeCatalogMenu.href);
             } else if (activeSidebarMainLink) {
                 setMenuInfo(activeSidebarMainLink);
             } else if (sidebarSummaryItems.length) {
@@ -1033,6 +1218,20 @@
             } else if (menuLinks.length) {
                 setMenuInfo(menuLinks[0]);
             }
+            try {
+                const savedMainMenu = String(window.localStorage.getItem(ACTIVE_MAIN_MENU_KEY) || '').trim();
+                if (savedMainMenu) {
+                    const preferredMain = Array.from(sidebarMainLinks).find((link) => String(link.dataset.menuName || '').trim() === savedMainMenu);
+                    const preferredNav = Array.from(navbarOrgLinks).find((link) => String(link.dataset.menuName || '').trim() === savedMainMenu);
+                    if (!activeSidebarLink && !activeNavbarOrgLink && !activeSidebarMainLink) {
+                        if (preferredMain) {
+                            setMenuInfo(preferredMain);
+                        } else if (preferredNav) {
+                            setMenuInfo(preferredNav);
+                        }
+                    }
+                }
+            } catch (e) {}
             setSidebarState(true);
             window.addEventListener('resize', () => {
                 setSidebarState(isSidebarOpen);
@@ -2823,6 +3022,33 @@
                 (navbar ? getComputedStyle(navbar).color : '')
                 || getComputedStyle(document.documentElement).getPropertyValue('--navbar-text')
             );
+            const _sectionBtnEl = document.getElementById('navbar-section-btn');
+            const _sectionDropdownEl = document.getElementById('navbar-section-dropdown');
+            if (_sectionBtnEl && _sectionDropdownEl) {
+                const closeSectionDropdown = () => {
+                    _sectionDropdownEl.classList.remove('open');
+                    _sectionBtnEl.setAttribute('aria-expanded', 'false');
+                };
+                _sectionBtnEl.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const willOpen = !_sectionDropdownEl.classList.contains('open');
+                    if (willOpen) {
+                        _sectionDropdownEl.classList.add('open');
+                        _sectionBtnEl.setAttribute('aria-expanded', 'true');
+                        if (userDropdown) userDropdown.classList.remove('open');
+                    } else {
+                        closeSectionDropdown();
+                    }
+                });
+                document.addEventListener('click', (event) => {
+                    if (!_sectionBtnEl.contains(event.target) && !_sectionDropdownEl.contains(event.target)) {
+                        closeSectionDropdown();
+                    }
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') closeSectionDropdown();
+                });
+            }
             if (navbarAvatarBtn && userDropdown) {
                 const closeUserDropdown = () => {
                     userDropdown.classList.remove('open');

@@ -1,0 +1,10 @@
+dimension,metrica,valor,umbral,periodicidad,estado
+tecnico,availability_24h_pct,100.00,>=95.00,diaria,Cumple
+tecnico,error_rate_24h_pct,0.00,<=5.00,diaria,Cumple
+tecnico,duracion_promedio_24h_ms,22.50,observacional,diaria,Cumple
+modelo,drift_score_abs_7d_vs_30d,0.0000,<=0.1500,semanal,Cumple
+modelo,riesgo_alto_30d_pct,0.00,<=40.00,semanal,Cumple
+negocio,mora_alta_30d_pct,0.00,<=35.00,mensual,Cumple
+negocio,recuperacion_potencial_30d_pct,0.00,>=60.00,mensual,En revision
+negocio,conversion_comercial_potencial_pct,0.00,>=20.00,mensual,En revision
+negocio,aprobacion_scoring_30d_pct,0.00,15.00-85.00,mensual,En revision

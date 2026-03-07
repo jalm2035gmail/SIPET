@@ -1,0 +1,4 @@
+tipo,sucursal_id,nombre_sucursal,municipio,region,socio_id,socio_nombre,direccion
+catalogo_sucursal,SUC-YUR,Yuriria,Yuriria,sur,,,
+catalogo_sucursal,SUC-CUI,Cuitzeo,Cuitzeo,norte,,,
+catalogo_sucursal,SUC-SAM,Santa Ana Maya,Santa Ana Maya,este,,,

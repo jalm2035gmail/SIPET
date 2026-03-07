@@ -2717,6 +2717,11 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           let editingHitoIndex = -1;
           let editingKpiIndex = -1;
           let ganttVisibility = {};
+          const entryParams = new URLSearchParams(window.location.search || "");
+          const entryOpenTarget = String(entryParams.get("open") || "").toLowerCase();
+          const entryTabTarget = String(entryParams.get("tab") || "").toLowerCase();
+          const entryAxisIdRaw = entryParams.get("axis_id");
+          let entryIntentDone = false;
           const PLAN_STORAGE_KEY = "sipet_plan_macro_v1";
           const toId = (value) => {
             const n = Number(value);
@@ -4536,6 +4541,35 @@ EJES_ESTRATEGICOS_HTML = dedent("""
             }
           };
 
+          const applyEntryIntent = () => {
+            if (entryIntentDone) return;
+            const wantsObjectives = entryTabTarget === "objetivos" || entryOpenTarget === "objective";
+            if (!wantsObjectives) return;
+
+            const objetivosTab = document.querySelector('.axm-tab[data-axm-tab="objetivos"]');
+            if (objetivosTab) {
+              tabs.forEach((btn) => { btn.classList.remove("active"); btn.classList.remove("tab-active"); });
+              objetivosTab.classList.add("active");
+              objetivosTab.classList.add("tab-active");
+            }
+            applyTabView("objetivos");
+
+            const desiredAxisId = toId(entryAxisIdRaw);
+            if (desiredAxisId && axes.some((axis) => toId(axis.id) === desiredAxisId)) {
+              selectedAxisId = desiredAxisId;
+            }
+            renderAll();
+
+            entryIntentDone = true;
+            if (window.history && typeof window.history.replaceState === "function") {
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+
+            if (entryOpenTarget === "objective" && addObjBtn) {
+              setTimeout(() => addObjBtn.click(), 0);
+            }
+          };
+
           const importStrategicCsv = async (file) => {
             if (!file) return;
             showMsg("Importando plantilla estratégica y POA...");
@@ -4793,7 +4827,10 @@ EJES_ESTRATEGICOS_HTML = dedent("""
           loadPlanWindow();
           syncAxisDateBounds();
 
-          Promise.all([loadDepartments(), loadAxes()]).then(loadCollaborators).catch((err) => {
+          Promise.all([loadDepartments(), loadAxes()]).then(async () => {
+            await loadCollaborators();
+            applyEntryIntent();
+          }).catch((err) => {
             showMsg(err.message || "No se pudieron cargar los ejes.", true);
           });
           iaFeatureEnabled("plan_estrategico").then((enabled) => {
@@ -7552,6 +7589,118 @@ def ejes_estrategicos_page(request: Request):
     _bind_core_symbols()
     base_content = dedent("""
       <section class="grid gap-4 w-full max-w-6xl">
+        <style>
+          .cards-2{
+            display:grid;
+            grid-template-columns:repeat(2, minmax(0, 1fr));
+            gap:22px;
+            align-items:start;
+          }
+          .panel{
+            background:#ffffff;
+            border:1px solid #d8dee8;
+            border-radius:20px;
+            box-shadow:0 10px 24px rgba(16, 24, 40, .06);
+            padding:18px 22px 20px;
+          }
+          .panel__head{
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            margin-bottom:8px;
+          }
+          .panel__title{
+            margin:0;
+            font-size:20px;
+            font-weight:800;
+            letter-spacing:0.10em;
+            text-transform:uppercase;
+            color:#475569;
+          }
+          .panel__meta{
+            font-size:22px;
+            color:#0f172a;
+          }
+          .panel__meta strong{ font-weight:900; }
+          .panel__list{
+            list-style:none;
+            padding:0;
+            margin:10px 0 0 0;
+            color:#334155;
+            font-size:22px;
+            line-height:1.55;
+          }
+          .panel__list li{
+            padding-left:34px;
+            position:relative;
+            margin:10px 0;
+          }
+          .panel__list li::before{
+            content:"";
+            position:absolute;
+            left:14px;
+            top:0.9em;
+            width:6px;
+            height:6px;
+            border-radius:999px;
+            background:rgba(100, 116, 139, .35);
+            transform:translateY(-50%);
+          }
+          .panel__more{
+            display:inline-block;
+            margin-top:8px;
+            color:#64748b;
+            font-style:italic;
+            font-size:20px;
+            text-decoration:none;
+          }
+          .panel__more:hover{ text-decoration:underline; }
+          .poa-small-muted{
+            color:#475569;
+            font-size:14px;
+            margin-bottom:10px;
+          }
+          .poa-summary{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:12px;
+          }
+          .poa-summary h4{
+            margin:0 0 4px 0;
+            font-size:22px;
+            color:#0f172a;
+          }
+          .poa-summary p{
+            margin:0;
+            color:#53657f;
+            font-size:16px;
+          }
+          .poa-summary-total{
+            white-space:nowrap;
+            color:#334155;
+            font-size:18px;
+            font-weight:600;
+          }
+          @media (max-width:980px){
+            .cards-2{ grid-template-columns:1fr; }
+            .panel__title{ font-size:18px; }
+            .panel__meta, .panel__list{ font-size:20px; }
+          }
+          .planes-action-card{
+            border-radius:28px;
+          }
+          .planes-action-row{
+            gap:14px;
+            padding-top:16px;
+          }
+          @media (max-width: 1024px){
+            .planes-action-row{ gap:12px; }
+          }
+          @media (max-width: 640px){
+            .planes-action-row{ gap:10px; }
+          }
+        </style>
         <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
           <div class="w-full flex flex-col md:flex-row items-center gap-10">
             <img
@@ -7581,6 +7730,19 @@ def ejes_estrategicos_page(request: Request):
             <span class="view-pill-label boton_vista-label">Organigrama</span>
           </button>
         </div>
+        <article class="titulo bg-base-200 rounded-box border border-base-300 planes-action-card">
+          <div class="p-4 sm:p-6">
+            <h2 class="page-title">Plan estratégico</h2>
+            <p class="page-description">Selecciona un eje para editarlo o crea uno nuevo.</p>
+            <div class="view-buttons planes-action-row">
+              <button type="button" id="planes-add-axis-btn" class="boton_vista boton_vista-eliptico active">Agregar eje</button>
+              <a href="/api/planificacion/plantilla-plan-poa.csv" class="boton_vista boton_vista-eliptico">Descargar plantilla CSV</a>
+              <button type="button" id="planes-import-csv-btn" class="boton_vista boton_vista-eliptico">Importar CSV estratégico + POA</button>
+              <input id="planes-import-csv-file" type="file" accept=".csv,text/csv" class="hidden">
+            </div>
+            <div id="planes-import-csv-msg" class="text-sm sm:text-base pt-1 min-h-[1.5rem] text-base-content/70"></div>
+          </div>
+        </article>
         <article class="card border shadow-sm rounded-[2rem]" style="background:#eff4f2;border-color:#cfd7df;">
           <div class="card-body p-6 sm:p-8 lg:p-10" id="planes-view-list">
             <style>
@@ -7589,6 +7751,15 @@ def ejes_estrategicos_page(request: Request):
                 color:#1f2937;
                 padding:18px 18px 12px;
                 border-radius:18px;
+              }
+              .axm-tabs .tab-icon{
+                width:16px;
+                height:16px;
+                min-width:16px;
+                min-height:16px;
+                display:inline-block;
+                object-fit:contain;
+                vertical-align:middle;
               }
               .dash__title{
                 font-size:13.2px;
@@ -7797,35 +7968,211 @@ def ejes_estrategicos_page(request: Request):
                 .donut{ width:84px; height:84px; }
                 .donut::before{ inset:11px; }
               }
+              /* ── tab panels ───────────────────────────────────── */
+              .axm-foundacion{
+                background:#fff;
+                border:1px solid #d8dee8;
+                border-radius:20px;
+                padding:24px 28px;
+                box-shadow:0 6px 18px rgba(16,24,40,.06);
+              }
+              .axm-foundacion h3{
+                font-size:1rem;
+                font-weight:700;
+                color:#0f172a;
+                margin:0 0 8px;
+              }
+              .axm-foundacion p{
+                font-size:.875rem;
+                color:#475569;
+                margin:0 0 14px;
+              }
+              .axm-foundacion-toolbar{
+                display:flex;
+                flex-wrap:wrap;
+                gap:6px;
+                margin-bottom:10px;
+              }
+              .axm-foundacion-tool{
+                font-size:.75rem;
+                padding:4px 10px;
+                border:1px solid #cbd5e1;
+                border-radius:6px;
+                background:#f8fafc;
+                cursor:pointer;
+                display:inline-flex;
+                align-items:center;
+                gap:4px;
+                color:#334155;
+              }
+              .axm-foundacion-tool:hover{ background:#e2e8f0; }
+              .axm-foundacion-editor{
+                min-height:120px;
+                border:1px solid #cbd5e1;
+                border-radius:10px;
+                padding:12px 14px;
+                background:#f8fafc;
+                font-size:.875rem;
+                line-height:1.6;
+                color:#1e293b;
+                outline:none;
+              }
+              .axm-foundacion-editor[contenteditable=true]{
+                background:#fff;
+                border-color:#94a3b8;
+              }
+              .axm-foundacion-source{
+                width:100%;
+                min-height:120px;
+                font-family:monospace;
+                font-size:.8rem;
+                border:1px solid #cbd5e1;
+                border-radius:10px;
+                padding:10px 12px;
+                resize:vertical;
+              }
+              .axm-foundacion-actions{
+                display:flex;
+                gap:8px;
+                margin-top:12px;
+              }
+              .axm-foundacion-msg{ font-size:.82rem; margin-top:8px; min-height:1.2em; }
+              .axm-identidad{ background:#fff; border:1px solid #d8dee8; border-radius:20px; padding:0; box-shadow:0 6px 18px rgba(16,24,40,.06); overflow:hidden; }
+              .axm-id-acc{ border-bottom:1px solid #e2e8f0; }
+              .axm-id-acc:last-of-type{ border-bottom:none; }
+              .axm-id-acc > summary{
+                padding:14px 22px;
+                font-size:.875rem;
+                font-weight:700;
+                color:#0f172a;
+                cursor:pointer;
+                list-style:none;
+                user-select:none;
+              }
+              .axm-id-acc > summary::-webkit-details-marker{ display:none; }
+              .axm-id-grid{
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                gap:16px;
+                padding:0 22px 18px;
+              }
+              @media(max-width:720px){ .axm-id-grid{ grid-template-columns:1fr; } }
+              .axm-textarea{
+                width:100%;
+                min-height:90px;
+                border:1px solid #cbd5e1;
+                border-radius:10px;
+                padding:10px 12px;
+                font-size:.875rem;
+                line-height:1.6;
+                resize:vertical;
+                background:#f8fafc;
+              }
+              .axm-textarea:not([readonly]){ background:#fff; border-color:#94a3b8; }
+              .axm-id-actions{ display:flex; gap:6px; margin-top:8px; }
+              .axm-id-right h4{ font-size:.875rem; font-weight:700; color:#0f172a; margin:0 0 6px; }
+              .axm-id-full{ font-size:.875rem; color:#334155; line-height:1.7; white-space:pre-wrap; }
+              .axm-id-msg{ font-size:.82rem; padding:6px 22px 12px; min-height:1.2em; }
+              .planes-obj-layout{
+                display:grid;
+                grid-template-columns: 300px minmax(0, 1fr);
+                gap:16px;
+                align-items:stretch;
+              }
+              .planes-obj-axes{
+                background:#eef2f6;
+                border:1px solid #d2dae4;
+                border-radius:16px;
+                padding:14px;
+              }
+              .planes-obj-side-title{
+                margin:0 0 10px;
+                font-weight:700;
+                font-size:1.1rem;
+                color:#1f2937;
+              }
+              .planes-obj-axes-list{
+                display:grid;
+                gap:10px;
+                max-height:460px;
+                overflow:auto;
+                padding-right:4px;
+              }
+              .planes-obj-axis-btn{
+                width:100%;
+                text-align:left;
+                border:1px solid #cfd7e3;
+                border-radius:14px;
+                background:#f7f9fc;
+                color:#334155;
+                padding:12px 14px;
+                font-weight:600;
+                font-style:italic;
+                cursor:pointer;
+              }
+              .planes-obj-axis-btn.active{
+                background:#ffffff;
+                border-color:#9bb1cc;
+                color:#0f172a;
+              }
+              .planes-obj-main{
+                border:1px solid #d2dae4;
+                border-radius:16px;
+                background:#ffffff;
+                padding:14px;
+              }
+              .planes-obj-head{
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:10px;
+                margin-bottom:10px;
+              }
+              .planes-obj-title{
+                margin:0;
+                font-weight:700;
+                font-size:1.2rem;
+                color:#1f2937;
+              }
+              .planes-obj-list{
+                display:grid;
+                gap:12px;
+                max-height:460px;
+                overflow:auto;
+                padding-right:4px;
+              }
+              .planes-obj-item{
+                border:1px solid #cfd7e3;
+                border-radius:16px;
+                background:#f7faf9;
+                padding:14px 16px;
+              }
+              .planes-obj-item h5{
+                margin:0;
+                font-size:1.05rem;
+                font-weight:800;
+                color:#0f172a;
+              }
+              .planes-obj-code{
+                margin-top:6px;
+                color:#64748b;
+                font-style:italic;
+              }
+              .planes-obj-meta{
+                margin-top:6px;
+                color:#64748b;
+                font-style:italic;
+              }
+              @media(max-width:980px){
+                .planes-obj-layout{ grid-template-columns:1fr; }
+                .planes-obj-axes-list,
+                .planes-obj-list{ max-height:none; }
+              }
             </style>
-            <section class="grid gap-5">
-              <div class="tabs tabs-lifted w-full flex-wrap axm-tabs" role="tablist" aria-label="Planificación estratégica">
-                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="fundamentacion">
-                  <img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación
-                </button>
-                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="identidad">
-                  <img src="/templates/icon/identidad.svg" alt="" class="tab-icon">Identidad
-                </button>
-                <button type="button" class="tab gap-2 rounded-t-lg tab-active active axm-tab" data-planes-strategic-tab="ejes">
-                  <img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos
-                </button>
-                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="objetivos">
-                  <img src="/templates/icon/objetivos.svg" alt="" class="tab-icon">Objetivos
-                </button>
-              </div>
-              <section id="planes-tab-panel-fundamentacion" class="card bg-base-100 border border-base-300 rounded-2xl hidden">
-                <div class="card-body">
-                  <h3 class="card-title">Fundamentación</h3>
-                  <p class="text-base-content/70">Contenido en transición Daisy con CSS institucional.</p>
-                </div>
-              </section>
-              <section id="planes-tab-panel-identidad" class="card bg-base-100 border border-base-300 rounded-2xl hidden">
-                <div class="card-body">
-                  <h3 class="card-title">Identidad</h3>
-                  <p class="text-base-content/70">Contenido en transición Daisy con CSS institucional.</p>
-                </div>
-              </section>
-              <div id="planes-tab-panel-ejes" class="grid gap-7">
+            <!-- ── Cuatro áreas de resumen (siempre visibles, sobre las pestañas) ── -->
+            <div class="grid gap-5" id="planes-dashboard-areas">
+
+              <!-- Área 1: configuración del plan -->
               <article class="card border rounded-[2rem] shadow-sm" style="background:#eff4f2;border-color:#cfd7df;">
                 <div class="card-body p-6">
                   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -7850,6 +8197,8 @@ def ejes_estrategicos_page(request: Request):
                   </div>
                 </div>
               </article>
+
+              <!-- Área 2: tablero KPI -->
               <div class="dash">
                 <h2 class="dash__title">Tablero de seguimiento</h2>
                 <div class="dash__grid">
@@ -7878,6 +8227,8 @@ def ejes_estrategicos_page(request: Request):
                   <span><strong>Visión:</strong> <b id="planes-vision-progress">0%</b></span>
                 </div>
               </div>
+
+              <!-- Área 3: hitos logrados -->
               <div class="milestone-card">
                 <div class="milestone-card__inner">
                   <div class="donut" id="planes-milestone-donut" style="--p:0">
@@ -7894,6 +8245,8 @@ def ejes_estrategicos_page(request: Request):
                   </div>
                 </div>
               </div>
+
+              <!-- Área 4: ejes y objetivos sin responsable -->
               <div class="cards-2">
                 <section class="panel">
                   <header class="panel__head">
@@ -7916,11 +8269,142 @@ def ejes_estrategicos_page(request: Request):
                   <a class="panel__more" id="planes-objectives-pending-more" href="#" aria-label="Más objetivos sin responsable"></a>
                 </section>
               </div>
+
+            </div>
+
+            <!-- ── Notebook de pestañas (debajo de las cuatro áreas) ───────────────────────── -->
+            <section class="grid gap-5" style="margin-top:1.5rem;">
+              <div class="tabs tabs-lifted w-full flex-wrap axm-tabs" role="tablist" aria-label="Planificación estratégica">
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab tab-active active" data-planes-strategic-tab="fundamentacion">
+                  <img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="identidad">
+                  <img src="/templates/icon/identidad.svg" alt="" class="tab-icon">Identidad
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="ejes">
+                  <img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="objetivos">
+                  <img src="/templates/icon/objetivos.svg" alt="" class="tab-icon">Objetivos
+                </button>
               </div>
-              <section id="planes-tab-panel-objetivos" class="card bg-base-100 border border-base-300 rounded-2xl hidden">
+              <section id="planes-tab-panel-fundamentacion" class="axm-foundacion" style="display:block;" data-panel-display="block">
+                <h3>Fundamentación</h3>
+                <p>Registra aquí la fundamentación del plan estratégico.</p>
+                <div class="axm-foundacion-toolbar">
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="bold">Negrita</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="italic">Itálica</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="underline">Subrayar</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="insertUnorderedList">Lista</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="insertOrderedList">Numerada</button>
+                  <button type="button" class="axm-foundacion-tool" id="planes-foundacion-upload-btn">Subir HTML</button>
+                  <label class="axm-foundacion-tool">
+                    <input id="planes-foundacion-show-source" type="checkbox">
+                    Ver código HTML
+                  </label>
+                  <input id="planes-foundacion-upload" type="file" accept=".html,text/html">
+                </div>
+                <div id="planes-foundacion-editor" class="axm-foundacion-editor" contenteditable="false"></div>
+                <textarea id="planes-foundacion-source" class="axm-foundacion-source" placeholder="Código HTML..."></textarea>
+                <div class="axm-foundacion-actions">
+                  <button type="button" class="action-button" id="planes-foundacion-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                    <img src="/icon/boton/editar.svg" alt="Editar">
+                    <span class="action-label">Editar</span>
+                  </button>
+                  <button type="button" class="action-button" id="planes-foundacion-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                    <img src="/icon/boton/guardar.svg" alt="Guardar">
+                    <span class="action-label">Guardar</span>
+                  </button>
+                </div>
+                <div class="axm-foundacion-msg" id="planes-foundacion-msg" aria-live="polite"></div>
+              </section>
+              <section id="planes-tab-panel-identidad" class="axm-identidad" style="display:none;" data-panel-display="block">
+                <details class="axm-id-acc" open>
+                  <summary>Misión</summary>
+                  <div class="axm-id-grid">
+                    <div class="axm-id-left">
+                      <textarea id="planes-identidad-mision-text" class="axm-textarea" rows="5" placeholder="Escribe la misión (una línea por elemento)" readonly></textarea>
+                      <div class="axm-id-actions">
+                        <button type="button" class="action-button" id="planes-identidad-mision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                          <img src="/icon/boton/editar.svg" alt="Editar">
+                          <span class="action-label">Editar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-mision-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                          <img src="/icon/boton/guardar.svg" alt="Guardar">
+                          <span class="action-label">Guardar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-mision-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                          <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                          <span class="action-label">Eliminar</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="axm-id-right">
+                      <h4>Misión</h4>
+                      <p class="axm-id-full" id="planes-identidad-mision-full"></p>
+                    </div>
+                  </div>
+                </details>
+                <details class="axm-id-acc">
+                  <summary>Visión</summary>
+                  <div class="axm-id-grid">
+                    <div class="axm-id-left">
+                      <textarea id="planes-identidad-vision-text" class="axm-textarea" rows="5" placeholder="Escribe la visión (una línea por elemento)" readonly></textarea>
+                      <div class="axm-id-actions">
+                        <button type="button" class="action-button" id="planes-identidad-vision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                          <img src="/icon/boton/editar.svg" alt="Editar">
+                          <span class="action-label">Editar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-vision-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                          <img src="/icon/boton/guardar.svg" alt="Guardar">
+                          <span class="action-label">Guardar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-vision-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                          <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                          <span class="action-label">Eliminar</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="axm-id-right">
+                      <h4>Visión</h4>
+                      <p class="axm-id-full" id="planes-identidad-vision-full"></p>
+                    </div>
+                  </div>
+                </details>
+                <div class="axm-id-msg" id="planes-identidad-msg" aria-live="polite"></div>
+              </section>
+              <section id="planes-tab-panel-ejes" class="card bg-base-100 border border-base-300 rounded-2xl" style="display:none;" data-panel-display="block">
                 <div class="card-body">
-                  <h3 class="card-title">Objetivos</h3>
-                  <p class="text-base-content/70">Contenido en transición Daisy con CSS institucional.</p>
+                  <h3 class="card-title">Ejes estratégicos</h3>
+                  <p class="text-base-content/70">Listado de ejes estratégicos registrados en el plan.</p>
+                  <div id="planes-ejes-list" class="grid gap-3 mt-2">
+                    <div class="text-base-content/60">Cargando ejes...</div>
+                  </div>
+                  <a href="/ejes-estrategicos" class="btn btn-primary mt-2">Ir al editor de ejes</a>
+                </div>
+              </section>
+              <section id="planes-tab-panel-objetivos" class="card bg-base-100 border border-base-300 rounded-2xl" style="display:none;" data-panel-display="block">
+                <div class="card-body">
+                  <h3 class="card-title">Objetivos del eje</h3>
+                  <div class="planes-obj-layout mt-2">
+                    <aside class="planes-obj-axes">
+                      <h4 class="planes-obj-side-title">Ejes estratégicos</h4>
+                      <div id="planes-objetivos-axes-list" class="planes-obj-axes-list">
+                        <div class="text-base-content/60">Cargando ejes...</div>
+                      </div>
+                    </aside>
+                    <section class="planes-obj-main">
+                      <div class="planes-obj-head">
+                        <h4 id="planes-objetivos-selected-axis-title" class="planes-obj-title">Objetivos: sin eje seleccionado</h4>
+                        <div class="view-buttons" style="margin:0;">
+                          <button type="button" id="planes-add-objective-btn" class="boton_vista boton_vista-eliptico active">Agregar objetivo</button>
+                        </div>
+                      </div>
+                      <div id="planes-objetivos-list" class="planes-obj-list">
+                        <div class="text-base-content/60">Cargando objetivos...</div>
+                      </div>
+                    </section>
+                  </div>
                 </div>
               </section>
             </section>
@@ -7959,6 +8443,58 @@ def ejes_estrategicos_page(request: Request):
             btn.addEventListener('click', () => setView(btn.getAttribute('data-planes-view') || 'list'));
           });
 
+          const planesAddAxisBtn = document.getElementById('planes-add-axis-btn');
+          const planesImportBtn = document.getElementById('planes-import-csv-btn');
+          const planesImportFile = document.getElementById('planes-import-csv-file');
+          const planesImportMsg = document.getElementById('planes-import-csv-msg');
+          const setPlanesImportMsg = (text, isError = false) => {
+            if (!planesImportMsg) return;
+            planesImportMsg.textContent = text || '';
+            planesImportMsg.style.color = isError ? '#b91c1c' : '#0f3d2e';
+          };
+          if (planesAddAxisBtn) {
+            planesAddAxisBtn.addEventListener('click', () => {
+              setStrategicTab('ejes', true);
+              const ejesPanel = document.getElementById('planes-tab-panel-ejes');
+              const ejesLink = ejesPanel ? ejesPanel.querySelector('a[href="/ejes-estrategicos"]') : null;
+              if (ejesLink) {
+                ejesLink.focus();
+              }
+            });
+          }
+          if (planesImportBtn && planesImportFile) {
+            planesImportBtn.addEventListener('click', () => planesImportFile.click());
+            planesImportFile.addEventListener('change', async () => {
+              const file = planesImportFile.files && planesImportFile.files[0] ? planesImportFile.files[0] : null;
+              if (!file) return;
+              const form = new FormData();
+              form.append('file', file);
+              setPlanesImportMsg('Importando plantilla estratégica y POA...');
+              planesImportBtn.disabled = true;
+              try {
+                const response = await fetch('/api/planificacion/importar-plan-poa', {
+                  method: 'POST',
+                  body: form,
+                  credentials: 'same-origin'
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || data?.success === false) {
+                  throw new Error(data?.error || data?.detail || 'No se pudo importar el archivo.');
+                }
+                const axes = Number(data?.inserted_axes || 0);
+                const objectives = Number(data?.inserted_objectives || 0);
+                const acts = Number(data?.inserted_activities || 0);
+                setPlanesImportMsg(`Importación completada: ${axes} ejes, ${objectives} objetivos y ${acts} actividades.`);
+                setTimeout(() => window.location.reload(), 550);
+              } catch (error) {
+                setPlanesImportMsg(error?.message || 'No se pudo importar el archivo.', true);
+              } finally {
+                planesImportBtn.disabled = false;
+                planesImportFile.value = '';
+              }
+            });
+          }
+
           const strategicTabButtons = Array.from(document.querySelectorAll('[data-planes-strategic-tab]'));
           const strategicTabPanels = {
             fundamentacion: document.getElementById('planes-tab-panel-fundamentacion'),
@@ -7966,22 +8502,286 @@ def ejes_estrategicos_page(request: Request):
             ejes: document.getElementById('planes-tab-panel-ejes'),
             objetivos: document.getElementById('planes-tab-panel-objetivos'),
           };
-          const setStrategicTab = (tab) => {
+          const setStrategicTab = (tab, shouldScroll = false) => {
             const target = ['fundamentacion', 'identidad', 'ejes', 'objetivos'].includes(tab) ? tab : 'ejes';
             Object.keys(strategicTabPanels).forEach((key) => {
               const panel = strategicTabPanels[key];
               if (!panel) return;
-              panel.classList.toggle('hidden', key !== target);
+              const isActive = key === target;
+              const panelDisplay = panel.getAttribute('data-panel-display') || 'block';
+              panel.classList.toggle('hidden', !isActive);
+              panel.style.display = isActive ? panelDisplay : 'none';
             });
             strategicTabButtons.forEach((btn) => {
               const on = (btn.getAttribute('data-planes-strategic-tab') || '') === target;
               btn.classList.toggle('active', on);
               btn.classList.toggle('tab-active', on);
             });
+            if (shouldScroll) {
+              const targetPanel = strategicTabPanels[target];
+              if (targetPanel && typeof targetPanel.scrollIntoView === 'function') {
+                targetPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }
           };
           strategicTabButtons.forEach((btn) => {
-            btn.addEventListener('click', () => setStrategicTab(btn.getAttribute('data-planes-strategic-tab') || 'ejes'));
+            btn.addEventListener('click', () => setStrategicTab(btn.getAttribute('data-planes-strategic-tab') || 'ejes', true));
           });
+
+          const foundationPanelEl = document.getElementById('planes-tab-panel-fundamentacion');
+          const foundationEditorEl = document.getElementById('planes-foundacion-editor');
+          const foundationSourceEl = document.getElementById('planes-foundacion-source');
+          const foundationUploadBtn = document.getElementById('planes-foundacion-upload-btn');
+          const foundationUploadEl = document.getElementById('planes-foundacion-upload');
+          const foundationShowSourceEl = document.getElementById('planes-foundacion-show-source');
+          const foundationEditBtn = document.getElementById('planes-foundacion-edit');
+          const foundationSaveBtn = document.getElementById('planes-foundacion-save');
+          const foundationMsgEl = document.getElementById('planes-foundacion-msg');
+          const setFoundationMsg = (text, isError = false) => {
+            if (!foundationMsgEl) return;
+            foundationMsgEl.textContent = text || '';
+            foundationMsgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+          };
+          const getFoundationHtml = () => {
+            if (foundationShowSourceEl && foundationShowSourceEl.checked && foundationSourceEl) {
+              return String(foundationSourceEl.value || '');
+            }
+            return foundationEditorEl ? String(foundationEditorEl.innerHTML || '') : '';
+          };
+          const setFoundationHtml = (rawHtml) => {
+            const raw = String(rawHtml || '');
+            if (foundationEditorEl) foundationEditorEl.innerHTML = raw;
+            if (foundationSourceEl) foundationSourceEl.value = raw;
+          };
+          const syncFoundationSourceMode = () => {
+            const show = !!(foundationShowSourceEl && foundationShowSourceEl.checked);
+            if (show) {
+              if (foundationSourceEl) foundationSourceEl.value = foundationEditorEl ? foundationEditorEl.innerHTML : '';
+            } else if (foundationEditorEl && foundationSourceEl) {
+              foundationEditorEl.innerHTML = foundationSourceEl.value || '';
+            }
+            if (foundationSourceEl) foundationSourceEl.style.display = show ? 'block' : 'none';
+            if (foundationEditorEl) foundationEditorEl.style.display = show ? 'none' : 'block';
+          };
+          const setFoundationEditable = (enabled) => {
+            if (foundationEditorEl) foundationEditorEl.setAttribute('contenteditable', enabled ? 'true' : 'false');
+            if (foundationSourceEl) foundationSourceEl.readOnly = !enabled;
+          };
+          const loadFoundationFromDb = async () => {
+            const response = await fetch('/api/strategic-foundation', { method: 'GET', credentials: 'same-origin' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.success === false) {
+              throw new Error(data?.error || data?.detail || 'No se pudo cargar Fundamentación.');
+            }
+            setFoundationHtml(String(data?.data?.texto || ''));
+            syncFoundationSourceMode();
+          };
+          const saveFoundationToDb = async () => {
+            const response = await fetch('/api/strategic-foundation', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ texto: getFoundationHtml() }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.success === false) {
+              throw new Error(data?.error || data?.detail || 'No se pudo guardar Fundamentación.');
+            }
+          };
+          if (foundationPanelEl) {
+            setFoundationEditable(false);
+            syncFoundationSourceMode();
+            foundationShowSourceEl && foundationShowSourceEl.addEventListener('change', syncFoundationSourceMode);
+            foundationUploadBtn && foundationUploadBtn.addEventListener('click', () => {
+              if (foundationUploadEl) foundationUploadEl.click();
+            });
+            foundationUploadEl && foundationUploadEl.addEventListener('change', async () => {
+              const file = foundationUploadEl.files && foundationUploadEl.files[0] ? foundationUploadEl.files[0] : null;
+              if (!file) return;
+              const text = await file.text().catch(() => '');
+              if (!text) {
+                setFoundationMsg('No se pudo leer el archivo HTML.', true);
+                return;
+              }
+              setFoundationHtml(text);
+              syncFoundationSourceMode();
+              setFoundationMsg('HTML cargado correctamente.');
+            });
+            foundationEditBtn && foundationEditBtn.addEventListener('click', () => {
+              setFoundationEditable(true);
+              setFoundationMsg('Modo edición habilitado.');
+              if (foundationEditorEl && foundationEditorEl.style.display !== 'none') foundationEditorEl.focus();
+            });
+            foundationSaveBtn && foundationSaveBtn.addEventListener('click', async () => {
+              try {
+                if (foundationShowSourceEl && foundationShowSourceEl.checked && foundationEditorEl && foundationSourceEl) {
+                  foundationEditorEl.innerHTML = foundationSourceEl.value || '';
+                }
+                await saveFoundationToDb();
+                setFoundationEditable(false);
+                setFoundationMsg('Fundamentación guardada.');
+              } catch (error) {
+                setFoundationMsg(error?.message || 'No se pudo guardar Fundamentación.', true);
+              }
+            });
+            document.querySelectorAll('[data-planes-found-cmd]').forEach((btn) => {
+              btn.addEventListener('click', () => {
+                const cmd = btn.getAttribute('data-planes-found-cmd') || '';
+                if (!cmd || !foundationEditorEl) return;
+                foundationEditorEl.focus();
+                try {
+                  document.execCommand(cmd, false, null);
+                } catch (_err) {}
+              });
+            });
+            loadFoundationFromDb().catch((error) => {
+              setFoundationMsg(error?.message || 'No se pudo cargar Fundamentación.', true);
+            });
+          }
+
+          const identityPanelEl = document.getElementById('planes-tab-panel-identidad');
+          const identityMsgEl = document.getElementById('planes-identidad-msg');
+          const missionTextEl = document.getElementById('planes-identidad-mision-text');
+          const missionFullEl = document.getElementById('planes-identidad-mision-full');
+          const missionEditBtn = document.getElementById('planes-identidad-mision-edit');
+          const missionSaveBtn = document.getElementById('planes-identidad-mision-save');
+          const missionDeleteBtn = document.getElementById('planes-identidad-mision-delete');
+          const visionTextEl = document.getElementById('planes-identidad-vision-text');
+          const visionFullEl = document.getElementById('planes-identidad-vision-full');
+          const visionEditBtn = document.getElementById('planes-identidad-vision-edit');
+          const visionSaveBtn = document.getElementById('planes-identidad-vision-save');
+          const visionDeleteBtn = document.getElementById('planes-identidad-vision-delete');
+          const setIdentityMsg = (text, isError = false) => {
+            if (!identityMsgEl) return;
+            identityMsgEl.textContent = text || '';
+            identityMsgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+          };
+          const normalizeLineText = (line) => {
+            if (line == null) return '';
+            if (typeof line === 'string') return line.trim();
+            if (typeof line === 'object') {
+              const code = String(line.code || '').trim();
+              const text = String(line.text || '').trim();
+              if (code && text) return `${code} - ${text}`;
+              return text || code;
+            }
+            return String(line).trim();
+          };
+          const linesToTextarea = (lines) => (Array.isArray(lines) ? lines.map(normalizeLineText).filter(Boolean).join('\\n') : '');
+          const textareaToLines = (rawValue, prefix) => {
+            const chunks = String(rawValue || '').split('\\n').map((item) => item.trim()).filter(Boolean);
+            return chunks.map((row, idx) => {
+              const dashPos = row.indexOf(' - ');
+              if (dashPos > 0) {
+                const codeRaw = row.slice(0, dashPos).trim();
+                const textRaw = row.slice(dashPos + 3).trim();
+                return { code: codeRaw || `${prefix}-${String(idx + 1).padStart(2, '0')}`, text: textRaw || row };
+              }
+              return { code: `${prefix}-${String(idx + 1).padStart(2, '0')}`, text: row };
+            });
+          };
+          const updateIdentityPreview = () => {
+            if (missionFullEl && missionTextEl) missionFullEl.textContent = missionTextEl.value.split('\\n').map((s) => s.trim()).filter(Boolean).join(' | ');
+            if (visionFullEl && visionTextEl) visionFullEl.textContent = visionTextEl.value.split('\\n').map((s) => s.trim()).filter(Boolean).join(' | ');
+          };
+          const setIdentityEditable = (textareaEl, enabled) => {
+            if (!textareaEl) return;
+            textareaEl.readOnly = !enabled;
+            if (enabled) textareaEl.focus();
+          };
+          const loadIdentityForPlanes = async () => {
+            const response = await fetch('/api/strategic-identity', { method: 'GET', credentials: 'same-origin' });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.success === false) {
+              throw new Error(data?.error || data?.detail || 'No se pudo cargar Identidad.');
+            }
+            if (missionTextEl) missionTextEl.value = linesToTextarea(data?.data?.mision);
+            if (visionTextEl) visionTextEl.value = linesToTextarea(data?.data?.vision);
+            updateIdentityPreview();
+          };
+          const saveIdentityBlock = async (block, lines) => {
+            const response = await fetch(`/api/strategic-identity/${encodeURIComponent(block)}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({ lineas: lines }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.success === false) {
+              throw new Error(data?.error || data?.detail || 'No se pudo guardar Identidad.');
+            }
+          };
+          const clearIdentityBlock = async (block) => {
+            const response = await fetch(`/api/strategic-identity/${encodeURIComponent(block)}`, {
+              method: 'DELETE',
+              credentials: 'same-origin',
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data?.success === false) {
+              throw new Error(data?.error || data?.detail || 'No se pudo limpiar Identidad.');
+            }
+          };
+          if (identityPanelEl) {
+            setIdentityEditable(missionTextEl, false);
+            setIdentityEditable(visionTextEl, false);
+            missionTextEl && missionTextEl.addEventListener('input', updateIdentityPreview);
+            visionTextEl && visionTextEl.addEventListener('input', updateIdentityPreview);
+            missionEditBtn && missionEditBtn.addEventListener('click', () => {
+              setIdentityEditable(missionTextEl, true);
+              setIdentityMsg('Modo edición habilitado para Misión.');
+            });
+            missionSaveBtn && missionSaveBtn.addEventListener('click', async () => {
+              try {
+                const lines = textareaToLines(missionTextEl ? missionTextEl.value : '', 'm');
+                await saveIdentityBlock('mision', lines);
+                setIdentityEditable(missionTextEl, false);
+                updateIdentityPreview();
+                setIdentityMsg('Misión guardada.');
+              } catch (error) {
+                setIdentityMsg(error?.message || 'No se pudo guardar Misión.', true);
+              }
+            });
+            missionDeleteBtn && missionDeleteBtn.addEventListener('click', async () => {
+              try {
+                await clearIdentityBlock('mision');
+                if (missionTextEl) missionTextEl.value = '';
+                setIdentityEditable(missionTextEl, false);
+                updateIdentityPreview();
+                setIdentityMsg('Misión limpiada.');
+              } catch (error) {
+                setIdentityMsg(error?.message || 'No se pudo limpiar Misión.', true);
+              }
+            });
+            visionEditBtn && visionEditBtn.addEventListener('click', () => {
+              setIdentityEditable(visionTextEl, true);
+              setIdentityMsg('Modo edición habilitado para Visión.');
+            });
+            visionSaveBtn && visionSaveBtn.addEventListener('click', async () => {
+              try {
+                const lines = textareaToLines(visionTextEl ? visionTextEl.value : '', 'v');
+                await saveIdentityBlock('vision', lines);
+                setIdentityEditable(visionTextEl, false);
+                updateIdentityPreview();
+                setIdentityMsg('Visión guardada.');
+              } catch (error) {
+                setIdentityMsg(error?.message || 'No se pudo guardar Visión.', true);
+              }
+            });
+            visionDeleteBtn && visionDeleteBtn.addEventListener('click', async () => {
+              try {
+                await clearIdentityBlock('vision');
+                if (visionTextEl) visionTextEl.value = '';
+                setIdentityEditable(visionTextEl, false);
+                updateIdentityPreview();
+                setIdentityMsg('Visión limpiada.');
+              } catch (error) {
+                setIdentityMsg(error?.message || 'No se pudo limpiar Visión.', true);
+              }
+            });
+            loadIdentityForPlanes().catch((error) => {
+              setIdentityMsg(error?.message || 'No se pudo cargar Identidad.', true);
+            });
+          }
 
           const escapeHtml = (value) => String(value == null ? '' : value)
             .replace(/&/g, '&amp;')
@@ -8091,6 +8891,106 @@ def ejes_estrategicos_page(request: Request):
             );
           };
 
+          const renderStrategicAxesPanel = (axes) => {
+            const host = document.getElementById('planes-ejes-list');
+            if (!host) return;
+            const axisList = Array.isArray(axes) ? axes : [];
+            if (!axisList.length) {
+              host.innerHTML = '<div class="text-base-content/60">Sin ejes registrados.</div>';
+              return;
+            }
+            host.innerHTML = axisList.map((axis) => {
+              const code = escapeHtml(axis?.codigo || 'Sin código');
+              const name = escapeHtml(axis?.nombre || 'Sin nombre');
+              const owner = escapeHtml(axis?.responsabilidad_directa || 'Sin responsable');
+              const progress = Math.max(0, Math.min(100, Number(axis?.avance || 0)));
+              const objectivesCount = Number(axis?.objetivos_count || (Array.isArray(axis?.objetivos) ? axis.objetivos.length : 0)) || 0;
+              return `
+                <article class="card bg-base-200 border border-base-300 rounded-xl">
+                  <div class="card-body p-4">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                      <h4 class="font-semibold text-base-content">${code} - ${name}</h4>
+                      <span class="badge badge-outline">${progress}%</span>
+                    </div>
+                    <div class="text-sm text-base-content/70">Responsable: ${owner}</div>
+                    <div class="text-sm text-base-content/70">Objetivos: ${objectivesCount}</div>
+                  </div>
+                </article>
+              `;
+            }).join('');
+          };
+
+          const renderStrategicObjectivesPanel = (axes) => {
+            const axesHost = document.getElementById('planes-objetivos-axes-list');
+            const host = document.getElementById('planes-objetivos-list');
+            const titleEl = document.getElementById('planes-objetivos-selected-axis-title');
+            const addBtn = document.getElementById('planes-add-objective-btn');
+            if (!host || !axesHost) return;
+            const axisList = Array.isArray(axes) ? axes : [];
+            if (addBtn) {
+              addBtn.onclick = () => {
+                const selected = axisList.find((axis) => String(axis?.id || '') === String(window.__planesSelectedAxisId || '')) || axisList[0] || null;
+                const axisId = selected && selected.id != null ? String(selected.id) : '';
+                const qs = new URLSearchParams();
+                qs.set('tab', 'objetivos');
+                qs.set('open', 'objective');
+                if (axisId) qs.set('axis_id', axisId);
+                window.location.href = `/ejes-estrategicos?${qs.toString()}`;
+              };
+            }
+            if (!axisList.length) {
+              axesHost.innerHTML = '<div class="text-base-content/60">Sin ejes registrados.</div>';
+              if (titleEl) titleEl.textContent = 'Objetivos: sin eje seleccionado';
+              host.innerHTML = '<div class="text-base-content/60">Sin objetivos registrados.</div>';
+              return;
+            }
+            let selectedAxisId = window.__planesSelectedAxisId || null;
+            if (!selectedAxisId || !axisList.some((axis) => String(axis?.id || '') === String(selectedAxisId))) {
+              selectedAxisId = axisList[0]?.id || null;
+              window.__planesSelectedAxisId = selectedAxisId;
+            }
+
+            axesHost.innerHTML = axisList.map((axis) => {
+              const axisId = String(axis?.id || '');
+              const on = String(selectedAxisId) === axisId;
+              const axisCode = escapeHtml(axis?.codigo || 'Sin código');
+              const axisName = escapeHtml(axis?.nombre || 'Sin nombre');
+              return `<button type="button" class="planes-obj-axis-btn ${on ? 'active' : ''}" data-planes-axis-id="${axisId}">${axisCode}: ${axisName}</button>`;
+            }).join('');
+            axesHost.querySelectorAll('[data-planes-axis-id]').forEach((btn) => {
+              btn.addEventListener('click', () => {
+                window.__planesSelectedAxisId = btn.getAttribute('data-planes-axis-id') || null;
+                renderStrategicObjectivesPanel(axisList);
+              });
+            });
+
+            const selectedAxis = axisList.find((axis) => String(axis?.id || '') === String(selectedAxisId)) || axisList[0];
+            const selectedAxisCode = escapeHtml(selectedAxis?.codigo || 'Sin código');
+            const selectedAxisName = escapeHtml(selectedAxis?.nombre || 'Sin nombre');
+            if (titleEl) titleEl.textContent = `Objetivos: ${selectedAxisCode}: ${selectedAxisName}`;
+
+            const objectives = Array.isArray(selectedAxis?.objetivos) ? selectedAxis.objetivos : [];
+            if (!objectives.length) {
+              host.innerHTML = '<div class="text-base-content/60">Este eje no tiene objetivos registrados.</div>';
+              return;
+            }
+            host.innerHTML = objectives.map((obj) => {
+              const name = escapeHtml(obj?.nombre || 'Sin nombre');
+              const code = escapeHtml(obj?.codigo || 'Sin código');
+              const hito = escapeHtml(obj?.hito || 'N/D');
+              const avance = Math.max(0, Math.min(100, Number(obj?.avance || 0)));
+              const fechaInicio = escapeHtml(obj?.fecha_inicio || obj?.inicio || 'N/D');
+              const fechaFin = escapeHtml(obj?.fecha_fin || obj?.fin || 'N/D');
+              return `
+                <article class="planes-obj-item">
+                  <h5>${name}</h5>
+                  <div class="planes-obj-code">${code}</div>
+                  <div class="planes-obj-meta">Hito: ${hito} · Avance: ${avance}% · Fecha inicial: ${fechaInicio} · Fecha final: ${fechaFin}</div>
+                </article>
+              `;
+            }).join('');
+          };
+
           const loadTracking = async () => {
             try {
               const response = await fetch('/api/strategic-axes', {
@@ -8101,8 +9001,12 @@ def ejes_estrategicos_page(request: Request):
               const payload = await response.json();
               const axes = (payload && payload.success && Array.isArray(payload.data)) ? payload.data : [];
               renderPlanesTrackingBoard(axes);
+              renderStrategicAxesPanel(axes);
+              renderStrategicObjectivesPanel(axes);
             } catch (_err) {
               renderPlanesTrackingBoard([]);
+              renderStrategicAxesPanel([]);
+              renderStrategicObjectivesPanel([]);
             }
           };
 
@@ -8113,7 +9017,7 @@ def ejes_estrategicos_page(request: Request):
           });
 
           loadTracking();
-          setStrategicTab('ejes');
+          setStrategicTab('fundamentacion');
           setView('list');
         })();
       </script>
@@ -8149,13 +9053,297 @@ def poa_page(request: Request):
             </div>
           </div>
         </div>
-        <article class="card bg-base-100 border border-base-300 shadow-sm">
-          <div class="card-body">
-            <h2 class="card-title">Módulo en transición DaisyUI</h2>
-            <p class="text-base-content/70">Se removió temporalmente el CSS personalizado de esta pantalla para mantener solo estilos Daisy.</p>
+        <div class="view-buttons page-view-buttons" id="poa-view-switch">
+          <button class="view-pill boton_vista active" type="button" data-poa-view="list" data-tooltip="Lista" aria-label="Lista">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+            <span class="view-pill-label boton_vista-label">List</span>
+          </button>
+          <button class="view-pill boton_vista" type="button" data-poa-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Kanban</span>
+          </button>
+          <button class="view-pill boton_vista" type="button" data-poa-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Organigrama</span>
+          </button>
+        </div>
+        <article class="card border border-base-300 shadow-sm rounded-[2rem]" style="background:#eff4f2;">
+          <div class="card-body p-6 sm:p-8">
+            <h2 class="text-3xl sm:text-4xl font-semibold text-base-content">Tablero POA por eje</h2>
+            <p class="text-lg sm:text-2xl text-base-content/70">Cada columna corresponde a un eje y contiene las tarjetas de sus objetivos.</p>
+            <div class="flex flex-wrap gap-3 pt-2">
+              <a href="/api/planificacion/plantilla-plan-poa.csv" class="btn btn-lg bg-base-100 border border-base-300 text-base-content hover:bg-base-200 normal-case">Descargar plantilla CSV</a>
+              <a href="/api/planificacion/exportar-plan-poa.xlsx" class="btn btn-lg bg-base-100 border border-base-300 text-base-content hover:bg-base-200 normal-case">Exportar plan + POA XLS</a>
+              <button type="button" id="poa-import-csv-btn" class="btn btn-lg bg-base-100 border border-base-300 text-base-content hover:bg-base-200 normal-case">Importar CSV estratégico + POA</button>
+              <input id="poa-import-csv-file" type="file" accept=".csv,text/csv" class="hidden">
+            </div>
+            <div id="poa-import-csv-msg" class="text-sm sm:text-base pt-1 min-h-[1.5rem] text-base-content/70"></div>
+          </div>
+        </article>
+        <article class="card border border-base-300 shadow-sm rounded-[2rem]" style="background:#eff4f2;">
+          <div class="card-body p-6 sm:p-8">
+            <div class="poa-small-muted">Permisos: edicion · acceso todas_tareas · rol administrador</div>
+
+            <div class="cards-2 mb-4">
+              <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
+                <header class="panel__head">
+                  <h3 class="panel__title">Actividades sin responsable</h3>
+                  <div class="panel__meta"><strong>149</strong> pendiente(s)</div>
+                </header>
+                <ul class="panel__list">
+                  <li>Diseño del Plan Integral de Crecimiento Social 2026</li>
+                  <li>Implementación de Campaña Institucional de Captación Territorial</li>
+                  <li>Profesionalización y Fortalecimiento del Equipo Comercial</li>
+                  <li>Implementación de Sistema de Seguimiento Comercial (CRM o Control Mensual)</li>
+                  <li>Estrategia Digital Complementaria de Afiliación</li>
+                  <li>Implementación de Programa de Incentivos por Captación</li>
+                  <li>Diseño y estructuración del Producto Financiero Juvenil</li>
+                  <li>Diseño del Programa de Educación Financiera Juvenil</li>
+                </ul>
+                <a href="#" class="panel__more">+141 más</a>
+              </section>
+              <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
+                <header class="panel__head">
+                  <h3 class="panel__title">Subtareas sin responsable</h3>
+                  <div class="panel__meta"><strong>18</strong> pendiente(s)</div>
+                </header>
+                <ul class="panel__list">
+                  <li>Análisis de Crecimiento histórico. <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
+                  <li>Análisis de Penetración territorial <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
+                  <li>Análisis de Competencia (fintech, sofipos, crédito comercial). <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
+                  <li>Análisis de Segmentación demográfica. <span class="text-base-content/60">(Diseño del Plan Integral de Crecimiento Social 2026)</span></li>
+                  <li>Establecer Calendario mensual de activaciones. <span class="text-base-content/60">(Implementación de Campaña Institucional de Captación Territorial)</span></li>
+                  <li>Establecer programa Presencia en ferias, tianguis y eventos locales. <span class="text-base-content/60">(Implementación de Campaña Institucional de Captación Territorial)</span></li>
+                  <li>Documentar Jornadas de afiliación simplificada. <span class="text-base-content/60">(Implementación de Campaña Institucional de Captación Territorial)</span></li>
+                  <li>Programa de Taller intensivo de captación. <span class="text-base-content/60">(Profesionalización y Fortalecimiento del Equipo Comercial)</span></li>
+                </ul>
+                <a href="#" class="panel__more">+10 más</a>
+              </section>
+            </div>
+
+            <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
+              <div class="poa-summary">
+                <div>
+                  <h4>Concentración de actividades por usuario</h4>
+                  <p>Distribución de actividades POA asignadas por responsable.</p>
+                </div>
+                <div class="poa-summary-total">Total asignadas: 1</div>
+              </div>
+            </section>
+          </div>
+        </article>
+        <article class="card border border-base-300 shadow-sm rounded-[2rem]" style="background:#eff4f2;">
+          <div class="card-body p-6 sm:p-8">
+            <div class="poa-summary mb-3">
+              <div>
+                <h4 class="!text-3xl">Concentración de actividades por usuario</h4>
+                <p>Distribución de actividades POA asignadas por responsable.</p>
+              </div>
+              <div class="poa-summary-total" id="poa-user-total">Total asignadas: 0</div>
+            </div>
+            <div id="poa-user-bars" class="grid gap-3"></div>
+            <div class="cards-2 mt-5" id="poa-axis-columns"></div>
           </div>
         </article>
       </section>
+      <dialog id="poa-objective-modal" class="modal">
+        <div class="modal-box w-11/12 max-w-6xl rounded-3xl">
+          <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" aria-label="Cerrar">✕</button>
+          </form>
+          <h3 class="font-bold text-3xl" id="poa-modal-title">Actividades del objetivo</h3>
+          <p class="text-lg text-base-content/70 mt-1 mb-3" id="poa-modal-subtitle"></p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <div class="card bg-base-100 border border-base-300 rounded-2xl p-4">
+              <div class="panel__title !text-base !tracking-normal">Estatus</div>
+              <div id="poa-modal-status" class="text-2xl font-semibold">No iniciado</div>
+            </div>
+            <div class="card bg-base-100 border border-base-300 rounded-2xl p-4">
+              <div class="panel__title !text-base !tracking-normal">Avance</div>
+              <div id="poa-modal-progress" class="text-2xl font-semibold">0%</div>
+            </div>
+          </div>
+          <div class="card bg-base-100 border border-base-300 rounded-2xl p-4">
+            <div class="panel__title !text-2xl !tracking-normal !mb-2">Actividades del objetivo</div>
+            <div id="poa-modal-activities" class="grid gap-2 max-h-[60vh] overflow-auto"></div>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button>Cerrar</button>
+        </form>
+      </dialog>
+      <script>
+        (function () {
+          const importBtn = document.getElementById('poa-import-csv-btn');
+          const fileInput = document.getElementById('poa-import-csv-file');
+          const msgEl = document.getElementById('poa-import-csv-msg');
+          const axisColumnsEl = document.getElementById('poa-axis-columns');
+          const userBarsEl = document.getElementById('poa-user-bars');
+          const userTotalEl = document.getElementById('poa-user-total');
+          const objectiveModal = document.getElementById('poa-objective-modal');
+          const modalTitleEl = document.getElementById('poa-modal-title');
+          const modalSubtitleEl = document.getElementById('poa-modal-subtitle');
+          const modalStatusEl = document.getElementById('poa-modal-status');
+          const modalProgressEl = document.getElementById('poa-modal-progress');
+          const modalActivitiesEl = document.getElementById('poa-modal-activities');
+          const setMsg = (text, isError) => {
+            if (!msgEl) return;
+            msgEl.textContent = text || '';
+            msgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+          };
+          if (!importBtn || !fileInput) return;
+          importBtn.addEventListener('click', () => fileInput.click());
+          fileInput.addEventListener('change', async () => {
+            const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            if (!file) return;
+            try {
+              setMsg('Importando archivo...', false);
+              const formData = new FormData();
+              formData.append('file', file);
+              const response = await fetch('/api/planificacion/importar-plan-poa', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || data?.success === false) {
+                throw new Error(data?.error || data?.detail || 'No se pudo importar el archivo.');
+              }
+              setMsg('Importación completada correctamente.', false);
+            } catch (error) {
+              setMsg(error?.message || 'No se pudo importar el archivo.', true);
+            } finally {
+              fileInput.value = '';
+            }
+          });
+
+          const esc = (v) => String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+          const statusRank = (s) => {
+            const key = String(s || '').toLowerCase();
+            if (key.includes('revision')) return 4;
+            if (key.includes('termin')) return 3;
+            if (key.includes('proceso')) return 2;
+            return 1;
+          };
+          const buildSubTree = (subs, parentId, depth) => {
+            const list = (subs || []).filter((s) => Number(s.parent_subactivity_id || 0) === Number(parentId || 0));
+            if (!list.length) return '';
+            const items = list.map((s) => {
+              const margin = Math.min(10, depth * 14);
+              return `
+                <li style="margin-left:${margin}px">
+                  <span class="text-base-content/70">Nivel ${Number(s.nivel || 1)}:</span>
+                  ${esc(s.nombre || 'Subtarea sin nombre')}
+                  ${buildSubTree(subs, s.id, depth + 1)}
+                </li>
+              `;
+            }).join('');
+            return `<ul class="list-disc pl-6 text-base-content/80 text-sm mt-1">${items}</ul>`;
+          };
+          const openObjectiveModal = (objective, activities) => {
+            if (!objectiveModal || !modalActivitiesEl) return;
+            const activityList = Array.isArray(activities) ? activities : [];
+            const progress = activityList.length
+              ? Math.round(activityList.reduce((s, a) => s + Number(a.avance || 0), 0) / activityList.length)
+              : 0;
+            const topStatus = activityList.length
+              ? activityList.slice().sort((a, b) => statusRank(b.status) - statusRank(a.status))[0].status || 'No iniciado'
+              : 'No iniciado';
+            if (modalTitleEl) modalTitleEl.textContent = 'Actividades del objetivo';
+            if (modalSubtitleEl) modalSubtitleEl.textContent = `${objective.codigo || 'sin código'} · ${objective.nombre || 'Objetivo'}`;
+            if (modalStatusEl) modalStatusEl.textContent = topStatus;
+            if (modalProgressEl) modalProgressEl.textContent = `${progress}%`;
+            modalActivitiesEl.innerHTML = activityList.length ? activityList.map((a) => `
+              <article class="border border-base-300 rounded-2xl p-4">
+                <h4 class="text-2xl font-semibold">${esc(a.nombre || 'Actividad sin nombre')}</h4>
+                <div class="text-base-content/60 italic">${esc(a.codigo || 'sin código')} · ${esc(a.responsable || 'Sin responsable')}</div>
+                ${buildSubTree(a.subactivities || [], 0, 1)}
+              </article>
+            `).join('') : '<p class="text-base-content/70">No hay actividades registradas para este objetivo.</p>';
+            if (typeof objectiveModal.showModal === 'function') objectiveModal.showModal();
+          };
+          const renderPoaAxisBoard = (payload) => {
+            if (!axisColumnsEl) return;
+            const objectives = Array.isArray(payload?.objectives) ? payload.objectives : [];
+            const activities = Array.isArray(payload?.activities) ? payload.activities : [];
+            const groupedByAxis = {};
+            objectives.forEach((obj) => {
+              const axisName = String(obj.axis_name || 'Sin eje').trim() || 'Sin eje';
+              if (!groupedByAxis[axisName]) groupedByAxis[axisName] = [];
+              groupedByAxis[axisName].push(obj);
+            });
+            const axisNames = Object.keys(groupedByAxis).sort((a, b) => a.localeCompare(b, 'es'));
+            axisColumnsEl.innerHTML = axisNames.map((axisName) => {
+              const items = groupedByAxis[axisName] || [];
+              const cards = items.map((obj) => {
+                const actCount = activities.filter((a) => Number(a.objective_id || 0) === Number(obj.id || 0)).length;
+                const hito = Array.isArray(obj.hitos) && obj.hitos.length ? String(obj.hitos[0].nombre || '') : (obj.hito || 'N/D');
+                return `
+                  <article class="poa-objective-card card bg-base-100 border border-base-300 rounded-2xl shadow-sm p-4" data-poa-objective-id="${Number(obj.id || 0)}">
+                    <div class="text-3xl font-semibold">${esc(obj.codigo || '')} ${esc(obj.nombre || 'Objetivo')}</div>
+                    <div class="text-base-content/70">Hito: ${esc(hito || 'N/D')}</div>
+                    <div class="text-base-content/70">Fecha inicial: ${esc(obj.fecha_inicial || 'N/D')}</div>
+                    <div class="text-base-content/70">Fecha final: ${esc(obj.fecha_final || 'N/D')}</div>
+                    <div class="text-base-content/70">Actividades: ${actCount}</div>
+                    <div class="badge badge-outline mt-2">${esc(obj.codigo || 'sin-codigo')}</div>
+                  </article>
+                `;
+              }).join('');
+              return `
+                <section class="panel card bg-base-100 border border-base-300 rounded-2xl shadow-sm">
+                  <header class="panel__head">
+                    <h3 class="text-2xl font-semibold text-base-content">${esc(axisName)}</h3>
+                  </header>
+                  <div class="grid gap-3">${cards || '<div class="text-base-content/60">Sin objetivos</div>'}</div>
+                </section>
+              `;
+            }).join('');
+            axisColumnsEl.querySelectorAll('.poa-objective-card').forEach((card) => {
+              card.style.cursor = 'pointer';
+              card.addEventListener('click', () => {
+                const objectiveId = Number(card.getAttribute('data-poa-objective-id') || 0);
+                const objective = objectives.find((o) => Number(o.id || 0) === objectiveId);
+                const objectiveActivities = activities.filter((a) => Number(a.objective_id || 0) === objectiveId);
+                openObjectiveModal(objective || {}, objectiveActivities);
+              });
+            });
+            if (userBarsEl) {
+              const byUser = {};
+              activities.forEach((a) => {
+                const user = String(a.responsable || 'Sin responsable').trim() || 'Sin responsable';
+                byUser[user] = (byUser[user] || 0) + 1;
+              });
+              const total = activities.length;
+              if (userTotalEl) userTotalEl.textContent = `Total asignadas: ${total}`;
+              const users = Object.keys(byUser).sort((a, b) => byUser[b] - byUser[a]).slice(0, 8);
+              userBarsEl.innerHTML = users.length ? users.map((u) => {
+                const count = byUser[u];
+                const pct = total ? Math.round((count * 1000) / total) / 10 : 0;
+                return `
+                  <div class="grid grid-cols-[minmax(220px,1fr)_3fr_auto] gap-3 items-center">
+                    <div class="text-xl">${esc(u)}</div>
+                    <progress class="progress progress-success w-full" value="${pct}" max="100"></progress>
+                    <div class="text-xl">${count} (${pct}%)</div>
+                  </div>
+                `;
+              }).join('') : '<div class="text-base-content/60">Sin actividades asignadas.</div>';
+            }
+          };
+          const loadPoaBoard = async () => {
+            try {
+              const response = await fetch('/api/poa/board-data', { method: 'GET', credentials: 'same-origin' });
+              const payload = await response.json().catch(() => ({}));
+              if (!response.ok || payload?.success === false) throw new Error(payload?.error || payload?.detail || 'No se pudo cargar tablero POA.');
+              renderPoaAxisBoard(payload);
+            } catch (error) {
+              if (axisColumnsEl) axisColumnsEl.innerHTML = `<div class="panel text-error">${esc(error?.message || 'No se pudo cargar tablero POA.')}</div>`;
+            }
+          };
+          loadPoaBoard();
+        })();
+      </script>
     """)
     return render_backend_page(
         request,

@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-02-18T17:42:05.448551+00:00",
+  "summary": {
+    "total_controles": 5,
+    "configurados": 3,
+    "pendientes": 2
+  },
+  "rows": [
+    {
+      "control": "nginx_tls_conf",
+      "estado": "Configurado",
+      "detalle": "/Users/jalm/Dropbox/Apps/intelicoop/docker/nginx.gateway.tls.conf"
+    },
+    {
+      "control": "compose_tls_override",
+      "estado": "Configurado",
+      "detalle": "/Users/jalm/Dropbox/Apps/intelicoop/docker/docker-compose.tls.yml"
+    },
+    {
+      "control": "cert_fullchain",
+      "estado": "Pendiente",
+      "detalle": "/Users/jalm/Dropbox/Apps/intelicoop/certs/fullchain.pem"
+    },
+    {
+      "control": "cert_privkey",
+      "estado": "Pendiente",
+      "detalle": "/Users/jalm/Dropbox/Apps/intelicoop/certs/privkey.pem"
+    },
+    {
+      "control": "hsts_header",
+      "estado": "Configurado",
+      "detalle": "header_hsts_en_nginx_tls_conf"
+    }
+  ],
+  "run_instructions": {
+    "compose_command": "docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.tls.yml up -d --build",
+    "https_url_local": "https://localhost:8443"
+  }
+}

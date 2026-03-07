@@ -1,0 +1,342 @@
+<!-- ── Tablero de KPIs — Control Interno COSO · Fase 5 ───────────────── -->
+<section id="tb-root" class="grid gap-6 w-full max-w-6xl">
+
+  <!-- Encabezado -->
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-6">
+      <img src="/templates/icon/plan.svg" alt="Tablero"
+           width="72" height="72"
+           class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+           onerror="this.style.display='none'">
+      <div class="w-full grid gap-1 content-center">
+        <div class="text-3xl sm:text-4xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">
+          Tablero de control interno
+        </div>
+        <div class="text-base text-base-content/70">
+          Indicadores clave de desempeño — COSO · Fase 5
+        </div>
+      </div>
+      <button type="button" id="tb-btn-refrescar"
+              class="btn btn-outline shrink-0 gap-2">
+        <svg id="tb-spinner" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 hidden animate-spin"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0115 0M20 15a9 9 0 01-15 0"/>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0115 0M20 15a9 9 0 01-15 0"/>
+        </svg>
+        Refrescar
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumen ejecutivo (4 tarjetas grandes) -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="tb-resumen">
+    <div class="stat card bg-base-100 border border-base-300 shadow-sm py-4 px-5">
+      <div class="stat-title text-xs uppercase tracking-wide">Controles</div>
+      <div class="stat-value text-3xl" id="tb-total-controles">—</div>
+      <div class="stat-desc" id="tb-desc-controles">activos</div>
+    </div>
+    <div class="stat card bg-base-100 border border-base-300 shadow-sm py-4 px-5">
+      <div class="stat-title text-xs uppercase tracking-wide">Actividades</div>
+      <div class="stat-value text-3xl" id="tb-total-actividades">—</div>
+      <div class="stat-desc" id="tb-desc-actividades">en programa</div>
+    </div>
+    <div class="stat card bg-base-100 border border-base-300 shadow-sm py-4 px-5">
+      <div class="stat-title text-xs uppercase tracking-wide">Evidencias</div>
+      <div class="stat-value text-3xl" id="tb-total-evidencias">—</div>
+      <div class="stat-desc" id="tb-desc-evidencias">registradas</div>
+    </div>
+    <div class="stat card bg-base-100 border border-base-300 shadow-sm py-4 px-5">
+      <div class="stat-title text-xs uppercase tracking-wide">Hallazgos</div>
+      <div class="stat-value text-3xl" id="tb-total-hallazgos">—</div>
+      <div class="stat-desc" id="tb-desc-hallazgos">abiertos / total</div>
+    </div>
+  </div>
+
+  <!-- Fila 1: Ejecución del programa + Cumplimiento de evidencias -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <!-- Ejecución del programa anual -->
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5 gap-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-base">Ejecución del programa anual</h3>
+          <span class="badge badge-primary text-xs" id="tb-pct-completadas">0 %</span>
+        </div>
+        <div id="tb-prog-actividades" class="grid gap-2 text-sm"></div>
+        <div>
+          <div class="flex justify-between text-xs text-base-content/60 mb-1">
+            <span>Avance general</span>
+            <span id="tb-pct-prog-label">0 %</span>
+          </div>
+          <progress class="progress progress-primary w-full" id="tb-pct-prog-bar" value="0" max="100"></progress>
+        </div>
+      </div>
+    </article>
+
+    <!-- Cumplimiento de controles (evidencias) -->
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5 gap-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-base">Cumplimiento de controles</h3>
+          <span class="badge badge-success text-xs" id="tb-pct-cumple">0 %</span>
+        </div>
+        <div id="tb-ev-resultados" class="grid gap-2 text-sm"></div>
+        <div>
+          <div class="flex justify-between text-xs text-base-content/60 mb-1">
+            <span>% evidencias que cumplen</span>
+            <span id="tb-pct-cumple-label">0 %</span>
+          </div>
+          <progress class="progress progress-success w-full" id="tb-pct-cumple-bar" value="0" max="100"></progress>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Fila 2: Hallazgos por riesgo + Estado de acciones correctivas -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <!-- Hallazgos por nivel de riesgo -->
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5 gap-4">
+        <h3 class="font-bold text-base">Hallazgos por nivel de riesgo</h3>
+        <div class="grid gap-3" id="tb-hz-riesgo"></div>
+        <div class="divider my-0"></div>
+        <h4 class="font-semibold text-sm">Por estado</h4>
+        <div class="grid gap-2" id="tb-hz-estado"></div>
+        <div>
+          <div class="flex justify-between text-xs text-base-content/60 mb-1">
+            <span>% hallazgos resueltos</span>
+            <span id="tb-pct-resueltos-label">0 %</span>
+          </div>
+          <progress class="progress progress-info w-full" id="tb-pct-resueltos-bar" value="0" max="100"></progress>
+        </div>
+      </div>
+    </article>
+
+    <!-- Controles por componente COSO -->
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5 gap-4">
+        <h3 class="font-bold text-base">Controles por componente COSO</h3>
+        <div class="grid gap-2 text-sm" id="tb-coso-controles"></div>
+        <div class="divider my-0"></div>
+        <h4 class="font-semibold text-sm">Acciones correctivas</h4>
+        <div class="grid gap-2" id="tb-acciones-kpi"></div>
+      </div>
+    </article>
+  </div>
+
+  <!-- Fila 3: Hallazgos por componente COSO + Periodicidad controles -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <!-- Hallazgos por componente COSO -->
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5 gap-4">
+        <h3 class="font-bold text-base">Hallazgos por componente COSO</h3>
+        <div class="grid gap-2 text-sm" id="tb-coso-hallazgos"></div>
+      </div>
+    </article>
+
+    <!-- Programas por estado -->
+    <article class="card bg-base-100 border border-base-300 shadow-sm">
+      <div class="card-body p-5 gap-4">
+        <h3 class="font-bold text-base">Programas anuales por estado</h3>
+        <div class="grid gap-2 text-sm" id="tb-programas-estado"></div>
+        <div class="divider my-0"></div>
+        <h4 class="font-semibold text-sm">Controles por periodicidad</h4>
+        <div class="grid gap-2 text-sm" id="tb-periodicidad"></div>
+      </div>
+    </article>
+  </div>
+
+</section>
+
+<script>
+(function () {
+
+const API = "/api/ci-tablero";
+
+/* ── helpers ────────────────────────────────────────────────────────────── */
+
+function _qs(id) { return document.getElementById(id); }
+
+/** Devuelve un HTML de barra de progreso con etiqueta */
+function _barra(label, valor, total, claseProgress, claseTexto = "") {
+  const pct = total ? Math.round(valor / total * 100) : 0;
+  return `
+    <div>
+      <div class="flex justify-between items-center mb-0.5">
+        <span class="${claseTexto}">${label}</span>
+        <span class="font-semibold tabular-nums">${valor} <span class="text-base-content/50 font-normal text-xs">/ ${total} (${pct}%)</span></span>
+      </div>
+      <progress class="progress ${claseProgress} w-full h-2" value="${pct}" max="100"></progress>
+    </div>`;
+}
+
+/** Devuelve un HTML de item con badge de cantidad */
+function _item(label, valor, badgeClass = "badge-neutral") {
+  return `<div class="flex items-center justify-between gap-2">
+    <span class="text-sm">${label || "—"}</span>
+    <span class="badge ${badgeClass} text-xs font-semibold">${valor}</span>
+  </div>`;
+}
+
+/* ── renderizado ────────────────────────────────────────────────────────── */
+
+function _renderControles(c) {
+  _qs("tb-total-controles").textContent = c.total;
+  _qs("tb-desc-controles").textContent  = `${c.activos} activos`;
+
+  // COSO
+  const totalC = c.total || 1;
+  const coso   = c.por_componente || {};
+  _qs("tb-coso-controles").innerHTML = Object.entries(coso)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => _barra(k, v, totalC, "progress-primary"))
+    .join("") || "<p class='text-base-content/40 text-xs'>Sin datos.</p>";
+
+  // Periodicidad
+  const per = c.por_periodicidad || {};
+  _qs("tb-periodicidad").innerHTML = Object.entries(per)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => _item(k, v, "badge-primary badge-outline"))
+    .join("") || "<p class='text-base-content/40 text-xs'>Sin datos.</p>";
+}
+
+function _renderPrograma(p) {
+  _qs("tb-total-actividades").textContent  = p.total_actividades;
+  _qs("tb-desc-actividades").textContent   = `${p.total_programas} programa(s)`;
+  _qs("tb-pct-completadas").textContent    = `${p.pct_completadas} %`;
+  _qs("tb-pct-prog-label").textContent     = `${p.pct_completadas} %`;
+  _qs("tb-pct-prog-bar").value             = p.pct_completadas;
+
+  const total = p.total_actividades || 1;
+  const items = [
+    { label: "Completado",  val: p.completadas, cls: "progress-success" },
+    { label: "En proceso",  val: p.en_proceso,  cls: "progress-info" },
+    { label: "Programado",  val: p.programadas, cls: "progress-primary" },
+    { label: "Diferido",    val: p.diferidas,   cls: "progress-warning" },
+    { label: "Cancelado",   val: p.canceladas,  cls: "progress-error" },
+  ];
+  _qs("tb-prog-actividades").innerHTML = items
+    .map(i => _barra(i.label, i.val, total, i.cls))
+    .join("");
+
+  // Programas por estado
+  const ep = p.por_estado_programa || {};
+  const badgeMap = {
+    "En ejecución": "badge-info",
+    "Aprobado":     "badge-success",
+    "Borrador":     "badge-warning",
+    "Cerrado":      "badge-ghost",
+  };
+  _qs("tb-programas-estado").innerHTML = Object.entries(ep)
+    .map(([k, v]) => _item(k, v, badgeMap[k] || "badge-neutral"))
+    .join("") || "<p class='text-base-content/40 text-xs'>Sin programas.</p>";
+}
+
+function _renderEvidencias(ev) {
+  _qs("tb-total-evidencias").textContent = ev.total;
+  _qs("tb-desc-evidencias").textContent  = `${ev.cumple} cumplen`;
+  const evaluadas = ev.cumple + ev.parcial + ev.no_cumple || 1;
+  _qs("tb-pct-cumple").textContent       = `${ev.pct_cumple} %`;
+  _qs("tb-pct-cumple-label").textContent = `${ev.pct_cumple} %`;
+  _qs("tb-pct-cumple-bar").value         = ev.pct_cumple;
+
+  const items = [
+    { label: "Cumple",                val: ev.cumple,      cls: "progress-success" },
+    { label: "Cumple parcialmente",   val: ev.parcial,     cls: "progress-warning" },
+    { label: "No cumple",             val: ev.no_cumple,   cls: "progress-error" },
+    { label: "Por evaluar",           val: ev.por_evaluar, cls: "progress-neutral" },
+  ];
+  _qs("tb-ev-resultados").innerHTML = items
+    .map(i => _barra(i.label, i.val, ev.total || 1, i.cls))
+    .join("");
+}
+
+function _renderHallazgos(h) {
+  _qs("tb-total-hallazgos").textContent = h.total;
+  _qs("tb-desc-hallazgos").textContent  = `${h.abiertos} abiertos / ${h.total} total`;
+
+  const total = h.total || 1;
+  // Por riesgo
+  const riesgos = [
+    { label: "Crítico", val: h.criticos, cls: "progress-error",   txt: "text-error font-semibold" },
+    { label: "Alto",    val: h.altos,    cls: "progress-error",   txt: "text-error" },
+    { label: "Medio",   val: h.medios,   cls: "progress-warning", txt: "text-warning" },
+    { label: "Bajo",    val: h.bajos,    cls: "progress-success", txt: "" },
+  ];
+  _qs("tb-hz-riesgo").innerHTML = riesgos
+    .map(r => _barra(r.label, r.val, total, r.cls, r.txt))
+    .join("");
+
+  // Por estado
+  const estados = [
+    { label: "Abierto",     val: h.abiertos,   cls: "progress-error" },
+    { label: "En atención", val: h.en_atencion, cls: "progress-warning" },
+    { label: "Subsanado",   val: h.subsanados,  cls: "progress-info" },
+    { label: "Cerrado",     val: h.cerrados,    cls: "progress-success" },
+  ];
+  _qs("tb-hz-estado").innerHTML = estados
+    .map(e => _barra(e.label, e.val, total, e.cls))
+    .join("");
+
+  _qs("tb-pct-resueltos-label").textContent = `${h.pct_resueltos} %`;
+  _qs("tb-pct-resueltos-bar").value         = h.pct_resueltos;
+
+  // COSO hallazgos
+  const coso = h.por_coso || {};
+  _qs("tb-coso-hallazgos").innerHTML = Object.entries(coso)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => _barra(k, v, total, "progress-warning"))
+    .join("") || "<p class='text-base-content/40 text-xs'>Sin hallazgos.</p>";
+
+  // Acciones correctivas
+  const pctAC = h.pct_acciones;
+  _qs("tb-acciones-kpi").innerHTML = `
+    <div class="grid grid-cols-3 gap-2">
+      <div class="stat card bg-base-100 border border-base-300 py-2 px-3">
+        <div class="stat-title text-xs">Total</div>
+        <div class="stat-value text-xl">${h.total_acciones}</div>
+      </div>
+      <div class="stat card bg-success/10 border border-success/30 py-2 px-3">
+        <div class="stat-title text-xs text-success">Ejecutadas</div>
+        <div class="stat-value text-xl text-success">${h.acciones_ejecutadas}</div>
+      </div>
+      <div class="stat card bg-primary/10 border border-primary/30 py-2 px-3">
+        <div class="stat-title text-xs text-primary">% ejec.</div>
+        <div class="stat-value text-xl text-primary">${pctAC}%</div>
+      </div>
+    </div>
+    <progress class="progress progress-success w-full h-2 mt-1" value="${pctAC}" max="100"></progress>`;
+}
+
+/* ── carga de datos ─────────────────────────────────────────────────────── */
+
+async function cargar() {
+  const spinner = _qs("tb-spinner");
+  spinner.classList.remove("hidden");
+  try {
+    const r = await fetch(API);
+    if (!r.ok) throw new Error("Error al cargar indicadores.");
+    const d = await r.json();
+    _renderControles(d.controles);
+    _renderPrograma(d.programa);
+    _renderEvidencias(d.evidencias);
+    _renderHallazgos(d.hallazgos);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    spinner.classList.add("hidden");
+  }
+}
+
+_qs("tb-btn-refrescar").addEventListener("click", cargar);
+cargar();
+
+})();
+</script>

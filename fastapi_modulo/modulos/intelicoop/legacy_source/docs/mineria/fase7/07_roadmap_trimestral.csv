@@ -1,0 +1,6 @@
+prioridad,iniciativa,objetivo_estrategico,puntaje_prioridad,horizonte,owner
+P1,explicabilidad_avanzada_scoring,reducir_riesgo_crediticio,4.70,Q+1,riesgo_analitica
+P2,alertamiento_predictivo_cobranza_por_gestor,mejorar_recuperacion,4.70,Q+2,cobranzas_analitica
+P3,integracion_fuente_externa_buro,expansion_credito_sano,4.40,Q+2,riesgo_datos
+P4,tablero_valor_negocio_ejecutivo,gobierno_y_transparencia,4.30,Q+1,analitica_negocio
+P5,orquestacion_reentrenamiento_multi_modelo,eficiencia_operativa,4.00,Q+1,mlops_backend

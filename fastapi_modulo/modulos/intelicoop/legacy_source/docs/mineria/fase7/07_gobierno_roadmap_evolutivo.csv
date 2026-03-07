@@ -1,0 +1,6 @@
+dimension,criterio,valor,referencia,estado
+gobierno,revision_trimestral_definida,si,comite_trimestral,Cumple
+priorizacion,backlog_priotizado_por_impacto_factibilidad,5 iniciativas,matriz_impacto_factibilidad,Cumple
+alineacion_estrategica,iniciativas_alineadas_a_objetivos,si,riesgo_recuperacion_eficiencia_transparencia,Cumple
+contexto_actual,score_promedio_actual,0.0000,informativo,Cumple
+contexto_actual,mora_alta_rate_actual_pct,0.00,informativo,Cumple

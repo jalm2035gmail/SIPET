@@ -1,0 +1,474 @@
+<section id="ci-root" class="grid gap-5 w-full max-w-6xl">
+
+  <!-- ── Encabezado ──────────────────────────────────────────────── -->
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-6">
+      <img src="/templates/icon/plan.svg" alt="Control interno"
+           width="72" height="72"
+           class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+           onerror="this.style.display='none'">
+      <div class="w-full grid gap-1 content-center">
+        <div class="text-3xl sm:text-4xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">
+          Control interno
+        </div>
+        <div class="text-base text-base-content/70">
+          Catálogo de controles internos — Componentes COSO · Fase 1
+        </div>
+      </div>
+      <button type="button" id="ci-btn-nuevo"
+              class="btn btn-primary shrink-0 gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        Nuevo control
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Filtros ─────────────────────────────────────────────────── -->
+  <article class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body p-4">
+      <div class="flex flex-wrap gap-3 items-end">
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Componente COSO</span></div>
+          <select id="ci-filtro-componente" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Ambiente de control</option>
+            <option>Evaluación de riesgos</option>
+            <option>Actividades de control</option>
+            <option>Información y comunicación</option>
+            <option>Monitoreo</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Área</span></div>
+          <select id="ci-filtro-area" class="select select-bordered select-sm w-full">
+            <option value="">Todas</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Estado</span></div>
+          <select id="ci-filtro-estado" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Activo</option>
+            <option>Inactivo</option>
+            <option>Pendiente de revisión</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Búsqueda</span></div>
+          <input type="text" id="ci-busqueda" placeholder="Código, nombre…"
+                 class="input input-bordered input-sm w-full">
+        </label>
+        <button type="button" id="ci-btn-filtrar"
+                class="btn btn-outline btn-sm self-end">Filtrar</button>
+        <button type="button" id="ci-btn-limpiar"
+                class="btn btn-ghost btn-sm self-end">Limpiar</button>
+      </div>
+    </div>
+  </article>
+
+  <!-- ── Tabla de controles ──────────────────────────────────────── -->
+  <article class="card bg-base-100 border border-base-300 shadow-sm overflow-x-auto">
+    <div class="card-body p-0">
+      <div class="flex items-center justify-between p-4 border-b border-base-300">
+        <h2 class="font-semibold text-base-content">Controles registrados</h2>
+        <span id="ci-total" class="badge badge-outline badge-sm">0 registros</span>
+      </div>
+      <table class="table table-sm table-zebra w-full">
+        <thead>
+          <tr class="text-xs uppercase text-base-content/60">
+            <th class="w-24">Código</th>
+            <th>Nombre</th>
+            <th class="hidden md:table-cell">Componente COSO</th>
+            <th class="hidden lg:table-cell">Área</th>
+            <th class="hidden lg:table-cell">Periodicidad</th>
+            <th>Estado</th>
+            <th class="w-24 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="ci-tbody">
+          <tr id="ci-row-empty">
+            <td colspan="7" class="text-center py-8 text-base-content/40">
+              No hay controles registrados. Crea el primero con el botón <b>Nuevo control</b>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <!-- ── Notificación flotante ───────────────────────────────────── -->
+  <div id="ci-toast" class="toast toast-end" style="display:none; z-index:9999;">
+    <div id="ci-toast-inner" class="alert shadow-lg max-w-xs text-sm"></div>
+  </div>
+
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════
+     Modal: formulario de control
+════════════════════════════════════════════════════════════════ -->
+<dialog id="ci-modal" class="modal">
+  <div class="modal-box w-full max-w-2xl">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3">✕</button>
+    </form>
+    <h3 id="ci-modal-titulo" class="font-bold text-lg mb-4">Nuevo control</h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+      <!-- Código -->
+      <label class="form-control w-full">
+        <div class="label py-1"><span class="label-text font-semibold">Código <span class="text-error">*</span></span></div>
+        <input type="text" id="ci-f-codigo" maxlength="30" placeholder="Ej. AC-001"
+               class="input input-bordered w-full">
+      </label>
+
+      <!-- Nombre -->
+      <label class="form-control w-full sm:col-span-2">
+        <div class="label py-1"><span class="label-text font-semibold">Nombre del control <span class="text-error">*</span></span></div>
+        <input type="text" id="ci-f-nombre" maxlength="200"
+               placeholder="Descripción corta del control"
+               class="input input-bordered w-full">
+      </label>
+
+      <!-- Componente COSO -->
+      <label class="form-control w-full">
+        <div class="label py-1"><span class="label-text font-semibold">Componente COSO <span class="text-error">*</span></span></div>
+        <select id="ci-f-componente" class="select select-bordered w-full">
+          <option value="">-- Selecciona --</option>
+          <option>Ambiente de control</option>
+          <option>Evaluación de riesgos</option>
+          <option>Actividades de control</option>
+          <option>Información y comunicación</option>
+          <option>Monitoreo</option>
+        </select>
+      </label>
+
+      <!-- Área responsable -->
+      <label class="form-control w-full">
+        <div class="label py-1"><span class="label-text font-semibold">Área responsable <span class="text-error">*</span></span></div>
+        <input type="text" id="ci-f-area" maxlength="100"
+               placeholder="Ej. Dirección de Crédito"
+               class="input input-bordered w-full">
+      </label>
+
+      <!-- Tipo de riesgo -->
+      <label class="form-control w-full">
+        <div class="label py-1"><span class="label-text font-semibold">Tipo de riesgo</span></div>
+        <input type="text" id="ci-f-tipo_riesgo" maxlength="100"
+               placeholder="Ej. Riesgo operacional"
+               class="input input-bordered w-full">
+      </label>
+
+      <!-- Periodicidad -->
+      <label class="form-control w-full">
+        <div class="label py-1"><span class="label-text font-semibold">Periodicidad</span></div>
+        <select id="ci-f-periodicidad" class="select select-bordered w-full">
+          <option>Diario</option>
+          <option>Semanal</option>
+          <option selected>Mensual</option>
+          <option>Trimestral</option>
+          <option>Semestral</option>
+          <option>Anual</option>
+          <option>Eventual</option>
+        </select>
+      </label>
+
+      <!-- Normativa aplicable -->
+      <label class="form-control w-full sm:col-span-2">
+        <div class="label py-1"><span class="label-text font-semibold">Normativa aplicable</span></div>
+        <input type="text" id="ci-f-normativa" maxlength="200"
+               placeholder="Ej. Circular CNBV 2023-04, LACP Art. 36"
+               class="input input-bordered w-full">
+      </label>
+
+      <!-- Descripción -->
+      <label class="form-control w-full sm:col-span-2">
+        <div class="label py-1"><span class="label-text font-semibold">Descripción</span></div>
+        <textarea id="ci-f-descripcion" rows="3"
+                  placeholder="Detalle del procedimiento de control"
+                  class="textarea textarea-bordered w-full"></textarea>
+      </label>
+
+      <!-- Estado -->
+      <label class="form-control w-full">
+        <div class="label py-1"><span class="label-text font-semibold">Estado</span></div>
+        <select id="ci-f-estado" class="select select-bordered w-full">
+          <option selected>Activo</option>
+          <option>Inactivo</option>
+          <option>Pendiente de revisión</option>
+        </select>
+      </label>
+
+    </div><!-- /grid -->
+
+    <div id="ci-form-error" class="alert alert-error text-sm mt-3" style="display:none;"></div>
+
+    <div class="modal-action">
+      <button type="button" id="ci-btn-cancelar" class="btn btn-ghost">Cancelar</button>
+      <button type="button" id="ci-btn-guardar" class="btn btn-primary gap-2">
+        <span id="ci-btn-guardar-spinner" class="loading loading-spinner loading-xs" style="display:none;"></span>
+        Guardar
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>cerrar</button></form>
+</dialog>
+
+<!-- ════════════════════════════════════════════════════════════════
+     Modal: confirmar eliminación
+════════════════════════════════════════════════════════════════ -->
+<dialog id="ci-modal-delete" class="modal">
+  <div class="modal-box max-w-sm">
+    <h3 class="font-bold text-lg mb-2">Eliminar control</h3>
+    <p class="text-base-content/70 text-sm mb-4">
+      ¿Confirmas que deseas eliminar <strong id="ci-delete-nombre"></strong>?
+      Esta acción no se puede deshacer.
+    </p>
+    <div class="modal-action">
+      <form method="dialog"><button class="btn btn-ghost">Cancelar</button></form>
+      <button type="button" id="ci-btn-confirmar-delete" class="btn btn-error">Eliminar</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>cerrar</button></form>
+</dialog>
+
+<!-- ════════════════════════════════════════════════════════════════
+     Script
+════════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  // ─── Estado ────────────────────────────────────────────────────
+  let controles = [];
+  let editingId = null;
+  let deleteId  = null;
+
+  // ─── Refs ──────────────────────────────────────────────────────
+  const tbody        = document.getElementById('ci-tbody');
+  const totalEl      = document.getElementById('ci-total');
+  const modal        = document.getElementById('ci-modal');
+  const modalDelete  = document.getElementById('ci-modal-delete');
+  const modalTitulo  = document.getElementById('ci-modal-titulo');
+  const formError    = document.getElementById('ci-form-error');
+  const spinner      = document.getElementById('ci-btn-guardar-spinner');
+  const deleteNombre = document.getElementById('ci-delete-nombre');
+  const toast        = document.getElementById('ci-toast');
+  const toastInner   = document.getElementById('ci-toast-inner');
+
+  const campos = ['codigo','nombre','componente','area','tipo_riesgo',
+                  'periodicidad','descripcion','normativa','estado'];
+
+  function field(id) { return document.getElementById('ci-f-' + id); }
+
+  // ─── Toast ─────────────────────────────────────────────────────
+  let toastTimer = null;
+  function showToast(msg, isError) {
+    toastInner.className = 'alert shadow-lg max-w-xs text-sm ' +
+      (isError ? 'alert-error' : 'alert-success');
+    toastInner.textContent = msg;
+    toast.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+  }
+
+  // ─── Badge de estado ───────────────────────────────────────────
+  const ESTADO_BADGE = {
+    'Activo':                 'badge-success',
+    'Inactivo':               'badge-error',
+    'Pendiente de revisión':  'badge-warning',
+  };
+
+  // ─── Renderizar tabla ──────────────────────────────────────────
+  function renderTabla(lista) {
+    totalEl.textContent = lista.length + ' registro' + (lista.length !== 1 ? 's' : '');
+    if (!lista.length) {
+      tbody.innerHTML = `<tr id="ci-row-empty">
+        <td colspan="7" class="text-center py-8 text-base-content/40">
+          No hay controles que coincidan con los filtros.
+        </td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map(c => {
+      const badgeCls = ESTADO_BADGE[c.estado] || 'badge-neutral';
+      return `<tr>
+        <td class="font-mono text-xs font-semibold">${esc(c.codigo)}</td>
+        <td class="font-medium">${esc(c.nombre)}</td>
+        <td class="hidden md:table-cell text-xs text-base-content/70">${esc(c.componente)}</td>
+        <td class="hidden lg:table-cell text-xs text-base-content/70">${esc(c.area)}</td>
+        <td class="hidden lg:table-cell text-xs">${esc(c.periodicidad)}</td>
+        <td><span class="badge badge-sm ${badgeCls}">${esc(c.estado)}</span></td>
+        <td class="text-right">
+          <button class="btn btn-ghost btn-xs" title="Editar"
+                  onclick="ciEdit(${c.id})">✏️</button>
+          <button class="btn btn-ghost btn-xs text-error" title="Eliminar"
+                  onclick="ciDeletePrompt(${c.id}, '${esc(c.nombre).replace(/'/g,"&#39;")}')">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ─── Cargar desde API ──────────────────────────────────────────
+  async function cargar(params) {
+    try {
+      const qs = new URLSearchParams(params || {}).toString();
+      const res = await fetch('/api/control-interno?' + qs, {credentials:'same-origin'});
+      const data = await res.json();
+      controles = data.controles || [];
+      renderTabla(controles);
+    } catch (e) {
+      showToast('Error al cargar controles.', true);
+    }
+  }
+
+  // ─── Filtrar ───────────────────────────────────────────────────
+  function getFiltros() {
+    const params = {};
+    const comp  = document.getElementById('ci-filtro-componente').value;
+    const area  = document.getElementById('ci-filtro-area').value;
+    const est   = document.getElementById('ci-filtro-estado').value;
+    const busq  = document.getElementById('ci-busqueda').value.trim();
+    if (comp) params.componente = comp;
+    if (area) params.area = area;
+    if (est)  params.estado = est;
+    if (busq) params.q = busq;
+    return params;
+  }
+
+  document.getElementById('ci-btn-filtrar').addEventListener('click', () => cargar(getFiltros()));
+  document.getElementById('ci-btn-limpiar').addEventListener('click', () => {
+    document.getElementById('ci-filtro-componente').value = '';
+    document.getElementById('ci-filtro-area').value = '';
+    document.getElementById('ci-filtro-estado').value = '';
+    document.getElementById('ci-busqueda').value = '';
+    cargar();
+  });
+
+  // ─── Abrir modal (nuevo) ───────────────────────────────────────
+  document.getElementById('ci-btn-nuevo').addEventListener('click', () => {
+    editingId = null;
+    modalTitulo.textContent = 'Nuevo control';
+    campos.forEach(c => {
+      const el = field(c);
+      if (!el) return;
+      if (el.tagName === 'SELECT') {
+        el.selectedIndex = 0;
+        if (c === 'estado') el.value = 'Activo';
+        if (c === 'periodicidad') el.value = 'Mensual';
+      } else {
+        el.value = '';
+      }
+    });
+    formError.style.display = 'none';
+    modal.showModal();
+  });
+
+  // ─── Editar ────────────────────────────────────────────────────
+  window.ciEdit = function(id) {
+    const c = controles.find(x => x.id === id);
+    if (!c) return;
+    editingId = id;
+    modalTitulo.textContent = 'Editar control';
+    campos.forEach(k => {
+      const el = field(k);
+      if (el) el.value = c[k] || '';
+    });
+    formError.style.display = 'none';
+    modal.showModal();
+  };
+
+  // ─── Prompt eliminar ───────────────────────────────────────────
+  window.ciDeletePrompt = function(id, nombre) {
+    deleteId = id;
+    deleteNombre.textContent = nombre;
+    modalDelete.showModal();
+  };
+
+  document.getElementById('ci-btn-confirmar-delete').addEventListener('click', async () => {
+    if (!deleteId) return;
+    modalDelete.close();
+    try {
+      const res = await fetch('/api/control-interno/' + deleteId, {
+        method: 'DELETE', credentials: 'same-origin'
+      });
+      if (!res.ok) throw new Error();
+      showToast('Control eliminado.');
+      cargar(getFiltros());
+    } catch {
+      showToast('No se pudo eliminar el control.', true);
+    }
+  });
+
+  // ─── Cancelar modal ────────────────────────────────────────────
+  document.getElementById('ci-btn-cancelar').addEventListener('click', () => modal.close());
+
+  // ─── Guardar ───────────────────────────────────────────────────
+  document.getElementById('ci-btn-guardar').addEventListener('click', async () => {
+    formError.style.display = 'none';
+
+    const payload = {};
+    campos.forEach(c => {
+      const el = field(c);
+      if (el) payload[c] = el.value.trim();
+    });
+
+    if (!payload.codigo)     { showFormError('El código es obligatorio.'); return; }
+    if (!payload.nombre)     { showFormError('El nombre es obligatorio.'); return; }
+    if (!payload.componente) { showFormError('Selecciona un componente COSO.'); return; }
+    if (!payload.area)       { showFormError('El área responsable es obligatoria.'); return; }
+
+    spinner.style.display = 'inline-block';
+    try {
+      const url    = editingId ? '/api/control-interno/' + editingId : '/api/control-interno';
+      const method = editingId ? 'PUT' : 'POST';
+      const res    = await fetch(url, {
+        method,
+        headers: {'Content-Type':'application/json'},
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al guardar.');
+      modal.close();
+      showToast(editingId ? 'Control actualizado.' : 'Control creado.');
+      cargar(getFiltros());
+    } catch (e) {
+      showFormError(e.message || 'No se pudo guardar.');
+    } finally {
+      spinner.style.display = 'none';
+    }
+  });
+
+  function showFormError(msg) {
+    formError.textContent = msg;
+    formError.style.display = 'flex';
+  }
+
+  // ─── Cargar opciones de área ───────────────────────────────────
+  async function cargarOpciones() {
+    try {
+      const res = await fetch('/api/control-interno-opciones', {credentials:'same-origin'});
+      const data = await res.json();
+      const sel = document.getElementById('ci-filtro-area');
+      (data.areas || []).forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a; opt.textContent = a;
+        sel.appendChild(opt);
+      });
+    } catch (_) {}
+  }
+
+  // ─── Init ──────────────────────────────────────────────────────
+  cargarOpciones();
+  cargar();
+})();
+</script>

@@ -1,0 +1,7 @@
+fecha_ejecucion,model_version,antecedente,consecuente,soporte,confianza,lift,casos_antecedente,casos_regla,oportunidad_comercial
+2026-02-18,asociacion_productos_v1,credito_solicitado,cuenta_ahorro,1.0000,1.0000,1.0000,1,1,Ofrecer plan de ahorro programado.
+2026-02-18,asociacion_productos_v1,credito_solicitado,movimientos_recientes,1.0000,1.0000,1.0000,1,1,Campana de fidelizacion por alta actividad.
+2026-02-18,asociacion_productos_v1,cuenta_ahorro,credito_solicitado,1.0000,1.0000,1.0000,1,1,Campana de acompanamiento a solicitud de credito.
+2026-02-18,asociacion_productos_v1,cuenta_ahorro,movimientos_recientes,1.0000,1.0000,1.0000,1,1,Campana de fidelizacion por alta actividad.
+2026-02-18,asociacion_productos_v1,movimientos_recientes,credito_solicitado,1.0000,1.0000,1.0000,1,1,Campana de acompanamiento a solicitud de credito.
+2026-02-18,asociacion_productos_v1,movimientos_recientes,cuenta_ahorro,1.0000,1.0000,1.0000,1,1,Ofrecer plan de ahorro programado.

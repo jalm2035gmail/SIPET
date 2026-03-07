@@ -161,6 +161,27 @@
     }
   }
 
+  var tabs = Array.prototype.slice.call(document.querySelectorAll("[data-tab]"));
+  var panels = Array.prototype.slice.call(document.querySelectorAll(".tab-panel[data-panel]"));
+  function setTab(tabKey) {
+    var target = String(tabKey || "activo-total");
+    tabs.forEach(function (tabBtn) {
+      var on = (tabBtn.getAttribute("data-tab") || "") === target;
+      tabBtn.classList.toggle("tab-active", on);
+      tabBtn.classList.toggle("active", on);
+    });
+    panels.forEach(function (panelEl) {
+      var show = (panelEl.getAttribute("data-panel") || "") === target;
+      panelEl.hidden = !show;
+      panelEl.style.display = show ? "block" : "none";
+    });
+  }
+  tabs.forEach(function (tabBtn) {
+    tabBtn.addEventListener("click", function () {
+      setTab(tabBtn.getAttribute("data-tab") || "activo-total");
+    });
+  });
+  setTab("activo-total");
   load();
 })();
 </script>

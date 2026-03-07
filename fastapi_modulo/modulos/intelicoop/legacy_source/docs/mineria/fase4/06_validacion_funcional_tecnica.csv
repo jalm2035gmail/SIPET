@@ -1,0 +1,6 @@
+dimension,criterio,valor,umbral,estado
+mora_temprana,alertas_historicas_generadas,1,>= 1,Cumple
+mora_temprana,tasa_alerta_alta_controlada_pct,0.00,>= 0.00,Cumple
+segmentacion_socios,cobertura_segmentacion_pct,100.00,>= 60.00,Cumple
+reglas_asociacion,reglas_vigentes_publicadas,6,>= 1,Cumple
+reglas_asociacion,lift_promedio_reglas,1.0000,>= 1.0000,Cumple

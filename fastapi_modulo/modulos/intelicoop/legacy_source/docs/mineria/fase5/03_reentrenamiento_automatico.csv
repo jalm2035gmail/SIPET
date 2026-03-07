@@ -1,0 +1,7 @@
+dimension,metrica,valor
+disparador,force,si
+disparador,dias_desde_ultimo_entrenamiento,0
+disparador,drift_abs_score_promedio,0.0000
+decision,reentrenar,si
+decision,accion,reentrenado_validado_promovido
+salida,promoted_version,scoring_mvp_20260218

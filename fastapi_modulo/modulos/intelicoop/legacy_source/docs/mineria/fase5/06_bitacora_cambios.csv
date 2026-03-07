@@ -1,0 +1,8 @@
+fecha,tipo_cambio,referencia,detalle
+2026-02-18T13:41:39.086852+00:00,pipeline_run,reentrenamiento_scoring,estado=ok;duracion_ms=56;idempotency_key=reentrenamiento_scoring:2026-02-18:weekly_retrain
+2026-02-18T13:26:12.392754+00:00,pipeline_run,validacion_submodulos,estado=ok;duracion_ms=10;idempotency_key=validacion_submodulos:2026-02-18:daily_0215
+2026-02-18T13:26:12.379984+00:00,pipeline_run,integracion_submodulos,estado=ok;duracion_ms=13;idempotency_key=integracion_submodulos:2026-02-18:daily_0215
+2026-02-18T13:26:12.364104+00:00,pipeline_run,reglas_asociacion,estado=ok;duracion_ms=10;idempotency_key=reglas_asociacion:2026-02-18:daily_0215
+2026-02-18T13:26:12.350364+00:00,pipeline_run,segmentacion_mensual,estado=ok;duracion_ms=34;idempotency_key=segmentacion_mensual:2026-02-18:daily_0215
+2026-02-18T13:26:12.310401+00:00,pipeline_run,mora_temprana_batch,estado=ok;duracion_ms=12;idempotency_key=mora_temprana_batch:2026-02-18:daily_0215
+2026-02-18T13:41:39.002627+00:00,model_promotion,scoring_mvp_20260218,source_model=/Users/jalm/Dropbox/Apps/intelicoop/backend/fastapi_service/app/core/modelo_scoring.pkl

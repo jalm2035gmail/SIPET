@@ -1,0 +1,6 @@
+componente,valor,semaforo,estado
+salud_cartera_imor,0.00,Verde,Cumple
+colocacion_cumplimiento,1.50,Rojo,En revision
+captacion_estabilidad,100.00,Verde,Cumple
+riesgo_cobertura,0.00,Rojo,En revision
+cobranza_eficiencia,0.00,Rojo,En revision

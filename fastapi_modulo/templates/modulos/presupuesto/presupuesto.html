@@ -1,4 +1,18 @@
 <section>
+  <div class="view-buttons page-view-buttons" id="presupuesto-view-switch" style="margin-bottom:12px;">
+    <button class="view-pill boton_vista active" type="button" data-presupuesto-view="list" data-tooltip="Lista" aria-label="Lista">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+      <span class="view-pill-label boton_vista-label">List</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-presupuesto-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Kanban</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-presupuesto-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Organigrama</span>
+    </button>
+  </div>
   <div style="margin-bottom: 24px;">
     <a href="/proyectando/descargar-csv-presupuesto" class="color-btn color-btn--primary" download>Descargar CSV</a>
     <button type="button" id="presupuesto-import-btn" class="color-btn color-btn--ghost">Importar CSV o Excel</button>
@@ -387,6 +401,28 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function() {
+    const presupuestoTabs = Array.from(document.querySelectorAll(".presupuesto-notebook [data-tab]"));
+    const presupuestoPanels = Array.from(document.querySelectorAll(".presupuesto-notebook .tab-panel[data-panel]"));
+    const setPresupuestoTab = (tabKey) => {
+      const target = String(tabKey || "presupuesto-anual");
+      presupuestoTabs.forEach((tabBtn) => {
+        const on = (tabBtn.getAttribute("data-tab") || "") === target;
+        tabBtn.classList.toggle("tab-active", on);
+        tabBtn.classList.toggle("active", on);
+      });
+      presupuestoPanels.forEach((panelEl) => {
+        const show = (panelEl.getAttribute("data-panel") || "") === target;
+        panelEl.hidden = !show;
+        panelEl.style.display = show ? "block" : "none";
+      });
+    };
+    presupuestoTabs.forEach((tabBtn) => {
+      tabBtn.addEventListener("click", () => {
+        setPresupuestoTab(tabBtn.getAttribute("data-tab") || "presupuesto-anual");
+      });
+    });
+    setPresupuestoTab("presupuesto-anual");
+
     const btn = document.getElementById("toggle-cod-col-btn");
     const importBtn = document.getElementById("presupuesto-import-btn");
     const importFileInput = document.getElementById("presupuesto-import-file");

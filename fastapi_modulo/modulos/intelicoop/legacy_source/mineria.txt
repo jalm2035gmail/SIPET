@@ -1,0 +1,455 @@
+Avance fase 1:  65%
+Avance fase 2:  100%
+Avance fase 3:  100%
+Avance fase 4:  100%
+Avance fase 5:  100%
+Avance fase 6:  100%
+Avance fase 7:  100%
+
+Avance total:  98%
+
+Minería de datos
+
+Módulo de Minería de Datos para Cartera de Crédito
+Objetivo del Módulo
+Ejecutar procesos de extracción de conocimiento (modelos predictivos y segmentaciones) sobre los datos de la cooperativa para generar valor: predecir riesgo, detectar patrones de mora y encontrar oportunidades de negocio.
+
+Fases de Desarrollo (General)
+
+✅ Fase 1. Definición y Alcance
+- ✅ 1.1 Taller de arranque con negocio y tecnología:
+  - Identificar patrocinador, dueño de producto y responsables por área (crédito, cobranzas, riesgos, TI).
+  - Definir alcance inicial del módulo y prioridades por impacto.
+  - Documentar restricciones operativas, regulatorias y de seguridad.
+- ✅ 1.2 Definición de casos de uso priorizados:
+  - Caso 1: scoring en originación de crédito (tiempo real).
+  - Caso 2: alertas de mora temprana (batch diario).
+  - Caso 3: segmentación de socios (batch mensual).
+  - Caso 4: reglas de asociación para campañas comerciales.
+- ✅ 1.3 Definición de objetivos de negocio por caso:
+  - Scoring: reducir tasa de incumplimiento y mejorar tiempo de respuesta.
+  - Mora: anticipar deterioro y priorizar gestión de cobranza.
+  - Segmentación: aumentar efectividad de ofertas y retención.
+  - Asociación: incrementar cross-sell y uso de productos.
+- ✅ 1.4 Definición de métricas de éxito:
+  - Métricas de modelo: AUC, precision, recall, KS, lift.
+  - Métricas de operación: latencia API, disponibilidad, tiempo batch.
+  - Métricas de negocio: mora, aprobación, recuperación, conversión comercial.
+- ✅ 1.5 Definición de población y etiquetas:
+  - Definir universo de análisis (socios activos, créditos vigentes, históricos).
+  - Definir etiqueta de incumplimiento (30/60/90 días) y ventana temporal.
+  - Definir políticas de exclusión (datos incompletos, valores atípicos extremos).
+- ✅ 1.6 Definición de contratos funcionales:
+  - Acordar campos mínimos de entrada y salida por API.
+  - Definir frecuencia de actualización de resultados por submódulo.
+  - Definir usuarios consumidores y permisos por rol.
+- ✅ 1.7 Entregables obligatorios de la fase:
+  - ✅ Documento de alcance firmado.
+  - ✅ Catálogo de casos de uso y KPIs.
+  - ✅ Matriz RACI de responsabilidades.
+  - ✅ Backlog inicial priorizado (historias técnicas y funcionales).
+- ✅ Control de aprobaciones de fase:
+  - ✅ Lista de pendientes de firma, responsables y fecha objetivo.
+
+✅ Fase 2. Gobierno y Preparación de Datos
+- ✅ 2.1 Inventario formal de fuentes:
+  - Levantar catálogo de tablas internas (socios, créditos, pagos, ahorros, transacciones).
+  - Levantar catálogo de fuentes externas (buró, datos demográficos, benchmarks sectoriales).
+  - Definir dueño de cada fuente y nivel de criticidad.
+  - ✅ Implementado comando de diccionario técnico real: `manage.py diccionario_datos` (exporta CSV/JSON).
+- ✅ 2.2 Perfilamiento de datos:
+  - Medir completitud, unicidad, consistencia y actualidad.
+  - Identificar valores atípicos, nulos y errores de codificación.
+  - Generar reporte de calidad por tabla y por variable crítica.
+  - ✅ Implementado comando de perfilamiento real: `manage.py perfilar_datos` (exporta CSV/JSON).
+- ✅ 2.3 Estandarización y homologación:
+  - Unificar catálogos (estado de crédito, productos, canales, zona geográfica).
+  - Estandarizar formatos de fecha, moneda e identificadores.
+  - Definir reglas para deduplicación de socios y créditos.
+- ✅ 2.4 Diseño del repositorio analítico:
+  - Definir esquema de tablas analíticas y claves de integración.
+  - Definir granularidad temporal (diaria, mensual, por evento).
+  - Definir particionado y estrategia de crecimiento histórico.
+- ✅ 2.5 Definición de reglas de negocio para datos:
+  - Validar rangos permitidos por variable (monto, tasa, plazo, atraso).
+  - Definir lógica de imputación de faltantes.
+  - Definir políticas de exclusión de registros inválidos.
+- ✅ 2.6 Trazabilidad y versionado:
+  - Asignar fecha de corte y versión a cada carga de datos.
+  - Registrar lineage (origen -> transformación -> salida).
+  - Definir estándar de auditoría para reproducibilidad.
+- ✅ 2.7 Seguridad y cumplimiento:
+  - Clasificar datos sensibles y definir niveles de acceso.
+  - Aplicar políticas de enmascaramiento y minimización de datos.
+  - Validar retención, respaldo y cumplimiento normativo.
+- ✅ 2.8 Entregables obligatorios de la fase:
+  - Diccionario de datos completo y aprobado.
+  - Informe de calidad de datos con plan de remediación.
+  - Diseño del modelo analítico físico/lógico.
+  - Especificación de reglas de validación y trazabilidad.
+- ✅ Control de aprobaciones de fase:
+  - ✅ Lista de pendientes de firma, responsables y fecha objetivo.
+  - ✅ Punto 1 de 8 iniciado: aprobación de inventario/diccionario en estado `En revisión`.
+  - ✅ Punto 2 de 8 iniciado: reporte de perfilamiento/calidad generado y en estado `En revisión`.
+  - ✅ Punto 3 de 8 iniciado: plan de remediación de calidad generado (CSV/MD) y en estado `En revisión`.
+  - ✅ Punto 4 de 8 iniciado: homologación de catálogos ejecutada (dry-run) con reporte CSV/MD.
+  - ✅ Punto 5 de 8 iniciado: validación de datos ejecutada con reglas y reporte CSV/MD.
+  - ✅ Punto 6 de 8 iniciado: lineage de cargas registrado con hash y versiones (JSONL/CSV/MD).
+  - ✅ Punto 7 de 8 iniciado: auditoría de seguridad/cumplimiento ejecutada con reporte CSV/MD.
+  - ✅ Punto 8 de 8 completado técnicamente: acta de cierre de Fase 2 generada.
+
+Fase 3. Construcción del MVP
+- 3.1 Diseño funcional y técnico del Scoring MVP:
+  - Definir variables mínimas de entrada para inferencia.
+  - Definir estructura de salida (score, probabilidad, recomendación, factores de riesgo).
+  - Definir reglas de decisión iniciales (aprobar, evaluar, rechazar).
+- 3.2 Construcción del pipeline de entrenamiento:
+  - Seleccionar dataset histórico y ventana temporal de entrenamiento.
+  - Ejecutar limpieza, balanceo y transformación de variables.
+  - Entrenar modelo base (benchmark) y modelo candidato.
+- 3.3 Evaluación y selección de modelo:
+  - Comparar métricas de desempeño (AUC, precision, recall, KS, lift).
+  - Verificar estabilidad por segmento de socio y tipo de crédito.
+  - Seleccionar modelo para despliegue inicial y documentar justificación.
+- 3.4 Implementación del servicio de inferencia:
+  - Publicar endpoint REST de scoring.
+  - Incluir validaciones de entrada y manejo de errores controlados.
+  - Asegurar tiempo de respuesta objetivo para operación en línea.
+- 3.5 Persistencia de resultados:
+  - Guardar cada inferencia en tabla histórica con timestamp.
+  - Registrar versión de modelo aplicada y variables de entrada.
+  - Permitir trazabilidad por solicitud y por socio.
+- 3.6 Integración con sistemas consumidores:
+  - Integrar scoring con flujo de originación de crédito.
+  - Exponer resultados al dashboard operativo y de riesgo.
+  - Validar contrato API con frontend y servicios backend.
+- 3.7 Pruebas del MVP:
+  - Pruebas unitarias, integración y carga.
+  - Pruebas de consistencia de resultados entre ambientes.
+  - Pruebas de seguridad y autorización por rol.
+- 3.8 Puesta en marcha controlada:
+  - Implementar despliegue gradual (canary o lote controlado).
+  - Medir métricas técnicas y de negocio durante estabilización.
+  - Definir criterios de rollback y contingencia.
+- 3.9 Entregables obligatorios de la fase:
+  - API de scoring operativa en ambiente productivo.
+  - Tabla histórica de resultados de scoring activa.
+  - Documento de validación de modelo y baseline de métricas.
+  - Acta de aceptación del MVP por negocio y tecnología.
+- ✅ Arranque técnico Fase 3:
+  - ✅ Modelo y migración `ResultadoScoring` creados en Django.
+  - ✅ API de persistencia/listado de scoring implementada en `apps.analitica`.
+  - ✅ Endpoint unificado `POST /api/analitica/ml/scoring/evaluar/` implementado (llama FastAPI y puede persistir).
+  - ✅ Integración inicial con frontend en creación de crédito para persistir scoring.
+  - ✅ Pruebas API de analítica actualizadas y pasando (`manage.py test apps.analitica.tests`).
+  - ✅ Punto 1 de 8 iniciado: diseño funcional/técnico del MVP documentado.
+  - ✅ Punto 2 de 8 completado técnicamente: pipeline de entrenamiento base ejecutado (benchmark vs candidato), artefacto de modelo actualizado y evidencia regenerable con `manage.py entrenar_scoring_mvp`.
+  - ✅ Punto 3 de 8 completado técnicamente: evaluación global y por segmentos del scoring ejecutada, con decisión documentada de selección de modelo (`mantener_modelo_desplegado`).
+  - ✅ Punto 4 de 8 completado técnicamente: servicio de inferencia reforzado con validaciones de negocio, errores controlados (`400/502`), trazabilidad por `request_id` y métrica `latency_ms` en cada respuesta.
+  - ✅ Punto 5 de 8 completado técnicamente: persistencia histórica reforzada con trazabilidad por `solicitud_id` y `socio_id`, filtros de consulta y consistencia de `request_id` entre respuesta y registro persistido.
+  - ✅ Punto 6 de 8 completado técnicamente: integración de scoring con originación de crédito y endpoint de resumen para consumo de dashboard operativo/riesgo (`GET /api/analitica/ml/scoring/resumen/`), validado con pruebas.
+  - ✅ Punto 7 de 8 completado técnicamente: pruebas unitarias/API e integración ejecutadas (seguridad por rol incluida) y prueba de carga reproducible con objetivo de latencia cumplido (`p95=16.56 ms`, `error_rate=0.00%`).
+  - ✅ Punto 8 de 8 completado técnicamente: plan de puesta en marcha controlada (canary) generado con compuertas de paso, criterios de rollback/contingencia y estado operativo documentado (`manage.py puesta_marcha_controlada_scoring`).
+  - ✅ Cierre de fase completado técnicamente: entregables obligatorios del MVP consolidados (API operativa, histórico de scoring, validación de modelo y acta de aceptación) con acta técnica reproducible (`manage.py cerrar_fase3_construccion_mvp`).
+
+Fase 4. Modelos Complementarios
+- 4.1 Priorización de submódulos complementarios:
+  - Definir orden de implementación según impacto y disponibilidad de datos.
+  - Alinear objetivos de riesgo, cobranza y comercial por submódulo.
+  - Definir alcance inicial de cada modelo (MVP por submódulo).
+- 4.2 Submódulo de Predicción de Mora Temprana:
+  - Definir ventanas de predicción (30/60/90 días).
+  - Construir variables de comportamiento de pago y tendencia de atraso.
+  - Entrenar y calibrar modelo de alertas tempranas.
+  - Clasificar nivel de alerta (bajo/medio/alto) con umbrales de negocio.
+  - Publicar resultados para priorización de gestión de cobranza.
+- 4.3 Submódulo de Segmentación de Socios:
+  - Definir variables de segmentación (financieras, transaccionales y de relación).
+  - Probar técnicas de clustering y seleccionar número óptimo de segmentos.
+  - Etiquetar segmentos con nombres interpretables para negocio.
+  - Generar perfil estadístico por segmento (ingreso, morosidad, productos).
+  - Publicar tabla de segmento por socio con fecha de ejecución.
+- 4.4 Submódulo de Reglas de Asociación:
+  - Construir cesta de productos por socio y por periodo.
+  - Ejecutar Apriori o FP-Growth para descubrir reglas relevantes.
+  - Filtrar reglas por umbrales de soporte, confianza y lift.
+  - Traducir reglas en oportunidades comerciales accionables.
+  - Publicar reglas vigentes para campañas y cross-sell.
+- 4.5 Integración entre submódulos:
+  - Reutilizar variables comunes para evitar duplicidad de cálculo.
+  - Unificar formato de salida y versionado de resultados.
+  - Asegurar consistencia entre scoring, mora y segmentación.
+- 4.6 Validación funcional y técnica:
+  - Validar calidad de alertas con equipo de cobranzas.
+  - Validar utilidad de segmentos con equipo comercial.
+  - Validar reglas de asociación con casos de negocio reales.
+- 4.7 Entregables obligatorios de la fase:
+  - Modelo de mora temprana en operación con alertas históricas.
+  - Segmentación mensual de socios con perfiles descriptivos.
+  - Repositorio de reglas de asociación priorizadas.
+  - Informe de impacto inicial por submódulo (riesgo y comercial).
+- ✅ Arranque técnico Fase 4:
+  - ✅ Punto 1 de 7 completado técnicamente: priorización de submódulos (mora temprana, segmentación y reglas de asociación) definida con criterio de impacto + disponibilidad de datos y alcance MVP por submódulo (`manage.py priorizar_modelos_complementarios`).
+  - ✅ Punto 2 de 7 completado técnicamente: submódulo de mora temprana implementado con evaluación 30/60/90, clasificación de alerta (baja/media/alta), persistencia histórica en `ResultadoMoraTemprana`, endpoint API (`POST /api/analitica/ml/mora-temprana/evaluar/`) y publicación batch reproducible (`manage.py generar_alertas_mora_temprana`).
+  - ✅ Punto 3 de 7 completado técnicamente: submódulo de segmentación implementado con ejecución mensual reproducible (`manage.py generar_segmentacion_mensual_socios`), tabla histórica `ResultadoSegmentacionSocio` por socio/fecha, perfiles descriptivos por segmento y endpoints de consulta/resumen (`GET /api/analitica/ml/segmentacion-socios/`, `GET /api/analitica/ml/segmentacion-socios/perfiles/`).
+  - ✅ Punto 4 de 7 completado técnicamente: submódulo de reglas de asociación implementado con corrida batch tipo Apriori sobre cesta de productos por socio, filtrado por soporte/confianza/lift, publicación histórica en `ReglaAsociacionProducto`, endpoints de consulta/resumen (`GET /api/analitica/ml/reglas-asociacion/`, `GET /api/analitica/ml/reglas-asociacion/resumen/`) y comando reproducible (`manage.py generar_reglas_asociacion_productos`).
+  - ✅ Punto 5 de 7 completado técnicamente: integración base entre submódulos implementada con resumen unificado (`GET /api/analitica/ml/submodulos/resumen/`), estandarización de salida por `model_version/total_registros`, validación de consistencia por socio entre scoring-mora-segmentación y evidencia reproducible (`manage.py integrar_submodulos_fase4`).
+  - ✅ Punto 6 de 7 completado técnicamente: validación funcional/técnica implementada con criterios auditables para mora, segmentación y reglas (cobertura, volumen, lift y estado global), acta reproducible (`manage.py validar_submodulos_fase4`) y evidencias en `docs/mineria/fase4/06_validacion_funcional_tecnica.*`.
+  - ✅ Punto 7 de 7 completado técnicamente: cierre de entregables obligatorios de fase consolidado (mora, segmentación, reglas e informe de impacto inicial), con acta de cierre técnico y trazabilidad por evidencia (`manage.py cerrar_fase4_modelos_complementarios`).
+
+Fase 5. Integración y Automatización
+- 5.1 Diseño de arquitectura de ejecución:
+  - Definir qué procesos son tiempo real y cuáles batch.
+  - Establecer ventanas de ejecución (nocturno, semanal, mensual).
+  - Definir dependencia entre tareas (carga -> features -> modelos -> publicación).
+- 5.2 Orquestación de pipelines:
+  - Configurar scheduler (cron, Celery Beat o Airflow).
+  - Implementar jobs idempotentes con control de reintento.
+  - Registrar estado de ejecución por corrida (inicio, fin, duración, resultado).
+- 5.3 Automatización de reentrenamiento:
+  - Definir frecuencia por modelo (mensual/trimestral).
+  - Definir disparadores por degradación de métricas o drift.
+  - Implementar flujo de reentrenar, validar y promover versión.
+- 5.4 Integración de APIs con sistemas consumidores:
+  - Publicar contratos API versionados (OpenAPI).
+  - Garantizar compatibilidad con originación, cobranzas y dashboard.
+  - Definir políticas de autenticación, autorización y rate limit.
+- 5.5 Monitoreo y alertamiento:
+  - Monitorear salud técnica (latencia, errores, disponibilidad).
+  - Monitorear salud de datos (completitud, frescura, consistencia).
+  - Monitorear salud del modelo (drift, estabilidad, performance).
+  - Configurar alertas automáticas con umbrales y escalamiento.
+- 5.6 Observabilidad y trazabilidad:
+  - Centralizar logs de inferencia y batch.
+  - Trazar cada predicción a su versión de modelo y feature set.
+  - Mantener bitácora de cambios de configuración y despliegues.
+- 5.7 Gestión operativa y continuidad:
+  - Definir runbooks de operación y soporte.
+  - Definir procedimientos de rollback ante fallas.
+  - Definir plan de continuidad y recuperación ante desastres.
+- 5.8 Entregables obligatorios de la fase:
+  - Pipelines automáticos en producción con monitoreo activo.
+  - Contratos API versionados y publicados.
+  - Tablero operativo de salud técnica y de datos.
+  - Manual operativo (runbook) y protocolo de contingencia.
+- ✅ Arranque técnico Fase 5:
+  - ✅ Punto 1 de 8 completado técnicamente: arquitectura de ejecución definida con separación real-time vs batch, ventanas operativas recomendadas y cadena de dependencias (carga -> features -> modelos -> publicación) documentada y regenerable (`manage.py disenar_arquitectura_ejecucion_fase5`).
+  - ✅ Punto 2 de 8 completado técnicamente: orquestación de pipelines implementada con ejecución secuencial reproducible, control de idempotencia por `pipeline+idempotency_key` y bitácora de corrida (inicio/fin/duración/estado/detalle) en `EjecucionPipeline` (`manage.py orquestar_pipelines_fase5`).
+  - ✅ Punto 3 de 8 completado técnicamente: automatización de reentrenamiento implementada para scoring con disparadores por frecuencia (días desde último entrenamiento) y drift (`score_promedio`), flujo reproducible detectar->reentrenar->evaluar->promover versión y registro en bitácora de ejecución (`manage.py automatizar_reentrenamiento_fase5`).
+  - ✅ Punto 4 de 8 completado técnicamente: contratos API versionados publicados con esquema OpenAPI (`04_openapi_v1.json`), compatibilidad para sistemas consumidores (originación/cobranzas/dashboard) y política operativa de autenticación/autorización/rate-limit documentada (`manage.py publicar_contratos_api_fase5`).
+  - ✅ Punto 5 de 8 completado técnicamente: monitoreo y alertamiento implementados para salud técnica (latencia/error/disponibilidad), salud de datos (frescura/completitud) y salud de modelo (drift), con generación automática de alertas y escalamiento por ámbito (`manage.py monitorear_alertamiento_fase5`).
+  - ✅ Punto 6 de 8 completado técnicamente: observabilidad y trazabilidad implementadas con centralización de logs de inferencia/batch (`.run/mineria/06_observabilidad_inferencias.jsonl`), export de traza por predicción (`model_version` + `feature_set`) y bitácora consolidada de cambios/pipelines/promociones (`manage.py observabilidad_trazabilidad_fase5`).
+  - ✅ Punto 7 de 8 completado técnicamente: gestión operativa y continuidad implementadas con runbook de operación, procedimientos de rollback y plan de contingencia/recuperación (RTO/RPO) documentados y regenerables (`manage.py gestionar_operacion_continuidad_fase5`).
+  - ✅ Punto 8 de 8 completado técnicamente: cierre de entregables obligatorios de la fase consolidado (pipelines+monitoreo, contratos API versionados, tablero operativo y runbook/protocolo de contingencia) con acta técnica reproducible (`manage.py cerrar_fase5_integracion_automatizacion`).
+
+Fase 6. Validación, Seguridad y Auditoría
+- 6.1 Validación técnica de modelos en producción:
+  - Verificar desempeño real vs. desempeño esperado en validación.
+  - Medir estabilidad temporal por cohorte y tipo de producto.
+  - Confirmar ausencia de degradación crítica tras despliegues.
+- 6.2 Validación funcional con áreas de negocio:
+  - Revisar utilidad de predicciones con riesgo y cobranzas.
+  - Validar interpretabilidad y accionabilidad de resultados.
+  - Ajustar umbrales de decisión según evidencia operativa.
+- 6.3 Pruebas de robustez y resiliencia:
+  - Ejecutar pruebas con datos incompletos, atípicos y extremos.
+  - Simular caídas parciales de servicios y recuperación.
+  - Validar comportamiento ante errores de fuentes externas.
+- 6.4 Seguridad de la información:
+  - Aplicar cifrado en tránsito y en reposo para datos sensibles.
+  - Validar segregación por rol en APIs y repositorios analíticos.
+  - Revisar controles de acceso, expiración y rotación de credenciales.
+- 6.5 Cumplimiento normativo y privacidad:
+  - Verificar cumplimiento de políticas internas y regulatorias.
+  - Aplicar principios de minimización y uso legítimo de datos.
+  - Definir retención y anonimización para datos históricos.
+- 6.6 Auditoría y trazabilidad de extremo a extremo:
+  - Registrar entrada, salida y versión de modelo por inferencia.
+  - Registrar quién ejecutó cambios de parámetros o versiones.
+  - Mantener historial de aprobaciones y rechazos de modelos.
+- 6.7 Gobierno de cambios del módulo:
+  - Establecer comité técnico-funcional para aprobar cambios críticos.
+  - Definir flujo formal de promoción entre ambientes.
+  - Documentar impactos esperados y resultados post-cambio.
+- 6.8 Entregables obligatorios de la fase:
+  - Informe de validación técnica y funcional firmado.
+  - Matriz de riesgos de seguridad y plan de mitigación.
+  - Evidencia de auditoría de inferencias y versiones de modelos.
+  - Plan formal de cumplimiento y controles operativos.
+- ✅ Arranque técnico Fase 6:
+  - ✅ Punto 1 de 8 completado técnicamente: validación técnica en producción implementada con contraste de desempeño real vs referencia esperada, estabilidad por cohorte temporal y tipo de crédito, y verificación de degradación post-despliegue (`manage.py validar_tecnica_modelos_fase6`).
+  - ✅ Punto 2 de 8 completado técnicamente: validación funcional con negocio implementada para cobranzas/riesgo/comercial, con criterios de accionabilidad, interpretabilidad y utilidad operativa documentados en acta reproducible (`manage.py validar_funcional_negocio_fase6`).
+  - ✅ Punto 3 de 8 completado técnicamente: pruebas de robustez y resiliencia implementadas con escenarios de datos incompletos/extremos, fallas parciales de servicios externos y detección de payload inválido, con evidencia reproducible (`manage.py probar_robustez_resiliencia_fase6`).
+  - ✅ Punto 4 de 8 completado técnicamente: seguridad de la informacion evaluada con controles de cifrado en transito/reposo, segregacion por rol en APIs analiticas y revision de acceso/credenciales (expiracion y rotacion), con matriz reproducible (`manage.py asegurar_seguridad_informacion_fase6`).
+  - ✅ Punto 5 de 8 completado técnicamente: cumplimiento normativo y privacidad evaluados con controles de minimizacion de datos, uso legitimo por rol, retencion por marca temporal y pseudonimizacion de historicos, con evidencia reproducible (`manage.py validar_cumplimiento_privacidad_fase6`).
+  - ✅ Punto 6 de 8 completado técnicamente: auditoria y trazabilidad extremo a extremo implementadas con registro de entrada/salida/version por inferencia, bitacora de cambios con actor y consolidado de aprobaciones/rechazos de modelos, con evidencia reproducible (`manage.py auditar_trazabilidad_extremo_extremo_fase6`).
+  - ✅ Punto 7 de 8 completado técnicamente: gobierno de cambios del modulo implementado con comite tecnico-funcional, flujo formal de promocion entre ambientes (desarrollo/QA/produccion) e impactos post-cambio documentados, con evidencia reproducible (`manage.py gobierno_cambios_modulo_fase6`).
+  - ✅ Punto 8 de 8 completado técnicamente: cierre de entregables obligatorios de la fase consolidado (informe de validacion, matriz de riesgos de seguridad, evidencia de auditoria y plan formal de cumplimiento) con acta tecnica reproducible (`manage.py cerrar_fase6_validacion_seguridad_auditoria`).
+
+Fase 7. Operación Continua y Mejora
+- 7.1 Monitoreo continuo del desempeño:
+  - Medir diariamente KPIs técnicos (latencia, errores, disponibilidad).
+  - Medir periódicamente KPIs de modelo (AUC, precision, recall, estabilidad).
+  - Medir KPIs de negocio (mora, recuperación, conversión comercial, aprobación).
+- 7.2 Gestión de drift y recalibración:
+  - Detectar drift de datos y de concepto en variables críticas.
+  - Ejecutar recalibración de umbrales cuando cambie el contexto.
+  - Disparar reentrenamiento cuando métricas caigan bajo umbral definido.
+- 7.3 Mejora incremental del módulo:
+  - Incorporar nuevas features internas (comportamiento digital, recurrencia transaccional).
+  - Integrar nuevas fuentes externas de riesgo y contexto económico.
+  - Probar variantes de modelos y comparar con baseline vigente.
+- 7.4 Ciclo de experimentación controlada:
+  - Ejecutar pruebas A/B o shadow mode para nuevas versiones.
+  - Comparar impacto en métricas antes de promover cambios.
+  - Mantener rollback inmediato para versiones con desempeño inferior.
+- 7.5 Gestión de deuda técnica y mantenimiento:
+  - Revisar periódicamente calidad de código, pruebas y cobertura.
+  - Actualizar dependencias de ML/infraestructura de forma controlada.
+  - Mantener documentación técnica y funcional actualizada.
+- 7.6 Adopción organizacional:
+  - Entrenar usuarios de negocio en interpretación de resultados.
+  - Crear rutinas operativas para uso diario de alertas y scores.
+  - Recoger retroalimentación y priorizar mejoras por valor.
+- 7.7 Gobierno de roadmap evolutivo:
+  - Revisar trimestralmente la hoja de ruta del módulo.
+  - Priorizar nuevas capacidades según impacto y factibilidad.
+  - Alinear evolución analítica con estrategia de la cooperativa.
+- 7.8 Entregables obligatorios de la fase:
+  - Tablero permanente de monitoreo técnico, analítico y de negocio.
+  - Plan de mejora continua con backlog priorizado.
+  - Evidencia de retraining/recalibración y resultados comparativos.
+  - Reporte ejecutivo periódico de valor generado por el módulo.
+- ✅ Arranque técnico Fase 7:
+  - ✅ Punto 1 de 8 completado técnicamente: monitoreo continuo del desempeño implementado con KPIs técnicos (disponibilidad/error/duración), KPIs de modelo (drift y composición de riesgo) y KPIs de negocio (mora, recuperación potencial, conversión comercial y aprobación), con evidencia reproducible (`manage.py monitorear_desempeno_continuo_fase7`).
+  - ✅ Punto 2 de 8 completado técnicamente: gestión de drift y recalibración implementada con detección de deriva (7d vs 30d), ajuste de umbrales de decisión de scoring y disparo controlado de reentrenamiento (dry-run/ejecución), con evidencia reproducible (`manage.py gestionar_drift_recalibracion_fase7`).
+  - ✅ Punto 3 de 8 completado técnicamente: mejora incremental del módulo implementada con incorporación de features internas (recurrencia/actividad transaccional), integración de contexto externo de riesgo y comparación de variantes contra baseline para recomendación de evolución (`manage.py mejorar_incremental_modulo_fase7`).
+  - ✅ Punto 4 de 8 completado técnicamente: ciclo de experimentación controlada implementado con pruebas A/B y shadow mode, comparación de impacto frente a baseline y decisión operativa de promoción/rollback inmediato según guardrails (`manage.py experimentacion_controlada_fase7`).
+  - ✅ Punto 5 de 8 completado técnicamente: gestión de deuda técnica y mantenimiento implementada con revisión de calidad/pruebas, control de dependencias y actualización documental, incluyendo backlog de mantenimiento priorizado (`manage.py gestionar_deuda_tecnica_mantenimiento_fase7`).
+  - ✅ Punto 6 de 8 completado técnicamente: adopción organizacional implementada con plan de entrenamiento por área (riesgo/cobranzas/comercial), rutinas operativas de uso diario y backlog priorizado de retroalimentación por valor (`manage.py adopcion_organizacional_fase7`).
+  - ✅ Punto 7 de 8 completado técnicamente: gobierno de roadmap evolutivo implementado con revisión trimestral, priorización por impacto/factibilidad y alineación de iniciativas con objetivos estratégicos de riesgo, recuperación y eficiencia (`manage.py gobierno_roadmap_evolutivo_fase7`).
+  - ✅ Punto 8 de 8 completado técnicamente: cierre de entregables obligatorios de la fase consolidado (tablero permanente, plan de mejora continua, evidencia de retraining/recalibración y reporte ejecutivo periódico), con acta técnica reproducible (`manage.py cerrar_fase7_operacion_mejora`).
+
+Elementos Base para Implementación del Módulo de Minería de Datos
+
+1. Diagnóstico Inicial
+- El módulo debe arrancar con foco en crédito y riesgo.
+- La prioridad operativa es generar resultados consumibles por API y guardarlos históricamente.
+- El diseño debe soportar ejecución en tiempo real (scoring) y en batch (mora, segmentación, asociaciones).
+
+2. Brechas a Definir Antes de Implementar
+- Definir etiqueta de incumplimiento: 30, 60 o 90 días de mora.
+- Definir periodicidad de reentrenamiento por submódulo.
+- Definir umbrales de negocio: aprobar, evaluar, rechazar.
+- Definir trazabilidad de modelos: versión, fecha de entrenamiento, dataset usado.
+- Definir política de monitoreo de drift y desempeño.
+
+3. Plan de Implementación por Fases (MVP)
+- Fase 1: Scoring crediticio online + almacenamiento de resultados.
+- Fase 2: Predicción de mora temprana (30/60/90 días) en proceso batch.
+- Fase 3: Segmentación mensual de socios con perfiles interpretables.
+- Fase 4: Reglas de asociación entre productos para oportunidades comerciales.
+
+4. Tablas Mínimas del Repositorio Analítico
+- mineria_model_version:
+  nombre_modelo, version, algoritmo, fecha_entrenamiento, metricas, estado.
+- mineria_feature_snapshot:
+  id_entidad, fecha_corte, variables usadas en inferencia.
+- mineria_resultado_scoring:
+  id_solicitud, score_crediticio, probabilidad_incumplimiento, recomendacion, version_modelo, fecha.
+- mineria_alerta_mora:
+  id_credito, prob_mora_30d, prob_mora_60d, prob_mora_90d, nivel_alerta, fecha.
+- mineria_segmento_socio:
+  id_socio, segmento, fecha_ejecucion, version_modelo.
+- mineria_regla_asociacion:
+  regla, soporte, confianza, lift, fecha_ejecucion.
+
+5. APIs Mínimas del Módulo
+- POST /api/ml/scoring
+- GET /api/ml/scoring/{id_solicitud}
+- GET /api/ml/mora-alertas?dias=30|60|90
+- GET /api/ml/segmentos/socios
+- GET /api/ml/reglas-asociacion
+
+6. Información que Necesitamos Subir al Módulo
+
+6.1 Datos de Socios
+- id_socio, edad, género, estado civil, nivel educativo, actividad económica, zona geográfica.
+- fecha_alta_socio, antigüedad, canales usados (app/web/oficina).
+
+6.2 Datos de Créditos
+- id_credito, id_socio, fecha_desembolso, monto, plazo, tasa, destino, garantías.
+- estado_credito, fecha_vencimiento, saldo_actual.
+
+6.3 Datos de Pagos y Mora
+- id_pago, id_credito, fecha_vencimiento, fecha_pago, monto_pagado.
+- días_atraso por cuota, mora acumulada, reestructuraciones.
+
+6.4 Datos de Ahorros y Transacciones
+- saldo_promedio, saldo_minimo, saldo_maximo.
+- frecuencia de depósitos/retiros/transferencias.
+- total movimientos por periodo.
+
+6.5 Datos Externos (Opcional pero Recomendado)
+- score de buró, endeudamiento global, consultas recientes en centrales de riesgo.
+- variables macro y demográficas por zona.
+
+7. Formato de Carga Recomendado
+- Batch diario: CSV o Parquet para tablas históricas.
+- Tiempo real: JSON por API para scoring en originación.
+- Clave de integración obligatoria: id_socio e id_credito consistentes entre sistemas.
+
+8. Reglas de Calidad de Datos (Obligatorias)
+- No permitir IDs nulos o duplicados.
+- Validar rangos: monto > 0, tasa >= 0, plazo > 0.
+- Homologar catálogos: estados de crédito, tipos de producto, canales.
+- Registrar fecha_corte en toda carga analítica.
+
+9. Criterios de Aceptación del Módulo
+- Respuesta de scoring menor a 500 ms en ambiente productivo.
+- Resultados batch guardados con versionado y fecha de ejecución.
+- Trazabilidad completa de modelo y variables utilizadas.
+- Endpoints disponibles para consumo por originación, cobranza y dashboard.
+
+
+Implementado
+
+Scoring en tiempo real (POST).
+scoring.py (line 15)
+main.py (line 69)
+CreditoForm.jsx (line 73)
+Integración con originación de crédito (formulario + sugerencia por score).
+CreditoForm.jsx (line 96)
+urls.py (line 11)
+models.py (line 16)
+Segmentación de socios (batch) con motor ORM/PySpark.
+segmentacion_socios.py (line 115)
+segmentar_socios.py (line 8)
+run_segmentacion_diaria.sh (line 19)
+Exposición y uso de segmentos en app.
+models.py (line 18)
+serializers.py (line 6)
+SociosList.jsx (line 23)
+AhorrosDashboard.jsx (line 35)
+Seguridad base por rol + 2FA.
+permissions.py (line 14)
+serializers.py (line 169)
+views.py (line 96)
+Parcial
+
+Automatización/orquestación.
+Hay cron para segmentación y Celery Beat para resumen de campañas, pero no pipeline ML completo (features -> modelo -> publicación).
+run_segmentacion_diaria.sh (line 19)
+settings.py (line 126)
+OpenAPI/contratos.
+FastAPI expone OpenAPI y test de ruta scoring, pero no versionado formal de contratos ML.
+test_scoring_api.py (line 59)
+No implementado (según actividades de mineria.txt)
+
+Persistencia histórica de inferencias de scoring con versión de modelo/feature snapshot.
+GET /api/ml/scoring/{id_solicitud}.
+Submódulo de mora temprana 30/60/90 + endpoint GET /api/ml/mora-alertas.
+Reglas de asociación (Apriori/FP-Growth) + publicación.
+Tablas objetivo mineria_* (model_version, feature_snapshot, resultado_scoring, alerta_mora, segmento_socio histórico, regla_asociacion).
+Monitoreo de drift, recalibración/reentrenamiento automático, auditoría end-to-end de inferencias.
+Dashboard operativo de riesgo/mora conectado a resultados ML (hoy hay scoring en formulario, no tablero ML completo).

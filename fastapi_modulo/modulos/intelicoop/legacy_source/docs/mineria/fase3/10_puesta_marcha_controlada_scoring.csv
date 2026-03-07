@@ -1,0 +1,5 @@
+fase,porcentaje_trafico,criterio_operativo,estado
+canary_10,10,"Monitorear errores, latencia y distribucion de riesgo.",bloqueada
+canary_30,30,Validar estabilidad operativa y consistencia del scoring.,bloqueada
+canary_60,60,Expandir cobertura con monitoreo continuo de compuertas.,bloqueada
+rollout_100,100,Activacion total con monitoreo post-despliegue.,bloqueada

@@ -1,0 +1,5 @@
+dimension,control,estado,detalle
+comite,comite_tecnico_funcional_con_roles_cubiertos,En revision,"auditor=1, jefe=0, admin=1, superadmin=1"
+promocion,flujo_formal_dev_qa_prod_con_evidencia,Cumple,"orquestacion=no, reentrenamiento=si, promocion=si"
+post_cambio,impactos_esperados_y_resultados_documentados,Cumple,"validacion_tecnica=si, validacion_funcional=si, monitoreo=si"
+post_cambio,version_promovida_identificada,Cumple,promoted_version=scoring_mvp_20260218

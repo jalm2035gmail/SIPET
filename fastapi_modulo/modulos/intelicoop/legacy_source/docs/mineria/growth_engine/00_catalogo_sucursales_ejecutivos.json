@@ -1,0 +1,37 @@
+{
+  "version": "growth_engine_catalogo_v1",
+  "fallback_sucursal": "Yuriria",
+  "sucursales": [
+    {
+      "sucursal_id": "yuriria",
+      "nombre": "Yuriria",
+      "territorio_keywords": [
+        "yuriria"
+      ],
+      "ejecutivos": [
+        "ejec_yur_01",
+        "ejec_yur_02"
+      ]
+    },
+    {
+      "sucursal_id": "cuitzeo",
+      "nombre": "Cuitzeo",
+      "territorio_keywords": [
+        "cuitzeo"
+      ],
+      "ejecutivos": [
+        "ejec_cui_01"
+      ]
+    },
+    {
+      "sucursal_id": "santa_ana_maya",
+      "nombre": "Santa Ana Maya",
+      "territorio_keywords": [
+        "santa ana maya"
+      ],
+      "ejecutivos": [
+        "ejec_sam_01"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+{"fecha_evento_utc": "2026-02-18T16:16:57.523947+00:00", "canal": "email", "tipo_alerta": "deterioro_cobertura", "entidad_id": "global", "severidad": "critical", "destino": "riesgo@intelicoop.local", "mensaje": "Cobertura por debajo del minimo esperado"}
+{"fecha_evento_utc": "2026-02-18T16:16:57.523973+00:00", "canal": "whatsapp_interno", "tipo_alerta": "deterioro_cobertura", "entidad_id": "global", "severidad": "critical", "destino": "grupo_riesgo_interno", "mensaje": "Cobertura por debajo del minimo esperado"}

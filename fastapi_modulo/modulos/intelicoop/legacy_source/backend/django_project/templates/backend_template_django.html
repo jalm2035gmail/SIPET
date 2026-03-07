@@ -1,0 +1,1868 @@
+{% extends "base_django.html" %}
+
+{% block title %}{{ title|default:"Template Backend" }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --sidebar-text-color: #164723;
+    --sidebar-icon-color: #164723;
+    --sidebar-top-bg: #fff5ee;
+    --sidebar-bottom-bg: #ffe8d7;
+    --navbar-bg-color: #0f172a;
+    --navbar-text-color: #e5e7eb;
+    --navbar-icon-color: #e5e7eb;
+  }
+
+  .top-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--navbar-bg-color);
+    color: var(--navbar-text-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 16px 0 72px;
+    box-sizing: border-box;
+    z-index: 28;
+  }
+
+  .top-navbar-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .top-navbar-title-icon,
+  .top-navbar-link-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    background-color: var(--navbar-icon-color);
+  }
+
+  .top-navbar-title-icon {
+    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+  }
+
+  .top-navbar-links {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .top-navbar-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: var(--navbar-text-color);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.92;
+  }
+
+  .top-navbar-link:hover {
+    opacity: 1;
+  }
+
+  .top-navbar-link-icon {
+    -webkit-mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+    mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+  }
+
+  .top-navbar-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .navbar-user-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    background-color: var(--navbar-icon-color);
+    -webkit-mask: url('/static/iconos/usuario.svg') no-repeat center / contain;
+    mask: url('/static/iconos/usuario.svg') no-repeat center / contain;
+  }
+
+  .navbar-edit-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #d4d4d8;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .top-navbar:hover .navbar-edit-btn,
+  .navbar-edit-btn:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-toggle {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 30;
+  }
+
+  .menu-icon,
+  .menu-icon::before,
+  .menu-icon::after {
+    width: 20px;
+    height: 2px;
+    background: #222;
+    border-radius: 2px;
+    display: block;
+    content: "";
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    position: relative;
+  }
+
+  .menu-icon::before { position: absolute; top: -6px; left: 0; }
+  .menu-icon::after { position: absolute; top: 6px; left: 0; }
+
+  .menu-panel {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 240px;
+    height: calc(100% - 56px);
+    background: linear-gradient(to bottom, var(--sidebar-top-bg) 0%, var(--sidebar-top-bg) 45%, var(--sidebar-bottom-bg) 100%);
+    border-right: 1px solid #ececec;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 25;
+    padding-top: 12px;
+    overflow: auto;
+  }
+
+  .menu-panel.open { transform: translateX(0); }
+
+  .menu-panel.anim-slide-lr.open { animation: sidebar-slide-lr 0.35s ease; }
+  .menu-panel.anim-slide-rl.open { animation: sidebar-slide-rl 0.35s ease; }
+  .menu-panel.anim-slide-td.open { animation: sidebar-slide-td 0.35s ease; }
+  .menu-panel.anim-slide-bu.open { animation: sidebar-slide-bu 0.35s ease; }
+
+  @keyframes sidebar-slide-lr {
+    from { transform: translateX(-100%); opacity: 0.4; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes sidebar-slide-rl {
+    from { transform: translateX(100%); opacity: 0.4; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes sidebar-slide-td {
+    from { transform: translateY(-100%); opacity: 0.4; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes sidebar-slide-bu {
+    from { transform: translateY(100%); opacity: 0.4; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .menu-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 12px 16px 16px;
+    background: var(--sidebar-top-bg);
+    border-bottom: 1px solid #ececec;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 72px;
+  }
+
+  .menu-header img {
+    max-width: 100%;
+    max-height: 60px;
+    object-fit: contain;
+  }
+
+  .sidebar-edit-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #d4d4d8;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .menu-panel:hover .sidebar-edit-btn,
+  .sidebar-edit-btn:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-list { list-style: none; margin: 0; padding: 0; }
+  .menu-list > li { border-bottom: 1px solid #f1f1f1; }
+
+  .menu-list a {
+    display: block;
+    padding: 12px 18px;
+    color: var(--sidebar-text-color);
+    text-decoration: none;
+  }
+
+  .menu-list a:hover { background: #f0f0f0; }
+
+  .menu-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px 6px;
+    color: var(--sidebar-text-color);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .menu-label-icon,
+  .menu-label-icon-config {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    background-color: var(--sidebar-icon-color);
+  }
+
+  .menu-label-icon {
+    -webkit-mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+    mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+  }
+
+  .menu-label-icon-config {
+    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+  }
+
+  .submenu { list-style: none; margin: 0; padding: 0 0 8px; }
+  .submenu a { padding-left: 34px; }
+
+  .submenu-group > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 34px;
+    color: var(--sidebar-text-color);
+    user-select: none;
+  }
+
+  .submenu-group > summary::-webkit-details-marker { display: none; }
+  .submenu-nested { list-style: none; margin: 0; padding: 0 0 8px; }
+  .submenu-nested a {
+    padding-left: 50px;
+    padding-right: 18px;
+    text-align: right;
+  }
+
+  .menu-item-with-icon > a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .menu-item-with-icon img {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+  }
+
+  .menu-summary-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .menu-summary-with-icon img {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+  }
+
+  .sidebar-editor {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(360px, 94vw);
+    height: 100%;
+    background: #ffffff;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    z-index: 35;
+    padding: 20px 16px;
+    overflow: auto;
+  }
+
+  .sidebar-editor.open { transform: translateX(0); }
+
+  .editor-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .editor-head h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #111827;
+  }
+
+  .editor-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .editor-field {
+    margin-bottom: 12px;
+  }
+
+  .editor-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .editor-field input,
+  .editor-field select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .editor-actions button {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .backend-template {
+    max-width: 980px;
+    margin: 88px auto 32px;
+    padding: 0 16px 32px;
+  }
+
+  .backend-template h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    line-height: 1.2;
+    color: #111827;
+  }
+
+  .backend-template p {
+    margin: 0 0 20px;
+    color: #4b5563;
+    font-size: 14px;
+  }
+
+  .backend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .backend-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px;
+    background: #ffffff;
+  }
+
+  .backend-card h2 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: #111827;
+  }
+
+  .backend-card span {
+    display: block;
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .config-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .config-side {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .config-side-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 14px;
+    border: 0;
+    border-bottom: 1px solid #e5e7eb;
+    background: transparent;
+    color: #4b5563;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .config-side-item:last-child {
+    border-bottom: 0;
+  }
+
+  .config-side-item.active {
+    color: #1d4ed8;
+    background: #eff6ff;
+    box-shadow: inset 3px 0 0 #2563eb;
+  }
+
+  .config-side-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    background-color: currentColor;
+    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    opacity: 0.9;
+  }
+
+  .config-panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .config-title {
+    margin: 0 0 14px;
+    font-size: 44px;
+    line-height: 1.05;
+    color: #111827;
+  }
+
+  .config-form {
+    display: grid;
+    gap: 14px;
+  }
+
+  .config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .config-field {
+    display: grid;
+    gap: 8px;
+  }
+
+  .config-field label {
+    font-size: 18px;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .config-field input,
+  .config-field select {
+    height: 58px;
+    border: 1px solid #cfd5df;
+    border-radius: 14px;
+    padding: 0 16px;
+    font-size: 42px;
+    color: #1f2937;
+    background: #ffffff;
+  }
+
+  .config-separator {
+    margin: 8px 0;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .config-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .config-day {
+    border: 0;
+    border-radius: 12px;
+    padding: 10px 16px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .users-shell {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .users-header {
+    display: grid;
+    grid-template-columns: 1fr 150px;
+    gap: 14px;
+    align-items: start;
+    margin-bottom: 16px;
+  }
+
+  .users-name-label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2b2f33;
+    margin-bottom: 6px;
+  }
+
+  .users-name {
+    background: #eee4e6;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #0f172a;
+  }
+
+  .users-role {
+    margin-top: 8px;
+    background: #eee4e6;
+    border-radius: 16px;
+    padding: 8px 12px;
+    font-size: 16px;
+    color: #6b7280;
+  }
+
+  .users-avatar-wrap {
+    display: grid;
+    gap: 8px;
+    justify-items: end;
+  }
+
+  .users-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 4px;
+    background: #22c55e;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .users-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  .users-avatar.has-image img {
+    display: block;
+  }
+
+  .users-avatar.has-image span {
+    display: none;
+  }
+
+  .users-avatar-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .users-avatar-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .users-avatar-btn img {
+    width: 14px;
+    height: 14px;
+  }
+
+  .users-form {
+    display: grid;
+    gap: 14px;
+  }
+
+  .users-target-row {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .users-target-row label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2b2f33;
+  }
+
+  .users-target-row select {
+    height: 42px;
+    border: 0;
+    border-radius: 20px;
+    padding: 0 14px;
+    font-size: 16px;
+    color: #1f2937;
+    background: #eee4e6;
+    box-sizing: border-box;
+  }
+
+  .users-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 52px;
+  }
+
+  .users-field {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .users-field label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2b2f33;
+  }
+
+  .users-field input,
+  .users-field select {
+    height: 42px;
+    border: 0;
+    border-radius: 20px;
+    padding: 0 14px;
+    font-size: 16px;
+    color: #1f2937;
+    background: #eee4e6;
+    box-sizing: border-box;
+  }
+
+  .users-field-checkbox {
+    grid-template-columns: 260px auto;
+  }
+
+  .users-field-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: #2563eb;
+  }
+
+  .users-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .users-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #111827;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .users-action-btn img {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+  }
+
+  .users-save-btn {
+    background: #111827;
+    color: #ffffff;
+  }
+
+  .users-status {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: #374151;
+    min-height: 18px;
+  }
+
+  @media (max-width: 1100px) {
+    .config-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .config-row {
+      grid-template-columns: 1fr;
+    }
+
+    .config-title {
+      font-size: 34px;
+    }
+
+    .config-field input,
+    .config-field select {
+      font-size: 28px;
+    }
+
+    .users-header {
+      grid-template-columns: 1fr;
+    }
+
+    .users-avatar {
+      margin-left: 0;
+    }
+
+    .users-name {
+      font-size: 24px;
+    }
+
+    .users-field {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .users-target-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .users-field label,
+    .users-field input {
+      font-size: 15px;
+    }
+
+    .users-row {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .top-navbar {
+      padding-right: 10px;
+    }
+
+    .top-navbar-links {
+      display: none;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<header id="topNavbar" class="top-navbar">
+  <div class="top-navbar-title">
+    <span class="top-navbar-title-icon" aria-hidden="true"></span>
+    Intellicoop
+  </div>
+  <nav class="top-navbar-links" aria-label="Navegación superior">
+    <a class="top-navbar-link" href="{{ backend_home_path }}">
+      <span class="top-navbar-link-icon" aria-hidden="true"></span>
+      Inicio
+    </a>
+    <a class="top-navbar-link" href="{{ backend_config_path }}">
+      <span class="top-navbar-link-icon" aria-hidden="true"></span>
+      Configuración
+    </a>
+    <a class="top-navbar-link" href="{{ backend_personalizar_users_path }}">
+      <span class="top-navbar-link-icon" aria-hidden="true"></span>
+      Usuarios
+    </a>
+  </nav>
+  <div class="top-navbar-right">
+    <span class="navbar-user-icon" aria-hidden="true"></span>
+    <button id="openNavbarEditor" class="navbar-edit-btn" type="button" aria-label="Editar navbar" title="Editar navbar">✎</button>
+  </div>
+</header>
+
+<button id="menuBtn" class="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="menuPanel">
+  <span class="menu-icon"></span>
+</button>
+
+<nav id="menuPanel" class="menu-panel anim-slide-lr" aria-hidden="true">
+  <div class="menu-header">
+    <img id="sidebarLogo" src="/static/imagenes/cc.png" alt="Tu Negocio" />
+    <button id="openSidebarEditor" class="sidebar-edit-btn" type="button" aria-label="Editar sidebar" title="Editar sidebar">✎</button>
+  </div>
+  <ul class="menu-list">
+    <li><a href="{{ backend_home_path }}">Inicio</a></li>
+    <li>
+      <details class="submenu-group" open>
+        <summary class="menu-summary-with-icon">
+          <img src="/static/iconos/usuario.svg" alt="" aria-hidden="true" />
+          Socios
+        </summary>
+        <ul class="submenu-nested">
+          <li><a href="{{ frontend_socios_path }}">Socios (Frontend)</a></li>
+          <li><a href="{{ frontend_socios_inactivos_path }}">Socios inactivos (Frontend)</a></li>
+          <li><a href="{{ api_socios_path }}">Socios (API)</a></li>
+          <li><a href="{{ api_socios_ping_path }}">Socios Ping (API)</a></li>
+        </ul>
+      </details>
+    </li>
+    <li>
+      <details class="submenu-group" open>
+        <summary class="menu-summary-with-icon">
+          <img src="/static/iconos/ahorro.svg" alt="" aria-hidden="true" />
+          Ahorro
+        </summary>
+        <ul class="submenu-nested">
+          <li><a href="{{ frontend_ahorros_path }}">Ahorros (Frontend)</a></li>
+          <li><a href="{{ api_ahorros_cuentas_path }}">Ahorros Cuentas (API)</a></li>
+          <li><a href="{{ api_ahorros_movimientos_path }}">Ahorros Movimientos (API)</a></li>
+          <li><a href="{{ api_ahorros_aperturar_path }}">Ahorros Aperturar (API)</a></li>
+          <li><a href="{{ api_ahorros_ping_path }}">Ahorros Ping (API)</a></li>
+        </ul>
+      </details>
+    </li>
+    <li>
+      <details class="submenu-group" open>
+        <summary class="menu-summary-with-icon">
+          <img src="/static/iconos/credito.svg" alt="" aria-hidden="true" />
+          Crédito
+        </summary>
+        <ul class="submenu-nested">
+          <li><a href="{{ frontend_creditos_path }}">Créditos (Frontend)</a></li>
+          <li><a href="{{ frontend_creditos_nuevo_path }}">Créditos nuevo (Frontend)</a></li>
+          <li><a href="{{ api_creditos_path }}">Créditos (API)</a></li>
+          <li><a href="{{ api_creditos_pagos_path }}">Créditos pagos (API)</a></li>
+          <li><a href="{{ backend_mineria_path }}">Minería de datos</a></li>
+        </ul>
+      </details>
+    </li>
+    <li id="configuracionItem">
+      <span class="menu-label">
+        <span class="menu-label-icon-config" aria-hidden="true"></span>
+        Backend Django
+      </span>
+      <ul class="submenu">
+        <li><a href="{{ backend_home_path }}">Template backend</a></li>
+        <li><a href="{{ backend_config_path }}">Configuración</a></li>
+        <li><a href="{{ backend_login_path }}">Login backend</a></li>
+        <li><a href="{{ admin_path }}">Admin Django</a></li>
+        <li><a href="{{ admin_users_path }}">Usuarios (Admin)</a></li>
+      </ul>
+    </li>
+    <li id="frontendItem">
+      <span class="menu-label">
+        <span class="menu-label-icon" aria-hidden="true"></span>
+        Frontend Web
+      </span>
+      <ul class="submenu">
+        <li><a href="{{ frontend_home_path }}">Inicio</a></li>
+        <li><a href="{{ frontend_campanas_path }}">Campañas</a></li>
+        <li><a href="{{ frontend_prospectos_path }}">Prospectos</a></li>
+        <li>
+          <details class="submenu-group" open>
+            <summary>Autenticación</summary>
+            <ul class="submenu-nested">
+              <li><a href="{{ frontend_login_path }}">Login</a></li>
+              <li><a href="{{ frontend_register_path }}">Registro</a></li>
+              <li><a href="{{ frontend_forgot_password_path }}">Recuperar contraseña</a></li>
+            </ul>
+          </details>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <details class="submenu-group" open>
+        <summary>APIs disponibles</summary>
+        <ul class="submenu-nested">
+          <li><a href="{{ api_health_path }}">Health</a></li>
+          <li><a href="{{ api_auth_login_path }}">Auth Login</a></li>
+          <li><a href="{{ api_auth_refresh_path }}">Auth Refresh</a></li>
+          <li><a href="{{ api_auth_register_path }}">Auth Register</a></li>
+          <li><a href="{{ api_auth_profile_path }}">Auth Profile</a></li>
+          <li><a href="{{ api_campanas_root_path }}">Campañas (root)</a></li>
+          <li><a href="{{ api_prospectos_root_path }}">Prospectos (root)</a></li>
+          <li><a href="{{ api_analitica_campanas_path }}">Analítica Campañas</a></li>
+          <li><a href="{{ api_analitica_prospectos_path }}">Analítica Prospectos</a></li>
+          <li><a href="{{ api_analitica_ping_path }}">Analítica Ping</a></li>
+        </ul>
+      </details>
+    </li>
+    <li id="personalizarItem">
+      <details class="submenu-group" open>
+        <summary class="menu-summary-with-icon">
+          <img src="/static/icons/personalizar.svg" alt="" aria-hidden="true" />
+          Personalizar
+        </summary>
+        <ul class="submenu-nested">
+          <li><a href="{{ backend_personalizar_users_path }}">Usuarios</a></li>
+        </ul>
+      </details>
+    </li>
+  </ul>
+</nav>
+
+<aside id="sidebarEditor" class="sidebar-editor" aria-hidden="true">
+  <div class="editor-head">
+    <h3>Editar Sidebar</h3>
+    <button id="closeSidebarEditor" class="editor-close" type="button" aria-label="Cerrar editor">x</button>
+  </div>
+  <div class="editor-field">
+    <label for="sidebarLogoInput">Logo</label>
+    <input id="sidebarLogoInput" type="file" accept="image/*" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarTextColor">Color de texto</label>
+    <input id="sidebarTextColor" type="color" value="#164723" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarIconColor">Color de icono</label>
+    <input id="sidebarIconColor" type="color" value="#164723" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarTopBg">Color sidebar superior</label>
+    <input id="sidebarTopBg" type="color" value="#fff5ee" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarBottomBg">Color sidebar inferior</label>
+    <input id="sidebarBottomBg" type="color" value="#ffe8d7" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarAnimation">Animación</label>
+    <select id="sidebarAnimation">
+      <option value="slide-lr">Desplazar izquierda a derecha</option>
+      <option value="slide-rl">Desplazar derecha a izquierda</option>
+      <option value="slide-td">Desplazar arriba a abajo</option>
+      <option value="slide-bu">Desplazar abajo a arriba</option>
+    </select>
+  </div>
+  <div class="editor-head">
+    <h3>Editar Navbar</h3>
+  </div>
+  <div class="editor-field">
+    <label for="navbarBgColor">Color de fondo</label>
+    <input id="navbarBgColor" type="color" value="#0f172a" />
+  </div>
+  <div class="editor-field">
+    <label for="navbarTextColor">Color de texto</label>
+    <input id="navbarTextColor" type="color" value="#e5e7eb" />
+  </div>
+  <div class="editor-field">
+    <label for="navbarIconColor">Color de SVG</label>
+    <input id="navbarIconColor" type="color" value="#e5e7eb" />
+  </div>
+  <div class="editor-actions">
+    <button id="resetSidebarStyle" type="button">Restablecer</button>
+  </div>
+</aside>
+
+<main class="backend-template">
+  {% if is_users_shell %}
+  <section class="users-shell">
+    <div class="users-header">
+      <div>
+        <div class="users-name-label">Usuario</div>
+        <div id="usersName" class="users-name">Usuario</div>
+        <div id="usersRole" class="users-role">Nombre del puesto</div>
+      </div>
+      <div class="users-avatar-wrap">
+        <div id="usersAvatar" class="users-avatar">
+          <span id="usersAvatarInitial">U</span>
+          <img id="usersAvatarImage" src="" alt="Avatar del usuario" />
+        </div>
+        <div class="users-avatar-actions">
+          <button id="editUsersAvatarBtn" class="users-avatar-btn" type="button" title="Editar imagen" aria-label="Editar imagen">
+            <img src="/static/iconos/editar.svg" alt="" aria-hidden="true" />
+          </button>
+          <button id="deleteUsersAvatarBtn" class="users-avatar-btn" type="button" title="Eliminar imagen" aria-label="Eliminar imagen">
+            <img src="/static/iconos/eliminar.svg" alt="" aria-hidden="true" />
+          </button>
+          <input id="usersAvatarInput" type="file" accept="image/*" hidden />
+        </div>
+      </div>
+    </div>
+    <div id="usersTargetRow" class="users-target-row">
+      <label for="usersTargetSelect">Seleccionar usuario</label>
+      <select id="usersTargetSelect"></select>
+    </div>
+    <div class="users-form">
+      <div class="users-row">
+        <div class="users-field">
+          <label>Nombre de usuario</label>
+          <input id="userUsername" type="text" value="" />
+        </div>
+      </div>
+      <div class="users-row">
+        <div class="users-field">
+          <label>Correo de trabajo</label>
+          <input id="userEmail" type="text" value="" />
+        </div>
+        <div class="users-field">
+          <label>Departamento</label>
+          <input id="userDepartamento" type="text" value="" />
+        </div>
+      </div>
+      <div class="users-row">
+        <div class="users-field">
+          <label>Teléfono laboral</label>
+          <input id="userTelefonoLaboral" type="text" value="" />
+        </div>
+        <div class="users-field">
+          <label>Puesto de trabajo</label>
+          <input id="userPuestoTrabajo" type="text" value="" placeholder="por ejemplo, Gerente de ventas" />
+        </div>
+      </div>
+      <div class="users-row">
+        <div class="users-field">
+          <label>Celular de trabajo</label>
+          <input id="userCelular" type="text" value="" />
+        </div>
+        <div class="users-field">
+          <label>Rol</label>
+          <select id="userRol">
+            <option value="superadmin">Superadministrador</option>
+            <option value="administrador">Administrador</option>
+            <option value="jefe_departamento">Jefe de departamento</option>
+            <option value="auditor">Auditor</option>
+          </select>
+        </div>
+      </div>
+      <div class="users-row">
+        <div class="users-field">
+          <label>Contraseña</label>
+          <input id="userPassword" type="password" value="" placeholder="Contraseña" />
+        </div>
+      </div>
+      <div class="users-row">
+        <div class="users-field users-field-checkbox">
+          <label>Autenticación por dos factores</label>
+          <input id="userTwoFactorEnabled" type="checkbox" />
+        </div>
+      </div>
+      <p id="usersFormStatus" class="users-status"></p>
+      <div class="users-actions">
+        <button id="newUsersProfileBtn" class="users-action-btn" type="button">
+          <img src="/static/iconos/nuevo.svg" alt="" aria-hidden="true" />
+          Nuevo
+        </button>
+        <button id="editUsersProfileBtn" class="users-action-btn" type="button">
+          <img src="/static/iconos/editar.svg" alt="" aria-hidden="true" />
+          Editar
+        </button>
+        <button id="saveUsersProfileBtn" class="users-action-btn users-save-btn" type="button">
+          <img src="/static/iconos/guardar.svg" alt="" aria-hidden="true" />
+          Guardar
+        </button>
+        <button id="deleteUsersProfileBtn" class="users-action-btn" type="button">
+          <img src="/static/iconos/eliminar.svg" alt="" aria-hidden="true" />
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </section>
+  {% elif is_mineria_shell %}
+  <section class="mineria-shell"></section>
+  {% elif is_config_shell %}
+  <section class="config-shell">
+    <aside class="config-side" aria-label="Secciones de configuración">
+      <button class="config-side-item active" type="button"><span class="config-side-icon" aria-hidden="true"></span>Mi Negocio</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Tickets</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Impresora</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Impuestos</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Inventario</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Caja</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Alertas</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Datos Fiscales</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Preferencias</button>
+    </aside>
+    <section class="config-panel">
+      <h1 class="config-title">Información del Negocio</h1>
+      <div class="config-form">
+        <div class="config-row">
+          <div class="config-field">
+            <label>Nombre del Negocio *</label>
+            <input type="text" value="Abarrotes Don Pepe" />
+          </div>
+          <div class="config-field">
+            <label>Giro o Tipo de Negocio</label>
+            <select>
+              <option>Abarrotes y Miscelánea</option>
+            </select>
+          </div>
+        </div>
+        <div class="config-field">
+          <label>Dirección</label>
+          <input type="text" value="Av. Juárez #123, Col. Centro, CP 06000" />
+        </div>
+        <div class="config-row">
+          <div class="config-field">
+            <label>Teléfono</label>
+            <input type="text" value="55 1234 5678" />
+          </div>
+          <div class="config-field">
+            <label>Email</label>
+            <input type="text" value="contacto@abarrotesdonpepe.com" />
+          </div>
+        </div>
+        <div class="config-separator"></div>
+        <div class="config-row">
+          <div class="config-field">
+            <label>Hora de Apertura</label>
+            <input type="text" value="07:00" />
+          </div>
+          <div class="config-field">
+            <label>Hora de Cierre</label>
+            <input type="text" value="21:00" />
+          </div>
+        </div>
+        <div class="config-field">
+          <label>Días Laborales</label>
+          <div class="config-days">
+            <button class="config-day" type="button">Lun</button>
+            <button class="config-day" type="button">Mar</button>
+            <button class="config-day" type="button">Mié</button>
+            <button class="config-day" type="button">Jue</button>
+            <button class="config-day" type="button">Vie</button>
+            <button class="config-day" type="button">Sáb</button>
+            <button class="config-day" type="button">Dom</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+  {% else %}
+  <h1>{{ page_heading|default:"Template Backend" }}</h1>
+  <p>{{ page_subtitle|default:"Base reutilizable para vistas administrativas." }}</p>
+  <section class="backend-grid">
+    <article class="backend-card">
+      <h2>Encabezado</h2>
+      <span>Zona para título y acciones.</span>
+    </article>
+    <article class="backend-card">
+      <h2>Contenido</h2>
+      <span>Área principal para formularios o tablas.</span>
+    </article>
+    <article class="backend-card">
+      <h2>Sidebar</h2>
+      <span>Panel lateral para filtros o ayuda.</span>
+    </article>
+  </section>
+  {% endif %}
+</main>
+
+<script>
+  (function () {
+    const STORAGE_KEY = "backend_template_sidebar_settings";
+    const DEFAULTS = {
+      logo: "/static/imagenes/cc.png",
+      textColor: "#164723",
+      iconColor: "#164723",
+      topBg: "#fff5ee",
+      bottomBg: "#ffe8d7",
+      navbarBgColor: "#0f172a",
+      navbarTextColor: "#e5e7eb",
+      navbarIconColor: "#e5e7eb",
+      animation: "slide-lr"
+    };
+
+    const btn = document.getElementById("menuBtn");
+    const panel = document.getElementById("menuPanel");
+    const personalizarItem = document.getElementById("personalizarItem");
+    const configuracionItem = document.getElementById("configuracionItem");
+    const sidebarLogo = document.getElementById("sidebarLogo");
+
+    const openEditorBtn = document.getElementById("openSidebarEditor");
+    const openNavbarEditorBtn = document.getElementById("openNavbarEditor");
+    const closeEditorBtn = document.getElementById("closeSidebarEditor");
+    const editor = document.getElementById("sidebarEditor");
+
+    const logoInput = document.getElementById("sidebarLogoInput");
+    const textColorInput = document.getElementById("sidebarTextColor");
+    const iconColorInput = document.getElementById("sidebarIconColor");
+    const topBgInput = document.getElementById("sidebarTopBg");
+    const bottomBgInput = document.getElementById("sidebarBottomBg");
+    const animationInput = document.getElementById("sidebarAnimation");
+    const navbarBgColorInput = document.getElementById("navbarBgColor");
+    const navbarTextColorInput = document.getElementById("navbarTextColor");
+    const navbarIconColorInput = document.getElementById("navbarIconColor");
+    const resetBtn = document.getElementById("resetSidebarStyle");
+    const usersName = document.getElementById("usersName");
+    const usersRole = document.getElementById("usersRole");
+    const usersAvatar = document.getElementById("usersAvatar");
+    const usersAvatarInitial = document.getElementById("usersAvatarInitial");
+    const usersAvatarImage = document.getElementById("usersAvatarImage");
+    const editUsersAvatarBtn = document.getElementById("editUsersAvatarBtn");
+    const deleteUsersAvatarBtn = document.getElementById("deleteUsersAvatarBtn");
+    const usersAvatarInput = document.getElementById("usersAvatarInput");
+    const userUsernameInput = document.getElementById("userUsername");
+    const userEmailInput = document.getElementById("userEmail");
+    const userDepartamentoInput = document.getElementById("userDepartamento");
+    const userTelefonoLaboralInput = document.getElementById("userTelefonoLaboral");
+    const userPuestoTrabajoInput = document.getElementById("userPuestoTrabajo");
+    const userCelularInput = document.getElementById("userCelular");
+    const userRolInput = document.getElementById("userRol");
+    const userPasswordInput = document.getElementById("userPassword");
+    const userTwoFactorEnabledInput = document.getElementById("userTwoFactorEnabled");
+    const newUsersProfileBtn = document.getElementById("newUsersProfileBtn");
+    const editUsersProfileBtn = document.getElementById("editUsersProfileBtn");
+    const saveUsersProfileBtn = document.getElementById("saveUsersProfileBtn");
+    const deleteUsersProfileBtn = document.getElementById("deleteUsersProfileBtn");
+    const usersFormStatus = document.getElementById("usersFormStatus");
+    const usersTargetRow = document.getElementById("usersTargetRow");
+    const usersTargetSelect = document.getElementById("usersTargetSelect");
+    let currentUserId = null;
+    let selectedUserId = null;
+    let isCreatingUser = false;
+    let avatarImageValue = "";
+    let avatarImageDirty = false;
+
+    function readStoredToken() {
+      const keys = ["intellicoop_access_token", "access_token", "token", "auth_token"];
+      for (let i = 0; i < keys.length; i += 1) {
+        const key = keys[i];
+        const localValue = window.localStorage.getItem(key);
+        if (localValue) return localValue;
+        const sessionValue = window.sessionStorage.getItem(key);
+        if (sessionValue) return sessionValue;
+      }
+      return "";
+    }
+
+    function parsePayload(tokenValue) {
+      const token = tokenValue.startsWith("Bearer ") ? tokenValue.slice(7) : tokenValue;
+      const parts = token.split(".");
+      if (parts.length < 2) return null;
+      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+      return JSON.parse(window.atob(padded));
+    }
+
+    function getUserType() {
+      try {
+        const token = readStoredToken();
+        if (!token) return "";
+        const payload = parsePayload(token);
+        return payload && payload.user_type ? String(payload.user_type).toLowerCase() : "";
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function getAuthHeaders() {
+      const token = readStoredToken();
+      if (!token) return {};
+      const authValue = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+      return { Authorization: authValue };
+    }
+
+    function setUsersStatus(message, isError) {
+      if (!usersFormStatus) return;
+      usersFormStatus.textContent = message || "";
+      usersFormStatus.style.color = isError ? "#b91c1c" : "#166534";
+    }
+
+    function buildDisplayName(profileData) {
+      return (profileData.username || "").trim() || "Usuario";
+    }
+
+    function renderAvatar() {
+      if (!usersAvatar || !usersAvatarImage || !usersAvatarInitial) return;
+      const hasImage = Boolean(avatarImageValue);
+      usersAvatar.classList.toggle("has-image", hasImage);
+      usersAvatarImage.src = hasImage ? avatarImageValue : "";
+      const username = (userUsernameInput && userUsernameInput.value.trim()) || "U";
+      usersAvatarInitial.textContent = username.charAt(0).toUpperCase();
+    }
+
+    function fillUsersForm(profileData) {
+      if (!userEmailInput) return;
+      userUsernameInput.value = profileData.username || "";
+      userEmailInput.value = profileData.email || "";
+      userDepartamentoInput.value = profileData.departamento || "";
+      userTelefonoLaboralInput.value = profileData.telefono || "";
+      userPuestoTrabajoInput.value = profileData.puesto_trabajo || "";
+      userCelularInput.value = profileData.celular || "";
+      userRolInput.value = profileData.rol || "auditor";
+      userTwoFactorEnabledInput.checked = Boolean(profileData.two_factor_enabled);
+      userPasswordInput.value = "";
+      avatarImageValue = profileData.avatar_image || "";
+      avatarImageDirty = false;
+      selectedUserId = profileData.id || selectedUserId;
+
+      if (usersName) {
+        usersName.textContent = buildDisplayName(profileData);
+      }
+      if (usersRole) {
+        usersRole.textContent = profileData.puesto_trabajo || "Nombre del puesto";
+      }
+      renderAvatar();
+    }
+
+    function clearUsersForm() {
+      if (!userEmailInput) return;
+      userUsernameInput.value = "";
+      userEmailInput.value = "";
+      userDepartamentoInput.value = "";
+      userTelefonoLaboralInput.value = "";
+      userPuestoTrabajoInput.value = "";
+      userCelularInput.value = "";
+      userRolInput.value = "auditor";
+      userTwoFactorEnabledInput.checked = false;
+      userPasswordInput.value = "";
+      avatarImageValue = "";
+      avatarImageDirty = true;
+      if (usersName) usersName.textContent = "Nuevo usuario";
+      if (usersRole) usersRole.textContent = "Nombre del puesto";
+      renderAvatar();
+    }
+
+    function setUsersFormEditable(editable) {
+      if (!userEmailInput) return;
+      [
+        userUsernameInput,
+        userEmailInput,
+        userDepartamentoInput,
+        userTelefonoLaboralInput,
+        userPuestoTrabajoInput,
+        userCelularInput,
+        userPasswordInput,
+        userTwoFactorEnabledInput
+      ].forEach(function (element) {
+        if (!element) return;
+        element.disabled = !editable;
+      });
+      if (editUsersAvatarBtn) editUsersAvatarBtn.disabled = !editable;
+      if (deleteUsersAvatarBtn) deleteUsersAvatarBtn.disabled = !editable;
+      if (userRolInput) {
+        userRolInput.disabled = !editable || !isSuperadmin();
+      }
+      if (saveUsersProfileBtn) {
+        saveUsersProfileBtn.disabled = !editable;
+      }
+    }
+
+    function populateUsersTargetSelect(usersList) {
+      if (!usersTargetSelect) return;
+      usersTargetSelect.innerHTML = "";
+      usersList.forEach(function (item) {
+        const option = document.createElement("option");
+        option.value = String(item.id);
+        option.textContent = `${item.username} (${item.rol})`;
+        usersTargetSelect.appendChild(option);
+      });
+      if (selectedUserId) {
+        usersTargetSelect.value = String(selectedUserId);
+      }
+    }
+
+    function loadSelectedUserProfile(userId) {
+      const headers = getAuthHeaders();
+      fetch(`{{ api_auth_users_path }}${userId}/`, { headers: headers })
+        .then(function (response) {
+          if (!response.ok) throw new Error("No se pudo cargar el usuario seleccionado.");
+          return response.json();
+        })
+        .then(function (data) {
+          fillUsersForm(data);
+          setUsersFormEditable(false);
+          setUsersStatus("", false);
+        })
+        .catch(function () {
+          setUsersStatus("No fue posible cargar el usuario seleccionado.", true);
+        });
+    }
+
+    function loadUsersProfile() {
+      if (!userEmailInput) return;
+      const headers = getAuthHeaders();
+      if (!headers.Authorization) {
+        setUsersStatus("Inicia sesión para editar tu perfil.", true);
+        return;
+      }
+
+      fetch("{{ api_auth_profile_path }}", { headers: headers })
+        .then(function (response) {
+          if (!response.ok) throw new Error("No se pudo cargar el perfil.");
+          return response.json();
+        })
+        .then(function (data) {
+          currentUserId = data.id;
+          if (!selectedUserId || !canManageUsers()) {
+            selectedUserId = data.id;
+          }
+          if (String(selectedUserId) === String(data.id)) {
+            fillUsersForm(data);
+          }
+          isCreatingUser = false;
+          setUsersFormEditable(false);
+          if (!canManageUsers()) {
+            if (usersTargetRow) usersTargetRow.style.display = "none";
+            if (newUsersProfileBtn) newUsersProfileBtn.disabled = true;
+            if (editUsersProfileBtn) editUsersProfileBtn.disabled = false;
+            if (deleteUsersProfileBtn) deleteUsersProfileBtn.disabled = true;
+            setUsersStatus("", false);
+            return;
+          }
+
+          if (usersTargetRow) usersTargetRow.style.display = "";
+          if (newUsersProfileBtn) newUsersProfileBtn.disabled = false;
+          if (editUsersProfileBtn) editUsersProfileBtn.disabled = false;
+          if (deleteUsersProfileBtn) deleteUsersProfileBtn.disabled = String(selectedUserId) === String(currentUserId);
+          fetch("{{ api_auth_users_path }}", { headers: headers })
+            .then(function (usersResponse) {
+              if (!usersResponse.ok) throw new Error("No se pudo cargar la lista de usuarios.");
+              return usersResponse.json();
+            })
+            .then(function (usersList) {
+              populateUsersTargetSelect(usersList);
+              if (selectedUserId && String(selectedUserId) !== String(currentUserId)) {
+                loadSelectedUserProfile(selectedUserId);
+              }
+            })
+            .catch(function () {
+              setUsersStatus("No fue posible cargar la lista de usuarios.", true);
+            });
+          setUsersStatus("", false);
+        })
+        .catch(function () {
+          setUsersStatus("No fue posible cargar los datos del usuario.", true);
+        });
+    }
+
+    function saveUsersProfile() {
+      if (!userEmailInput) return;
+      const headers = getAuthHeaders();
+      if (!headers.Authorization) {
+        setUsersStatus("Inicia sesión para guardar cambios.", true);
+        return;
+      }
+
+      const payload = {
+        username: userUsernameInput.value.trim(),
+        email: userEmailInput.value.trim(),
+        departamento: userDepartamentoInput.value.trim(),
+        telefono: userTelefonoLaboralInput.value.trim(),
+        puesto_trabajo: userPuestoTrabajoInput.value.trim(),
+        celular: userCelularInput.value.trim(),
+        two_factor_enabled: Boolean(userTwoFactorEnabledInput.checked),
+      };
+      if (!payload.username) {
+        delete payload.username;
+      }
+      if (avatarImageDirty) {
+        payload.avatar_image = avatarImageValue;
+      }
+      if (isSuperadmin()) {
+        payload.rol = userRolInput.value;
+      }
+      if (userPasswordInput.value.trim()) {
+        payload.password = userPasswordInput.value.trim();
+      }
+      if (!payload.email) {
+        setUsersStatus("El correo es obligatorio.", true);
+        return;
+      }
+
+      let endpoint = "{{ api_auth_profile_path }}";
+      let method = "PATCH";
+      if (isCreatingUser && canManageUsers()) {
+        endpoint = "{{ api_auth_users_path }}";
+        method = "POST";
+      } else if (canManageUsers() && selectedUserId && currentUserId && String(selectedUserId) !== String(currentUserId)) {
+        endpoint = `{{ api_auth_users_path }}${selectedUserId}/`;
+      }
+      if (method === "POST" && !payload.password) {
+        setUsersStatus("La contraseña es obligatoria para crear usuario.", true);
+        return;
+      }
+      if (method === "POST" && !payload.username) {
+        setUsersStatus("El nombre de usuario es obligatorio para crear usuario.", true);
+        return;
+      }
+
+      setUsersStatus("Guardando...", false);
+      fetch(endpoint, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          ...headers
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            return response.json().then(function (errorBody) {
+              const firstError = Object.values(errorBody || {})[0];
+              const errorText = Array.isArray(firstError) ? firstError[0] : firstError || "No fue posible guardar.";
+              throw new Error(errorText);
+            });
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          if (method === "POST") {
+            isCreatingUser = false;
+            selectedUserId = data.id;
+            loadUsersProfile();
+          } else {
+            fillUsersForm(data);
+          }
+          setUsersFormEditable(false);
+          setUsersStatus("Cambios guardados correctamente.", false);
+        })
+        .catch(function (error) {
+          setUsersStatus(error.message || "No fue posible guardar los cambios.", true);
+        });
+    }
+
+    function isSuperadmin() {
+      return getUserType() === "superadmin";
+    }
+
+    function isAdminOrSuperadmin() {
+      const userType = getUserType();
+      return userType === "superadmin" || userType === "administrador" || userType === "admin";
+    }
+
+    function canManageUsers() {
+      return isAdminOrSuperadmin();
+    }
+
+    function startNewUser() {
+      if (!canManageUsers()) {
+        setUsersStatus("No autorizado para crear usuarios.", true);
+        return;
+      }
+      isCreatingUser = true;
+      selectedUserId = null;
+      clearUsersForm();
+      setUsersFormEditable(true);
+      if (deleteUsersProfileBtn) deleteUsersProfileBtn.disabled = true;
+      setUsersStatus("Nuevo usuario: completa los campos y presiona Guardar.", false);
+    }
+
+    function startEditUser() {
+      setUsersFormEditable(true);
+      setUsersStatus("Editando usuario.", false);
+    }
+
+    function deleteSelectedUser() {
+      if (!canManageUsers() || !selectedUserId || String(selectedUserId) === String(currentUserId)) {
+        setUsersStatus("Selecciona un usuario válido para eliminar.", true);
+        return;
+      }
+      if (!window.confirm("¿Eliminar este usuario?")) return;
+      const headers = getAuthHeaders();
+      fetch(`{{ api_auth_users_path }}${selectedUserId}/`, {
+        method: "DELETE",
+        headers: headers
+      })
+        .then(function (response) {
+          if (!response.ok) throw new Error("No fue posible eliminar el usuario.");
+          selectedUserId = currentUserId;
+          loadUsersProfile();
+          setUsersStatus("Usuario eliminado.", false);
+        })
+        .catch(function (error) {
+          setUsersStatus(error.message || "No fue posible eliminar el usuario.", true);
+        });
+    }
+
+    if (personalizarItem) {
+      personalizarItem.style.display = "";
+    }
+    if (configuracionItem) {
+      configuracionItem.style.display = isAdminOrSuperadmin() ? "" : "none";
+    }
+    if (openEditorBtn) {
+      openEditorBtn.style.display = isSuperadmin() ? "inline-flex" : "none";
+    }
+    if (openNavbarEditorBtn) {
+      openNavbarEditorBtn.style.display = isSuperadmin() ? "inline-flex" : "none";
+    }
+    if (saveUsersProfileBtn) {
+      saveUsersProfileBtn.addEventListener("click", saveUsersProfile);
+      loadUsersProfile();
+    }
+    if (newUsersProfileBtn) {
+      newUsersProfileBtn.addEventListener("click", startNewUser);
+    }
+    if (editUsersProfileBtn) {
+      editUsersProfileBtn.addEventListener("click", startEditUser);
+    }
+    if (deleteUsersProfileBtn) {
+      deleteUsersProfileBtn.addEventListener("click", deleteSelectedUser);
+    }
+    if (usersTargetSelect) {
+      usersTargetSelect.addEventListener("change", function () {
+        const selected = usersTargetSelect.value;
+        if (!selected) return;
+        selectedUserId = selected;
+        if (canManageUsers()) {
+          loadSelectedUserProfile(selected);
+        }
+      });
+    }
+    if (userUsernameInput) {
+      userUsernameInput.addEventListener("input", function () {
+        if (usersName) usersName.textContent = userUsernameInput.value.trim() || "Usuario";
+        renderAvatar();
+      });
+    }
+    if (userPuestoTrabajoInput) {
+      userPuestoTrabajoInput.addEventListener("input", function () {
+        if (usersRole) usersRole.textContent = userPuestoTrabajoInput.value.trim() || "Nombre del puesto";
+      });
+    }
+    if (editUsersAvatarBtn && usersAvatarInput) {
+      editUsersAvatarBtn.addEventListener("click", function () {
+        if (editUsersAvatarBtn.disabled) return;
+        usersAvatarInput.click();
+      });
+      usersAvatarInput.addEventListener("change", function () {
+        const file = usersAvatarInput.files && usersAvatarInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const result = event.target && event.target.result;
+          if (typeof result === "string") {
+            avatarImageValue = result;
+            avatarImageDirty = true;
+            renderAvatar();
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    if (deleteUsersAvatarBtn) {
+      deleteUsersAvatarBtn.addEventListener("click", function () {
+        if (deleteUsersAvatarBtn.disabled) return;
+        avatarImageValue = "";
+        avatarImageDirty = true;
+        renderAvatar();
+      });
+    }
+
+    function setMenuState(open) {
+      panel.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", String(open));
+      panel.setAttribute("aria-hidden", String(!open));
+    }
+
+    function setEditorState(open) {
+      editor.classList.toggle("open", open);
+      editor.setAttribute("aria-hidden", String(!open));
+    }
+
+    function saveSettings(settings) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { ...DEFAULTS };
+        const parsed = JSON.parse(raw);
+        return { ...DEFAULTS, ...parsed };
+      } catch (error) {
+        return { ...DEFAULTS };
+      }
+    }
+
+    function applyAnimation(animation) {
+      panel.classList.remove("anim-slide-lr", "anim-slide-rl", "anim-slide-td", "anim-slide-bu");
+      panel.classList.add(`anim-${animation}`);
+    }
+
+    function applySettings(settings) {
+      document.documentElement.style.setProperty("--sidebar-text-color", settings.textColor);
+      document.documentElement.style.setProperty("--sidebar-icon-color", settings.iconColor);
+      document.documentElement.style.setProperty("--sidebar-top-bg", settings.topBg);
+      document.documentElement.style.setProperty("--sidebar-bottom-bg", settings.bottomBg);
+      document.documentElement.style.setProperty("--navbar-bg-color", settings.navbarBgColor);
+      document.documentElement.style.setProperty("--navbar-text-color", settings.navbarTextColor);
+      document.documentElement.style.setProperty("--navbar-icon-color", settings.navbarIconColor);
+      sidebarLogo.src = settings.logo || DEFAULTS.logo;
+      applyAnimation(settings.animation);
+
+      textColorInput.value = settings.textColor;
+      iconColorInput.value = settings.iconColor;
+      topBgInput.value = settings.topBg;
+      bottomBgInput.value = settings.bottomBg;
+      animationInput.value = settings.animation;
+      navbarBgColorInput.value = settings.navbarBgColor;
+      navbarTextColorInput.value = settings.navbarTextColor;
+      navbarIconColorInput.value = settings.navbarIconColor;
+    }
+
+    let currentSettings = loadSettings();
+    applySettings(currentSettings);
+
+    btn.addEventListener("click", function () {
+      setMenuState(!panel.classList.contains("open"));
+    });
+
+    document.addEventListener("click", function (event) {
+      const isInsideMenu = panel.contains(event.target) || btn.contains(event.target);
+      const isInsideEditor = editor.contains(event.target) || openEditorBtn.contains(event.target);
+      if (!isInsideMenu) setMenuState(false);
+      if (!isInsideEditor) setEditorState(false);
+    });
+
+    openEditorBtn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      setEditorState(true);
+      setMenuState(true);
+    });
+
+    openNavbarEditorBtn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      setEditorState(true);
+    });
+
+    closeEditorBtn.addEventListener("click", function () {
+      setEditorState(false);
+    });
+
+    function updateSetting(key, value) {
+      currentSettings = { ...currentSettings, [key]: value };
+      applySettings(currentSettings);
+      saveSettings(currentSettings);
+    }
+
+    textColorInput.addEventListener("input", function () {
+      updateSetting("textColor", textColorInput.value);
+    });
+
+    iconColorInput.addEventListener("input", function () {
+      updateSetting("iconColor", iconColorInput.value);
+    });
+
+    topBgInput.addEventListener("input", function () {
+      updateSetting("topBg", topBgInput.value);
+    });
+
+    bottomBgInput.addEventListener("input", function () {
+      updateSetting("bottomBg", bottomBgInput.value);
+    });
+
+    navbarBgColorInput.addEventListener("input", function () {
+      updateSetting("navbarBgColor", navbarBgColorInput.value);
+    });
+
+    navbarTextColorInput.addEventListener("input", function () {
+      updateSetting("navbarTextColor", navbarTextColorInput.value);
+    });
+
+    navbarIconColorInput.addEventListener("input", function () {
+      updateSetting("navbarIconColor", navbarIconColorInput.value);
+    });
+
+    animationInput.addEventListener("change", function () {
+      updateSetting("animation", animationInput.value);
+      if (panel.classList.contains("open")) {
+        setMenuState(false);
+        setTimeout(function () { setMenuState(true); }, 40);
+      }
+    });
+
+    logoInput.addEventListener("change", function () {
+      const file = logoInput.files && logoInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const result = event.target && event.target.result;
+        if (typeof result === "string") {
+          updateSetting("logo", result);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    resetBtn.addEventListener("click", function () {
+      currentSettings = { ...DEFAULTS };
+      applySettings(currentSettings);
+      saveSettings(currentSettings);
+      logoInput.value = "";
+    });
+  })();
+</script>
+<script src="/static/js/backend-navbar.js"></script>
+{% endblock %}

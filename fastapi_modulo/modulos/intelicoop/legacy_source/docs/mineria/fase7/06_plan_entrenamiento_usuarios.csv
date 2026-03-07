@@ -1,0 +1,4 @@
+modulo,audiencia,duracion_horas,objetivo,estado
+interpretacion_scoring,riesgo y originacion,2,interpretar score/recomendacion y excepciones,Programado
+gestion_alertas_mora,cobranzas,2,priorizar alertas media/alta y medir recuperacion,Programado
+segmentacion_y_reglas,comercial,1.5,usar segmentos y reglas para campanas,Programado

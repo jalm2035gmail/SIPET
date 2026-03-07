@@ -1,0 +1,6 @@
+pipeline,fecha_corte,run_id,idempotency_key,estado,detalle,skipped
+mora_temprana_batch,2026-02-18,daily_0215,mora_temprana_batch:2026-02-18:daily_0215,ok,ejecutado,no
+segmentacion_mensual,2026-02-18,daily_0215,segmentacion_mensual:2026-02-18:daily_0215,ok,ejecutado,no
+reglas_asociacion,2026-02-18,daily_0215,reglas_asociacion:2026-02-18:daily_0215,ok,ejecutado,no
+integracion_submodulos,2026-02-18,daily_0215,integracion_submodulos:2026-02-18:daily_0215,ok,ejecutado,no
+validacion_submodulos,2026-02-18,daily_0215,validacion_submodulos:2026-02-18:daily_0215,ok,ejecutado,no

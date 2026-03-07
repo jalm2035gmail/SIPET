@@ -1,0 +1,5 @@
+dimension,segmento,samples,metrica,valor,umbral_o_referencia,estado
+global,scoring_operativo,0,score_promedio_real,0.000000,comparar_vs_validacion,En revision
+global,referencia_modelo,1,brier_esperado,0.405636,metadata_candidate_metrics,Cumple
+global,referencia_modelo,1,auc_esperado,0.138393,metadata_candidate_metrics,Cumple
+post_deploy,ultima_promocion_modelo,0,drift_7d_before_after,0.000000,<=0.1000,Cumple
