@@ -17,13 +17,16 @@ def _resolve_database_url() -> str:
     app_env = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "development").strip().lower()
     is_railway = any(str(value or "").strip() for key, value in os.environ.items() if key.startswith("RAILWAY_"))
     is_prod_like = app_env in {"production", "prod"} or is_railway
-    if is_prod_like:
-        raise RuntimeError(
-            "DATABASE_URL no está configurada en producción/Railway. "
-            "Define DATABASE_URL (PostgreSQL) para evitar fallback a SQLite local."
-        )
     default_sqlite_name = f"strategic_planning_{app_env}.db"
     sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or "").strip()
+    if not sqlite_db_path and is_prod_like:
+        # Railway puede iniciar sin DATABASE_URL si el servicio aún no tiene una BD adjunta.
+        # Preferimos degradar a SQLite local para que el contenedor abra el puerto y exponga /health.
+        sqlite_db_path = os.path.join("/tmp", default_sqlite_name)
+        print(
+            "[db] DATABASE_URL no configurada en producción/Railway; "
+            f"usando fallback SQLite temporal en {sqlite_db_path}."
+        )
     if sqlite_db_path and os.path.basename(sqlite_db_path).lower() == "strategic_planning.db" and not is_prod_like:
         sqlite_db_path = default_sqlite_name
     if not sqlite_db_path:
