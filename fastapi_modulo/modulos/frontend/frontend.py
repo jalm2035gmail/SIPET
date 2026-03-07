@@ -7,6 +7,17 @@ from datetime import datetime
 from fastapi import APIRouter, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from fastapi_modulo.modulos.frontend.frontend_store import (
+    delete_page as store_delete_page,
+    get_page as store_get_page,
+    get_page_by_slug as store_get_page_by_slug,
+    list_pages as store_list_pages,
+    list_versions as store_list_versions,
+    publish_page as store_publish_page,
+    restore_version as store_restore_version,
+    upsert_page as store_upsert_page,
+)
+
 router = APIRouter()
 
 _STORE_PATH       = os.path.join("fastapi_modulo", "modulos", "frontend", "pages_store.json")
@@ -18,6 +29,14 @@ _GALLERY_DIR      = os.path.join("static", "gallery")
 _GALLERY_MAX_MB   = 5
 _MAX_VERSIONS     = 5
 _BRAND_PATH       = os.path.join("fastapi_modulo", "modulos", "frontend", "brand_store.json")
+_RESERVED_WEB_SLUGS = {
+    "",
+    "descripcion",
+    "funcionalidades",
+    "login",
+    "404",
+    "passkey",
+}
 
 # Simple in-memory page render cache: {slug: rendered_html}
 _page_cache: dict = {}
@@ -38,51 +57,7 @@ _TASAS_DEFAULT = [
 # ── Data helpers ──────────────────────────────────────────────────────────────
 
 def _load_pages() -> list:
-    try:
-        with open(_STORE_PATH, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-            return data if isinstance(data, list) else []
-    except (OSError, json.JSONDecodeError):
-        return []
-
-
-def _save_pages(pages: list) -> None:
-    os.makedirs(os.path.dirname(_STORE_PATH), exist_ok=True)
-    with open(_STORE_PATH, "w", encoding="utf-8") as fh:
-        json.dump(pages, fh, ensure_ascii=False, indent=2)
-
-
-def _load_versions() -> dict:
-    """Returns {page_id: [snapshot, ...]} — newest first, max _MAX_VERSIONS each."""
-    try:
-        with open(_VERSIONS_PATH, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-            return data if isinstance(data, dict) else {}
-    except (OSError, json.JSONDecodeError):
-        return {}
-
-
-def _save_versions(versions: dict) -> None:
-    os.makedirs(os.path.dirname(_VERSIONS_PATH), exist_ok=True)
-    with open(_VERSIONS_PATH, "w", encoding="utf-8") as fh:
-        json.dump(versions, fh, ensure_ascii=False, indent=2)
-
-
-def _snapshot_version(page_id: str, page: dict) -> None:
-    """Push current page state as a version snapshot (keep newest _MAX_VERSIONS)."""
-    versions = _load_versions()
-    snapshots = versions.get(page_id, [])
-    snapshot = {
-        "saved_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
-        "title":    page.get("title", ""),
-        "status":   page.get("status", "draft"),
-        "gjs_html": page.get("gjs_html", ""),
-        "gjs_css":  page.get("gjs_css", ""),
-        "meta":     page.get("meta") or {},
-    }
-    snapshots.insert(0, snapshot)
-    versions[page_id] = snapshots[:_MAX_VERSIONS]
-    _save_versions(versions)
+    return store_list_pages()
 
 
 # ── Builder UI ────────────────────────────────────────────────────────────────
@@ -100,14 +75,12 @@ def frontend_builder(request: Request):
 
 @router.get("/api/frontend/pages")
 def api_pages_list():
-    pages = _load_pages()
-    return {"success": True, "data": pages}
+    return {"success": True, "data": store_list_pages()}
 
 
 @router.get("/api/frontend/pages/{page_id}")
 def api_page_get(page_id: str):
-    pages = _load_pages()
-    page = next((p for p in pages if p.get("id") == page_id), None)
+    page = store_get_page(page_id)
     if not page:
         return JSONResponse({"success": False, "error": "No encontrado"}, status_code=404)
     return {"success": True, "data": page}
@@ -120,21 +93,29 @@ async def api_pages_save(request: Request):
     except Exception:
         return JSONResponse({"success": False, "error": "JSON inválido"}, status_code=400)
 
-    pages = _load_pages()
     action = body.get("action", "upsert")
 
     if action == "delete":
         pid = str(body.get("id", ""))
-        pages = [p for p in pages if p.get("id") != pid]
-        _save_pages(pages)
-        return {"success": True, "data": pages}
+        return {"success": True, "data": store_delete_page(pid)}
 
     # upsert
     pid = str(body.get("id") or _uuid.uuid4())
-    existing_idx = next((i for i, p in enumerate(pages) if p.get("id") == pid), None)
+    pages = store_list_pages()
 
     slug_raw = str(body.get("slug") or body.get("title") or "pagina").strip().lower()
     slug = "".join(c if c.isalnum() or c == "-" else "-" for c in slug_raw).strip("-") or "pagina"
+    if slug in _RESERVED_WEB_SLUGS:
+        return JSONResponse(
+            {"success": False, "error": f'La ruta "/web/{slug}" está reservada. Usa otro slug.'},
+            status_code=400,
+        )
+    duplicate = next((p for p in pages if p.get("slug") == slug and p.get("id") != pid), None)
+    if duplicate:
+        return JSONResponse(
+            {"success": False, "error": f'Ya existe otra página con la ruta "/web/{slug}".'},
+            status_code=400,
+        )
 
     page = {
         "id":       pid,
@@ -148,23 +129,11 @@ async def api_pages_save(request: Request):
         "meta":     body.get("meta") if isinstance(body.get("meta"), dict) else {},
     }
 
-    if existing_idx is not None:
-        pages[existing_idx] = page
-    else:
-        pages.append(page)
-
-    # if this page is marked as home, unset all others
-    if page["is_home"]:
-        for p in pages:
-            if p["id"] != pid:
-                p["is_home"] = False
-
-    _snapshot_version(pid, page)
-    _save_pages(pages)
+    saved = store_upsert_page(page)
     # Invalidate render cache on any save
     _page_cache.pop(page["slug"], None)
     _page_cache.pop("web:" + page["slug"], None)
-    return {"success": True, "data": pages, "page": page}
+    return {"success": True, "data": saved["pages"], "page": saved["page"]}
 
 
 # ── Public preview ────────────────────────────────────────────────────────────
@@ -173,8 +142,7 @@ async def api_pages_save(request: Request):
 def public_page(slug: str):
     if slug in _page_cache:
         return HTMLResponse(_page_cache[slug])
-    pages = _load_pages()
-    page = next((p for p in pages if p.get("slug") == slug and p.get("status") == "published"), None)
+    page = store_get_page_by_slug(slug, published_only=True)
     if not page:
         return HTMLResponse("<h1 style='font-family:sans-serif;padding:40px'>Página no encontrada</h1>", status_code=404)
     rendered = _render_page_html(page)
@@ -188,8 +156,7 @@ def public_page_web(slug: str):
     cache_key = "web:" + slug
     if cache_key in _page_cache:
         return HTMLResponse(_page_cache[cache_key])
-    pages = _load_pages()
-    page = next((p for p in pages if p.get("slug") == slug and p.get("status") == "published"), None)
+    page = store_get_page_by_slug(slug, published_only=True)
     if not page:
         return HTMLResponse("<h1 style='font-family:sans-serif;padding:40px'>Página no encontrada</h1>", status_code=404)
     rendered = _render_page_html(page)
@@ -200,8 +167,7 @@ def public_page_web(slug: str):
 @router.get("/p-preview/{slug}", response_class=HTMLResponse)
 def preview_page(slug: str):
     """Draft preview — accessible from the builder regardless of publish status."""
-    pages = _load_pages()
-    page = next((p for p in pages if p.get("slug") == slug), None)
+    page = store_get_page_by_slug(slug, published_only=False)
     if not page:
         return HTMLResponse("<h1 style='font-family:sans-serif;padding:40px'>Página no encontrada</h1>", status_code=404)
     return _render_page_html(page)
@@ -210,12 +176,9 @@ def preview_page(slug: str):
 @router.post("/api/frontend/pages/{page_id}/publish")
 def api_page_publish(page_id: str):
     """Set page status to 'published' and invalidate render cache."""
-    pages = _load_pages()
-    page = next((p for p in pages if p.get("id") == page_id), None)
+    page = store_publish_page(page_id)
     if not page:
         return JSONResponse({"success": False, "error": "No encontrado"}, status_code=404)
-    page["status"] = "published"
-    _save_pages(pages)
     _page_cache.pop(page.get("slug", ""), None)
     _page_cache.pop("web:" + page.get("slug", ""), None)
     return {"success": True, "page": page}
@@ -224,27 +187,20 @@ def api_page_publish(page_id: str):
 @router.get("/api/frontend/versions/{page_id}")
 def api_versions_list(page_id: str):
     """Return version snapshots for a page (newest first, max 5)."""
-    versions = _load_versions()
-    return {"success": True, "data": versions.get(page_id, [])}
+    return {"success": True, "data": store_list_versions(page_id)}
 
 
 @router.post("/api/frontend/versions/{page_id}/restore/{version_idx}")
 def api_version_restore(page_id: str, version_idx: int):
     """Restore a version snapshot back into the active page."""
-    versions = _load_versions()
-    snaps = versions.get(page_id, [])
-    if version_idx < 0 or version_idx >= len(snaps):
+    versions = store_list_versions(page_id)
+    if version_idx < 0 or version_idx >= len(versions):
         return JSONResponse({"success": False, "error": "Versión no encontrada"}, status_code=404)
-    snap = snaps[version_idx]
-    pages = _load_pages()
-    page = next((p for p in pages if p.get("id") == page_id), None)
+    page = store_restore_version(page_id, version_idx)
     if not page:
         return JSONResponse({"success": False, "error": "Página no encontrada"}, status_code=404)
-    page["gjs_html"] = snap.get("gjs_html", "")
-    page["gjs_css"]  = snap.get("gjs_css", "")
-    page["meta"]     = snap.get("meta") or {}
-    _save_pages(pages)
     _page_cache.pop(page.get("slug", ""), None)
+    _page_cache.pop("web:" + page.get("slug", ""), None)
     return {"success": True, "page": page}
 
 
@@ -713,4 +669,3 @@ def api_gallery_delete(filename: str):
         os.remove(path)
         return {"success": True}
     return JSONResponse({"success": False, "error": "Archivo no encontrado"}, status_code=404)
-

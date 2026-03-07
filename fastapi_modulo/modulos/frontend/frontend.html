@@ -616,7 +616,7 @@
       <div class="wb-sep"></div>
       <input type="text" id="wb-page-title" placeholder="Título de la página…" maxlength="100">
       <div id="wb-page-slug-wrap" class="wb-page-slug-wrap">
-        <span style="color:#475569">/p/</span>
+        <span style="color:#475569">/web/</span>
         <input type="text" id="wb-page-slug" placeholder="url-slug" maxlength="80">
       </div>
       <select id="wb-status-sel">
@@ -1637,7 +1637,7 @@
       return '<div class="page-item'+(p.id===_currentPageId?' active':'')+'" onclick="selectPageFromModal(\''+p.id+'\')">'
         +'<div style="flex:1;min-width:0;">'
         +'<strong style="display:block;font-size:13px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;">'+esc(p.title||'Sin titulo')+'</strong>'
-        +'<span style="font-size:11px;color:#64748b;">/p/'+esc(p.slug||'')+'</span>'
+        +'<span style="font-size:11px;color:#64748b;">/web/'+esc(p.slug||'')+'</span>'
         +'</div>'
         +'<span class="pi-status '+(p.status||'draft')+'">'+(p.status==="published"?"Pub":"Bor")+'</span>'
         +'<button class="pi-dup" onclick="duplicatePageById(event,\''+p.id+'\')" title="Duplicar">&#9944;</button>'
@@ -2049,7 +2049,7 @@
   window.publishCurrentPage = function(){
     var page = currentPage();
     if(!page){ toast('Selecciona una página primero', false); return; }
-    if(!confirm('¿Publicar "' + page.title + '"? Estará disponible en /p/' + page.slug)) return;
+    if(!confirm('¿Publicar "' + page.title + '"? Estará disponible en /web/' + page.slug)) return;
     fetch('/api/frontend/pages/' + page.id + '/publish', {method:'POST'})
       .then(function(r){ return r.json(); })
       .then(function(j){
@@ -2065,7 +2065,7 @@
   };
   document.getElementById('wb-publish-btn').addEventListener('click', window.publishCurrentPage);
 
-  /* Ver publicado — abre /p/{slug} en nueva pestaña */
+  /* Ver publicado — abre /web/{slug} en nueva pestaña */
   document.getElementById('wb-view-published-btn').addEventListener('click', function(){
     var page = currentPage();
     if(!page){ toast('Selecciona una página primero', false); return; }
@@ -2073,7 +2073,7 @@
       toast('⚠ La página aún no está publicada. Usa “Publicar” primero.', false);
       return;
     }
-    window.open('/p/' + page.slug, '_blank');
+    window.open('/web/' + page.slug, '_blank');
   });
 
   /* ── Historial de versiones ── */
