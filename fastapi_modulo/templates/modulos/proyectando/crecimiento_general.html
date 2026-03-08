@@ -1,4 +1,212 @@
-<section class="p-4">
+<section class="p-4 cg-scope">
+  <style>
+    .cg-scope{
+      --cg-accent: var(--sidebar-top, var(--sidebar-bottom, #0f172a));
+    }
+    .cg-toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:16px;
+    }
+    .cg-chart-toggle{
+      width:74px;
+      height:74px;
+      border-radius:999px;
+      border:1px solid color-mix(in srgb, var(--cg-accent) 22%, #ffffff 78%);
+      background:
+        radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--cg-accent) 10%, #ffffff 90%), transparent 48%),
+        linear-gradient(145deg, #ffffff 0%, color-mix(in srgb, var(--field-color, #eef2f7) 72%, #ffffff 28%) 100%);
+      box-shadow:0 14px 28px rgba(15,23,42,.10);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .cg-chart-toggle:hover,
+    .cg-chart-toggle:focus-visible{
+      transform:translateY(-2px) scale(1.02);
+      box-shadow:0 18px 34px rgba(15,23,42,.14);
+      border-color:color-mix(in srgb, var(--cg-accent) 38%, #ffffff 62%);
+      outline:none;
+    }
+    .cg-chart-toggle .boton_vista-icono{
+      width:28px;
+      height:28px;
+      background:var(--cg-accent);
+      opacity:.86;
+      border-radius:0 !important;
+      box-shadow:none !important;
+      display:block !important;
+      -webkit-mask: var(--view-pill-icon-url) center / contain no-repeat;
+      mask: var(--view-pill-icon-url) center / contain no-repeat;
+    }
+    .cg-chart-panel{
+      max-height:0;
+      overflow:hidden;
+      opacity:0;
+      transform:translateY(-10px);
+      transition:max-height .42s ease, opacity .3s ease, transform .3s ease, margin .3s ease;
+      margin:0 auto;
+      width:min(100%, 980px);
+    }
+    .cg-chart-panel.open{
+      max-height:480px;
+      opacity:1;
+      transform:translateY(0);
+      margin:0 auto 18px;
+    }
+    .cg-chart-card{
+      border:1px solid color-mix(in srgb, var(--cg-accent) 14%, #ffffff 86%);
+      border-radius:28px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--field-color, #eef4f2) 80%, #ffffff 20%) 0%, #ffffff 100%);
+      box-shadow:0 20px 45px rgba(15,23,42,.10);
+      padding:20px 22px 18px;
+      position:relative;
+    }
+    .cg-chart-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .cg-chart-title{
+      font-size:1.05rem;
+      font-weight:800;
+      color:var(--cg-accent);
+      margin:0;
+    }
+    .cg-chart-subtitle{
+      font-size:.84rem;
+      color:#5b6472;
+      margin:4px 0 0;
+    }
+    .cg-chart-badge{
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:8px 12px;
+      background:color-mix(in srgb, var(--cg-accent) 10%, #ffffff 90%);
+      color:var(--cg-accent);
+      font-size:.76rem;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .cg-chart-svg{
+      display:block;
+      width:100%;
+      height:auto;
+    }
+    .cg-chart-grid{
+      stroke:rgba(100,116,139,.18);
+      stroke-width:1;
+    }
+    .cg-chart-axis{
+      fill:#64748b;
+      font-size:12px;
+      font-weight:700;
+    }
+    .cg-chart-area{
+      fill:url(#cgAreaGradient);
+      opacity:.95;
+      animation:cgAreaFade 1.8s ease;
+    }
+    .cg-chart-line{
+      fill:none;
+      stroke:var(--cg-accent);
+      stroke-width:4;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      stroke-dasharray:1400;
+      stroke-dashoffset:1400;
+      animation:cgLineDraw 2.8s cubic-bezier(.22,.8,.22,1) forwards;
+    }
+    .cg-chart-point{
+      fill:#fff;
+      stroke:var(--cg-accent);
+      stroke-width:3;
+      transform-origin:center;
+      animation:cgPointPop .7s ease both;
+    }
+    .cg-chart-point--projected{
+      fill:color-mix(in srgb, var(--cg-accent) 18%, #ffffff 82%);
+    }
+    .cg-chart-value{
+      fill:var(--cg-accent);
+      font-size:11px;
+      font-weight:800;
+    }
+    @keyframes cgLineDraw{
+      to{stroke-dashoffset:0;}
+    }
+    @keyframes cgPointPop{
+      0%{transform:scale(.2); opacity:0;}
+      100%{transform:scale(1); opacity:1;}
+    }
+    @keyframes cgAreaFade{
+      0%{opacity:0; transform:translateY(8px);}
+      100%{opacity:.95; transform:translateY(0);}
+    }
+    .cg-table-wrap{
+      display:flex;
+      justify-content:center;
+    }
+    .cg-table{
+      width:auto !important;
+      min-width:0;
+      table-layout:auto;
+    }
+    .cg-table th,
+    .cg-table td{
+      padding:10px 12px;
+      white-space:nowrap;
+    }
+    .cg-col-year{
+      width:88px;
+      min-width:88px;
+    }
+    .cg-col-amount{
+      width:148px;
+      min-width:148px;
+    }
+    .cg-input{
+      min-width: 68px;
+    }
+    .cg-input.cg-input-projection{
+      background: var(--cg-accent) !important;
+      color: #f8fafc !important;
+      border-color: var(--cg-accent) !important;
+      font-weight: 700;
+    }
+    .cg-input.cg-input-projection::placeholder{
+      color: rgba(248,250,252,.72);
+    }
+    .cg-readonly-cell{
+      color: color-mix(in srgb, var(--cg-accent) 88%, #475569 12%);
+      opacity: .9;
+    }
+    .cg-pct-col{
+      width: 70px;
+      min-width: 70px;
+    }
+    .cg-pct-input-wrap{
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: 100%;
+    }
+    #cg-activo-total-tbody td.text-right,
+    #cg-pasivo-total-tbody td.text-right,
+    #cg-patrimonio-tbody td.text-right,
+    #cg-activo-total-tbody input.text-right{
+      text-align: right !important;
+    }
+  </style>
   <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6 mb-4">
     <div class="w-full flex flex-col md:flex-row items-center gap-10">
       <img
@@ -22,14 +230,41 @@
 
   <div class="-mt-px rounded-b-box border border-base-300 bg-base-100 p-4 notebook-content">
     <section class="tab-panel" data-panel="activo-total">
-      <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
+      <div class="cg-toolbar">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="cg-activo-save-btn" class="btn btn-primary">Guardar</button>
+          <span id="cg-activo-msg" class="text-sm text-base-content/70"></span>
+        </div>
+        <button
+          type="button"
+          id="cg-chart-toggle"
+          class="cg-chart-toggle"
+          aria-label="Mostrar gráfica de crecimiento"
+          title="Mostrar gráfica de crecimiento"
+        >
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/crecimiento.svg')"></span>
+        </button>
+      </div>
+      <div id="cg-chart-panel" class="cg-chart-panel">
+        <div class="cg-chart-card">
+          <div class="cg-chart-head">
+            <div>
+              <h3 class="cg-chart-title">Crecimiento del activo total</h3>
+              <p class="cg-chart-subtitle">Evolución histórica y proyectada con énfasis en el salto de crecimiento.</p>
+            </div>
+            <span class="cg-chart-badge">Activo total</span>
+          </div>
+          <svg id="cg-chart-svg" class="cg-chart-svg" viewBox="0 0 920 320" role="img" aria-label="Gráfica de crecimiento del activo total"></svg>
+        </div>
+      </div>
+      <div class="overflow-x-auto cg-table-wrap">
+        <table class="table table-zebra cg-table">
           <thead>
             <tr>
-              <th>Año</th>
-              <th class="text-right">Saldo</th>
-              <th class="text-right">Crecimiento</th>
-              <th class="text-right">%</th>
+              <th class="cg-col-year">Año</th>
+              <th class="text-right cg-col-amount">Saldo</th>
+              <th class="text-right cg-col-amount">Crecimiento</th>
+              <th class="text-right cg-pct-col">%</th>
             </tr>
           </thead>
           <tbody id="cg-activo-total-tbody"></tbody>
@@ -38,14 +273,14 @@
     </section>
 
     <section class="tab-panel" data-panel="pasivo-total" hidden>
-      <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
+      <div class="overflow-x-auto cg-table-wrap">
+        <table class="table table-zebra cg-table">
           <thead>
             <tr>
               <th>Rubro</th>
-              <th class="text-right">Y0</th>
-              <th class="text-right">Y1</th>
-              <th class="text-right">Proyección</th>
+              <th class="text-right cg-col-amount">Y0</th>
+              <th class="text-right cg-col-amount">Y1</th>
+              <th class="text-right cg-col-amount">Proyección</th>
             </tr>
           </thead>
           <tbody id="cg-pasivo-total-tbody"></tbody>
@@ -54,14 +289,14 @@
     </section>
 
     <section class="tab-panel" data-panel="patrimonio" hidden>
-      <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
+      <div class="overflow-x-auto cg-table-wrap">
+        <table class="table table-zebra cg-table">
           <thead>
             <tr>
               <th>Rubro</th>
-              <th class="text-right">Y0</th>
-              <th class="text-right">Y1</th>
-              <th class="text-right">Proyección</th>
+              <th class="text-right cg-col-amount">Y0</th>
+              <th class="text-right cg-col-amount">Y1</th>
+              <th class="text-right cg-col-amount">Proyección</th>
             </tr>
           </thead>
           <tbody id="cg-patrimonio-tbody"></tbody>
@@ -76,6 +311,13 @@
   var tbodyActivo = document.getElementById("cg-activo-total-tbody");
   var tbodyPasivo = document.getElementById("cg-pasivo-total-tbody");
   var tbodyPatrimonio = document.getElementById("cg-patrimonio-tbody");
+  var activoSaveBtn = document.getElementById("cg-activo-save-btn");
+  var activoMsg = document.getElementById("cg-activo-msg");
+  var chartToggleBtn = document.getElementById("cg-chart-toggle");
+  var chartPanel = document.getElementById("cg-chart-panel");
+  var chartSvg = document.getElementById("cg-chart-svg");
+  var activoRowsState = [];
+  var activoGrowthMap = {};
 
   function esc(v) {
     return String(v == null ? "" : v)
@@ -85,55 +327,184 @@
       .replace(/"/g, "&quot;");
   }
 
-  function parseJson(raw, fallback) {
-    try {
-      var parsed = JSON.parse(raw || "");
-      return parsed == null ? fallback : parsed;
-    } catch (_) {
-      return fallback;
-    }
-  }
-
   function num(v) {
     if (v == null || v === "") return "";
     return String(v);
   }
 
+  function parseNumber(value) {
+    var cleaned = String(value == null ? "" : value).replace(/,/g, "").replace(/%/g, "").trim();
+    if (!cleaned) return NaN;
+    var numeric = Number(cleaned);
+    return Number.isFinite(numeric) ? numeric : NaN;
+  }
+
+  function formatAmount(value) {
+    if (!Number.isFinite(value)) return "";
+    return Math.round(value).toLocaleString("en-US");
+  }
+
+  function formatPercent(value) {
+    if (!Number.isFinite(value)) return "";
+    return (Math.round(value * 100) / 100).toString().replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1") + "%";
+  }
+
+  function formatPercentInput(value) {
+    if (!Number.isFinite(value)) return "00.00%";
+    return value.toFixed(2) + "%";
+  }
+
+  function buildChartPath(points) {
+    if (!points.length) return "";
+    return points.map(function (point, idx) {
+      return (idx === 0 ? "M" : "L") + point.x + " " + point.y;
+    }).join(" ");
+  }
+
+  function renderActivoChart(rows) {
+    if (!chartSvg) return;
+    var data = (Array.isArray(rows) ? rows : []).filter(function (row) {
+      return Number.isFinite(parseNumber(row && row.saldo));
+    });
+    if (!data.length) {
+      chartSvg.innerHTML = "";
+      return;
+    }
+    var width = 920;
+    var height = 320;
+    var padding = { top: 28, right: 26, bottom: 46, left: 70 };
+    var chartWidth = width - padding.left - padding.right;
+    var chartHeight = height - padding.top - padding.bottom;
+    var values = data.map(function (row) { return parseNumber(row.saldo); });
+    var minValue = Math.min.apply(Math, values);
+    var maxValue = Math.max.apply(Math, values);
+    var range = Math.max(maxValue - minValue, Math.max(maxValue, 1) * 0.15);
+    var floor = Math.max(0, minValue - (range * 0.18));
+    var ceil = maxValue + (range * 0.08);
+    function xFor(idx) {
+      return padding.left + (data.length === 1 ? chartWidth / 2 : (idx * (chartWidth / (data.length - 1))));
+    }
+    function yFor(value) {
+      var ratio = (value - floor) / Math.max(ceil - floor, 1);
+      return padding.top + chartHeight - (ratio * chartHeight);
+    }
+    var points = data.map(function (row, idx) {
+      return {
+        x: xFor(idx),
+        y: yFor(parseNumber(row.saldo)),
+        year: row.year,
+        projected: !!row.projected,
+        value: parseNumber(row.saldo)
+      };
+    });
+    var linePath = buildChartPath(points);
+    var areaPath = linePath + " L " + points[points.length - 1].x + " " + (padding.top + chartHeight) + " L " + points[0].x + " " + (padding.top + chartHeight) + " Z";
+    var gridLines = Array.from({ length: 4 }).map(function (_, idx) {
+      var y = padding.top + (idx * (chartHeight / 3));
+      return '<line class="cg-chart-grid" x1="' + padding.left + '" y1="' + y + '" x2="' + (width - padding.right) + '" y2="' + y + '"></line>';
+    }).join("");
+    var xLabels = points.map(function (point) {
+      return '<text class="cg-chart-axis" x="' + point.x + '" y="' + (height - 18) + '" text-anchor="middle">' + esc(point.year) + '</text>';
+    }).join("");
+    var pointNodes = points.map(function (point, idx) {
+      var delay = (0.18 + (idx * 0.08)).toFixed(2);
+      return ''
+        + '<g>'
+        +   '<circle class="cg-chart-point' + (point.projected ? ' cg-chart-point--projected' : '') + '" cx="' + point.x + '" cy="' + point.y + '" r="7" style="animation-delay:' + delay + 's"></circle>'
+        +   '<text class="cg-chart-value" x="' + point.x + '" y="' + (point.y - 14) + '" text-anchor="middle">' + esc(formatAmount(point.value)) + '</text>'
+        + '</g>';
+    }).join("");
+    chartSvg.innerHTML = ''
+      + '<defs>'
+      +   '<linearGradient id="cgAreaGradient" x1="0" y1="0" x2="0" y2="1">'
+      +     '<stop offset="0%" stop-color="rgba(15,23,42,0.28)"></stop>'
+      +     '<stop offset="100%" stop-color="rgba(15,23,42,0.02)"></stop>'
+      +   '</linearGradient>'
+      + '</defs>'
+      + gridLines
+      + '<path class="cg-chart-area" d="' + areaPath + '"></path>'
+      + '<path class="cg-chart-line" d="' + linePath + '"></path>'
+      + pointNodes
+      + xLabels;
+  }
+
+  function recomputeActivoProjectedRows() {
+    var previousSaldo = null;
+    activoRowsState.forEach(function (row) {
+      if (!row) return;
+      var saldo = parseNumber(row.saldo);
+      if (!row.projected) {
+        previousSaldo = Number.isFinite(saldo) ? saldo : previousSaldo;
+        return;
+      }
+      var pct = parseNumber(row.pct);
+      if (Number.isFinite(previousSaldo) && Number.isFinite(pct)) {
+        var crecimiento = previousSaldo * (pct / 100);
+        var nextSaldo = previousSaldo + crecimiento;
+        row.crecimiento = crecimiento;
+        row.saldo = nextSaldo;
+        previousSaldo = nextSaldo;
+      } else {
+        row.crecimiento = null;
+        row.saldo = null;
+      }
+    });
+  }
+
   function renderActivo(rows) {
     if (!tbodyActivo) return;
-    if (!Array.isArray(rows) || !rows.length) {
+    activoRowsState = Array.isArray(rows) ? rows.slice() : [];
+    if (!activoRowsState.length) {
       tbodyActivo.innerHTML = '<tr><td colspan="4">Sin datos</td></tr>';
       return;
     }
-    tbodyActivo.innerHTML = rows.map(function (r) {
+    recomputeActivoProjectedRows();
+    renderActivoChart(activoRowsState);
+      tbodyActivo.innerHTML = activoRowsState.map(function (r, idx) {
+      var pctCell = r.projected
+        ? '<div class="cg-pct-input-wrap"><input class="input input-bordered campo input-sm cg-input cg-input-projection text-right" data-cg-row="' + idx + '" value="' + esc(formatPercentInput(parseNumber(r.pct))) + '"></div>'
+        : esc(formatPercent(parseNumber(r.pct)));
       return "<tr>" +
         "<td>" + esc(r.year) + "</td>" +
-        "<td class=\"text-right\">" + esc(num(r.saldo)) + "</td>" +
-        "<td class=\"text-right\">" + esc(num(r.crecimiento)) + "</td>" +
-        "<td class=\"text-right\">" + esc(num(r.pct)) + "</td>" +
+        "<td class=\"text-right cg-readonly-cell\">" + esc(formatAmount(parseNumber(r.saldo))) + "</td>" +
+        "<td class=\"text-right cg-readonly-cell\">" + esc(formatAmount(parseNumber(r.crecimiento))) + "</td>" +
+        "<td class=\"text-right cg-pct-col\">" + pctCell + "</td>" +
       "</tr>";
     }).join("");
+    tbodyActivo.querySelectorAll("input[data-cg-row]").forEach(function (input) {
+      input.addEventListener("input", function () {
+        var rowIdx = parseInt(this.getAttribute("data-cg-row") || "", 10);
+        if (!Number.isFinite(rowIdx) || !activoRowsState[rowIdx]) return;
+        var pct = parseNumber(this.value);
+        activoRowsState[rowIdx].pct = Number.isFinite(pct) ? pct : null;
+        activoGrowthMap[String(activoRowsState[rowIdx].offset)] = Number.isFinite(pct) ? String(pct) : "";
+      });
+      input.addEventListener("focus", function () {
+        var rowIdx = parseInt(this.getAttribute("data-cg-row") || "", 10);
+        if (!Number.isFinite(rowIdx) || !activoRowsState[rowIdx]) return;
+        var pct = parseNumber(activoRowsState[rowIdx].pct);
+        this.value = Number.isFinite(pct) ? pct.toFixed(2) : "00.00";
+        this.select();
+      });
+      input.addEventListener("blur", function () {
+        var rowIdx = parseInt(this.getAttribute("data-cg-row") || "", 10);
+        if (!Number.isFinite(rowIdx) || !activoRowsState[rowIdx]) return;
+        var pct = parseNumber(this.value);
+        activoRowsState[rowIdx].pct = Number.isFinite(pct) ? pct : null;
+        activoGrowthMap[String(activoRowsState[rowIdx].offset)] = Number.isFinite(pct) ? String(pct) : "";
+        renderActivo(activoRowsState);
+      });
+    });
   }
 
   function renderFinanciamiento(data) {
-    if (!data || typeof data !== "object") {
+    var pasivoRows = data && Array.isArray(data.pasivo_total) ? data.pasivo_total : [];
+    var patrimonioRows = data && Array.isArray(data.patrimonio) ? data.patrimonio : [];
+    if (!pasivoRows.length && !patrimonioRows.length) {
       if (tbodyPasivo) tbodyPasivo.innerHTML = '<tr><td colspan="4">Sin datos</td></tr>';
       if (tbodyPatrimonio) tbodyPatrimonio.innerHTML = '<tr><td colspan="4">Sin datos</td></tr>';
       return;
     }
-    var pasivoRows = [];
-    var patrimonioRows = [];
-    Object.keys(data).forEach(function (key) {
-      var item = data[key] || {};
-      var row = {
-        rubro: key.replace(/_/g, " "),
-        y0: item.y0_amount || "",
-        y1: item.y1_amount || "",
-        proj: item.proj_amount || ""
-      };
-      if (key.indexOf("pasivos_") === 0) pasivoRows.push(row);
-      if (key.indexOf("capital_") === 0) patrimonioRows.push(row);
-    });
     if (tbodyPasivo) {
       tbodyPasivo.innerHTML = pasivoRows.length ? pasivoRows.map(function (r) {
         return "<tr><td>" + esc(r.rubro) + "</td><td class=\"text-right\">" + esc(r.y0) + "</td><td class=\"text-right\">" + esc(r.y1) + "</td><td class=\"text-right\">" + esc(r.proj) + "</td></tr>";
@@ -148,16 +519,43 @@
 
   async function load() {
     try {
-      var res = await fetch("/api/proyectando/datos-preliminares");
-      var json = await res.json();
-      var data = (json && json.data) || {};
-      var activoRows = parseJson(data.cg_activo_total_rows_json, []);
-      var financiamiento = parseJson(data.cg_financiamiento_rows_json, {});
-      renderActivo(activoRows);
-      renderFinanciamiento(financiamiento);
+      var [resResumen, resActivo] = await Promise.all([
+        fetch("/api/proyectando/crecimiento-general/resumen"),
+        fetch("/api/proyectando/crecimiento-general/activo-total")
+      ]);
+      var jsonResumen = await resResumen.json();
+      var jsonActivo = await resActivo.json();
+      var data = (jsonResumen && jsonResumen.data) || {};
+      var activoData = (jsonActivo && jsonActivo.data) || {};
+      activoGrowthMap = activoData && typeof activoData.growth_map === "object" ? activoData.growth_map : {};
+      renderActivo(Array.isArray(activoData.rows) && activoData.rows.length ? activoData.rows : (Array.isArray(data.activo_total) ? data.activo_total : []));
+      renderFinanciamiento(data);
     } catch (_) {
       renderActivo([]);
       renderFinanciamiento({});
+    }
+  }
+
+  async function saveActivo() {
+    if (activoMsg) activoMsg.textContent = "Guardando...";
+    try {
+      var res = await fetch("/api/proyectando/crecimiento-general/activo-total", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ growth_map: activoGrowthMap })
+      });
+      var json = await res.json().catch(function () { return {}; });
+      if (!res.ok || !json || json.success === false) {
+        throw new Error((json && (json.error || json.detail)) || "No se pudo guardar");
+      }
+      var data = json.data || {};
+      activoGrowthMap = data && typeof data.growth_map === "object" ? data.growth_map : activoGrowthMap;
+      renderActivo(Array.isArray(data.rows) ? data.rows : []);
+      if (activoMsg) activoMsg.textContent = "Guardado.";
+      load();
+    } catch (err) {
+      if (activoMsg) activoMsg.textContent = (err && err.message) ? err.message : "Error al guardar.";
     }
   }
 
@@ -181,6 +579,13 @@
       setTab(tabBtn.getAttribute("data-tab") || "activo-total");
     });
   });
+  if (chartToggleBtn && chartPanel) {
+    chartToggleBtn.addEventListener("click", function () {
+      chartPanel.classList.toggle("open");
+      if (chartPanel.classList.contains("open")) renderActivoChart(activoRowsState);
+    });
+  }
+  if (activoSaveBtn) activoSaveBtn.addEventListener("click", saveActivo);
   setTab("activo-total");
   load();
 })();

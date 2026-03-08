@@ -1,7 +1,12 @@
 import os
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Body, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi_modulo.modulos.proyectando.data_store import (
+    load_crecimiento_general_activo_total_editor,
+    load_crecimiento_general_resumen,
+    save_crecimiento_general_activo_total_growth,
+)
 
 router = APIRouter()
 CRECIMIENTO_GENERAL_TEMPLATE_PATH = os.path.join(
@@ -38,6 +43,25 @@ def proyectando_crecimiento_general_page(request: Request):
             "colores": _get_colores_context(),
         },
     )
+
+
+@router.get("/api/proyectando/crecimiento-general/resumen")
+async def obtener_crecimiento_general_resumen():
+    return {"success": True, "data": load_crecimiento_general_resumen()}
+
+
+@router.get("/api/proyectando/crecimiento-general/activo-total")
+async def obtener_crecimiento_general_activo_total():
+    return {"success": True, "data": load_crecimiento_general_activo_total_editor()}
+
+
+@router.post("/api/proyectando/crecimiento-general/activo-total")
+async def guardar_crecimiento_general_activo_total(data: dict = Body(...)):
+    payload = data if isinstance(data, dict) else {}
+    growth_map = payload.get("growth_map", {})
+    if not isinstance(growth_map, dict):
+        growth_map = {}
+    return {"success": True, "data": save_crecimiento_general_activo_total_growth(growth_map)}
 
 
 @router.get("/proyectando/crecimiento-general/activo-total", response_class=HTMLResponse)
