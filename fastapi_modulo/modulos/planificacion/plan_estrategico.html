@@ -1,30 +1,304 @@
-<!-- plan_estrategico.html -->
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Plan Estratégico</title>
-</head>
-<body>
-    <h1>Plan Estratégico</h1>
-    <form id="objetivo-form" method="post" action="/api/ia/suggest/objective-text">
-        <label for="objetivo-texto">Objetivo estratégico</label><br>
-        <textarea id="objetivo-texto" name="objetivo_texto" rows="4" cols="60" placeholder="Describe el objetivo..."></textarea><br><br>
-        <button type="button" id="btn-sugerir-ia">Sugerir con IA</button>
-    </form>
-    <div id="sugerencia-ia" style="margin-top:20px;"></div>
-    <script>
-    document.getElementById('btn-sugerir-ia').onclick = async function() {
-        const texto = document.getElementById('objetivo-texto').value;
-        const resp = await fetch('/api/ia/suggest/objective-text', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ texto })
-        });
-        const data = await resp.json();
-        document.getElementById('sugerencia-ia').innerHTML =
-            '<b>Sugerencia IA:</b><br>' + (data.sugerencia || data.error || 'Sin respuesta');
-    };
-    </script>
-</body>
-</html>
+<link rel="stylesheet" href="/modulos/planificacion/plan_estrategico.css">
+      <section class="grid gap-4 w-full max-w-6xl">
+        
+        <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+          <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+              src="/templates/icon/plan.svg"
+              alt="Icono plan estratégico"
+              width="96"
+              height="96"
+              class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+              <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Plan estratégico</div>
+              <div class="block w-full text-base sm:text-lg text-base-content/70">Definir la estrategia institucional permite alinear objetivos, iniciativas y resultados.</div>
+            </div>
+          </div>
+        </div>
+        <div class="view-buttons page-view-buttons" id="planes-view-switch">
+          <button class="view-pill boton_vista active" type="button" data-planes-view="list" data-tooltip="Lista" aria-label="Lista">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+            <span class="view-pill-label boton_vista-label">List</span>
+          </button>
+          <button class="view-pill boton_vista" type="button" data-planes-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Kanban</span>
+          </button>
+          <button class="view-pill boton_vista" type="button" data-planes-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+            <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+            <span class="view-pill-label boton_vista-label">Organigrama</span>
+          </button>
+        </div>
+        <article class="titulo bg-base-200 rounded-box border border-base-300 planes-action-card">
+          <div class="p-4 sm:p-6">
+            <h2 class="page-title">Plan estratégico</h2>
+            <p class="page-description">Selecciona un eje para editarlo o crea uno nuevo.</p>
+            <div class="view-buttons planes-action-row">
+              <button type="button" id="planes-add-axis-btn" class="boton_vista boton_vista-eliptico active">Agregar eje</button>
+              <a href="/api/planificacion/plantilla-plan-poa.csv" class="boton_vista boton_vista-eliptico">Descargar plantilla CSV</a>
+              <button type="button" id="planes-import-csv-btn" class="boton_vista boton_vista-eliptico">Importar CSV estratégico + POA</button>
+              <input id="planes-import-csv-file" type="file" accept=".csv,text/csv" class="hidden">
+            </div>
+            <div id="planes-import-csv-msg" class="text-sm sm:text-base pt-1 min-h-[1.5rem] text-base-content/70"></div>
+          </div>
+        </article>
+        <article class="card border shadow-sm rounded-[2rem]" style="background:#eff4f2;border-color:#cfd7df;">
+          <div class="card-body p-6 sm:p-8 lg:p-10" id="planes-view-list">
+            
+            <!-- ── Cuatro áreas de resumen (siempre visibles, sobre las pestañas) ── -->
+            <div class="grid gap-5" id="planes-dashboard-areas">
+
+              <!-- Área 1: configuración del plan -->
+              <article class="card border rounded-[2rem] shadow-sm" style="background:#eff4f2;border-color:#cfd7df;">
+                <div class="card-body p-6">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div class="form-control">
+                      <label class="label pb-2">
+                        <span class="label-text text-[22px] font-semibold" style="color:#475569;">Vigencia del plan (años):</span>
+                      </label>
+                      <select id="planes-plan-years" class="select w-full text-[40px] font-medium" style="background:#f8fafc;border-color:#b8c4d3;color:#0f172a;">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3" selected>3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                      </select>
+                    </div>
+                    <div class="form-control">
+                      <label class="label pb-2">
+                        <span class="label-text text-[22px] font-semibold" style="color:#475569;">Inicio del plan:</span>
+                      </label>
+                      <input id="planes-plan-start" type="date" class="input w-full text-[40px] font-medium" style="background:#f8fafc;border-color:#b8c4d3;color:#0f172a;" value="2026-01-01">
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Área 2: tablero KPI -->
+              <div class="dash">
+                <h2 class="dash__title">Tablero de seguimiento</h2>
+                <div class="dash__grid">
+                  <div class="kpi">
+                    <div class="kpi__label">Avance global</div>
+                    <div class="kpi__value" id="planes-kpi-progress">0%</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="kpi__label">Ejes activos</div>
+                    <div class="kpi__value" id="planes-kpi-axes">0</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="kpi__label">Objetivos</div>
+                    <div class="kpi__value" id="planes-kpi-objectives">0</div>
+                  </div>
+                  <div class="kpi">
+                    <div class="kpi__label">Objetivos al 100%</div>
+                    <div class="kpi__value" id="planes-kpi-objectives-done">0</div>
+                  </div>
+                </div>
+                <div class="dash__progress">
+                  <div class="dash__progress-bar" id="planes-progress-fill" style="width:0%"></div>
+                </div>
+                <div class="dash__foot">
+                  <span class="dash__chip"><span class="dash__chip-label">Misión</span><span class="dash__chip-value" id="planes-mission-progress">0%</span></span>
+                  <span class="dash__chip"><span class="dash__chip-label">Visión</span><span class="dash__chip-value" id="planes-vision-progress">0%</span></span>
+                </div>
+              </div>
+
+              <!-- Área 3: hitos logrados -->
+              <div class="milestone-card">
+                <div class="milestone-card__inner">
+                  <div class="donut" id="planes-milestone-donut" style="--p:0">
+                    <div class="donut__center" id="planes-milestone-chart">0%</div>
+                  </div>
+                  <div class="milestone-info">
+                    <div class="milestone-title">Hitos logrados</div>
+                    <div class="milestone-stats">
+                      <span class="milestone-stat"><span class="milestone-stat-label">Total</span><strong class="milestone-stat-value" id="planes-milestone-total">0</strong></span>
+                      <span class="milestone-stat"><span class="milestone-stat-label">Logrados</span><strong class="milestone-stat-value" id="planes-milestone-done">0</strong></span>
+                      <span class="milestone-stat"><span class="milestone-stat-label">Pendientes</span><strong class="milestone-stat-value" id="planes-milestone-pending">0</strong></span>
+                      <span class="milestone-stat"><span class="milestone-stat-label">Atrasados</span><strong class="milestone-stat-value is-danger" id="planes-milestone-overdue">0</strong></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Área 4: ejes y objetivos sin responsable -->
+              <div class="cards-2">
+                <section class="panel">
+                  <header class="panel__head">
+                    <h3 class="panel__title">Ejes sin responsable</h3>
+                    <div class="panel__meta"><strong id="planes-axes-pending-count">0</strong> pendiente(s)</div>
+                  </header>
+                  <ul class="panel__list" id="planes-axes-pending-list">
+                    <li>Sin pendientes</li>
+                  </ul>
+                  <a class="panel__more" id="planes-axes-pending-more" href="#" aria-label="Más ejes sin responsable"></a>
+                </section>
+                <section class="panel">
+                  <header class="panel__head">
+                    <h3 class="panel__title">Objetivos sin responsable</h3>
+                    <div class="panel__meta"><strong id="planes-objectives-pending-count">0</strong> pendiente(s)</div>
+                  </header>
+                  <ul class="panel__list" id="planes-objectives-pending-list">
+                    <li>Sin pendientes</li>
+                  </ul>
+                  <a class="panel__more" id="planes-objectives-pending-more" href="#" aria-label="Más objetivos sin responsable"></a>
+                </section>
+              </div>
+
+            </div>
+
+            <!-- ── Notebook de pestañas (debajo de las cuatro áreas) ───────────────────────── -->
+            <section class="grid gap-5" style="margin-top:1.5rem;">
+              <div class="tabs tabs-lifted w-full flex-wrap axm-tabs" role="tablist" aria-label="Planificación estratégica">
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab tab-active active" data-planes-strategic-tab="fundamentacion">
+                  <img src="/templates/icon/macroeconomia.svg" alt="" class="tab-icon">Fundamentación
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="identidad">
+                  <img src="/templates/icon/identidad.svg" alt="" class="tab-icon">Identidad
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="ejes">
+                  <img src="/templates/icon/ejes.svg" alt="" class="tab-icon">Ejes estratégicos
+                </button>
+                <button type="button" class="tab gap-2 rounded-t-lg axm-tab" data-planes-strategic-tab="objetivos">
+                  <img src="/templates/icon/objetivos.svg" alt="" class="tab-icon">Objetivos
+                </button>
+              </div>
+              <section id="planes-tab-panel-fundamentacion" class="axm-foundacion" style="display:block;" data-panel-display="block">
+                <h3>Fundamentación</h3>
+                <p>Registra aquí la fundamentación del plan estratégico.</p>
+                <div class="axm-foundacion-toolbar">
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="bold">Negrita</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="italic">Itálica</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="underline">Subrayar</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="insertUnorderedList">Lista</button>
+                  <button type="button" class="axm-foundacion-tool" data-planes-found-cmd="insertOrderedList">Numerada</button>
+                  <button type="button" class="axm-foundacion-tool" id="planes-foundacion-upload-btn">Subir HTML</button>
+                  <label class="axm-foundacion-tool">
+                    <input id="planes-foundacion-show-source" type="checkbox">
+                    Ver código HTML
+                  </label>
+                  <input id="planes-foundacion-upload" type="file" accept=".html,text/html">
+                </div>
+                <div id="planes-foundacion-editor" class="axm-foundacion-editor" contenteditable="false"></div>
+                <textarea id="planes-foundacion-source" class="axm-foundacion-source" placeholder="Código HTML..."></textarea>
+                <div class="axm-foundacion-actions">
+                  <button type="button" class="action-button" id="planes-foundacion-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                    <img src="/icon/boton/editar.svg" alt="Editar">
+                    <span class="action-label">Editar</span>
+                  </button>
+                  <button type="button" class="action-button" id="planes-foundacion-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                    <img src="/icon/boton/guardar.svg" alt="Guardar">
+                    <span class="action-label">Guardar</span>
+                  </button>
+                </div>
+                <div class="axm-foundacion-msg" id="planes-foundacion-msg" aria-live="polite"></div>
+              </section>
+              <section id="planes-tab-panel-identidad" class="axm-identidad" style="display:none;" data-panel-display="block">
+                <details class="axm-id-acc" open>
+                  <summary>Misión</summary>
+                  <div class="axm-id-grid">
+                    <div class="axm-id-left">
+                      <div class="axm-id-lines" id="planes-identidad-mision-lines"></div>
+                      <button type="button" class="axm-id-add" id="planes-identidad-mision-add">Agregar línea</button>
+                      <div class="axm-id-actions">
+                        <button type="button" class="action-button" id="planes-identidad-mision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                          <img src="/icon/boton/editar.svg" alt="Editar">
+                          <span class="action-label">Editar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-mision-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                          <img src="/icon/boton/guardar.svg" alt="Guardar">
+                          <span class="action-label">Guardar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-mision-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                          <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                          <span class="action-label">Eliminar</span>
+                        </button>
+                      </div>
+                      <div id="planes-identidad-mision-hidden"></div>
+                    </div>
+                    <div class="axm-id-right">
+                      <h4>Misión</h4>
+                      <p class="axm-id-full" id="planes-identidad-mision-full"></p>
+                    </div>
+                  </div>
+                </details>
+                <details class="axm-id-acc">
+                  <summary>Visión</summary>
+                  <div class="axm-id-grid">
+                    <div class="axm-id-left">
+                      <div class="axm-id-lines" id="planes-identidad-vision-lines"></div>
+                      <button type="button" class="axm-id-add" id="planes-identidad-vision-add">Agregar línea</button>
+                      <div class="axm-id-actions">
+                        <button type="button" class="action-button" id="planes-identidad-vision-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                          <img src="/icon/boton/editar.svg" alt="Editar">
+                          <span class="action-label">Editar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-vision-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                          <img src="/icon/boton/guardar.svg" alt="Guardar">
+                          <span class="action-label">Guardar</span>
+                        </button>
+                        <button type="button" class="action-button" id="planes-identidad-vision-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                          <img src="/icon/boton/eliminar.svg" alt="Eliminar">
+                          <span class="action-label">Eliminar</span>
+                        </button>
+                      </div>
+                      <div id="planes-identidad-vision-hidden"></div>
+                    </div>
+                    <div class="axm-id-right">
+                      <h4>Visión</h4>
+                      <p class="axm-id-full" id="planes-identidad-vision-full"></p>
+                    </div>
+                  </div>
+                </details>
+                <div class="axm-id-msg" id="planes-identidad-msg" aria-live="polite"></div>
+              </section>
+              <section id="planes-tab-panel-ejes" class="card bg-base-100 border border-base-300 rounded-2xl" style="display:none;" data-panel-display="block">
+                <div class="card-body">
+                  <h3 class="card-title">Ejes estratégicos</h3>
+                  <p class="text-base-content/70">Listado de ejes estratégicos registrados en el plan.</p>
+                  <div id="planes-ejes-list" class="grid gap-3 mt-2">
+                    <div class="text-base-content/60">Cargando ejes...</div>
+                  </div>
+                  <a href="/ejes-estrategicos" class="btn btn-primary mt-2">Ir al editor de ejes</a>
+                </div>
+              </section>
+              <section id="planes-tab-panel-objetivos" class="card bg-base-100 border border-base-300 rounded-2xl" style="display:none;" data-panel-display="block">
+                <div class="card-body">
+                  <h3 class="card-title">Objetivos del eje</h3>
+                  <div class="planes-obj-layout mt-2">
+                    <aside class="planes-obj-axes">
+                      <h4 class="planes-obj-side-title">Ejes estratégicos</h4>
+                      <div id="planes-objetivos-axes-list" class="planes-obj-axes-list">
+                        <div class="text-base-content/60">Cargando ejes...</div>
+                      </div>
+                    </aside>
+                    <section class="planes-obj-main">
+                      <div class="planes-obj-head">
+                        <h4 id="planes-objetivos-selected-axis-title" class="planes-obj-title">Objetivos: sin eje seleccionado</h4>
+                        <div class="view-buttons" style="margin:0;">
+                          <button type="button" id="planes-add-objective-btn" class="boton_vista boton_vista-eliptico active">Agregar objetivo</button>
+                        </div>
+                      </div>
+                      <div id="planes-objetivos-list" class="planes-obj-list">
+                        <div class="text-base-content/60">Cargando objetivos...</div>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              </section>
+            </section>
+          </div>
+          <div class="card-body hidden" id="planes-view-kanban">
+            <h2 class="card-title">Vista Kanban</h2>
+            <p class="text-base-content/70">Módulo en transición DaisyUI. Esta vista confirma estructura Kanban para Plan estratégico.</p>
+          </div>
+          <div class="card-body hidden" id="planes-view-organigrama">
+            <h2 class="card-title">Vista Organigrama</h2>
+            <p class="text-base-content/70">Visualiza la relación entre misión, visión, líneas, ejes y objetivos.</p>
+            <div id="planes-organigrama-host" class="departamentos-page w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3"></div>
+          </div>
+        </article>
+      </section>
+      <script src="/modulos/planificacion/plan_estrategico.js"></script>

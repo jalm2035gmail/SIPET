@@ -680,7 +680,7 @@ MESES_NOMBRES = {
 def _get_core_imports():
     """Importaciones diferidas para evitar ciclos."""
     from fastapi_modulo.main import SessionLocal as CoreSessionLocal, is_superadmin, render_backend_page
-    from fastapi_modulo.modulos.planificacion.ejes_poa import _ensure_strategic_identity_table
+    from fastapi_modulo.modulos.planificacion.plan_estrategico_service import _ensure_strategic_identity_table
     return CoreSessionLocal, is_superadmin, render_backend_page, _ensure_strategic_identity_table
 
 

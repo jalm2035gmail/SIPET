@@ -42,6 +42,10 @@ from fastapi_modulo.modulos.proyectando.crecimiento_general import router as pro
 from fastapi_modulo.modulos.proyectando.sucursales import router as proyectando_sucursales_router
 from fastapi_modulo.modulos.proyectando.no_acceso import router as proyectando_no_acceso_router
 from fastapi_modulo.modulos.planificacion.ejes_poa import router as ejes_poa_router
+from fastapi_modulo.modulos.planificacion.kpis import router as planificacion_kpis_router
+from fastapi_modulo.modulos.planificacion.notificaciones import router as planificacion_notificaciones_router
+from fastapi_modulo.modulos.planificacion.plan_estrategico import router as plan_estrategico_router
+from fastapi_modulo.modulos.planificacion.poa import router as poa_router
 from fastapi_modulo.modulos.control_interno.control import router as control_interno_router
 from fastapi_modulo.modulos.control_interno.programa import router as ci_programa_router
 from fastapi_modulo.modulos.control_interno.evidencia import router as ci_evidencia_router
@@ -355,7 +359,33 @@ def _get_user_app_access(request: Request) -> list:
         if not _os.path.exists(_META_PATH):
             return []
         raw = _json.loads(open(_META_PATH, encoding="utf-8").read())
-        return raw.get(user_id, {}).get("app_access", []) if isinstance(raw, dict) else []
+        if not isinstance(raw, dict):
+            return []
+        entry = raw.get(user_id, {})
+        if not isinstance(entry, dict):
+            return []
+        direct_access = entry.get("app_access", [])
+        if isinstance(direct_access, list):
+            normalized = [str(item).strip() for item in direct_access if str(item).strip()]
+            if normalized:
+                return normalized
+        app_access_levels = entry.get("app_access_levels", {})
+        if isinstance(app_access_levels, dict):
+            visible = []
+            for app_name, levels in app_access_levels.items():
+                if not isinstance(levels, dict):
+                    continue
+                if any(bool(levels.get(level_key, False)) for level_key in (
+                    "full_access",
+                    "read_only",
+                    "department_only",
+                    "user_only",
+                    "special_permissions",
+                )):
+                    visible.append(str(app_name).strip())
+            if visible:
+                return visible
+        return []
     except Exception:
         return []
 
@@ -1910,6 +1940,10 @@ app.include_router(proyectando_datos_preliminares_router)
 app.include_router(proyectando_crecimiento_general_router)
 app.include_router(proyectando_sucursales_router)
 app.include_router(proyectando_no_acceso_router)
+app.include_router(plan_estrategico_router)
+app.include_router(poa_router)
+app.include_router(planificacion_kpis_router)
+app.include_router(planificacion_notificaciones_router)
 app.include_router(ejes_poa_router)
 app.include_router(control_interno_router)
 app.include_router(ci_programa_router)

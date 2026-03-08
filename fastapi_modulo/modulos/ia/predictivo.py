@@ -201,9 +201,7 @@ def _compute_kpi_risk_summary(db) -> Dict:
             ) m ON m.kpi_id = k.id AND m.rn = 1
         """)).fetchall()
 
-        from fastapi_modulo.modulos.planificacion.ejes_poa import (
-            _kpi_evaluate_status,
-        )
+        from fastapi_modulo.modulos.planificacion.kpis_service import _kpi_evaluate_status
 
         at_risk = []
         for row in rows:
