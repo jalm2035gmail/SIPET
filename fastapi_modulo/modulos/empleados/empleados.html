@@ -469,7 +469,11 @@
     var index = colaboradores.findIndex(function (emp) { return getColaboradorKey(emp) === key; });
     if (index >= 0) {
       colaboradores[index] = Object.assign({}, colaboradores[index], updated);
+      return colaboradores[index];
     }
+    var created = Object.assign({}, updated);
+    colaboradores.unshift(created);
+    return created;
   }
 
   function getPuestoOptions(selectedValue) {
@@ -860,12 +864,31 @@
 
     saveBtn.addEventListener('click', function () {
       if (!isMainEditMode) return;
+      var payload = buildMainSavePayload(current);
+      if (!payload.nombre) {
+        window.alert('El nombre es obligatorio.');
+        return;
+      }
+      if (!payload.usuario) {
+        window.alert('El usuario es obligatorio.');
+        return;
+      }
+      if (!current || !current.id) {
+        if (!payload.contrasena) {
+          window.alert('La contraseña es obligatoria para crear colaborador.');
+          return;
+        }
+        if (String(payload.contrasena).length < 8) {
+          window.alert('La contraseña debe tener al menos 8 caracteres.');
+          return;
+        }
+      }
       saveBtn.disabled = true;
       saveBtn.textContent = 'Guardando...';
       fetch('/api/colaboradores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(buildMainSavePayload(current))
+        body: JSON.stringify(payload)
       })
         .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
         .then(function (result) {
@@ -873,9 +896,8 @@
             throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo guardar');
           }
           if (result.json && result.json.data) {
-            upsertColaborador(result.json.data);
-            selectedColaboradorKey = getColaboradorKey(result.json.data);
-            current = result.json.data;
+            current = upsertColaborador(result.json.data);
+            selectedColaboradorKey = getColaboradorKey(current);
           }
           isMainEditMode = false;
           renderForm(current);
@@ -985,6 +1007,19 @@
       if (passwordIcon instanceof HTMLImageElement) {
         passwordIcon.src = visible ? '/templates/icon/boton/ojo.svg' : '/templates/icon/boton/ojot.svg';
       }
+    });
+  }
+
+  function clearNewDraftAutofill() {
+    var selectors = [
+      '[data-col-main-celular]',
+      '[data-col-identidad-password]',
+      '[data-col-identidad-usuario]',
+      '[data-col-identidad-correo]'
+    ];
+    selectors.forEach(function (selector) {
+      var input = mount.querySelector(selector);
+      if (input && 'value' in input) input.value = '';
     });
   }
 
@@ -1277,7 +1312,7 @@
           '<section class="rounded-box border border-base-300 bg-base-100 p-4 grid gap-4">' +
             '<div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">' +
               '<div class="grid gap-3">' +
-                '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.nombre || '') + '" data-col-identidad-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.nombre || '') + '" autocomplete="off" data-col-identidad-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
                 '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Puesto</span></div><select class="select select-bordered w-full" data-col-puesto>' + renderPuestoSelect(current.puesto || '') + '</select></label>' +
                 '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Eficiencia</span></div><div class="flex items-center gap-2"><input class="input input-bordered w-28" type="text" value="' + esc(eficienciaValue) + '" readonly><span class="font-semibold text-base-content/80">%</span></div></label>' +
               '</div>' +
@@ -1289,10 +1324,10 @@
               '</div>' +
             '</div>' +
             '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Celular</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.celular || '') + '" data-col-main-celular ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
-              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Contraseña</span></div><div class="relative"><input class="input input-bordered w-full pr-12" type="password" placeholder="' + (isNewRecord ? 'Mínimo 8 caracteres' : 'Dejar vacía para conservar la actual') + '" value="" data-col-identidad-password ' + (isMainEditMode ? '' : 'readonly') + '><button type="button" class="absolute inset-y-0 right-3 my-auto flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-transparent p-0" data-col-password-toggle title="Mostrar contraseña" aria-label="Mostrar contraseña"><img src="/templates/icon/boton/ojo.svg" alt="" class="h-5 w-5" data-col-password-icon></button></div></label>' +
-              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.usuario || '') + '" data-col-identidad-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
-              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo electrónico</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.correo || '') + '" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Celular</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.celular || '') + '" autocomplete="off" data-col-main-celular ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Contraseña</span></div><div class="relative"><input class="input input-bordered w-full pr-12" type="password" placeholder="' + (isNewRecord ? 'Mínimo 8 caracteres' : 'Dejar vacía para conservar la actual') + '" value="" autocomplete="new-password" data-col-identidad-password ' + (isMainEditMode ? '' : 'readonly') + '><button type="button" class="absolute inset-y-0 right-3 my-auto flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-transparent p-0" data-col-password-toggle title="Mostrar contraseña" aria-label="Mostrar contraseña"><img src="/templates/icon/boton/ojo.svg" alt="" class="h-5 w-5" data-col-password-icon></button></div></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.usuario || '') + '" autocomplete="off" data-col-identidad-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo electrónico</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.correo || '') + '" autocomplete="off" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Área organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.area || '') + '" data-col-area readonly></label>' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nivel organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.nivel || '') + '" data-col-nivel readonly></label>' +
               '<label class="form-control w-full md:col-span-2"><div class="label"><span class="label-text font-semibold">Jefe inmediato</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.jefe || 'Sin jefe inmediato') + '" readonly></label>' +
@@ -1329,9 +1364,9 @@
               '</div>' +
               '<div class="' + (isIdentidad ? '' : 'hidden') + '" data-panel="identidad">' +
                 '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">' +
-                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" placeholder="Nombre del colaborador" value="' + esc(current.nombre || '') + '" data-col-identidad-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
-                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" placeholder="usuario" value="' + esc(current.usuario || '') + '" data-col-identidad-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
-                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo</span></div><input class="input input-bordered w-full" type="email" placeholder="correo@empresa.com" value="' + esc(current.correo || '') + '" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" placeholder="Nombre del colaborador" value="' + esc(current.nombre || '') + '" autocomplete="off" data-col-identidad-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" placeholder="usuario" value="' + esc(current.usuario || '') + '" autocomplete="off" data-col-identidad-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo</span></div><input class="input input-bordered w-full" type="email" placeholder="correo@empresa.com" value="' + esc(current.correo || '') + '" autocomplete="off" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
                   '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Rol</span></div><input class="input input-bordered w-full" type="text" placeholder="Rol" value="' + esc(current.rol || '') + '" readonly></label>' +
                   '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Departamento</span></div><input class="input input-bordered w-full" type="text" placeholder="Departamento" value="' + esc(current.departamento || '') + '"></label>' +
                   '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Estado</span></div><input class="input input-bordered w-full" type="text" placeholder="Activo" value="' + esc(current.estado || '') + '"></label>' +
@@ -1376,6 +1411,7 @@
     bindPuestoAutofill(current);
     bindMainActions(current);
     bindCvRecordActions(current);
+    if (isNewRecord) clearNewDraftAutofill();
   }
 
   function renderList() {
