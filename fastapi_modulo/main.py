@@ -6552,7 +6552,7 @@ def mi_tablero_page(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 def root():
-    return RedirectResponse(url="/web", status_code=307)
+    return RedirectResponse(url="/web/inicio", status_code=307)
 
 # Área de configuración de imagen (menú)
 @app.get("/configura-imagen", response_class=HTMLResponse)
