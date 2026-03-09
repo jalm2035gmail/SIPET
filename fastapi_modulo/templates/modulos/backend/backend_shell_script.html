@@ -1,0 +1,1035 @@
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const hamburger = document.querySelector('.navbar-hamburger');
+            const sidebarElem = document.getElementById('sidebar');
+            const sidebarMobileBackdrop = document.getElementById('sidebar-mobile-backdrop');
+            const sidebarMobileClose = document.getElementById('sidebar-mobile-close');
+            const navbar = document.querySelector('.navbar');
+            const mainContent = document.querySelector('.main-content');
+            const menuLinks = document.querySelectorAll('nav > a[data-menu-name]');
+            const sidebarBlocks = document.querySelectorAll('.sidebar-block');
+            const sidebarSummaryItems = document.querySelectorAll('.sidebar-block > summary');
+            const sidebarSubmenuLinks = document.querySelectorAll('.sidebar-submenu a');
+            const sidebarMainLinks = document.querySelectorAll('.sidebar-main-link');
+            const navbarOrgLinks = document.querySelectorAll('.navbar-org-dropdown a[data-menu-name]');
+            const navbarOrgSummaries = document.querySelectorAll('.navbar-org-menu > summary[data-menu-name]');
+            const navbarMenuName = document.querySelector('.navbar-menu-name');
+            const navbarActiveSubmenus = null; /* replaced by navbar-section-menu dropdown */
+            const usuarioPanel = document.getElementById('usuario-panel');
+            const identitySidebarStyleSwitch = document.getElementById('identity-sidebar-style-switch');
+            const identitySidebarStyleLabel = document.getElementById('identity-sidebar-style-label');
+            const applySidebarStyleVariant = (variant) => {
+                const modern = variant === 'modern';
+                document.documentElement.classList.toggle('ui-sidebar-modern', modern);
+                if (identitySidebarStyleSwitch) {
+                    identitySidebarStyleSwitch.checked = modern;
+                }
+                if (identitySidebarStyleLabel) {
+                    identitySidebarStyleLabel.textContent = modern ? 'Moderno' : 'Original';
+                }
+            };
+            try {
+                applySidebarStyleVariant(window.localStorage.getItem('sipet_sidebar_style_variant') || 'modern');
+            } catch (e) {
+                applySidebarStyleVariant('modern');
+            }
+            if (identitySidebarStyleSwitch) {
+                identitySidebarStyleSwitch.addEventListener('change', () => {
+                    const variant = identitySidebarStyleSwitch.checked ? 'modern' : 'original';
+                    applySidebarStyleVariant(variant);
+                    requestAnimationFrame(() => {
+                        if (typeof setSidebarState === 'function') {
+                            setSidebarState(isSidebarOpen);
+                        }
+                    });
+                    try {
+                        window.localStorage.setItem('sipet_sidebar_style_variant', variant);
+                    } catch (e) {}
+                });
+            }
+            const navbarAvatarBtn = document.getElementById('navbar-avatar-btn');
+            const navbarAvatarImgEl = document.getElementById('navbar-avatar-img');
+            const userDropdown = document.getElementById('user-dropdown');
+            const logoutLink = document.getElementById('logout-link');
+            const sidebarUserImg = document.getElementById('sidebar-user-img');
+            const USER_LOGO_CACHE_KEY = 'sipet_logo_usuario_url';
+            const ACTIVE_MAIN_MENU_KEY = 'sipet_active_main_menu_name';
+            const NAVBAR_SUBMENU_CATALOG = window.__SIPET_BACKEND_NAVBAR_SUBMENU_CATALOG || {};
+            const CURRENT_USERNAME = String({{ (request.state.user_name | default('', true) | tojson) | safe }} || '').trim().toLowerCase();
+            let hasUserAvatarFromColaborador = false;
+            try {
+                const cachedUserLogo = String(window.localStorage.getItem(USER_LOGO_CACHE_KEY) || '').trim();
+                if (navbarAvatarImgEl instanceof HTMLImageElement) {
+                    if (cachedUserLogo) {
+                        navbarAvatarImgEl.src = cachedUserLogo;
+                    } else if (navbarAvatarImgEl.dataset.default) {
+                        navbarAvatarImgEl.src = navbarAvatarImgEl.dataset.default;
+                    }
+                }
+                if (sidebarUserImg instanceof HTMLImageElement) {
+                    if (cachedUserLogo) {
+                        sidebarUserImg.src = cachedUserLogo;
+                    } else if (sidebarUserImg.dataset.default) {
+                        sidebarUserImg.src = sidebarUserImg.dataset.default;
+                    }
+                }
+            } catch (e) {
+                // Ignorar acceso a localStorage cuando no esté disponible.
+            }
+            const syncCurrentUserAvatarFromColaborador = async () => {
+                if (!(sidebarUserImg instanceof HTMLImageElement) && !(navbarAvatarImgEl instanceof HTMLImageElement)) return;
+                try {
+                    const res = await fetch('/api/colaboradores', { headers: { Accept: 'application/json' } });
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    const rows = Array.isArray(json?.data) ? json.data : [];
+                    let me = null;
+                    if (CURRENT_USERNAME) {
+                        me = rows.find((row) => String(row?.usuario || '').trim().toLowerCase() === CURRENT_USERNAME) || null;
+                    }
+                    if (!me && rows.length === 1) {
+                        me = rows[0];
+                    }
+                    const avatarUrl = String(me?.imagen || '').trim();
+                    if (!avatarUrl) return;
+                    hasUserAvatarFromColaborador = true;
+                    if (navbarAvatarImgEl instanceof HTMLImageElement) {
+                        navbarAvatarImgEl.src = avatarUrl;
+                    }
+                    if (sidebarUserImg instanceof HTMLImageElement) {
+                        sidebarUserImg.src = avatarUrl;
+                    }
+                    try {
+                        window.localStorage.setItem(USER_LOGO_CACHE_KEY, avatarUrl);
+                    } catch (e) {
+                        // Ignorar acceso a localStorage cuando no esté disponible.
+                    }
+                } catch (e) {
+                    // Ignorar errores para no bloquear carga del layout.
+                }
+            };
+            const syncSidebarCompanyLogo = async () => {
+                if (!(sidebarUserImg instanceof HTMLImageElement) && !(navbarAvatarImgEl instanceof HTMLImageElement)) return;
+                if (hasUserAvatarFromColaborador) return;
+                try {
+                    const res = await fetch('/personalizar/estado', { headers: { Accept: 'application/json' } });
+                    if (!res.ok) return;
+                    const json = await res.json();
+                    const userLogoUrl = String(json?.assets?.logo_usuario?.url || '').trim();
+                    if (sidebarUserImg instanceof HTMLImageElement) {
+                        if (userLogoUrl) {
+                            sidebarUserImg.src = userLogoUrl;
+                        } else if (sidebarUserImg.dataset.default) {
+                            sidebarUserImg.src = sidebarUserImg.dataset.default;
+                        }
+                    }
+                    if (navbarAvatarImgEl instanceof HTMLImageElement) {
+                        if (userLogoUrl) {
+                            navbarAvatarImgEl.src = userLogoUrl;
+                            try {
+                                window.localStorage.setItem(USER_LOGO_CACHE_KEY, userLogoUrl);
+                            } catch (e) {
+                                // Ignorar acceso a localStorage cuando no esté disponible.
+                            }
+                        } else if (navbarAvatarImgEl.dataset.default) {
+                            navbarAvatarImgEl.src = navbarAvatarImgEl.dataset.default;
+                            try {
+                                window.localStorage.removeItem(USER_LOGO_CACHE_KEY);
+                            } catch (e) {
+                                // Ignorar acceso a localStorage cuando no esté disponible.
+                            }
+                        }
+                    }
+                } catch (e) {
+                    if (sidebarUserImg instanceof HTMLImageElement && sidebarUserImg.dataset.default) {
+                        sidebarUserImg.src = sidebarUserImg.dataset.default;
+                    }
+                    if (navbarAvatarImgEl instanceof HTMLImageElement && navbarAvatarImgEl.dataset.default) {
+                        navbarAvatarImgEl.src = navbarAvatarImgEl.dataset.default;
+                    }
+                }
+            };
+            const sidebarNotificationsTrigger = document.getElementById('sidebar-notifications-trigger');
+            const sidebarNotificationsBadge = document.getElementById('sidebar-notifications-badge');
+            const navbarIaStatusBtn = document.getElementById('navbar-ia-status-btn');
+            const navbarIaStatusX = document.getElementById('navbar-ia-status-x');
+            const navbarNotificationsTrigger = document.getElementById('navbar-notifications-trigger');
+            const navbarNotificationsBadge = document.getElementById('navbar-notifications-badge');
+            const navbarNotificationsIcon = document.querySelector('.navbar-notifications-icon');
+            const sidebarNotificationsPanel = document.getElementById('sidebar-notifications-panel');
+            const sidebarNotificationsCount = document.getElementById('sidebar-notifications-count');
+            const sidebarNotificationsList = document.getElementById('sidebar-notifications-list');
+            const sidebarNotificationsEmpty = document.getElementById('sidebar-notifications-empty');
+            const sidebarNotificationsRefresh = document.getElementById('sidebar-notifications-refresh');
+            const sidebarNotificationsMarkAll = document.getElementById('sidebar-notifications-mark-all');
+            // Sin toggles legacy de pestanas: se usa comportamiento DaisyUI base.
+            let iaStatusSnapshot = {
+                connected: false,
+                provider: '',
+                model: '',
+                base_url: '',
+                health_detail: '',
+            };
+            const applyIaStatus = (connected, provider, model, baseUrl = '', healthDetail = '') => {
+                if (!navbarIaStatusBtn || !navbarIaStatusX) return;
+                const ok = !!connected;
+                iaStatusSnapshot = {
+                    connected: ok,
+                    provider: String(provider || ''),
+                    model: String(model || ''),
+                    base_url: String(baseUrl || ''),
+                    health_detail: String(healthDetail || ''),
+                };
+                navbarIaStatusBtn.classList.toggle('is-disconnected', !ok);
+                navbarIaStatusX.classList.toggle('visible', !ok);
+                const label = ok
+                    ? `IA conectada${provider ? `: ${provider}` : ''}${model ? ` (${model})` : ''}`
+                    : 'IA no conectada';
+                navbarIaStatusBtn.setAttribute('title', label);
+                navbarIaStatusBtn.setAttribute('aria-label', label);
+            };
+            const loadIaStatus = async () => {
+                if (!navbarIaStatusBtn) return;
+                try {
+                    const res = await fetch('/api/ia/status', { headers: { Accept: 'application/json' } });
+                    const json = await res.json().catch(() => ({}));
+                    applyIaStatus(
+                        !!json?.connected,
+                        String(json?.provider || ''),
+                        String(json?.model || ''),
+                        String(json?.base_url || ''),
+                        String(json?.health_detail || '')
+                    );
+                } catch (_e) {
+                    applyIaStatus(false, '', '');
+                }
+            };
+            if (navbarIaStatusBtn) {
+                navbarIaStatusBtn.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    await loadIaStatus();
+                    const ok = !!iaStatusSnapshot.connected;
+                    const lines = [
+                        `Estado IA: ${ok ? 'Conectada' : 'No conectada'}`,
+                        `Confirmación de conexión: ${ok ? 'Sí, conexión activa' : 'No se detectó conexión activa'}`,
+                        `Proveedor: ${iaStatusSnapshot.provider || 'N/D'}`,
+                        `Modelo: ${iaStatusSnapshot.model || 'N/D'}`,
+                        `Base URL: ${iaStatusSnapshot.base_url || 'N/D'}`,
+                    ];
+                    if (iaStatusSnapshot.health_detail) {
+                        lines.push(`Detalle: ${iaStatusSnapshot.health_detail}`);
+                    }
+                    const openSettings = window.confirm(`${lines.join('\n')}\n\n¿Abrir Ajustes IA?`);
+                    if (openSettings) {
+                        window.location.assign('/ajustes/ia');
+                    }
+                });
+            }
+            const collapsedWidth = '0px';
+            const expandedWidth = '88px';
+            let isSidebarOpen = true;
+
+            const slugify = (value) => {
+                return (value || '')
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+            };
+
+            const normalizeRoutePath = (value) => {
+                const raw = String(value || '').split('?')[0].split('#')[0].trim();
+                if (!raw) return '/';
+                const normalized = raw.replace(/\/+$/, '');
+                return normalized || '/';
+            };
+
+            const resolveMenuFromCatalogByPath = (path) => {
+                const normalizedPath = normalizeRoutePath(path);
+                let best = null;
+                let bestScore = -1;
+                const visitItems = (menuName, items) => {
+                    (items || []).forEach((item) => {
+                        const children = Array.isArray(item && item.children) ? item.children : [];
+                        if (children.length) {
+                            visitItems(menuName, children);
+                            return;
+                        }
+                        const href = normalizeRoutePath(item && item.href ? item.href : '');
+                        if (!href) return;
+                        const exactOnly = !!(item && item.exact);
+                        const exact = href === normalizedPath;
+                        const prefix = !exactOnly && href !== '/' && normalizedPath.startsWith(`${href}/`);
+                        if (!exact && !prefix) return;
+                        const score = href.length + (exact ? 10000 : 0);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            best = {
+                                menuName,
+                                subLabel: String(item && item.label ? item.label : '').trim(),
+                                href: href || '/',
+                            };
+                        }
+                    });
+                };
+                Object.keys(NAVBAR_SUBMENU_CATALOG).forEach((menuName) => {
+                    const items = Array.isArray(NAVBAR_SUBMENU_CATALOG[menuName]) ? NAVBAR_SUBMENU_CATALOG[menuName] : [];
+                    visitItems(menuName, items);
+                });
+                return best;
+            };
+
+            const setMenuInfo = (source) => {
+                if (!source) return;
+                const fromSubmenu = source.matches && source.matches('.sidebar-submenu a');
+                const fromSummary = source.matches && source.matches('.sidebar-block > summary');
+
+                let mainLabel = source.dataset.menuName || source.textContent.trim();
+                let subLabel = '';
+                const directSubLabel = (source.dataset.submenuName || '').trim();
+                if (directSubLabel) subLabel = directSubLabel;
+
+                if (fromSubmenu) {
+                    const parentSummary = source.closest('.sidebar-block')?.querySelector('.sidebar-main-label');
+                    mainLabel = (parentSummary?.textContent || '').trim() || mainLabel;
+                    subLabel = (source.dataset.submenuName || source.textContent || '').trim();
+                } else if (fromSummary) {
+                    const label = source.querySelector('.sidebar-main-label');
+                    mainLabel = (label?.textContent || '').trim() || mainLabel;
+                }
+
+                const fallbackRoute = fromSubmenu
+                    ? `/${slugify(mainLabel)}/${slugify(subLabel)}`
+                    : `/${slugify(mainLabel)}`;
+                const explicitHref = source.getAttribute('href');
+                const routeHref = explicitHref && explicitHref !== '#'
+                    ? explicitHref
+                    : (source.dataset.route || fallbackRoute);
+                const catalogMenu = resolveMenuFromCatalogByPath(routeHref || fallbackRoute);
+                if (catalogMenu) {
+                    mainLabel = catalogMenu.menuName || mainLabel;
+                    if (!subLabel || fromSubmenu || explicitHref) {
+                        subLabel = catalogMenu.subLabel || subLabel;
+                    }
+                }
+                setNavbarMenu(mainLabel || 'BSC', subLabel, routeHref || '/');
+            };
+
+            const setNavbarMenu = (mainLabel, subLabel = '', routeHref = '/') => {
+                if (navbarMenuName) navbarMenuName.textContent = mainLabel || 'BSC';
+                try {
+                    const key = String(mainLabel || '').trim();
+                    if (key && Array.isArray(NAVBAR_SUBMENU_CATALOG[key])) {
+                        window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, key);
+                    }
+                } catch (e) {}
+                renderActiveSubmenus(mainLabel || '');
+            };
+
+            const hasCatalogRoutePriority = (path) => {
+                const menu = resolveMenuFromCatalogByPath(path);
+                return !!(menu && normalizeRoutePath(menu.href) === normalizeRoutePath(path));
+            };
+
+            const getNavbarSubmenuIconClass = (label, href) => {
+                const text = String(label || '').trim().toLowerCase();
+                const route = String(href || '').trim().toLowerCase();
+                if (text.includes('área') || text.includes('area') || text.includes('organigrama')) return 'fa-solid fa-sitemap';
+                if (text.includes('puesto')) return 'fa-solid fa-briefcase';
+                if (text.includes('región') || text.includes('region') || text.includes('sucursal')) return 'fa-solid fa-map-location-dot';
+                if (text.includes('colaborador') || text.includes('usuario')) return 'fa-solid fa-users';
+                if (text.includes('habilidad')) return 'fa-solid fa-brain';
+                if (text.includes('kpi')) return 'fa-solid fa-chart-line';
+                if (text.includes('reporte')) return 'fa-regular fa-file-lines';
+                if (text.includes('empresa') || text.includes('identidad') || text.includes('plantilla')) return 'fa-solid fa-building';
+                if (text.includes('web')) return 'fa-solid fa-globe';
+                if (text.includes('plan') || text.includes('foda') || text.includes('pestel') || text.includes('porter') || text.includes('poa')) return 'fa-solid fa-chess-board';
+                if (text.includes('objetivo')) return 'fa-solid fa-bullseye';
+                if (text.includes('datos') || text.includes('preliminares')) return 'fa-solid fa-chart-column';
+                if (text.includes('tablero')) return 'fa-regular fa-rectangle-list';
+                if (route.includes('/regiones') || route.includes('/sucursales')) return 'fa-solid fa-map-location-dot';
+                if (route.includes('/colaboradores')) return 'fa-solid fa-users';
+                if (route.includes('/kpis') || route.includes('/predictivo')) return 'fa-solid fa-chart-line';
+                if (route.includes('/reportes')) return 'fa-regular fa-file-lines';
+                if (route.includes('/identidad') || route.includes('/plantillas')) return 'fa-solid fa-building';
+                if (route.includes('/proyectando')) return 'fa-solid fa-chart-column';
+                if (text.includes('diagnóstico') || text.includes('diagnostico')) return 'fa-solid fa-stethoscope';
+                return 'fa-regular fa-circle';
+            };
+
+            const renderActiveSubmenus = (mainLabel) => {
+                const sectionMenu = document.getElementById('navbar-section-menu');
+                const sectionBtn = document.getElementById('navbar-section-btn');
+                const sectionBtnLabel = document.getElementById('navbar-section-btn-label');
+                const sectionDropdown = document.getElementById('navbar-section-dropdown');
+                if (!sectionMenu) return;
+                const requestedKey = String(mainLabel || '').trim();
+                const routeKey = String(resolveMenuFromCatalogByPath(window.location.pathname)?.menuName || '').trim();
+                let savedKey = '';
+                try {
+                    savedKey = String(window.localStorage.getItem(ACTIVE_MAIN_MENU_KEY) || '').trim();
+                } catch (e) {}
+                const firstCatalogKey = Object.keys(NAVBAR_SUBMENU_CATALOG).find(
+                    (candidate) => Array.isArray(NAVBAR_SUBMENU_CATALOG[candidate]) && NAVBAR_SUBMENU_CATALOG[candidate].length
+                ) || '';
+                const keyCandidates = [requestedKey, routeKey, savedKey, firstCatalogKey].filter(Boolean);
+                const key = keyCandidates.find((candidate) => Array.isArray(NAVBAR_SUBMENU_CATALOG[candidate]) && NAVBAR_SUBMENU_CATALOG[candidate].length) || '';
+                const links = key ? NAVBAR_SUBMENU_CATALOG[key] : [];
+                if (!links.length) {
+                    sectionMenu.style.display = 'none';
+                    if (sectionDropdown) { sectionDropdown.innerHTML = ''; sectionDropdown.classList.remove('open'); }
+                    if (sectionBtn) sectionBtn.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+                const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+                const seen = new Set();
+                const renderItem = (item, isChild = false) => {
+                    const label = String(item?.label || '').trim();
+                    if (!label || seen.has((isChild ? 'child:' : 'root:') + label)) return '';
+                    const children = Array.isArray(item && item.children) ? item.children : [];
+                    if (children.length) {
+                        const childItems = children.map((child) => renderItem(child, true)).filter(Boolean).join('');
+                        if (!childItems) return '';
+                        const hasActiveChild = children.some((child) => {
+                            const href = String(child?.href || '').trim();
+                            const normHref = href.replace(/\/+$/, '') || '/';
+                            return normHref === currentPath || (normHref !== '/' && currentPath.startsWith(normHref + '/'));
+                        });
+                        const iconClass = getNavbarSubmenuIconClass(label, '');
+                        return `<details class="navbar-section-group"${hasActiveChild ? ' open' : ''}><summary class="navbar-section-group-summary"><i class="navbar-section-link-icon ${iconClass}" aria-hidden="true"></i><span>${label}</span></summary><div class="navbar-section-group-items">${childItems}</div></details>`;
+                    }
+                    const href = String(item?.href || '').trim();
+                    if (!href) return '';
+                    seen.add((isChild ? 'child:' : 'root:') + label);
+                    const normHref = href.replace(/\/+$/, '') || '/';
+                    const isActive = normHref === currentPath || (normHref !== '/' && currentPath.startsWith(normHref + '/'));
+                    const iconClass = getNavbarSubmenuIconClass(label, href);
+                    return `<a class="navbar-section-link${isActive ? ' is-active' : ''}${isChild ? ' is-child' : ''}" href="${href}" data-menu-name="${key}"><i class="navbar-section-link-icon ${iconClass}" aria-hidden="true"></i><span>${label}</span></a>`;
+                };
+                const items = links.map((item) => renderItem(item, false)).filter(Boolean);
+                if (!items.length) { sectionMenu.style.display = 'none'; return; }
+                if (sectionDropdown) { sectionDropdown.innerHTML = items.join(''); sectionDropdown.classList.remove('open'); }
+                if (sectionBtnLabel) sectionBtnLabel.textContent = key;
+                if (sectionBtn) sectionBtn.setAttribute('aria-expanded', 'false');
+                sectionMenu.style.display = 'flex';
+                sectionMenu.style.alignItems = 'center';
+            };
+
+            const updateRouteVisibility = () => {};
+
+            const isMobileSidebarViewport = () => window.matchMedia('(max-width: 900px)').matches;
+            const getModernSidebarWidth = () => {
+                if (!sidebarElem) return 0;
+                return Math.round(sidebarElem.getBoundingClientRect().width || 0);
+            };
+
+            const setSidebarState = (open) => {
+                const isMobile = isMobileSidebarViewport();
+                const modernSidebar = document.documentElement.classList.contains('ui-sidebar-modern');
+                const modernSidebarWidth = getModernSidebarWidth();
+                sidebarElem.classList.toggle('is-collapsed', !open);
+                navbar.style.marginLeft = '0';
+                navbar.style.width = '100%';
+                mainContent.style.marginLeft = '0';
+                mainContent.style.width = '100%';
+                if (modernSidebar && open && !isMobile && modernSidebarWidth > 0) {
+                    mainContent.style.paddingRight = (32 + modernSidebarWidth + 16) + 'px';
+                } else {
+                    mainContent.style.paddingRight = '';
+                }
+                if (!open) {
+                    sidebarBlocks.forEach((item) => {
+                        item.removeAttribute('open');
+                        item.classList.remove('is-flyout-open');
+                    });
+                }
+                if (sidebarMobileBackdrop) {
+                    sidebarMobileBackdrop.hidden = !(open && isMobile);
+                    sidebarMobileBackdrop.classList.toggle('is-visible', open && isMobile);
+                }
+                if (hamburger) {
+                    hamburger.classList.toggle('is-open', open);
+                    hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                }
+                if (sidebarMobileClose) {
+                    sidebarMobileClose.setAttribute('aria-hidden', isMobile && open ? 'false' : 'true');
+                }
+                isSidebarOpen = open;
+                updateRouteVisibility();
+            };
+
+            const toggleSidebar = () => setSidebarState(!isSidebarOpen);
+
+            if (hamburger) {
+                hamburger.addEventListener('click', toggleSidebar);
+            }
+            if (sidebarMobileClose) {
+                sidebarMobileClose.addEventListener('click', () => setSidebarState(false));
+            }
+            if (sidebarMobileBackdrop) {
+                sidebarMobileBackdrop.addEventListener('click', () => setSidebarState(false));
+            }
+
+            sidebarSummaryItems.forEach((summary) => {
+                summary.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const block = summary.closest('.sidebar-block');
+                    if (!block) return;
+                    if (!isSidebarOpen) {
+                        const shouldOpenFlyout = !block.classList.contains('is-flyout-open');
+                        sidebarBlocks.forEach((item) => {
+                            item.classList.remove('is-flyout-open');
+                            item.removeAttribute('open');
+                        });
+                        if (shouldOpenFlyout) {
+                            block.classList.add('is-flyout-open');
+                        }
+                        setMenuInfo(summary);
+                        return;
+                    }
+                    const shouldOpen = !block.hasAttribute('open');
+                    sidebarBlocks.forEach((item) => {
+                        if (item !== block) {
+                            item.removeAttribute('open');
+                            item.classList.remove('is-flyout-open');
+                        }
+                    });
+                    if (shouldOpen) {
+                        block.setAttribute('open', '');
+                    } else {
+                        block.removeAttribute('open');
+                    }
+                    setMenuInfo(summary);
+                });
+            });
+            sidebarSubmenuLinks.forEach((link) => {
+                link.addEventListener('click', () => {
+                    setMenuInfo(link);
+                    if (!isSidebarOpen) {
+                        sidebarBlocks.forEach((item) => {
+                            item.removeAttribute('open');
+                            item.classList.remove('is-flyout-open');
+                        });
+                    }
+                });
+            });
+            sidebarMainLinks.forEach((link) => {
+                link.addEventListener('click', () => {
+                    setMenuInfo(link);
+                    try {
+                        const menuName = String(link.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
+                    if (!isSidebarOpen) {
+                        sidebarBlocks.forEach((item) => {
+                            item.removeAttribute('open');
+                            item.classList.remove('is-flyout-open');
+                        });
+                    }
+                });
+            });
+            navbarOrgLinks.forEach((link) => {
+                link.addEventListener('click', () => {
+                    setMenuInfo(link);
+                    try {
+                        const menuName = String(link.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
+                });
+            });
+            navbarOrgSummaries.forEach((summary) => {
+                summary.addEventListener('click', () => {
+                    setMenuInfo(summary);
+                    try {
+                        const menuName = String(summary.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
+                });
+            });
+            document.addEventListener('click', (event) => {
+                if (isSidebarOpen) return;
+                if (sidebarElem && sidebarElem.contains(event.target)) return;
+                sidebarBlocks.forEach((item) => {
+                    item.removeAttribute('open');
+                    item.classList.remove('is-flyout-open');
+                });
+            });
+
+            // ── Menús: enlace activo + auto-open + persistencia localStorage ──
+            (function initSidebarActiveState() {
+                const SIDEBAR_OPEN_KEY = 'sipet_sidebar_open_v2';
+                const clearSidebarActiveState = () => {
+                    document.querySelectorAll('.sidebar .is-active').forEach((node) => {
+                        node.classList.remove('is-active');
+                    });
+                };
+
+                const saveSidebarOpenState = () => {
+                    try {
+                        const open = [];
+                        sidebarBlocks.forEach((block) => {
+                            const lbl = (block.querySelector('.sidebar-main-label')?.textContent || '').trim();
+                            if (lbl && block.hasAttribute('open')) open.push(lbl);
+                        });
+                        localStorage.setItem(SIDEBAR_OPEN_KEY, JSON.stringify(open));
+                    } catch (_) {}
+                };
+
+                const activateSidebarLink = (link) => {
+                    clearSidebarActiveState();
+                    link.classList.add('is-active');
+                    const parentBlock = link.closest('.sidebar-block');
+                    if (parentBlock) {
+                        parentBlock.setAttribute('open', '');
+                        parentBlock.classList.add('is-active');
+                    }
+                    const parentSubGroup = link.closest('.sidebar-submenu-group');
+                    if (parentSubGroup) parentSubGroup.setAttribute('open', '');
+                    setMenuInfo(link);
+                };
+
+                const currentPath = window.location.pathname;
+                const allLinks = [
+                    ...document.querySelectorAll('.sidebar-submenu a[href]'),
+                    ...document.querySelectorAll('.sidebar-main-link[href]'),
+                ];
+
+                // coincidencia exacta primero
+                let foundActive = false;
+                for (const link of allLinks) {
+                    const href = (link.getAttribute('href') || '').split('?')[0];
+                    const exactOnly = String(link.dataset.routeMatch || '').trim() === 'exact';
+                    if (exactOnly && href !== currentPath) continue;
+                    if (href && href !== '/' && href !== '#' && href === currentPath) {
+                        activateSidebarLink(link);
+                        foundActive = true;
+                        break;
+                    }
+                }
+
+                // fallback: prefijo más largo
+                if (!foundActive) {
+                    let best = null, bestLen = 0;
+                    for (const link of allLinks) {
+                        const href = (link.getAttribute('href') || '').split('?')[0];
+                        const exactOnly = String(link.dataset.routeMatch || '').trim() === 'exact';
+                        if (!href || href === '/' || href === '#') continue;
+                        if (exactOnly) continue;
+                        if (currentPath.startsWith(href + '/') && href.length > bestLen) {
+                            best = link; bestLen = href.length;
+                        }
+                    }
+                    if (best) { activateSidebarLink(best); foundActive = true; }
+                }
+
+                // sin URL activa → restaurar desde localStorage
+                if (!foundActive) {
+                    try {
+                        const saved = JSON.parse(localStorage.getItem(SIDEBAR_OPEN_KEY) || '[]');
+                        if (Array.isArray(saved) && saved.length) {
+                            sidebarBlocks.forEach((block) => {
+                                const lbl = (block.querySelector('.sidebar-main-label')?.textContent || '').trim();
+                                if (lbl && saved.includes(lbl)) block.setAttribute('open', '');
+                            });
+                        }
+                    } catch (_) {}
+                }
+
+                // guardar estado al abrir/cerrar cada bloque
+                sidebarSummaryItems.forEach((summary) => {
+                    summary.addEventListener('click', () => setTimeout(saveSidebarOpenState, 50));
+                });
+            })();
+
+            // Eliminado: los links ahora navegan normalmente
+            const pickBestRouteMatch = (links, currentPath) => {
+                let best = null;
+                let bestLen = -1;
+                Array.from(links || []).forEach((link) => {
+                    const href = normalizeRoutePath(link.getAttribute('href'));
+                    const exactOnly = String(link.dataset.routeMatch || '').trim() === 'exact';
+                    if (!href || href === '#') return;
+                    const exact = href === currentPath;
+                    const prefix = !exactOnly && href !== '/' && currentPath.startsWith(`${href}/`);
+                    if (!exact && !prefix) return;
+                    const score = href.length + (exact ? 10000 : 0);
+                    if (score > bestLen) {
+                        bestLen = score;
+                        best = link;
+                    }
+                });
+                return best;
+            };
+            const currentSidebarPath = normalizeRoutePath(window.location.pathname);
+            const activeSidebarLink = pickBestRouteMatch(sidebarSubmenuLinks, currentSidebarPath);
+            const activeSidebarMainLink = pickBestRouteMatch(sidebarMainLinks, currentSidebarPath);
+            const activeNavbarOrgLink = pickBestRouteMatch(navbarOrgLinks, currentSidebarPath);
+            const activeCatalogMenu = resolveMenuFromCatalogByPath(currentSidebarPath);
+            const markSidebarMainLinkActiveByMenu = (menuName) => {
+                const target = Array.from(sidebarMainLinks).find((link) => String(link.dataset.menuName || '').trim() === String(menuName || '').trim());
+                if (!target) return false;
+                document.querySelectorAll('.sidebar .is-active').forEach((node) => node.classList.remove('is-active'));
+                target.classList.add('is-active');
+                return true;
+            };
+            if (activeSidebarLink) {
+                const block = activeSidebarLink.closest('.sidebar-block');
+                if (block) block.open = true;
+                setMenuInfo(activeSidebarLink);
+            } else if (activeNavbarOrgLink) {
+                setMenuInfo(activeNavbarOrgLink);
+            } else if (activeCatalogMenu) {
+                markSidebarMainLinkActiveByMenu(activeCatalogMenu.menuName);
+                setNavbarMenu(activeCatalogMenu.menuName, activeCatalogMenu.subLabel, activeCatalogMenu.href);
+            } else if (activeSidebarMainLink) {
+                setMenuInfo(activeSidebarMainLink);
+            } else if (sidebarSummaryItems.length) {
+                setMenuInfo(sidebarSummaryItems[0]);
+            } else if (sidebarMainLinks.length) {
+                setMenuInfo(sidebarMainLinks[0]);
+            } else if (menuLinks.length) {
+                setMenuInfo(menuLinks[0]);
+            }
+            try {
+                const savedMainMenu = String(window.localStorage.getItem(ACTIVE_MAIN_MENU_KEY) || '').trim();
+                if (savedMainMenu) {
+                    const preferredMain = Array.from(sidebarMainLinks).find((link) => String(link.dataset.menuName || '').trim() === savedMainMenu);
+                    const preferredNav = Array.from(navbarOrgLinks).find((link) => String(link.dataset.menuName || '').trim() === savedMainMenu);
+                    if (!activeSidebarLink && !activeNavbarOrgLink && !activeSidebarMainLink) {
+                        if (preferredMain) {
+                            setMenuInfo(preferredMain);
+                        } else if (preferredNav) {
+                            setMenuInfo(preferredNav);
+                        }
+                    }
+                }
+            } catch (e) {}
+            window.setTimeout(() => {
+                const resolvedPath = normalizeRoutePath(window.location.pathname);
+                const resolvedCatalogMenu = resolveMenuFromCatalogByPath(resolvedPath);
+                const resolvedSidebarMainLink = pickBestRouteMatch(sidebarMainLinks, resolvedPath);
+                if (resolvedCatalogMenu) {
+                    markSidebarMainLinkActiveByMenu(resolvedCatalogMenu.menuName);
+                    setNavbarMenu(resolvedCatalogMenu.menuName, resolvedCatalogMenu.subLabel, resolvedCatalogMenu.href);
+                } else if (resolvedSidebarMainLink) {
+                    setMenuInfo(resolvedSidebarMainLink);
+                }
+            }, 0);
+            setSidebarState(!isMobileSidebarViewport());
+            window.addEventListener('resize', () => {
+                if (!isMobileSidebarViewport() && !isSidebarOpen) {
+                    setSidebarState(true);
+                    return;
+                }
+                setSidebarState(isSidebarOpen);
+            });
+            const messageBox = document.createElement('div');
+            messageBox.className = 'message-box';
+            document.body.appendChild(messageBox);
+            let hideTimeout;
+            const showMessage = (msg, type = 'success') => {
+                messageBox.textContent = msg;
+                messageBox.classList.add('visible');
+                clearTimeout(hideTimeout);
+                hideTimeout = setTimeout(() => {
+                    messageBox.classList.remove('visible');
+                }, 2200);
+            };
+            const syncNavbarNotificationIconColor = (color) => {
+                const fromNavbar = navbar ? getComputedStyle(navbar).color : '';
+                const fromVar = getComputedStyle(document.documentElement).getPropertyValue('--navbar-text');
+                const value = (color || '').trim() || (fromNavbar || '').trim() || (fromVar || '').trim() || '#1f2933';
+                document.documentElement.style.setProperty('--navbar-notifications-icon-color', value);
+                if (navbarNotificationsIcon) {
+                    navbarNotificationsIcon.style.color = value;
+                }
+            };
+            const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (char) => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char
+            ));
+            const formatNotificationDate = (value) => {
+                if (!value) return '';
+                const parsed = new Date(value);
+                if (Number.isNaN(parsed.getTime())) return '';
+                return parsed.toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                });
+            };
+            const renderNotifications = (payload) => {
+                if (!sidebarNotificationsList || !sidebarNotificationsCount || !sidebarNotificationsEmpty) return;
+                const total = Number(payload?.total || 0);
+                const unread = Number(payload?.unread || 0);
+                const lateCount = Number(payload?.counts?.actividad_atrasada || 0);
+                const dueCount = Number(payload?.counts?.actividad_por_vencer || 0);
+                const items = Array.isArray(payload?.items) ? payload.items : [];
+                if (sidebarNotificationsBadge) {
+                    sidebarNotificationsBadge.textContent = unread > 99 ? '99+' : String(unread);
+                    sidebarNotificationsBadge.classList.toggle('visible', unread > 0);
+                }
+                if (navbarNotificationsBadge) {
+                    navbarNotificationsBadge.textContent = unread > 99 ? '99+' : String(unread);
+                    navbarNotificationsBadge.classList.toggle('visible', unread > 0);
+                }
+                if (unread > 0) {
+                    const parts = [`${unread} pendiente${unread === 1 ? '' : 's'}`];
+                    if (lateCount > 0) parts.push(`${lateCount} atrasada${lateCount === 1 ? '' : 's'}`);
+                    if (dueCount > 0) parts.push(`${dueCount} por vencer`);
+                    sidebarNotificationsCount.textContent = parts.join(' · ');
+                } else {
+                    sidebarNotificationsCount.textContent = 'Sin pendientes';
+                }
+                if (!items.length) {
+                    sidebarNotificationsList.innerHTML = '';
+                    sidebarNotificationsEmpty.style.display = 'block';
+                    return;
+                }
+                sidebarNotificationsEmpty.style.display = 'none';
+                sidebarNotificationsList.innerHTML = items.map((item) => {
+                    const href = item.href || '#';
+                    const itemClass = item.read ? 'notification-item read' : 'notification-item';
+                    const notificationId = escapeHtml(item.id || '');
+                    return `
+                        <li>
+                            <a class="${itemClass}" href="${escapeHtml(href)}" data-notification-id="${notificationId}">
+                                <div class="notification-item-title">${escapeHtml(item.title || 'Notificación')}</div>
+                                <div class="notification-item-msg">${escapeHtml(item.message || '')}</div>
+                                <div class="notification-item-date">${escapeHtml(formatNotificationDate(item.created_at))}</div>
+                            </a>
+                        </li>
+                    `;
+                }).join('');
+            };
+            const markNotificationRead = async (notificationId) => {
+                if (!notificationId) return;
+                await fetch('/api/notificaciones/marcar-leida', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: notificationId }),
+                });
+            };
+            const markAllNotificationsRead = async (notificationIds) => {
+                if (!Array.isArray(notificationIds) || !notificationIds.length) return;
+                await fetch('/api/notificaciones/marcar-todas-leidas', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: notificationIds }),
+                });
+            };
+            const loadNotifications = async (silent = true) => {
+                if (!sidebarNotificationsList) return;
+                try {
+                    const res = await fetch('/api/notificaciones/resumen', { headers: { 'Accept': 'application/json' } });
+                    const payload = await res.json();
+                    if (!res.ok || !payload?.success) {
+                        throw new Error(payload?.error || 'No se pudieron cargar las notificaciones');
+                    }
+                    renderNotifications(payload);
+                } catch (error) {
+                    if (!silent) {
+                        showMessage(error.message || 'No se pudieron cargar las notificaciones', 'error');
+                    }
+                }
+            };
+            // La logica especifica de diagnostico ya no vive en el shell backend.
+            const navbarAvatarImg = document.getElementById('navbar-avatar-img');
+            const applyFallback = (img) => {
+                if (!img) return;
+                const fallback = img.dataset.default;
+                img.addEventListener('error', function() {
+                    if (fallback) img.src = fallback;
+                });
+                if (!img.src) img.src = fallback;
+            };
+            applyFallback(navbarAvatarImg);
+            applyFallback(sidebarUserImg);
+            await syncCurrentUserAvatarFromColaborador();
+            syncSidebarCompanyLogo();
+            await loadIaStatus();
+            syncNavbarNotificationIconColor(
+                (navbar ? getComputedStyle(navbar).color : '')
+                || getComputedStyle(document.documentElement).getPropertyValue('--navbar-text')
+            );
+            const _sectionBtnEl = document.getElementById('navbar-section-btn');
+            const _sectionDropdownEl = document.getElementById('navbar-section-dropdown');
+            if (_sectionBtnEl && _sectionDropdownEl) {
+                const closeSectionDropdown = () => {
+                    _sectionDropdownEl.classList.remove('open');
+                    _sectionBtnEl.setAttribute('aria-expanded', 'false');
+                };
+                _sectionBtnEl.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const willOpen = !_sectionDropdownEl.classList.contains('open');
+                    if (willOpen) {
+                        _sectionDropdownEl.classList.add('open');
+                        _sectionBtnEl.setAttribute('aria-expanded', 'true');
+                        if (userDropdown) userDropdown.classList.remove('open');
+                    } else {
+                        closeSectionDropdown();
+                    }
+                });
+                document.addEventListener('click', (event) => {
+                    if (!_sectionBtnEl.contains(event.target) && !_sectionDropdownEl.contains(event.target)) {
+                        closeSectionDropdown();
+                    }
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') closeSectionDropdown();
+                });
+                _sectionDropdownEl.addEventListener('click', (event) => {
+                    const link = event.target.closest('a[data-menu-name]');
+                    if (!link) return;
+                    try {
+                        const menuName = String(link.dataset.menuName || '').trim();
+                        if (menuName) window.localStorage.setItem(ACTIVE_MAIN_MENU_KEY, menuName);
+                    } catch (e) {}
+                });
+            }
+            if (navbarAvatarBtn && userDropdown) {
+                const closeUserDropdown = () => {
+                    userDropdown.classList.remove('open');
+                    navbarAvatarBtn.setAttribute('aria-expanded', 'false');
+                };
+                navbarAvatarBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const willOpen = !userDropdown.classList.contains('open');
+                    if (willOpen) {
+                        userDropdown.classList.add('open');
+                        navbarAvatarBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        closeUserDropdown();
+                    }
+                });
+                document.addEventListener('click', (event) => {
+                    if (!userDropdown.contains(event.target) && !navbarAvatarBtn.contains(event.target)) {
+                        closeUserDropdown();
+                    }
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        closeUserDropdown();
+                    }
+                });
+                if (logoutLink) {
+                    logoutLink.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        closeUserDropdown();
+                        window.location.assign('/logout');
+                    });
+                }
+            }
+            if ((sidebarNotificationsTrigger || navbarNotificationsTrigger) && sidebarNotificationsPanel) {
+                const closeNotifications = () => {
+                    sidebarNotificationsPanel.classList.remove('open');
+                    sidebarNotificationsPanel.setAttribute('aria-hidden', 'true');
+                    if (navbarNotificationsTrigger) navbarNotificationsTrigger.setAttribute('aria-expanded', 'false');
+                    if (sidebarNotificationsTrigger) sidebarNotificationsTrigger.setAttribute('aria-expanded', 'false');
+                };
+                const openNotifications = async () => {
+                    sidebarNotificationsPanel.classList.add('open');
+                    sidebarNotificationsPanel.setAttribute('aria-hidden', 'false');
+                    if (navbarNotificationsTrigger) navbarNotificationsTrigger.setAttribute('aria-expanded', 'true');
+                    if (sidebarNotificationsTrigger) sidebarNotificationsTrigger.setAttribute('aria-expanded', 'true');
+                    await loadNotifications(false);
+                };
+                const bindNotificationsTrigger = (trigger, setMenu = false) => {
+                    if (!trigger) return;
+                    trigger.addEventListener('click', async (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (setMenu) setMenuInfo(trigger);
+                        const willOpen = !sidebarNotificationsPanel.classList.contains('open');
+                        if (willOpen) {
+                            await openNotifications();
+                        } else {
+                            closeNotifications();
+                        }
+                    });
+                };
+                bindNotificationsTrigger(sidebarNotificationsTrigger, true);
+                bindNotificationsTrigger(navbarNotificationsTrigger, false);
+                sidebarNotificationsRefresh && sidebarNotificationsRefresh.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    await loadNotifications(false);
+                });
+                sidebarNotificationsMarkAll && sidebarNotificationsMarkAll.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    const ids = Array.from(
+                        sidebarNotificationsList.querySelectorAll('[data-notification-id]')
+                    ).map((el) => (el.getAttribute('data-notification-id') || '').trim()).filter(Boolean);
+                    try {
+                        await markAllNotificationsRead(ids);
+                        await loadNotifications(false);
+                    } catch (error) {
+                        showMessage(error.message || 'No se pudieron marcar las notificaciones', 'error');
+                    }
+                });
+                sidebarNotificationsList.addEventListener('click', async (event) => {
+                    const link = event.target && event.target.closest ? event.target.closest('[data-notification-id]') : null;
+                    if (!link) return;
+                    const notificationId = (link.getAttribute('data-notification-id') || '').trim();
+                    const href = link.getAttribute('href') || '#';
+                    event.preventDefault();
+                    try {
+                        await markNotificationRead(notificationId);
+                    } catch (error) {
+                        // Si falla la persistencia, no bloqueamos navegación.
+                    }
+                    await loadNotifications(true);
+                    if (href && href !== '#') {
+                        window.location.assign(href);
+                    }
+                });
+                document.addEventListener('click', (event) => {
+                    if (
+                        sidebarNotificationsPanel.classList.contains('open')
+                        && !sidebarNotificationsPanel.contains(event.target)
+                        && !(sidebarNotificationsTrigger && sidebarNotificationsTrigger.contains(event.target))
+                        && !(navbarNotificationsTrigger && navbarNotificationsTrigger.contains(event.target))
+                    ) {
+                        closeNotifications();
+                    }
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        closeNotifications();
+                    }
+                });
+                loadNotifications(true);
+                window.setInterval(() => {
+                    loadNotifications(true);
+                }, 60000);
+            }
+            const empresaToggle = document.getElementById("empresa-section-toggle");
+            const empresaContent = document.getElementById("empresa-section-content");
+            if (empresaToggle && empresaContent) {
+                const setEmpresaOpenState = (open) => {
+                    empresaContent.classList.toggle("open", open);
+                    empresaToggle.setAttribute("aria-expanded", open ? "true" : "false");
+                    const indicator = empresaToggle.querySelector(".toggle-indicator");
+                    if (indicator) {
+                        indicator.textContent = open ? "−" : "+";
+                    }
+                };
+                empresaToggle.addEventListener("click", () => {
+                    const open = !empresaContent.classList.contains("open");
+                    setEmpresaOpenState(open);
+                });
+                const currentPath = window.location.pathname;
+                const empresaLinks = empresaContent.querySelectorAll('a[href]');
+                const shouldOpenEmpresa = Array.from(empresaLinks).some(link => link.getAttribute('href') === currentPath);
+                if (shouldOpenEmpresa) {
+                    setEmpresaOpenState(true);
+                    const activeEmpresaLink = Array.from(empresaLinks).find(link => link.getAttribute('href') === currentPath);
+                    if (activeEmpresaLink && activeEmpresaLink.dataset && activeEmpresaLink.dataset.menuName) {
+                        setMenuInfo(activeEmpresaLink);
+                    }
+                }
+            }
+        });
+    </script>

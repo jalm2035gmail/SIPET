@@ -32,10 +32,6 @@
       <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
       <span class="view-pill-label boton_vista-label">Organigrama</span>
     </button>
-    <button class="view-pill boton_vista" type="button" data-view="puestos" data-tooltip="Puestos laborales" aria-label="Puestos laborales">
-      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
-      <span class="view-pill-label boton_vista-label">Puestos laborales</span>
-    </button>
   </div>
 
   <div id="dep-layout" class="flex flex-col gap-4 lg:flex-row">
@@ -752,10 +748,6 @@
   function renderView(view) {
     if (!view) view = "form";
     currentView = view;
-    if (view === "puestos") {
-      window.location.href = "/inicio/departamentos/puestos-laborales";
-      return;
-    }
 
     if (view === "form") {
       openFormModal(readOnlyMode ? "Detalle del área (solo lectura)" : "Datos del área");

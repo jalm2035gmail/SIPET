@@ -1,22 +1,22 @@
   document.addEventListener("DOMContentLoaded", function() {
-    const presupuestoTabs = Array.from(document.querySelectorAll(".presupuesto-notebook [data-tab]"));
-    const presupuestoPanels = Array.from(document.querySelectorAll(".presupuesto-notebook .tab-panel[data-panel]"));
+    const presupuestoTabs = Array.from(document.querySelectorAll(".presupuesto-notebook [data-presupuesto-tab]"));
+    const presupuestoPanels = Array.from(document.querySelectorAll(".presupuesto-notebook .tab-panel[data-presupuesto-panel]"));
     const setPresupuestoTab = (tabKey) => {
       const target = String(tabKey || "presupuesto-anual");
       presupuestoTabs.forEach((tabBtn) => {
-        const on = (tabBtn.getAttribute("data-tab") || "") === target;
+        const on = (tabBtn.getAttribute("data-presupuesto-tab") || "") === target;
         tabBtn.classList.toggle("tab-active", on);
         tabBtn.classList.toggle("active", on);
       });
       presupuestoPanels.forEach((panelEl) => {
-        const show = (panelEl.getAttribute("data-panel") || "") === target;
+        const show = (panelEl.getAttribute("data-presupuesto-panel") || "") === target;
         panelEl.hidden = !show;
         panelEl.style.display = show ? "block" : "none";
       });
     };
     presupuestoTabs.forEach((tabBtn) => {
       tabBtn.addEventListener("click", () => {
-        setPresupuestoTab(tabBtn.getAttribute("data-tab") || "presupuesto-anual");
+        setPresupuestoTab(tabBtn.getAttribute("data-presupuesto-tab") || "presupuesto-anual");
       });
     });
     setPresupuestoTab("presupuesto-anual");
@@ -27,7 +27,7 @@
     const importStatusEl = document.getElementById("presupuesto-action-status");
     const saveBtn = document.querySelector(".dg-save-trigger");
     const saveStatusEl = document.querySelector(".dg-save-status");
-    const reportesPanel = document.querySelector('.tab-panel[data-panel="reportes"]');
+    const reportesPanel = document.querySelector('.tab-panel[data-presupuesto-panel="reportes"]');
     const reportesFullscreenBtn = document.getElementById("reportes-fullscreen-btn");
     const reportesFiltroNivelEl = document.getElementById("reportes-filtro-nivel");
     const reportesFiltroElementoEl = document.getElementById("reportes-filtro-elemento");

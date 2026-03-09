@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi_modulo.db import SessionLocal, RegionOrganizacional, Base, engine
 
 router = APIRouter()
-REGIONES_TEMPLATE_PATH = os.path.join("fastapi_modulo", "templates", "modulos", "empleados", "regiones.html")
+REGIONES_TEMPLATE_PATH = os.path.join("fastapi_modulo", "modulos", "empleados", "regiones.html")
 
 
 def _ensure_regiones_schema() -> None:

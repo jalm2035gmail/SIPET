@@ -1,0 +1,135 @@
+<script>
+window.__SIPET_BACKEND_NAVBAR_SUBMENU_CATALOG = {
+    "Web": [
+        { href: "/web/inicio", label: "Inicio" },
+        { href: "/web/descripcion", label: "Descripción" },
+        { href: "/web/funcionalidades", label: "Funcionalidades" },
+        { href: "/web/login", label: "Acceso" },
+    ],
+    "Mi tablero": [
+        { href: "/mi-tablero", label: "Mi tablero" },
+    ],
+    "Conversaciones": [
+        { href: "/notificaciones", label: "Bandeja" },
+    ],
+    "Organización": [
+        { href: "/inicio/departamentos", label: "Áreas" },
+        { href: "/inicio/departamentos/puestos-laborales", label: "Puestos laborales" },
+        { href: "/inicio/regiones", label: "Regiones" },
+        { href: "/inicio/sucursales", label: "Sucursales" },
+        { href: "/inicio/colaboradores", label: "Colaboradores" },
+        { href: "/inicio/colaboradores/habilidades", label: "Habilidades" },
+    ],
+    "Estrategia y táctica": [
+        {
+            label: "Diagnóstico",
+            children: [
+                { href: "/diagnostico/foda", label: "FODA" },
+                { href: "/diagnostico/pestel", label: "PESTEL" },
+                { href: "/diagnostico/porter", label: "PORTER" },
+                { href: "/diagnostico/percepcion-cliente", label: "Percepción del cliente" },
+            ],
+        },
+        { href: "/planes", label: "Plan estratégico" },
+        { href: "/poa", label: "POA" },
+        { href: "/planes", label: "Tablero de control" },
+        {% if current_role in ['superadministrador', 'superadmin'] %}
+        { href: "/estrategia-tactica/base-ia", label: "Base IA estrategia" },
+        {% endif %}
+    ],
+    "Datos financieros": [
+        { href: "/proyectando", label: "Tablero de control" },
+        { href: "/proyectando/datos-preliminares", label: "1. Preliminares" },
+        { href: "/proyectando/crecimiento-general", label: "2. Crecimiento general" },
+        { href: "/proyectando/activo-fijo", label: "3. Activo fijo" },
+        { href: "/proyectando/otras-cuentas-activo", label: "4. Otras cuentas de activo" },
+        { href: "/proyectando/cartera-prestamos", label: "5. Cartera de préstamos" },
+        { href: "/proyectando/recursos-liquidos", label: "6. Liquidez" },
+        { href: "/proyectando/pasivos", label: "7. Pasivos" },
+        { href: "/proyectando/gastos", label: "8. Gastos" },
+        { href: "/proyectando/tasa-referencia", label: "9. Tasa de referencia" },
+        { href: "/proyectando/presupuesto", label: "Presupuesto" },
+    ],
+    "Intelicoop": [
+        { href: "/inicio/intelicoop", label: "Dashboard" },
+    ],
+    "CRM": [
+        { href: "/crm", label: "Resumen" },
+    ],
+    "Auditoría": [
+        { href: "/auditoria", label: "Resumen" },
+    ],
+    "Gestión de Activo Fijo": [
+        { href: "/activo-fijo", label: "Resumen" },
+    ],
+    "Multiempresa": [
+        { href: "/multiempresa", label: "Empresas" },
+    ],
+    "BSC": [
+        { href: "/inicio", label: "Dashboard = BSC", exact: true },
+        { href: "/brujula/solidez-financiera", label: "Solidez Financiera" },
+        { href: "/brujula/liquidez", label: "Liquidez" },
+        { href: "/brujula/rentabilidad", label: "Rentabilidad" },
+        { href: "/brujula/crecimiento", label: "Crecimiento" },
+        { href: "/brujula/liderazgo", label: "Liderazgo" },
+        { href: "/brujula/productividad", label: "Productividad" },
+        { href: "/brujula/balance-social", label: "Balance Social" },
+        { href: "/brujula/reportes", label: "Reportes" },
+        { href: "/brujula/configuracion", label: "Configuración" },
+    ],
+    "KPI's": [
+        { href: "/kpis", label: "KPI's" },
+        { href: "/kpis/indicadores", label: "Indicadores" },
+        { href: "/ia/predictivo", label: "Análisis Predictivo" },
+    ],
+    "Reportes": [
+        { href: "/reportes", label: "Resumen" },
+        { href: "/reportes/documentos", label: "Documentos" },
+    ],
+    "Empresa": [
+        { href: "/identidad-institucional", label: "Identidad institucional" },
+        { href: "/empresa/usuarios", label: "Usuarios" },
+        { href: "/empresa/base-datos", label: "Base de datos" },
+        { href: "/plantillas", label: "Plantillas" },
+        { href: "/plantillas/constructor", label: "Constructor de formularios" },
+    ],
+    "Control y seguimiento": [
+        { href: "/control-seguimiento", label: "Control y seguimiento" },
+        { href: "/control-interno", label: "Control interno (COSO): Catálogo de controles" },
+        { href: "/control-interno/programa-anual", label: "Control interno (COSO): Programa anual" },
+        { href: "/control-interno/evidencias", label: "Control interno (COSO): Evidencias" },
+        { href: "/control-interno/hallazgos", label: "Control interno (COSO): Hallazgos" },
+        { href: "/control-interno/tablero", label: "Control interno (COSO): Tablero de KPIs" },
+        { href: "/control-interno/reportes", label: "Control interno (COSO): Reportes" },
+    ],
+    "BRUJULA": [
+        { href: "/inicio", label: "Dashboard = BSC", exact: true },
+        { href: "/brujula/solidez-financiera", label: "Solidez Financiera" },
+        { href: "/brujula/liquidez", label: "Liquidez" },
+        { href: "/brujula/rentabilidad", label: "Rentabilidad" },
+        { href: "/brujula/crecimiento", label: "Crecimiento" },
+        { href: "/brujula/liderazgo", label: "Liderazgo" },
+        { href: "/brujula/productividad", label: "Productividad" },
+        { href: "/brujula/balance-social", label: "Balance Social" },
+        { href: "/brujula/reportes", label: "Reportes" },
+        { href: "/brujula/configuracion", label: "Configuración" },
+    ],
+    "Control y segumiento": [
+        { href: "/control-seguimiento", label: "Control y seguimiento" },
+        { href: "/control-interno", label: "Control interno (COSO): Catálogo de controles" },
+        { href: "/control-interno/programa-anual", label: "Control interno (COSO): Programa anual" },
+        { href: "/control-interno/evidencias", label: "Control interno (COSO): Evidencias" },
+        { href: "/control-interno/hallazgos", label: "Control interno (COSO): Hallazgos" },
+        { href: "/control-interno/tablero", label: "Control interno (COSO): Tablero de KPIs" },
+        { href: "/control-interno/reportes", label: "Control interno (COSO): Reportes" },
+    ],
+    "Ajustes": [
+        { href: "/ajustes/configuracion", label: "Configuración" },
+        { href: "/ajustes/ia", label: "IA" },
+        { href: "/ia/predictivo", label: "Análisis Predictivo" },
+        { href: "/personalizar", label: "Colores" },
+        { href: "/roles-permisos", label: "Roles" },
+        { href: "/membresia", label: "Membresía" },
+    ],
+};
+</script>

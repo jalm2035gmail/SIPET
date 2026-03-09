@@ -1,0 +1,9 @@
+{
+  "favicon_filename": "icon.png",
+  "logo_filename": "icon.png",
+  "desktop_bg_filename": "fondo.jpg",
+  "mobile_bg_filename": "movil.jpg",
+  "company_short_name": "AVAN",
+  "login_message": "Incrementando el nivel de eficiencia",
+  "menu_position": "arriba"
+}

@@ -28,12 +28,12 @@
     </div>
     <section class="notebook-section presupuesto-notebook">
       <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Presupuesto">
-        <button type="button" class="tab tab-active gap-2 rounded-t-lg" data-tab="presupuesto-anual"><img src="/templates/icon/financiamiento.svg" alt="" class="w-4 h-4">Presupuesto anual</button>
-        <button type="button" class="tab gap-2 rounded-t-lg" data-tab="control-mensual"><img src="/templates/icon/calendario.svg" alt="" class="w-4 h-4">Control mensual</button>
-        <button type="button" class="tab gap-2 rounded-t-lg" data-tab="reportes"><img src="/templates/icon/crecimiento.svg" alt="" class="w-4 h-4">Reportes</button>
+        <button type="button" class="tab tab-active gap-2 rounded-t-lg" data-presupuesto-tab="presupuesto-anual"><img src="/templates/icon/financiamiento.svg" alt="" class="w-4 h-4">Presupuesto anual</button>
+        <button type="button" class="tab gap-2 rounded-t-lg" data-presupuesto-tab="control-mensual"><img src="/templates/icon/calendario.svg" alt="" class="w-4 h-4">Control mensual</button>
+        <button type="button" class="tab gap-2 rounded-t-lg" data-presupuesto-tab="reportes"><img src="/templates/icon/crecimiento.svg" alt="" class="w-4 h-4">Reportes</button>
       </div>
       <div class="proy-notebook-body notebook-content">
-        <div class="tab-panel" data-panel="presupuesto-anual">
+        <div class="tab-panel" data-presupuesto-panel="presupuesto-anual">
           <div class="tabla-oficial-wrap cod-toggle-wrap">
             <button type="button" id="toggle-cod-col-btn" class="cod-toggle-btn" aria-label="Mostrar u ocultar columna Cod">+</button>
             <table id="presupuesto-table" class="tabla-oficial">
@@ -52,7 +52,7 @@
             </table>
           </div>
         </div>
-        <div class="tab-panel" data-panel="control-mensual" hidden>
+        <div class="tab-panel" data-presupuesto-panel="control-mensual" hidden>
           <div class="control-mensual-actions">
             <button type="button" id="control-mensual-acc-btn" class="color-btn color-btn--ghost">Ver tabla acumulada</button>
           </div>
@@ -73,7 +73,7 @@
             </table>
           </div>
         </div>
-        <div class="tab-panel" data-panel="reportes" hidden>
+        <div class="tab-panel" data-presupuesto-panel="reportes" hidden>
           <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
             <button type="button" id="reportes-fullscreen-btn" class="color-btn color-btn--ghost">Ver en pantalla completa</button>
           </div>

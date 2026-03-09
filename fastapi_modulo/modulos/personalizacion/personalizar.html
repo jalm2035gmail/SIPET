@@ -207,3 +207,102 @@
     </button>
   </footer>
 </section>
+<script>
+(() => {
+  const colorKeys = [
+    'navbar-bg',
+    'navbar-text',
+    'sidebar-top',
+    'sidebar-bottom',
+    'sidebar-text',
+    'sidebar-icon',
+    'sidebar-hover',
+    'field-color',
+    'button-bg',
+    'button-text',
+  ];
+  const rootStyle = document.documentElement.style;
+  const colorInputs = colorKeys
+    .map((key) => document.getElementById(key))
+    .filter((input) => input instanceof HTMLInputElement);
+  if (!colorInputs.length) return;
+
+  const saveBtn = document.getElementById('personalizar-save-btn');
+  const resetBtn = document.getElementById('personalizar-reset-btn');
+  const editBtn = document.getElementById('personalizar-edit-btn');
+  const serverColors = window.__sipet_server_colors || {};
+  const defaults = Object.fromEntries(colorInputs.map((input) => [input.id, input.defaultValue || input.value]));
+
+  const applyColor = (key, value) => {
+    const normalized = String(value || '').trim();
+    if (!normalized) return;
+    rootStyle.setProperty(`--${key}`, normalized);
+    const preview = document.getElementById(`${key}-preview`);
+    if (preview) preview.style.background = normalized;
+    if (key === 'navbar-text') {
+      rootStyle.setProperty('--navbar-notifications-icon-color', normalized);
+    }
+  };
+
+  const collectColors = () => Object.fromEntries(
+    colorInputs.map((input) => [input.id, input.value])
+  );
+
+  const applyAllColors = (colors) => {
+    colorInputs.forEach((input) => {
+      const nextValue = String(colors[input.id] || input.value || defaults[input.id] || '').trim();
+      if (nextValue) {
+        input.value = nextValue;
+        applyColor(input.id, nextValue);
+      }
+    });
+  };
+
+  const setSaveState = (busy) => {
+    if (!saveBtn) return;
+    saveBtn.disabled = busy;
+    saveBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
+  };
+
+  colorInputs.forEach((input) => {
+    input.addEventListener('input', () => applyColor(input.id, input.value));
+    input.addEventListener('change', () => applyColor(input.id, input.value));
+  });
+
+  applyAllColors({ ...defaults, ...serverColors });
+
+  if (editBtn) {
+    editBtn.addEventListener('click', () => {
+      const firstInput = colorInputs[0];
+      if (firstInput) firstInput.focus();
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      setSaveState(true);
+      try {
+        const response = await fetch('/guardar-colores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(collectColors()),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error || 'No se pudieron guardar los colores');
+        }
+      } catch (error) {
+        window.alert(error.message || 'No se pudieron guardar los colores');
+      } finally {
+        setSaveState(false);
+      }
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      applyAllColors(defaults);
+    });
+  }
+})();
+</script>

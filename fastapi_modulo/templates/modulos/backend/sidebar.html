@@ -1,0 +1,162 @@
+<div class="sidebar" id="sidebar">
+    <button type="button" class="sidebar-mobile-close" id="sidebar-mobile-close" aria-label="Cerrar menú">×</button>
+    <div class="sidebar-section-title">Navegacion</div>
+    <nav>
+        <a class="sidebar-main-link" href="/web" data-menu-name="Web" data-route="/web" target="_blank" rel="noopener">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-globe" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Web</span>
+            </span>
+        </a>
+        {% if is_superadmin_effective or 'Mi tablero' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/mi-tablero" data-menu-name="Mi tablero" data-route="/mi-tablero">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-rectangle-list" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Mi tablero</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Conversaciones' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/notificaciones" data-menu-name="Conversaciones" data-route="/notificaciones">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-envelope" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Conversaciones</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/inicio/departamentos" data-menu-name="Organización" data-route="/inicio/departamentos">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-sitemap" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Organización</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Estrategia y táctica' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/planes" data-menu-name="Estrategia y táctica" data-route="/planes">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-chess-board" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Estrategia y táctica</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Datos financieros' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/proyectando" data-menu-name="Datos financieros" data-route="/proyectando">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-chart-column" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Datos financieros</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Intelicoop' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/inicio/intelicoop" data-menu-name="Intelicoop" data-route="/inicio/intelicoop">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-microchip" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Intelicoop</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Brújula' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/inicio" data-menu-name="BRUJULA" data-route="/inicio" data-route-match="exact">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-compass" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Brújula</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'CRM' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/crm" data-menu-name="CRM" data-route="/crm">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-address-card" aria-hidden="true"></i>
+                <span class="sidebar-main-label">CRM</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Auditoria' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/auditoria" data-menu-name="Auditoría" data-route="/auditoria">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-clipboard-check" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Auditoría</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'ActivoFijo' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/activo-fijo" data-menu-name="Gestión de Activo Fijo" data-route="/activo-fijo">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-building-columns" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Gestión de Activo Fijo</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'BSC' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/inicio" data-menu-name="BSC" data-route="/inicio">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-circle-dot" aria-hidden="true"></i>
+                <span class="sidebar-main-label">BSC</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Control y seguimiento' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/control-seguimiento" data-menu-name="Control y seguimiento" data-route="/control-seguimiento">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-list-check" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Control y segumiento</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'KPIs' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/kpis" data-menu-name="KPI's" data-route="/kpis">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-chart-line" aria-hidden="true"></i>
+                <span class="sidebar-main-label">KPI's</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Reportes' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/reportes" data-menu-name="Reportes" data-route="/reportes">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-file-lines" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Reportes</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Empresa' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/identidad-institucional" data-menu-name="Empresa" data-route="/identidad-institucional">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-building" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Empresa</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'Multiempresa' in (user_app_access | default([])) %}
+        <a class="sidebar-main-link" href="/multiempresa" data-menu-name="Multiempresa" data-route="/multiempresa">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-layer-group" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Multiempresa</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if current_role in ['superadministrador', 'superadmin'] %}
+        <a class="sidebar-main-link" href="/ajustes/configuracion" data-menu-name="Ajustes" data-route="/ajustes/configuracion">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-gear" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Ajustes</span>
+            </span>
+        </a>
+        {% endif %}
+    </nav>
+    <div class="sidebar-notifications-panel" id="sidebar-notifications-panel" aria-hidden="true">
+        <div class="sidebar-notifications-header">
+            <div>
+                <strong>Notificaciones</strong>
+                <div class="sidebar-notifications-count" id="sidebar-notifications-count">Sin pendientes</div>
+            </div>
+            <div class="sidebar-notifications-actions">
+                <button type="button" class="sidebar-notifications-refresh" id="sidebar-notifications-mark-all">Marcar todo</button>
+                <button type="button" class="sidebar-notifications-refresh" id="sidebar-notifications-refresh">Actualizar</button>
+            </div>
+        </div>
+        <div class="sidebar-notifications-empty" id="sidebar-notifications-empty">No tienes notificaciones pendientes.</div>
+        <ul class="sidebar-notifications-list" id="sidebar-notifications-list"></ul>
+    </div>
+</div>

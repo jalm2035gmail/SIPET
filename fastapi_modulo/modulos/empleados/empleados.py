@@ -29,6 +29,28 @@ CV_CONTACT_ALIASES = {
     "linkedin": ("linkedin", "perfil_linkedin"),
     "portfolio": ("portfolio", "portafolio", "sitio_web", "website"),
 }
+ACCESS_APP_OPTIONS = (
+    "BSC",
+    "Organización",
+    "Estrategia y táctica",
+    "Datos financieros",
+    "Control y seguimiento",
+    "KPIs",
+    "Reportes",
+    "Empresa",
+    "Intelicoop",
+    "CRM",
+    "Auditoria",
+    "ActivoFijo",
+    "Multiempresa",
+)
+ACCESS_LEVEL_KEYS = (
+    "full_access",
+    "read_only",
+    "department_only",
+    "user_only",
+    "special_permissions",
+)
 
 
 def _load_puestos_laborales_catalog() -> List[str]:
@@ -75,6 +97,17 @@ def _load_colab_meta() -> Dict[str, Dict[str, Any]]:
             if payload.get("cv_contacto") != normalized_contact:
                 payload["cv_contacto"] = normalized_contact
                 changed = True
+            normalized_access_levels = _normalize_app_access_levels(
+                payload.get("app_access_levels"),
+                payload.get("app_access", []),
+            )
+            normalized_app_access = _derive_visible_app_access(normalized_access_levels)
+            if payload.get("app_access_levels") != normalized_access_levels:
+                payload["app_access_levels"] = normalized_access_levels
+                changed = True
+            if payload.get("app_access") != normalized_app_access:
+                payload["app_access"] = normalized_app_access
+                changed = True
         if changed:
             COLAB_META_PATH.parent.mkdir(parents=True, exist_ok=True)
             COLAB_META_PATH.write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -109,6 +142,52 @@ def _normalize_poa_access_level(value: Any) -> str:
     return "todas_tareas" if raw == "todas_tareas" else "mis_tareas"
 
 
+def _normalize_app_access_levels(raw_levels: Any, fallback_app_access: Any = None) -> Dict[str, Dict[str, bool]]:
+    normalized: Dict[str, Dict[str, bool]] = {
+        app_name: {level_key: False for level_key in ACCESS_LEVEL_KEYS}
+        for app_name in ACCESS_APP_OPTIONS
+    }
+    if isinstance(raw_levels, dict):
+        for app_name in ACCESS_APP_OPTIONS:
+            raw_entry = raw_levels.get(app_name)
+            if not isinstance(raw_entry, dict):
+                continue
+            normalized[app_name] = {
+                level_key: bool(raw_entry.get(level_key, False))
+                for level_key in ACCESS_LEVEL_KEYS
+            }
+    fallback_values: List[str] = []
+    if isinstance(fallback_app_access, list):
+        fallback_values = [str(item).strip() for item in fallback_app_access if str(item).strip() in ACCESS_APP_OPTIONS]
+    elif isinstance(fallback_app_access, str) and fallback_app_access.strip() in ACCESS_APP_OPTIONS:
+        fallback_values = [fallback_app_access.strip()]
+    for app_name in fallback_values:
+        if not any(normalized[app_name].values()):
+            normalized[app_name]["full_access"] = True
+    return normalized
+
+
+def _derive_visible_app_access(app_access_levels: Dict[str, Dict[str, bool]]) -> List[str]:
+    visible: List[str] = []
+    for app_name in ACCESS_APP_OPTIONS:
+        levels = app_access_levels.get(app_name) or {}
+        if any(bool(levels.get(level_key, False)) for level_key in ACCESS_LEVEL_KEYS):
+            visible.append(app_name)
+    return visible
+
+
+def _serialize_access_settings(meta_entry: Any) -> Dict[str, Any]:
+    entry = meta_entry if isinstance(meta_entry, dict) else {}
+    app_access_levels = _normalize_app_access_levels(
+        entry.get("app_access_levels"),
+        entry.get("app_access", []),
+    )
+    return {
+        "app_access_levels": app_access_levels,
+        "app_access": _derive_visible_app_access(app_access_levels),
+    }
+
+
 def _is_admin_role(role_name: str) -> bool:
     role = (role_name or "").strip().lower()
     if role == "admin":
@@ -138,10 +217,16 @@ def _allowed_role_assignments(viewer_role: str) -> set[str]:
 
 EMPLEADOS_TEMPLATE_PATH = os.path.join(
     "fastapi_modulo",
-    "templates",
     "modulos",
     "empleados",
     "empleados.html",
+)
+EMPRESA_USUARIOS_TEMPLATE_PATH = os.path.join(
+    "fastapi_modulo",
+    "templates",
+    "modulos",
+    "empresa",
+    "usuarios.html",
 )
 
 
@@ -160,6 +245,7 @@ def api_listar_colaboradores(request: Request):
         assignable_roles = sorted(_allowed_role_assignments(viewer_role))
         data: List[Dict[str, Any]] = [
             {
+                **_serialize_access_settings(meta.get(str(u.id), {})),
                 "id": u.id,
                 "nombre": u.nombre or "",
                 "usuario": (_decrypt_sensitive(u.usuario) or "").strip(),
@@ -181,7 +267,6 @@ def api_listar_colaboradores(request: Request):
                 "colaborador": bool(meta.get(str(u.id), {}).get("colaborador", False)),
                 "menu_blocks": meta.get(str(u.id), {}).get("menu_blocks", []),
                 "poa_access_level": _normalize_poa_access_level(meta.get(str(u.id), {}).get("poa_access_level", "mis_tareas")),
-                "app_access": meta.get(str(u.id), {}).get("app_access", []),
                 "web_roles": meta.get(str(u.id), {}).get("web_roles", []),
                 "eficiencia": meta.get(str(u.id), {}).get("eficiencia", None),
                 "cv_contacto": _normalize_cv_contacto(meta.get(str(u.id), {}).get("cv_contacto", {})),
@@ -355,10 +440,9 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
     menu_blocks = sorted(set(menu_blocks))
     poa_access_level = _normalize_poa_access_level(data.get("poa_access_level"))
     raw_app_access = data.get("app_access")
-    app_access: List[str] = []
-    _VALID_APPS = {'BSC','Organización','Estrategia y táctica','Datos financieros','Control y seguimiento','KPIs','Reportes','Empresa','Intelicoop','CRM','Auditoria','ActivoFijo','Multiempresa'}
-    if isinstance(raw_app_access, list):
-        app_access = [str(a).strip() for a in raw_app_access if str(a).strip() in _VALID_APPS]
+    raw_app_access_levels = data.get("app_access_levels")
+    app_access_levels = _normalize_app_access_levels(raw_app_access_levels, raw_app_access)
+    app_access = _derive_visible_app_access(app_access_levels)
     raw_web_roles = data.get("web_roles")
     web_roles: List[str] = []
     _VALID_WEB_ROLES = {'editor', 'designer'}
@@ -565,6 +649,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
                 "colaborador": colaborador,
                 "menu_blocks": menu_blocks,
                 "poa_access_level": poa_access_level,
+                "app_access_levels": app_access_levels,
                 "app_access": app_access,
                 "web_roles": web_roles,
                 "eficiencia": eficiencia,
@@ -601,6 +686,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
                     "colaborador": colaborador,
                     "menu_blocks": menu_blocks,
                     "poa_access_level": poa_access_level,
+                    "app_access_levels": app_access_levels,
                     "app_access": app_access,
                     "web_roles": web_roles,
                     "eficiencia": eficiencia,
@@ -647,6 +733,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
             "colaborador": colaborador,
             "menu_blocks": menu_blocks,
             "poa_access_level": poa_access_level,
+            "app_access_levels": app_access_levels,
             "app_access": app_access,
             "web_roles": web_roles,
             "eficiencia": eficiencia,
@@ -683,6 +770,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
                 "colaborador": colaborador,
                 "menu_blocks": menu_blocks,
                 "poa_access_level": poa_access_level,
+                "app_access_levels": app_access_levels,
                 "app_access": app_access,
                 "web_roles": web_roles,
                 "eficiencia": eficiencia,
@@ -830,6 +918,18 @@ def _load_empleados_template() -> str:
         """
 
 
+def _load_empresa_usuarios_template() -> str:
+    try:
+        with open(EMPRESA_USUARIOS_TEMPLATE_PATH, "r", encoding="utf-8") as fh:
+            return fh.read()
+    except OSError:
+        return """
+        <section class="w-full">
+            <div class="alert alert-error">No se pudo cargar la pantalla de usuarios.</div>
+        </section>
+        """
+
+
 def _render_empleados_page(
     request: Request,
     title: str = "Usuarios",
@@ -854,6 +954,38 @@ def _render_empleados_page(
     )
 
 
+def _render_empresa_usuarios_page(request: Request) -> HTMLResponse:
+    from fastapi_modulo.main import render_backend_page, normalize_role_name
+
+    viewer_role = normalize_role_name((getattr(request.state, "user_role", None) or "").strip().lower())
+    if not _is_admin_role(viewer_role):
+        return render_backend_page(
+            request,
+            title="Usuarios",
+            description="Administración de accesos",
+            content=(
+                '<section class="w-full">'
+                '<article class="card bg-base-100 border border-base-300 shadow-sm">'
+                '<div class="card-body">'
+                '<h3 class="card-title">Sin acceso</h3>'
+                '<p class="text-base-content/70">Solo administrador y superadministrador pueden gestionar usuarios.</p>'
+                '</div></article></section>'
+            ),
+            hide_floating_actions=True,
+            show_page_header=False,
+            floating_actions_screen="none",
+        )
+    return render_backend_page(
+        request,
+        title="Usuarios",
+        description="Administración de accesos de usuarios",
+        content=_load_empresa_usuarios_template(),
+        hide_floating_actions=True,
+        show_page_header=False,
+        floating_actions_screen="none",
+    )
+
+
 @router.get("/usuarios", response_class=HTMLResponse)
 @router.get("/usuarios-sistema", response_class=HTMLResponse)
 def usuarios_page(request: Request):
@@ -867,6 +999,11 @@ def inicio_colaboradores_page(request: Request):
         title="Colaboradores",
         description="Gestiona colaboradores, roles y permisos desde la misma pantalla",
     )
+
+
+@router.get("/empresa/usuarios", response_class=HTMLResponse)
+def empresa_usuarios_page(request: Request):
+    return _render_empresa_usuarios_page(request)
 
 
 # ── Habilidades catalog store ─────────────────────────────────────────────────

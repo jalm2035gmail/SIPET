@@ -1,0 +1,347 @@
+[
+  {
+    "nivel": 1,
+    "cuenta": "100-00-00-00-00-000",
+    "descripcion": "ACTIVO"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "101-00-00-00-00-000",
+    "descripcion": "DISPONIBILIDADES"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "101-01-00-00-00-000",
+    "descripcion": "CAJA"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "101-02-00-00-00-000",
+    "descripcion": "BANCOS"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "101-03-00-00-00-000",
+    "descripcion": "OTRAS DISPONIBILIDADES"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "101-04-00-00-00-000",
+    "descripcion": "DISPONIBILIDADES RESTRINGIDAS O DADAS EN GARANTIA"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "102-00-00-00-00-000",
+    "descripcion": "INVERSIONES EN VALORES"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "103-00-00-00-00-000",
+    "descripcion": "DEUDORES POR REPORTO"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "104-00-00-00-00-000",
+    "descripcion": "CARTERA DE CREDITO VIGENTE"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "104-01-00-00-00-000",
+    "descripcion": "CREDITOS COMERCIALES"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "104-02-00-00-00-000",
+    "descripcion": "CREDITOS DE CONSUMO"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "104-03-00-00-00-000",
+    "descripcion": "CREDITOS A LA VIVIENDA"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "105-00-00-00-00-000",
+    "descripcion": "CARTERA DE CREDITO VENCIDA"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "105-01-00-00-00-000",
+    "descripcion": "CREDITOS VENCIDOS COMERCIALES"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "105-02-00-00-00-000",
+    "descripcion": "CREDITOS VENCIDOS DE CONSUMO"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "105-03-00-00-00-000",
+    "descripcion": "CREDITOS VENCIDOS A LA VIVIENDA"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "106-00-00-00-00-000",
+    "descripcion": "ESTIMACION PREVENTIVA PARA RIESGOS CREDITICIOS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "107-00-00-00-00-000",
+    "descripcion": "OTRAS CUENTAS POR COBRAR"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "107-03-00-00-00-000",
+    "descripcion": "DEUDORES DIVERSOS"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "107-04-00-00-00-000",
+    "descripcion": "ESTIMACION POR IRRECUPERABILIDAD O DIFICIL COBRO"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "108-00-00-00-00-000",
+    "descripcion": "BIENES ADJUDICADOS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "109-00-00-00-00-000",
+    "descripcion": "PROPIEDADES, MOBILIARIO Y EQUIPO"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "109-01-00-00-00-000",
+    "descripcion": "PROPIEDADES, MOBILIARIO Y EQUIPO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-01-01-00-00-000",
+    "descripcion": "TERRENOS"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-01-02-00-00-000",
+    "descripcion": "CONSTRUCCIONES"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-01-04-00-00-000",
+    "descripcion": "EQUIPO DE TRANSPORTE"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-01-05-00-00-000",
+    "descripcion": "EQUIPO DE COMPUTO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-01-06-00-00-000",
+    "descripcion": "MOBILIARIO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-01-07-00-00-000",
+    "descripcion": "ADAPTACIONES Y MEJORAS"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "109-02-00-00-00-000",
+    "descripcion": "REVALUACION DE PROPIEDADES, MOBILIARIO Y EQUIPO ("
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-02-01-00-00-000",
+    "descripcion": "TERRENOS"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-02-02-00-00-000",
+    "descripcion": "CONSTRUCCIONES"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-02-05-00-00-000",
+    "descripcion": "EQUIPO DE COMPUTO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-02-06-00-00-000",
+    "descripcion": "MOBILIARIO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-02-07-00-00-000",
+    "descripcion": "ADAPTACIONES Y MEJORAS"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "109-03-00-00-00-000",
+    "descripcion": "DEPRECIACION ACUMULADA DE PROPIEDADES, MOBILIARIO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-03-01-00-00-000",
+    "descripcion": "CONSTRUCCIONES"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-03-02-00-00-000",
+    "descripcion": "EQUIPO DE TRANSPORTE"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-03-03-00-00-000",
+    "descripcion": "EQUIPO DE COMPUTO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-03-04-00-00-000",
+    "descripcion": "MOBILIARIO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-03-05-00-00-000",
+    "descripcion": "ADAPTACIONES Y MEJORAS"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "109-04-00-00-00-000",
+    "descripcion": "REVALUACION DE LA DEPRECIACION ACUMULADA DE PROPI"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-04-01-00-00-000",
+    "descripcion": "CONSTRUCCIONES"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-04-03-00-00-000",
+    "descripcion": "EQUIPO DE COMPUTO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-04-04-00-00-000",
+    "descripcion": "MOBILIARIO"
+  },
+  {
+    "nivel": 9,
+    "cuenta": "109-04-05-00-00-000",
+    "descripcion": "ADAPTACIONES Y MEJORAS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "110-00-00-00-00-000",
+    "descripcion": "INVERSIONES PERMANENTES"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "113-00-00-00-00-000",
+    "descripcion": "OTROS ACTIVOS"
+  },
+  {
+    "nivel": 1,
+    "cuenta": "200-00-00-00-00-000",
+    "descripcion": "PASIVO"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "201-00-00-00-00-000",
+    "descripcion": "CAPTACION TRADICIONAL"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "201-01-00-00-00-000",
+    "descripcion": "DEPOSITOS DE EXIGIBILIDAD INMEDIATA"
+  },
+  {
+    "nivel": 6,
+    "cuenta": "201-02-00-00-00-000",
+    "descripcion": "DEPOSITOS A PLAZO"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "202-00-00-00-00-000",
+    "descripcion": "PRESTAMOS BANCARIOS Y DE OTROS ORGANISMOS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "204-00-00-00-00-000",
+    "descripcion": "OTRAS CUENTAS POR PAGAR"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "206-00-00-00-00-000",
+    "descripcion": "CREDITOS DIFERIDOS Y COBROS ANTICIPADOS"
+  },
+  {
+    "nivel": 1,
+    "cuenta": "300-00-00-00-00-000",
+    "descripcion": "CAPITAL CONTABLE"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "301-00-00-00-00-000",
+    "descripcion": "CAPITAL CONTRIBUIDO"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "302-00-00-00-00-000",
+    "descripcion": "CAPITAL GANADO"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "303-00-00-00-00-000",
+    "descripcion": "OTRAS CUENTAS DE CAPITAL"
+  },
+  {
+    "nivel": 1,
+    "cuenta": "400-00-00-00-00-000",
+    "descripcion": "INGRESOS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "401-00-00-00-00-000",
+    "descripcion": "INGRESOS POR INTERESES"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "403-00-00-00-00-000",
+    "descripcion": "COMISIONES Y TARIFAS COBRADAS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "405-00-00-00-00-000",
+    "descripcion": "OTROS INGRESOS DE LA OPERACION"
+  },
+  {
+    "nivel": 1,
+    "cuenta": "500-00-00-00-00-000",
+    "descripcion": "GASTOS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "501-00-00-00-00-000",
+    "descripcion": "GASTOS POR INTERESES"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "502-00-00-00-00-000",
+    "descripcion": "ESTIMACION PREVENTIVA PARA RIESGOS CREDITICIOS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "503-00-00-00-00-000",
+    "descripcion": "COMISIONES Y TARIFAS PAGADAS"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "504-00-00-00-00-000",
+    "descripcion": "OTROS EGRESOS DE LA OPERACION"
+  },
+  {
+    "nivel": 3,
+    "cuenta": "505-00-00-00-00-000",
+    "descripcion": "GASTOS DE ADMINISTRACION Y PROMOCION"
+  }
+]
