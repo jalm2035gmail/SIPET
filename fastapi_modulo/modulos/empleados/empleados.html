@@ -1,0 +1,1661 @@
+<section id="empleados-module" class="w-full space-y-4">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/templates/icon/usuarios.svg"
+        alt="Icono colaboradores"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+      />
+      <div class="w-full grid gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Colaboradores</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Gestión de colaboradores, roles y permisos.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="view-buttons page-view-buttons">
+    <button class="view-pill boton_vista" type="button" data-view="form" data-tooltip="Formulario" aria-label="Formulario">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Formulario</span>
+    </button>
+    <button class="view-pill boton_vista active" type="button" data-view="list" data-tooltip="Lista" aria-label="Lista">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Lista</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Kanban</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Organigrama</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" id="empleados-search-btn" data-tooltip="Buscar" aria-label="Buscar">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/buscar.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Buscar</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" id="empleados-new-btn" data-tooltip="Nuevo colaborador" aria-label="Nuevo colaborador">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Nuevo</span>
+    </button>
+  </div>
+
+  <div id="empleados-view"></div>
+</section>
+
+<script>
+(function () {
+  var mount = document.getElementById('empleados-view');
+  var viewButtons = Array.from(document.querySelectorAll('#empleados-module .view-buttons .view-pill[data-view]'));
+  var searchBtn = document.getElementById('empleados-search-btn');
+  var newBtn = document.getElementById('empleados-new-btn');
+  if (!mount) return;
+
+  var colaboradores = [];
+  var puestosLaborales = [];
+  var currentView = 'list';
+  var searchTerm = '';
+  var selectedColaboradorKey = '';
+  var currentFormTab = 'cv';
+  var isMainEditMode = false;
+  var orgLibPromise = null;
+  var colabOrgChart = null;
+  var orgExpandedColaboradorId = '';
+  var CV_CONTACT_FIELDS = [
+    { key: 'nombre_completo', label: 'Nombre completo', placeholder: 'Ej. Juan Pérez García' },
+    { key: 'telefono', label: 'Teléfono', placeholder: '+52 555 000 0000' },
+    { key: 'correo_electronico', label: 'Correo electrónico', placeholder: 'correo@ejemplo.com' },
+    { key: 'direccion', label: 'Dirección personal', placeholder: 'Calle, ciudad, estado' },
+    { key: 'linkedin', label: 'Perfil de LinkedIn', placeholder: 'https://linkedin.com/in/...' },
+    { key: 'portfolio', label: 'Portafolio o sitio web', placeholder: 'https://...' }
+  ];
+  var CV_EXPERIENCIA_FIELDS = [
+    { key: 'cargo', label: 'Cargo' },
+    { key: 'empresa', label: 'Empresa' },
+    { key: 'inicio_mes', label: 'Mes inicio' },
+    { key: 'inicio_anio', label: 'Año inicio' },
+    { key: 'fin_mes', label: 'Mes fin' },
+    { key: 'fin_anio', label: 'Año fin' },
+    { key: 'logros', label: 'Logros', multiline: true }
+  ];
+  var CV_EDUCACION_FIELDS = [
+    { key: 'titulo', label: 'Título' },
+    { key: 'institucion', label: 'Institución' },
+    { key: 'inicio_mes', label: 'Mes inicio' },
+    { key: 'inicio_anio', label: 'Año inicio' },
+    { key: 'fin_mes', label: 'Mes fin' },
+    { key: 'fin_anio', label: 'Año fin' }
+  ];
+  var CV_SKILL_FIELDS = [
+    { key: 'nombre', label: 'Nombre' },
+    { key: 'nivel', label: 'Nivel' }
+  ];
+  var CV_IDIOMA_FIELDS = [
+    { key: 'nombre', label: 'Idioma' },
+    { key: 'nivel', label: 'Nivel' }
+  ];
+  var CV_FORMACION_FIELDS = [
+    { key: 'nombre', label: 'Nombre' },
+    { key: 'entidad', label: 'Entidad' },
+    { key: 'mes', label: 'Mes' },
+    { key: 'anio', label: 'Año' },
+    { key: 'descripcion', label: 'Descripción', multiline: true }
+  ];
+  var CV_LOGROS_FIELDS = [
+    { key: 'titulo', label: 'Título' },
+    { key: 'entidad', label: 'Entidad' },
+    { key: 'mes', label: 'Mes' },
+    { key: 'anio', label: 'Año' },
+    { key: 'descripcion', label: 'Descripción', multiline: true }
+  ];
+  var CV_VOLUNTARIADO_FIELDS = [
+    { key: 'organizacion', label: 'Organización' },
+    { key: 'rol', label: 'Rol' },
+    { key: 'inicio_mes', label: 'Mes inicio' },
+    { key: 'inicio_anio', label: 'Año inicio' },
+    { key: 'fin_mes', label: 'Mes fin' },
+    { key: 'fin_anio', label: 'Año fin' },
+    { key: 'descripcion', label: 'Descripción', multiline: true }
+  ];
+  var CV_INFO_ADICIONAL_FIELDS = [
+    { key: 'carnet_conducir', label: 'Carnet de conducir', type: 'boolean' },
+    { key: 'tipo_carnet', label: 'Tipo de carnet' },
+    { key: 'vehiculo_propio', label: 'Vehículo propio', type: 'boolean' },
+    { key: 'disponibilidad_viaje', label: 'Disponibilidad de viaje' },
+    { key: 'disponibilidad_traslado', label: 'Disponibilidad de traslado' },
+    { key: 'notas', label: 'Notas', multiline: true }
+  ];
+  var ACCESS_APP_OPTIONS = ['BSC', 'Organización', 'Estrategia y táctica', 'Datos financieros', 'Control y seguimiento', 'KPIs', 'Reportes', 'Empresa', 'Intelicoop', 'CRM', 'Auditoria', 'ActivoFijo', 'Multiempresa'];
+  var ACCESS_LEVEL_OPTIONS = [
+    { key: 'full_access', label: 'Acceso total' },
+    { key: 'read_only', label: 'Solo lectura' },
+    { key: 'department_only', label: 'Solo departamento' },
+    { key: 'user_only', label: 'Solo usuario' },
+    { key: 'special_permissions', label: 'Permisos especiales' }
+  ];
+  var ACCESS_ROLE_OPTIONS = [
+    { value: 'administrador', label: 'Administrador' },
+    { value: 'autoridades', label: 'Autoridades' },
+    { value: 'departamento', label: 'Departamento' },
+    { value: 'usuario', label: 'Usuario' }
+  ];
+  var ACCESS_POA_OPTIONS = [
+    { value: 'mis_tareas', label: 'Mis tareas (sin vista Gantt)' },
+    { value: 'todas_tareas', label: 'Todas las tareas (todas las vistas)' }
+  ];
+  var ACCESS_WEB_ROLE_OPTIONS = [
+    { value: 'editor', label: 'Editor (puede cambiar contenido)' },
+    { value: 'designer', label: 'Diseñador (puede cambiar estructura)' }
+  ];
+
+  function esc(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function setActiveViewButton(view) {
+    viewButtons.forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+    });
+  }
+
+  function renderSimpleList(items, emptyText) {
+    var list = Array.isArray(items) ? items : [];
+    if (!list.length) return '<p class="text-sm text-base-content/60">' + esc(emptyText || 'Sin registros.') + '</p>';
+    return '<ul class="list-disc pl-5 grid gap-1 text-sm text-base-content/80">' +
+      list.map(function (item) { return '<li>' + esc(item) + '</li>'; }).join('') +
+      '</ul>';
+  }
+
+  function normalizeAccessRole(value) {
+    var raw = String(value || '').trim().toLowerCase();
+    if (raw === 'superadministrador' || raw === 'superadmin' || raw === 'admin' || raw === 'administrador') return 'administrador';
+    if (raw === 'autoridad' || raw === 'autoridades') return 'autoridades';
+    if (raw === 'departamento') return 'departamento';
+    return 'usuario';
+  }
+
+  function normalizePoaAccess(value) {
+    var raw = String(value || '').trim().toLowerCase();
+    if (raw === 'todas_tareas' || raw === 'todas' || raw === 'all') return 'todas_tareas';
+    return 'mis_tareas';
+  }
+
+  function renderAccessRadioGroup(name, options, selectedValue, dataAttrName) {
+    var dataAttr = dataAttrName ? (' ' + dataAttrName + '="1"') : '';
+    return '<div class="grid gap-2">' +
+      options.map(function (opt) {
+        var checked = String(selectedValue || '') === String(opt.value || '');
+        return '<label class="label justify-start gap-3 cursor-default p-0 min-h-0">' +
+          '<input type="radio" class="radio radio-sm" name="' + esc(name) + '" value="' + esc(opt.value || '') + '"' + dataAttr + ' ' + (checked ? 'checked ' : '') + '>' +
+          '<span class="label-text text-base-content font-semibold">' + esc(opt.label || '') + '</span>' +
+        '</label>';
+      }).join('') +
+      '</div>';
+  }
+
+  function renderAccessCheckboxGroup(options, selectedValues, dataAttrName) {
+    var dataAttr = dataAttrName ? (' ' + dataAttrName + '="1"') : '';
+    var selected = Array.isArray(selectedValues) ? selectedValues.map(function (v) { return String(v || '').trim().toLowerCase(); }) : [];
+    return '<div class="grid gap-2">' +
+      options.map(function (opt) {
+        var checked = selected.indexOf(String(opt || '').trim().toLowerCase()) !== -1;
+        return '<label class="label justify-start gap-3 cursor-default p-0 min-h-0">' +
+          '<input type="checkbox" class="checkbox checkbox-sm" value="' + esc(opt || '') + '"' + dataAttr + ' ' + (checked ? 'checked ' : '') + '>' +
+          '<span class="label-text text-base-content font-semibold">' + esc(opt) + '</span>' +
+        '</label>';
+      }).join('') +
+      '</div>';
+  }
+
+  function normalizeAccessMatrix(appAccessLevels, fallbackAppAccess) {
+    var normalized = {};
+    ACCESS_APP_OPTIONS.forEach(function (appName) {
+      normalized[appName] = {
+        full_access: false,
+        read_only: false,
+        department_only: false,
+        user_only: false,
+        special_permissions: false
+      };
+      var rawEntry = appAccessLevels && typeof appAccessLevels === 'object' ? appAccessLevels[appName] : null;
+      if (rawEntry && typeof rawEntry === 'object') {
+        ACCESS_LEVEL_OPTIONS.forEach(function (level) {
+          normalized[appName][level.key] = Boolean(rawEntry[level.key]);
+        });
+      }
+    });
+    if (Array.isArray(fallbackAppAccess)) {
+      fallbackAppAccess.forEach(function (appName) {
+        var key = String(appName || '').trim();
+        if (!normalized[key]) return;
+        var alreadyChecked = ACCESS_LEVEL_OPTIONS.some(function (level) { return normalized[key][level.key]; });
+        if (!alreadyChecked) normalized[key].full_access = true;
+      });
+    }
+    return normalized;
+  }
+
+  function collectAccessMatrix() {
+    var matrix = normalizeAccessMatrix(null, []);
+    Array.from(mount.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
+      var menuName = String(el.getAttribute('data-menu-name') || '').trim();
+      var levelKey = String(el.getAttribute('data-level-key') || '').trim();
+      if (!menuName || !levelKey || !matrix[menuName]) return;
+      if (!(levelKey in matrix[menuName])) return;
+      matrix[menuName][levelKey] = Boolean(el.checked);
+    });
+    return matrix;
+  }
+
+  function deriveAppAccessFromMatrix(matrix) {
+    return ACCESS_APP_OPTIONS.filter(function (appName) {
+      var entry = matrix && typeof matrix === 'object' ? matrix[appName] : null;
+      if (!entry || typeof entry !== 'object') return false;
+      return ACCESS_LEVEL_OPTIONS.some(function (level) { return Boolean(entry[level.key]); });
+    });
+  }
+
+  function renderAccessMatrix(options, selectedMatrix) {
+    var matrix = normalizeAccessMatrix(selectedMatrix, []);
+    return '' +
+      '<div class="overflow-x-auto">' +
+        '<table class="table table-sm w-full border border-base-300 rounded-box">' +
+          '<thead>' +
+            '<tr>' +
+              '<th class="min-w-[220px]">Nombre del menu</th>' +
+              ACCESS_LEVEL_OPTIONS.map(function (level) {
+                return '<th class="text-center min-w-[120px]">' + esc(level.label) + '</th>';
+              }).join('') +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>' +
+            options.map(function (appName) {
+              return '<tr>' +
+                '<td class="font-semibold text-base-content">' + esc(appName) + '</td>' +
+                ACCESS_LEVEL_OPTIONS.map(function (level) {
+                  var checked = matrix[appName] && matrix[appName][level.key];
+                  return '<td class="text-center">' +
+                    '<input type="checkbox" class="checkbox checkbox-sm" data-access-app-level="1" data-menu-name="' + esc(appName) + '" data-level-key="' + esc(level.key) + '" ' + (checked ? 'checked ' : '') + '>' +
+                  '</td>';
+                }).join('') +
+              '</tr>';
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>';
+  }
+
+  function renderAccessWebRoles(options, selectedValues, dataAttrName) {
+    var dataAttr = dataAttrName ? (' ' + dataAttrName + '="1"') : '';
+    var selected = Array.isArray(selectedValues) ? selectedValues.map(function (v) { return String(v || '').trim().toLowerCase(); }) : [];
+    return '<div class="grid gap-2">' +
+      options.map(function (opt) {
+        var checked = selected.indexOf(String(opt.value || '').trim().toLowerCase()) !== -1;
+        return '<label class="label justify-start gap-3 cursor-default p-0 min-h-0">' +
+          '<input type="checkbox" class="checkbox checkbox-sm" value="' + esc(opt.value || '') + '"' + dataAttr + ' ' + (checked ? 'checked ' : '') + '>' +
+          '<span class="label-text text-base-content font-semibold">' + esc(opt.label || '') + '</span>' +
+        '</label>';
+      }).join('') +
+      '</div>';
+  }
+
+  function collectCheckedValues(selector) {
+    return Array.from(mount.querySelectorAll(selector))
+      .filter(function (el) { return !!el && !!el.checked; })
+      .map(function (el) { return String(el.value || '').trim(); })
+      .filter(function (v) { return !!v; });
+  }
+
+  function collectAccessSettings(current) {
+    if (!mount.querySelector('[data-access-role="1"]') && !mount.querySelector('[data-access-poa="1"]') && !mount.querySelector('[data-access-app-level="1"]')) {
+      return {
+        rol: String(current.rol || current.role || 'usuario').trim(),
+        poa_access_level: String(current.poa_access_level || 'mis_tareas').trim(),
+        app_access_levels: normalizeAccessMatrix(current.app_access_levels, current.app_access),
+        app_access: Array.isArray(current.app_access) ? current.app_access : [],
+        menu_blocks: Array.isArray(current.menu_blocks) ? current.menu_blocks : [],
+        web_roles: Array.isArray(current.web_roles) ? current.web_roles : []
+      };
+    }
+    var roleEl = mount.querySelector('input[name="acceso-rol"][data-access-role="1"]:checked');
+    var poaEl = mount.querySelector('input[name="acceso-poa"][data-access-poa="1"]:checked');
+    var appAccessLevels = collectAccessMatrix();
+    return {
+      rol: roleEl ? String(roleEl.value || '').trim() : normalizeAccessRole(current.rol || current.role || ''),
+      poa_access_level: poaEl ? String(poaEl.value || '').trim() : normalizePoaAccess(current.poa_access_level || ''),
+      app_access_levels: appAccessLevels,
+      app_access: deriveAppAccessFromMatrix(appAccessLevels),
+      menu_blocks: collectCheckedValues('input[type="checkbox"][data-access-menu="1"]'),
+      web_roles: collectCheckedValues('input[type="checkbox"][data-access-web-role="1"]')
+    };
+  }
+
+  function renderCvValueList(items, emptyText) {
+    var list = Array.isArray(items) ? items : [];
+    if (!list.length) return '<p class="text-sm text-base-content/60">' + esc(emptyText || 'Sin registros.') + '</p>';
+    return '<ul class="cv-value-list">' +
+      list.map(function (item) {
+        return '<li class="cv-value-item">' + esc(item) + '</li>';
+      }).join('') +
+      '</ul>';
+  }
+
+  function renderCvRecordList(items, labels, orderedKeys, emptyValueText) {
+    var list = Array.isArray(items) ? items.filter(function (row) { return row && typeof row === 'object'; }) : [];
+    if (!list.length) list = [{}];
+    return '<div class="cv-record-list">' +
+      list.map(function (row, index) {
+        return '' +
+          '<div class="cv-record-card">' +
+            '<div class="cv-record-title">Registro ' + esc(String(index + 1)) + '</div>' +
+            renderLabelValueList(row, labels, '', orderedKeys, emptyValueText || 'Sin dato') +
+          '</div>';
+      }).join('') +
+      '</div>';
+  }
+
+  function renderCvFieldCell(field, value, group, index) {
+    var safeValue = value === null || value === undefined ? '' : String(value);
+    var baseAttrs = ' data-cv-group="' + esc(group) + '" data-cv-key="' + esc(field.key) + '"';
+    if (index !== null && index !== undefined) baseAttrs += ' data-cv-index="' + esc(String(index)) + '"';
+    var control = '';
+    if (field.type === 'boolean') {
+      var boolValue = String(safeValue || '').toLowerCase();
+      var yesSelected = (boolValue === 'true' || boolValue === '1' || boolValue === 'si' || boolValue === 'sí');
+      control = '' +
+        '<select class="cv-field-input"' + baseAttrs + '>' +
+          '<option value="false"' + (yesSelected ? '' : ' selected') + '>No</option>' +
+          '<option value="true"' + (yesSelected ? ' selected' : '') + '>Sí</option>' +
+        '</select>';
+    } else if (field.multiline) {
+      control = '<textarea class="cv-field-input cv-field-textarea"' + baseAttrs + ' placeholder="' + esc(field.placeholder || '') + '">' + esc(safeValue) + '</textarea>';
+    } else {
+      control = '<input class="cv-field-input" type="text"' + baseAttrs + ' placeholder="' + esc(field.placeholder || '') + '" value="' + esc(safeValue) + '">';
+    }
+    return '' +
+      '<li class="cv-field-item">' +
+        '<span class="cv-field-label">' + esc(field.label) + '</span>' +
+        control +
+      '</li>';
+  }
+
+  function renderCvEditableGrid(values, fields, group, fallbackValue) {
+    var source = values && typeof values === 'object' ? values : {};
+    return '<ul class="cv-field-grid">' +
+      fields.map(function (field) {
+        var raw = source[field.key];
+        var normalized = raw === null || raw === undefined || raw === '' ? (fallbackValue || '') : raw;
+        return renderCvFieldCell(field, normalized, group, null);
+      }).join('') +
+      '</ul>';
+  }
+
+  function renderCvRecordEditor(records, fields, group) {
+    var list = Array.isArray(records) ? records.filter(function (row) { return row && typeof row === 'object'; }) : [];
+    if (!list.length) list = [{}];
+    return '<div class="cv-record-list">' +
+      '<div class="cv-record-actions">' +
+        '<button type="button" class="btn btn-outline btn-xs" data-cv-add="' + esc(group) + '">Agregar registro</button>' +
+      '</div>' +
+      list.map(function (row, index) {
+        return '' +
+          '<div class="cv-record-card">' +
+            '<div class="cv-record-header">' +
+              '<div class="cv-record-title">Registro ' + esc(String(index + 1)) + '</div>' +
+              '<button type="button" class="btn btn-ghost btn-xs text-error" data-cv-remove="' + esc(group) + '" data-cv-remove-index="' + esc(String(index)) + '">Eliminar</button>' +
+            '</div>' +
+            '<ul class="cv-field-grid">' +
+              fields.map(function (field) {
+                return renderCvFieldCell(field, row[field.key] || '', group, index);
+              }).join('') +
+            '</ul>' +
+          '</div>';
+      }).join('') +
+      '</div>';
+  }
+
+  function parseBooleanLike(value) {
+    var raw = String(value || '').trim().toLowerCase();
+    return raw === 'true' || raw === '1' || raw === 'si' || raw === 'sí';
+  }
+
+  function collectCvGrid(group, fields) {
+    var out = {};
+    fields.forEach(function (field) {
+      var selector = '[data-cv-group="' + group + '"][data-cv-key="' + field.key + '"]:not([data-cv-index])';
+      var el = mount.querySelector(selector);
+      if (!el) {
+        out[field.key] = field.type === 'boolean' ? false : '';
+        return;
+      }
+      var val = 'value' in el ? el.value : '';
+      out[field.key] = field.type === 'boolean' ? parseBooleanLike(val) : String(val || '').trim();
+    });
+    return out;
+  }
+
+  function collectCvRecords(group, fields) {
+    var all = Array.from(mount.querySelectorAll('[data-cv-group="' + group + '"][data-cv-index]'));
+    var indexes = Array.from(new Set(all.map(function (el) { return String(el.getAttribute('data-cv-index') || '').trim(); })))
+      .filter(function (idx) { return idx !== ''; })
+      .sort(function (a, b) { return Number(a) - Number(b); });
+    return indexes.map(function (idx) {
+      var row = {};
+      fields.forEach(function (field) {
+        var selector = '[data-cv-group="' + group + '"][data-cv-key="' + field.key + '"][data-cv-index="' + idx + '"]';
+        var el = mount.querySelector(selector);
+        var val = el && 'value' in el ? el.value : '';
+        row[field.key] = field.type === 'boolean' ? parseBooleanLike(val) : String(val || '').trim();
+      });
+      return row;
+    }).filter(function (row) {
+      return fields.some(function (field) {
+        var value = row[field.key];
+        return field.type === 'boolean' ? Boolean(value) : String(value || '').trim() !== '';
+      });
+    });
+  }
+
+  function upsertColaborador(updated) {
+    var key = getColaboradorKey(updated);
+    var index = colaboradores.findIndex(function (emp) { return getColaboradorKey(emp) === key; });
+    if (index >= 0) {
+      colaboradores[index] = Object.assign({}, colaboradores[index], updated);
+    }
+  }
+
+  function getPuestoOptions(selectedValue) {
+    var selected = String(selectedValue || '').trim();
+    var options = [];
+    var seen = {};
+    puestosLaborales.forEach(function (item) {
+      var nombre = String((item && item.nombre) || item || '').trim();
+      var key = nombre.toLowerCase();
+      if (!nombre || seen[key]) return;
+      seen[key] = true;
+      options.push(nombre);
+    });
+    options.sort(function (a, b) { return a.localeCompare(b, 'es'); });
+    if (selected) {
+      var selectedKey = selected.toLowerCase();
+      if (!seen[selectedKey]) options.unshift(selected);
+    }
+    return options;
+  }
+
+  function renderPuestoSelect(selectedValue) {
+    var selected = String(selectedValue || '').trim();
+    var options = getPuestoOptions(selected);
+    var html = '<option value="">— Seleccionar puesto —</option>';
+    options.forEach(function (name) {
+      var isSelected = selected && name === selected;
+      html += '<option value="' + esc(name) + '"' + (isSelected ? ' selected' : '') + '>' + esc(name) + '</option>';
+    });
+    return html;
+  }
+
+  function parsePercentValue(raw) {
+    if (raw === null || raw === undefined) return 0;
+    var txt = String(raw).trim().replace('%', '');
+    var num = parseFloat(txt);
+    if (Number.isNaN(num)) return 0;
+    if (num < 0) return 0;
+    if (num > 100) return 100;
+    return Math.round(num);
+  }
+
+  function getEmpleadoSkillPercentMap(current) {
+    var out = {};
+    var cv = current && typeof current === 'object' && current.cv_habilidades && typeof current.cv_habilidades === 'object'
+      ? current.cv_habilidades
+      : {};
+    var all = []
+      .concat(Array.isArray(cv.tecnicas) ? cv.tecnicas : [])
+      .concat(Array.isArray(cv.blandas) ? cv.blandas : []);
+    all.forEach(function (item) {
+      if (!item || typeof item !== 'object') return;
+      var nombre = String(item.nombre || '').trim();
+      if (!nombre) return;
+      out[nombre.toLowerCase()] = parsePercentValue(item.nivel);
+    });
+    return out;
+  }
+
+  function getPuestoByNombre(nombrePuesto) {
+    var target = String(nombrePuesto || '').trim().toLowerCase();
+    if (!target) return null;
+    return puestosLaborales.find(function (p) {
+      return String((p && p.nombre) || '').trim().toLowerCase() === target;
+    }) || null;
+  }
+
+  function getPuestoDerivedFields(nombrePuesto, fallbackCurrent) {
+    var puesto = getPuestoByNombre(nombrePuesto);
+    var fallback = fallbackCurrent && typeof fallbackCurrent === 'object' ? fallbackCurrent : {};
+    return {
+      area: puesto ? String((puesto && puesto.area) || '').trim() : String(fallback.departamento || '').trim(),
+      nivel: puesto ? String((puesto && puesto.nivel) || '').trim() : String(fallback.nivel_organizacional || fallback.coach || '').trim()
+    };
+  }
+
+  function buildHabilidadesRows(current) {
+    var puesto = getPuestoByNombre(current && current.puesto);
+    if (!puesto || !Array.isArray(puesto.habilidades_requeridas)) return [];
+    var empleadoMap = getEmpleadoSkillPercentMap(current || {});
+    return puesto.habilidades_requeridas
+      .map(function (hab) {
+        var nombre = String((hab && hab.nombre) || '').trim();
+        if (!nombre) return null;
+        var requerido = parsePercentValue(
+          (hab && (hab.requerido || hab.porcentaje_requerido || hab.minimo || hab.nivel_requerido)) || 0
+        );
+        var colaborador = parsePercentValue(empleadoMap[nombre.toLowerCase()] || 0);
+        var brecha = colaborador - requerido;
+        return {
+          nombre: nombre,
+          requerido: requerido,
+          colaborador: colaborador,
+          brecha: brecha
+        };
+      })
+      .filter(Boolean)
+      .sort(function (a, b) { return a.nombre.localeCompare(b.nombre, 'es'); });
+  }
+
+  function renderHabilidadesMatrix(current) {
+    var puestoNombre = String((current && current.puesto) || '').trim();
+    if (!puestoNombre) {
+      return '<p class="text-sm text-base-content/60">Sin puesto asignado.</p>';
+    }
+    var rows = buildHabilidadesRows(current);
+    if (!rows.length) {
+      return '<p class="text-sm text-base-content/60">El puesto no tiene habilidades requeridas registradas.</p>';
+    }
+    var body = rows.map(function (row) {
+      var brechaClass = row.brecha < 0 ? 'text-error font-semibold' : 'text-success font-semibold';
+      return '<tr>' +
+        '<td>' + esc(row.nombre) + '</td>' +
+        '<td>' + esc(String(row.requerido)) + '%</td>' +
+        '<td>' + esc(String(row.colaborador)) + '%</td>' +
+        '<td class="' + brechaClass + '">' + esc(String(row.brecha)) + '%</td>' +
+      '</tr>';
+    }).join('');
+    return '' +
+      '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
+        '<p class="text-sm text-base-content/70 mb-2"><strong>Puesto:</strong> ' + esc(puestoNombre) + '</p>' +
+        '<div class="overflow-x-auto rounded-box border border-base-300">' +
+          '<table class="table table-zebra table-sm md:table-md">' +
+            '<thead><tr><th>Habilidad</th><th>% requerido</th><th>% colaborador</th><th>Brecha</th></tr></thead>' +
+            '<tbody>' + body + '</tbody>' +
+          '</table>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function buildCvSavePayload(current) {
+    var accessSettings = collectAccessSettings(current);
+    var cvContacto = collectCvGrid('cv_contacto', CV_CONTACT_FIELDS);
+    var cvInfoAdicional = collectCvGrid('cv_info_adicional', CV_INFO_ADICIONAL_FIELDS);
+    var perfilEl = mount.querySelector('[data-cv-single="cv_perfil_profesional"]');
+    var puestoEl = mount.querySelector('[data-col-puesto]');
+    var areaEl = mount.querySelector('[data-col-area]');
+    var nivelEl = mount.querySelector('[data-col-nivel]');
+    var puesto = puestoEl && 'value' in puestoEl ? String(puestoEl.value || '').trim() : String(current.puesto || '').trim();
+    var area = areaEl && 'value' in areaEl ? String(areaEl.value || '').trim() : String(current.departamento || '').trim();
+    var nivel = nivelEl && 'value' in nivelEl ? String(nivelEl.value || '').trim() : String(current.nivel_organizacional || current.coach || '').trim();
+    return {
+      id: current.id,
+      nombre: String(current.nombre || '').trim(),
+      usuario: String(current.usuario || '').trim(),
+      correo: String(current.correo || '').trim(),
+      contrasena: '',
+      departamento: area,
+      puesto: puesto,
+      jefe_inmediato_id: current.jefe_inmediato_id || null,
+      celular: String(current.celular || '').trim(),
+      nivel_organizacional: nivel,
+      imagen: String(current.imagen || '').trim(),
+      eficiencia: current.eficiencia,
+      colaborador: Boolean(current.colaborador),
+      rol: String(accessSettings.rol || current.rol || 'usuario').trim(),
+      menu_blocks: Array.isArray(accessSettings.menu_blocks) ? accessSettings.menu_blocks : (Array.isArray(current.menu_blocks) ? current.menu_blocks : []),
+      poa_access_level: String(accessSettings.poa_access_level || current.poa_access_level || 'mis_tareas').trim(),
+      app_access_levels: accessSettings.app_access_levels && typeof accessSettings.app_access_levels === 'object'
+        ? accessSettings.app_access_levels
+        : normalizeAccessMatrix(current.app_access_levels, current.app_access),
+      app_access: Array.isArray(accessSettings.app_access) ? accessSettings.app_access : (Array.isArray(current.app_access) ? current.app_access : []),
+      web_roles: Array.isArray(accessSettings.web_roles) ? accessSettings.web_roles : (Array.isArray(current.web_roles) ? current.web_roles : []),
+      identidad_mision: String(current.identidad_mision || '').trim(),
+      identidad_vision: String(current.identidad_vision || '').trim(),
+      cv_contacto: cvContacto,
+      cv_perfil_profesional: perfilEl && 'value' in perfilEl ? String(perfilEl.value || '').trim() : '',
+      cv_experiencia: collectCvRecords('cv_experiencia', CV_EXPERIENCIA_FIELDS),
+      cv_educacion: collectCvRecords('cv_educacion', CV_EDUCACION_FIELDS),
+      cv_habilidades: {
+        tecnicas: collectCvRecords('cv_habilidades_tecnicas', CV_SKILL_FIELDS),
+        blandas: collectCvRecords('cv_habilidades_blandas', CV_SKILL_FIELDS)
+      },
+      cv_idiomas: collectCvRecords('cv_idiomas', CV_IDIOMA_FIELDS),
+      cv_formacion: collectCvRecords('cv_formacion', CV_FORMACION_FIELDS),
+      cv_logros: collectCvRecords('cv_logros', CV_LOGROS_FIELDS),
+      cv_voluntariado: collectCvRecords('cv_voluntariado', CV_VOLUNTARIADO_FIELDS),
+      cv_info_adicional: cvInfoAdicional
+    };
+  }
+
+  function buildMainSavePayload(current) {
+    var payload = buildCvSavePayload(current);
+    var nombreEl = mount.querySelector('[data-col-identidad-nombre]');
+    var usuarioEl = mount.querySelector('[data-col-identidad-usuario]');
+    var correoEl = mount.querySelector('[data-col-identidad-correo]');
+    var passwordEl = mount.querySelector('[data-col-identidad-password]');
+    var puestoEl = mount.querySelector('[data-col-puesto]');
+    var celularEl = mount.querySelector('[data-col-main-celular]');
+    var colaboradorEl = mount.querySelector('[data-col-main-colaborador]');
+    if (nombreEl && 'value' in nombreEl) payload.nombre = String(nombreEl.value || '').trim();
+    if (usuarioEl && 'value' in usuarioEl) payload.usuario = String(usuarioEl.value || '').trim();
+    if (correoEl && 'value' in correoEl) payload.correo = String(correoEl.value || '').trim();
+    if (passwordEl && 'value' in passwordEl) payload.contrasena = String(passwordEl.value || '');
+    if (puestoEl && 'value' in puestoEl) payload.puesto = String(puestoEl.value || '').trim();
+    if (celularEl && 'value' in celularEl) payload.celular = String(celularEl.value || '').trim();
+    if (colaboradorEl) payload.colaborador = Boolean(colaboradorEl.checked);
+    var derived = getPuestoDerivedFields(payload.puesto, current);
+    payload.departamento = derived.area;
+    payload.nivel_organizacional = derived.nivel;
+    return payload;
+  }
+
+  function bindCvSave(current) {
+    var saveBtn = mount.querySelector('[data-cv-save]');
+    if (!saveBtn) return;
+    saveBtn.addEventListener('click', function () {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+      fetch('/api/colaboradores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(buildCvSavePayload(current))
+      })
+        .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.json || result.json.success === false) {
+            throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo guardar CV');
+          }
+          if (result.json && result.json.data) {
+            upsertColaborador(result.json.data);
+            selectedColaboradorKey = getColaboradorKey(result.json.data);
+          }
+          window.alert('CV guardado correctamente.');
+          renderForm();
+        })
+        .catch(function (error) {
+          window.alert(error && error.message ? error.message : 'No se pudo guardar CV');
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Guardar CV';
+        });
+    });
+  }
+
+  function bindAccessSave(current) {
+    var saveBtn = mount.querySelector('[data-access-save]');
+    if (!saveBtn) return;
+    saveBtn.addEventListener('click', function () {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+      fetch('/api/colaboradores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(buildCvSavePayload(current))
+      })
+        .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.json || result.json.success === false) {
+            throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo guardar acceso');
+          }
+          if (result.json && result.json.data) {
+            upsertColaborador(result.json.data);
+            selectedColaboradorKey = getColaboradorKey(result.json.data);
+          }
+          window.alert('Acceso guardado correctamente.');
+          renderForm();
+        })
+        .catch(function (error) {
+          window.alert(error && error.message ? error.message : 'No se pudo guardar acceso');
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Guardar acceso';
+        });
+    });
+  }
+
+  function saveColaboradorImage(current, imageUrl) {
+    var payload = buildCvSavePayload(current);
+    payload.imagen = String(imageUrl || '').trim();
+    return fetch('/api/colaboradores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json, imageUrl: imageUrl }; }); });
+  }
+
+  function bindPhotoActions(current) {
+    var fileInput = mount.querySelector('[data-col-photo-input]');
+    var editBtn = mount.querySelector('[data-col-photo-edit]');
+    var delBtn = mount.querySelector('[data-col-photo-del]');
+    if (!(fileInput instanceof HTMLInputElement) || !(editBtn instanceof HTMLButtonElement) || !(delBtn instanceof HTMLButtonElement)) return;
+
+    function setBusy(isBusy) {
+      editBtn.disabled = isBusy;
+      delBtn.disabled = isBusy;
+    }
+
+    editBtn.addEventListener('click', function () {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function () {
+      var file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      setBusy(true);
+      var formData = new FormData();
+      formData.append('file', file);
+      fetch('/api/colaboradores/foto', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: formData
+      })
+        .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+        .then(function (uploadResult) {
+          if (!uploadResult.ok || !uploadResult.json || uploadResult.json.success === false) {
+            throw new Error((uploadResult.json && (uploadResult.json.error || uploadResult.json.detail)) || 'No se pudo subir la foto');
+          }
+          var imageUrl = String((uploadResult.json && uploadResult.json.url) || '').trim();
+          if (!imageUrl) throw new Error('No se recibió URL de imagen');
+          return saveColaboradorImage(current, imageUrl);
+        })
+        .then(function (saveResult) {
+          if (!saveResult.ok || !saveResult.json || saveResult.json.success === false) {
+            throw new Error((saveResult.json && (saveResult.json.error || saveResult.json.detail)) || 'No se pudo guardar la foto del colaborador');
+          }
+          var updated = (saveResult.json && saveResult.json.data) ? saveResult.json.data : Object.assign({}, current, { imagen: saveResult.imageUrl });
+          upsertColaborador(updated);
+          selectedColaboradorKey = getColaboradorKey(updated);
+          renderForm(updated);
+        })
+        .catch(function (error) {
+          window.alert(error && error.message ? error.message : 'No se pudo subir la foto');
+        })
+        .finally(function () {
+          setBusy(false);
+          fileInput.value = '';
+        });
+    });
+
+    delBtn.addEventListener('click', function () {
+      if (!String(current.imagen || '').trim()) return;
+      setBusy(true);
+      saveColaboradorImage(current, '')
+        .then(function (saveResult) {
+          if (!saveResult.ok || !saveResult.json || saveResult.json.success === false) {
+            throw new Error((saveResult.json && (saveResult.json.error || saveResult.json.detail)) || 'No se pudo eliminar la foto del colaborador');
+          }
+          var updated = (saveResult.json && saveResult.json.data) ? saveResult.json.data : Object.assign({}, current, { imagen: '' });
+          upsertColaborador(updated);
+          selectedColaboradorKey = getColaboradorKey(updated);
+          renderForm(updated);
+        })
+        .catch(function (error) {
+          window.alert(error && error.message ? error.message : 'No se pudo eliminar la foto');
+        })
+        .finally(function () {
+          setBusy(false);
+        });
+    });
+  }
+
+  function bindPuestoAutofill(current) {
+    var puestoEl = mount.querySelector('[data-col-puesto]');
+    var areaEl = mount.querySelector('[data-col-area]');
+    var nivelEl = mount.querySelector('[data-col-nivel]');
+    var saveBtn = mount.querySelector('[data-col-main-save]');
+    var habilidadesEl = mount.querySelector('[data-col-habilidades-matrix]');
+    if (!(puestoEl instanceof HTMLSelectElement) || !(areaEl instanceof HTMLInputElement) || !(nivelEl instanceof HTMLInputElement)) return;
+    puestoEl.addEventListener('change', function () {
+      var derived = getPuestoDerivedFields(puestoEl.value, current);
+      current.puesto = String(puestoEl.value || '').trim();
+      current.departamento = derived.area;
+      current.nivel_organizacional = derived.nivel;
+      areaEl.value = derived.area;
+      nivelEl.value = derived.nivel;
+      if (habilidadesEl instanceof HTMLElement) habilidadesEl.innerHTML = renderHabilidadesMatrix(current);
+      isMainEditMode = true;
+      if (saveBtn instanceof HTMLButtonElement) saveBtn.disabled = false;
+    });
+  }
+
+  function bindMainActions(current) {
+    var editBtn = mount.querySelector('[data-col-main-edit]');
+    var saveBtn = mount.querySelector('[data-col-main-save]');
+    var delBtn = mount.querySelector('[data-col-main-del]');
+    if (!(saveBtn instanceof HTMLButtonElement)) return;
+
+    if (editBtn instanceof HTMLButtonElement) {
+      editBtn.addEventListener('click', function () {
+        isMainEditMode = true;
+        currentFormTab = 'identidad';
+        renderForm(current);
+      });
+    }
+
+    saveBtn.addEventListener('click', function () {
+      if (!isMainEditMode) return;
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+      fetch('/api/colaboradores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(buildMainSavePayload(current))
+      })
+        .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.json || result.json.success === false) {
+            throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo guardar');
+          }
+          if (result.json && result.json.data) {
+            upsertColaborador(result.json.data);
+            selectedColaboradorKey = getColaboradorKey(result.json.data);
+            current = result.json.data;
+          }
+          isMainEditMode = false;
+          renderForm(current);
+        })
+        .catch(function (error) {
+          window.alert(error && error.message ? error.message : 'No se pudo guardar');
+        })
+        .finally(function () {
+          saveBtn.disabled = false;
+          saveBtn.textContent = current && current.id ? 'Guardar' : 'Crear';
+        });
+    });
+
+    if (delBtn instanceof HTMLButtonElement) {
+      delBtn.addEventListener('click', function () {
+        var id = current && current.id;
+        if (!id) return;
+        if (!window.confirm('¿Eliminar este colaborador?')) return;
+        delBtn.disabled = true;
+        delBtn.textContent = 'Eliminando...';
+        fetch('/api/colaboradores/' + encodeURIComponent(String(id)), {
+          method: 'DELETE',
+          headers: { Accept: 'application/json' }
+        })
+          .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+          .then(function (result) {
+            if (!result.ok || !result.json || result.json.success === false) {
+              throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo eliminar');
+            }
+            var currentKey = getColaboradorKey(current);
+            colaboradores = colaboradores.filter(function (emp) { return getColaboradorKey(emp) !== currentKey; });
+            selectedColaboradorKey = '';
+            isMainEditMode = false;
+            render('list');
+          })
+          .catch(function (error) {
+            window.alert(error && error.message ? error.message : 'No se pudo eliminar');
+          })
+          .finally(function () {
+            delBtn.disabled = false;
+            delBtn.textContent = 'Eliminar';
+          });
+      });
+    }
+  }
+
+  function getCvRecordMeta(group, draft) {
+    if (!draft || typeof draft !== 'object') return null;
+    if (group === 'cv_experiencia') return { list: draft.cv_experiencia, fields: CV_EXPERIENCIA_FIELDS };
+    if (group === 'cv_educacion') return { list: draft.cv_educacion, fields: CV_EDUCACION_FIELDS };
+    if (group === 'cv_habilidades_tecnicas') return { list: draft.cv_habilidades && draft.cv_habilidades.tecnicas, fields: CV_SKILL_FIELDS };
+    if (group === 'cv_habilidades_blandas') return { list: draft.cv_habilidades && draft.cv_habilidades.blandas, fields: CV_SKILL_FIELDS };
+    if (group === 'cv_idiomas') return { list: draft.cv_idiomas, fields: CV_IDIOMA_FIELDS };
+    if (group === 'cv_formacion') return { list: draft.cv_formacion, fields: CV_FORMACION_FIELDS };
+    if (group === 'cv_logros') return { list: draft.cv_logros, fields: CV_LOGROS_FIELDS };
+    if (group === 'cv_voluntariado') return { list: draft.cv_voluntariado, fields: CV_VOLUNTARIADO_FIELDS };
+    return null;
+  }
+
+  function createEmptyCvRecord(fields) {
+    var row = {};
+    (fields || []).forEach(function (field) {
+      row[field.key] = field.type === 'boolean' ? false : '';
+    });
+    return row;
+  }
+
+  function bindCvRecordActions(current) {
+    Array.from(mount.querySelectorAll('[data-cv-add]')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var group = String(btn.getAttribute('data-cv-add') || '').trim();
+        if (!group) return;
+        var draft = buildCvSavePayload(current);
+        var meta = getCvRecordMeta(group, draft);
+        if (!meta || !Array.isArray(meta.list)) return;
+        meta.list.push(createEmptyCvRecord(meta.fields));
+        currentFormTab = 'cv';
+        renderForm(draft);
+      });
+    });
+    Array.from(mount.querySelectorAll('[data-cv-remove]')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var group = String(btn.getAttribute('data-cv-remove') || '').trim();
+        var index = Number(btn.getAttribute('data-cv-remove-index'));
+        if (!group || Number.isNaN(index)) return;
+        var draft = buildCvSavePayload(current);
+        var meta = getCvRecordMeta(group, draft);
+        if (!meta || !Array.isArray(meta.list) || !meta.list.length) return;
+        if (index >= 0 && index < meta.list.length) meta.list.splice(index, 1);
+        if (!meta.list.length) meta.list.push(createEmptyCvRecord(meta.fields));
+        currentFormTab = 'cv';
+        renderForm(draft);
+      });
+    });
+  }
+
+  function bindPasswordToggle() {
+    var toggleBtn = mount.querySelector('[data-col-password-toggle]');
+    var passwordInput = mount.querySelector('[data-col-identidad-password]');
+    var passwordIcon = mount.querySelector('[data-col-password-icon]');
+    if (!(toggleBtn instanceof HTMLButtonElement) || !(passwordInput instanceof HTMLInputElement)) return;
+    toggleBtn.addEventListener('click', function () {
+      var visible = passwordInput.type === 'text';
+      passwordInput.type = visible ? 'password' : 'text';
+      toggleBtn.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+      toggleBtn.setAttribute('title', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+      if (passwordIcon instanceof HTMLImageElement) {
+        passwordIcon.src = visible ? '/templates/icon/boton/ojo.svg' : '/templates/icon/boton/ojot.svg';
+      }
+    });
+  }
+
+  function normalizeCvList(raw, pickers) {
+    var rows = Array.isArray(raw) ? raw : [];
+    return rows.map(function (row) {
+      if (!row || typeof row !== 'object') return '';
+      var parts = [];
+      (pickers || []).forEach(function (key) {
+        var val = String(row[key] || '').trim();
+        if (val) parts.push(val);
+      });
+      return parts.join(' · ');
+    }).filter(function (txt) { return !!txt; });
+  }
+
+  function normalizeMixedList(raw, pickers) {
+    var rows = Array.isArray(raw) ? raw : [];
+    return rows.map(function (row) {
+      if (row === null || row === undefined) return '';
+      if (typeof row === 'string' || typeof row === 'number') return String(row).trim();
+      if (typeof row !== 'object') return '';
+      var parts = [];
+      (pickers || []).forEach(function (key) {
+        var val = String(row[key] || '').trim();
+        if (val) parts.push(val);
+      });
+      if (!parts.length) {
+        Object.keys(row).forEach(function (key) {
+          var val = row[key];
+          if (val === null || val === undefined || typeof val === 'object') return;
+          var txt = String(val).trim();
+          if (txt) parts.push(txt);
+        });
+      }
+      return parts.join(' · ');
+    }).filter(function (txt) { return !!txt; });
+  }
+
+  function renderLabelValueList(values, labels, emptyText, orderedKeys, emptyValueText) {
+    var rows = [];
+    var fallbackValue = String(emptyValueText || 'Sin dato');
+    if (values && typeof values === 'object' && Array.isArray(orderedKeys) && orderedKeys.length) {
+      orderedKeys.forEach(function (key) {
+        var raw = values[key];
+        var valueText = '';
+        if (raw !== null && raw !== undefined && raw !== '') {
+          valueText = typeof raw === 'boolean' ? (raw ? 'Sí' : 'No') : String(raw).trim();
+        }
+        rows.push({
+          label: (labels && labels[key]) ? labels[key] : key,
+          value: valueText || fallbackValue
+        });
+      });
+    } else if (values && typeof values === 'object') {
+      Object.keys(values).forEach(function (key) {
+        var raw = values[key];
+        if (raw === null || raw === undefined || raw === '') return;
+        var valueText = typeof raw === 'boolean' ? (raw ? 'Sí' : 'No') : String(raw).trim();
+        if (!valueText) return;
+        rows.push({
+          label: (labels && labels[key]) ? labels[key] : key,
+          value: valueText
+        });
+      });
+    }
+    if (!rows.length) return '<p class="text-sm text-base-content/60">' + esc(emptyText || 'Sin registros.') + '</p>';
+    return '<ul class="cv-field-grid">' +
+      rows.map(function (row) {
+        return '' +
+          '<li class="cv-field-item">' +
+            '<span class="cv-field-label">' + esc(row.label) + '</span>' +
+            '<span class="cv-field-value">' + esc(row.value) + '</span>' +
+          '</li>';
+      }).join('') +
+      '</ul>';
+  }
+
+  function renderCvAccordionItem(title, contentHtml, isOpen) {
+    return '' +
+      '<details class="cv-accordion rounded-box border border-base-300 bg-base-100"' + (isOpen ? ' open' : '') + '>' +
+        '<summary class="cv-accordion-title text-sm font-semibold">' + esc(title) + '</summary>' +
+        '<div class="cv-accordion-content pt-0">' + (contentHtml || '<p class="text-sm text-base-content/60">Sin registros.</p>') + '</div>' +
+      '</details>';
+  }
+
+  function getVisibleColaboradores() {
+    var term = String(searchTerm || '').trim().toLowerCase();
+    if (!term) return colaboradores;
+    return colaboradores.filter(function (emp) {
+      var haystack = [
+        emp.nombre, emp.usuario, emp.correo, emp.rol, emp.departamento, emp.estado
+      ].map(function (v) { return String(v || '').toLowerCase(); }).join(' ');
+      return haystack.indexOf(term) >= 0;
+    });
+  }
+
+  function matchesColaboradorSearch(emp) {
+    var term = String(searchTerm || '').trim().toLowerCase();
+    if (!term) return true;
+    var haystack = [
+      emp && emp.nombre,
+      emp && emp.usuario,
+      emp && emp.correo,
+      emp && emp.rol,
+      emp && emp.departamento,
+      emp && emp.estado,
+      emp && emp.puesto,
+      emp && emp.jefe
+    ].map(function (v) { return String(v || '').toLowerCase(); }).join(' ');
+    return haystack.indexOf(term) >= 0;
+  }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) {
+        resolve();
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = function () { resolve(); };
+      script.onerror = function () { reject(new Error('No se pudo cargar ' + src)); };
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureOrgLibrary() {
+    if (window.d3 && window.d3.OrgChart) return true;
+    if (!orgLibPromise) {
+      orgLibPromise = (async function () {
+        await loadScript('/static/vendor/d3.min.js');
+        await loadScript('/static/vendor/d3-flextree.min.js');
+        await loadScript('/static/vendor/d3-org-chart.min.js');
+      })().catch(function () { return false; });
+    }
+    var result = await orgLibPromise;
+    return result !== false && !!(window.d3 && window.d3.OrgChart);
+  }
+
+  function getColaboradorKey(emp) {
+    if (!emp || typeof emp !== 'object') return '';
+    var byId = emp.id;
+    if (byId !== null && byId !== undefined && String(byId).trim() !== '') return String(byId).trim();
+    var byUsuario = String(emp.usuario || '').trim();
+    if (byUsuario) return byUsuario.toLowerCase();
+    var byCorreo = String(emp.correo || '').trim();
+    if (byCorreo) return byCorreo.toLowerCase();
+    return String(emp.nombre || '').trim().toLowerCase();
+  }
+
+  function findColaboradorByKey(key) {
+    var target = String(key || '').trim().toLowerCase();
+    if (!target) return null;
+    return colaboradores.find(function (emp) {
+      return String(getColaboradorKey(emp) || '').trim().toLowerCase() === target;
+    }) || null;
+  }
+
+  function openFormByKey(key) {
+    var item = findColaboradorByKey(key);
+    if (!item) return;
+    selectedColaboradorKey = getColaboradorKey(item);
+    currentFormTab = 'cv';
+    isMainEditMode = false;
+    render('form');
+  }
+
+  function createNewColaboradorDraft() {
+    return {
+      id: null,
+      nombre: '',
+      usuario: '',
+      correo: '',
+      contrasena: '',
+      departamento: '',
+      puesto: '',
+      jefe: '',
+      jefe_inmediato_id: null,
+      celular: '',
+      nivel_organizacional: '',
+      imagen: '',
+      eficiencia: 0,
+      colaborador: true,
+      rol: 'usuario',
+      estado: 'Activo',
+      menu_blocks: [],
+      poa_access_level: 'mis_tareas',
+      app_access_levels: normalizeAccessMatrix(null, []),
+      app_access: [],
+      web_roles: [],
+      identidad_mision: '',
+      identidad_vision: '',
+      cv_contacto: {},
+      cv_perfil_profesional: '',
+      cv_experiencia: [],
+      cv_educacion: [],
+      cv_habilidades: { tecnicas: [], blandas: [] },
+      cv_idiomas: [],
+      cv_formacion: [],
+      cv_logros: [],
+      cv_voluntariado: [],
+      cv_info_adicional: {}
+    };
+  }
+
+  function renderForm(overrideCurrent) {
+    var current = (overrideCurrent && typeof overrideCurrent === 'object') ? overrideCurrent : (findColaboradorByKey(selectedColaboradorKey) || {});
+    if (currentFormTab === 'acceso') currentFormTab = 'cv';
+    var puestoDerived = getPuestoDerivedFields(current.puesto, current);
+    var cv = current.cv_habilidades && typeof current.cv_habilidades === 'object' ? current.cv_habilidades : {};
+    var habTecnicas = Array.isArray(cv.tecnicas) ? cv.tecnicas : [];
+    var habBlandas = Array.isArray(cv.blandas) ? cv.blandas : [];
+    var cvContacto = current.cv_contacto && typeof current.cv_contacto === 'object' ? current.cv_contacto : {};
+    var experiencia = Array.isArray(current.cv_experiencia) ? current.cv_experiencia : [];
+    var educacion = Array.isArray(current.cv_educacion) ? current.cv_educacion : [];
+    var formacion = Array.isArray(current.cv_formacion) ? current.cv_formacion : [];
+    var logros = Array.isArray(current.cv_logros) ? current.cv_logros : [];
+    var idiomas = Array.isArray(current.cv_idiomas) ? current.cv_idiomas : [];
+    var voluntariado = Array.isArray(current.cv_voluntariado) ? current.cv_voluntariado : [];
+    var infoAdicional = current.cv_info_adicional && typeof current.cv_info_adicional === 'object' ? current.cv_info_adicional : {};
+    var contactoInfo = {
+      nombre_completo: cvContacto.nombre_completo || current.nombre || '',
+      telefono: cvContacto.telefono || cvContacto.celular || current.telefono || '',
+      correo_electronico: cvContacto.correo_electronico || cvContacto.correo || current.correo || '',
+      direccion: cvContacto.direccion || cvContacto.direccion_personal || '',
+      linkedin: cvContacto.linkedin || cvContacto.perfil_linkedin || '',
+      portfolio: cvContacto.portfolio || cvContacto.portafolio || cvContacto.sitio_web || cvContacto.website || '',
+      github: cvContacto.github || ''
+    };
+    var cvAcordeones = [
+      renderCvAccordionItem('Información de contacto', renderCvEditableGrid(contactoInfo, CV_CONTACT_FIELDS, 'cv_contacto', '')),
+      renderCvAccordionItem('Perfil profesional', '' +
+        '<ul class="cv-field-grid">' +
+          '<li class="cv-field-item cv-field-item-full">' +
+            '<span class="cv-field-label">Perfil profesional</span>' +
+            '<textarea class="cv-field-input cv-field-textarea" data-cv-single="cv_perfil_profesional" placeholder="Describe el perfil profesional">' + esc(current.cv_perfil_profesional || '') + '</textarea>' +
+          '</li>' +
+        '</ul>'),
+      renderCvAccordionItem('Experiencia laboral', renderCvRecordEditor(experiencia, CV_EXPERIENCIA_FIELDS, 'cv_experiencia')),
+      renderCvAccordionItem('Educación', renderCvRecordEditor(educacion, CV_EDUCACION_FIELDS, 'cv_educacion')),
+      renderCvAccordionItem('Habilidades', '' +
+        '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
+          '<div><h5 class="font-semibold text-sm text-base-content mb-1">Técnicas</h5>' + renderCvRecordEditor(habTecnicas, CV_SKILL_FIELDS, 'cv_habilidades_tecnicas') + '</div>' +
+          '<div><h5 class="font-semibold text-sm text-base-content mb-1">Blandas</h5>' + renderCvRecordEditor(habBlandas, CV_SKILL_FIELDS, 'cv_habilidades_blandas') + '</div>' +
+        '</div>'),
+      renderCvAccordionItem('Idiomas', renderCvRecordEditor(idiomas, CV_IDIOMA_FIELDS, 'cv_idiomas')),
+      renderCvAccordionItem('Formación complementaria', renderCvRecordEditor(formacion, CV_FORMACION_FIELDS, 'cv_formacion')),
+      renderCvAccordionItem('Logros y reconocimientos', renderCvRecordEditor(logros, CV_LOGROS_FIELDS, 'cv_logros')),
+      renderCvAccordionItem('Voluntariado', renderCvRecordEditor(voluntariado, CV_VOLUNTARIADO_FIELDS, 'cv_voluntariado')),
+      renderCvAccordionItem('Información adicional', renderCvEditableGrid(infoAdicional, CV_INFO_ADICIONAL_FIELDS, 'cv_info_adicional', ''))
+    ].join('');
+    var appAccess = Array.isArray(current.app_access) ? current.app_access : [];
+    var appAccessLevels = normalizeAccessMatrix(current.app_access_levels, appAccess);
+    var webRoles = Array.isArray(current.web_roles) ? current.web_roles : [];
+    var menuBlocks = Array.isArray(current.menu_blocks) ? current.menu_blocks : [];
+    var rawAccessRole = String(current.rol || current.role || '').trim().toLowerCase();
+    var accessRole = normalizeAccessRole(rawAccessRole);
+    var accessRoleOptions = ACCESS_ROLE_OPTIONS.slice();
+    if (rawAccessRole === 'superadministrador' && !accessRoleOptions.some(function (opt) { return opt.value === 'superadministrador'; })) {
+      accessRoleOptions.unshift({ value: 'superadministrador', label: 'Superadministrador' });
+      accessRole = 'superadministrador';
+    }
+    var poaAccessLevel = normalizePoaAccess(current.poa_access_level || '');
+    var isCv = currentFormTab === 'cv';
+    var isHabilidades = currentFormTab === 'habilidades';
+    var isCumplimiento = currentFormTab === 'cumplimiento';
+    var isIdentidad = currentFormTab === 'identidad';
+    var isFuncionesPuesto = currentFormTab === 'funciones-puesto';
+    var isKpis = currentFormTab === 'kpis';
+    var isNotas = currentFormTab === 'notas';
+    var isCapacitacion = currentFormTab === 'capacitacion';
+    var isActivoFijo = currentFormTab === 'activo-fijo';
+    var isAcceso = false;
+    var isNewRecord = !(current && current.id);
+    var eficienciaValue = (current.eficiencia === null || current.eficiencia === undefined || current.eficiencia === '') ? '0' : String(current.eficiencia);
+    var colaboradorChecked = Boolean(current.colaborador);
+    mount.innerHTML = '' +
+      '<article class="card bg-base-100 border border-base-300 shadow-sm">' +
+        '<div class="card-body gap-4">' +
+          '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">' +
+            '<h3 class="card-title">Formulario de colaboradores</h3>' +
+            '<div class="flex items-center gap-2">' +
+              (isNewRecord ? '' : '<button type="button" class="btn btn-outline btn-sm" data-col-main-edit>Editar</button>') +
+              '<button type="button" class="btn btn-primary btn-sm" data-col-main-save ' + (isMainEditMode ? '' : 'disabled') + '>' + (isNewRecord ? 'Crear' : 'Guardar') + '</button>' +
+              (isNewRecord ? '' : '<button type="button" class="btn btn-error btn-sm" data-col-main-del>Eliminar</button>') +
+            '</div>' +
+          '</div>' +
+          '<section class="rounded-box border border-base-300 bg-base-100 p-4 grid gap-4">' +
+            '<div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">' +
+              '<div class="grid gap-3">' +
+                '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.nombre || '') + '" data-col-identidad-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Puesto</span></div><select class="select select-bordered w-full" data-col-puesto>' + renderPuestoSelect(current.puesto || '') + '</select></label>' +
+                '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Eficiencia</span></div><div class="flex items-center gap-2"><input class="input input-bordered w-28" type="text" value="' + esc(eficienciaValue) + '" readonly><span class="font-semibold text-base-content/80">%</span></div></label>' +
+              '</div>' +
+              '<div class="rounded-box border border-base-300 bg-base-200 min-h-[240px] flex items-center justify-center overflow-hidden relative">' +
+                (current.imagen ? '<img src="' + esc(current.imagen) + '" alt="Foto colaborador" class="w-full h-full object-cover">' : '<img src="/templates/icon/usuario.svg" alt="Usuario" class="w-36 h-36 opacity-70">') +
+                '<button type="button" style="position:absolute;left:10px;bottom:10px;z-index:10;background:transparent;border:0;padding:0;line-height:1;cursor:pointer;" data-col-photo-edit title="Editar foto" aria-label="Editar foto"><img src="/icon/boton/editar.svg" alt="" style="width:24px;height:24px;display:block;"></button>' +
+                '<button type="button" style="position:absolute;right:10px;bottom:10px;z-index:10;background:transparent;border:0;padding:0;line-height:1;cursor:pointer;" data-col-photo-del title="Eliminar foto" aria-label="Eliminar foto"><img src="/icon/boton/eliminar.svg" alt="" style="width:24px;height:24px;display:block;"></button>' +
+                '<input type="file" class="hidden" accept="image/*" data-col-photo-input>' +
+              '</div>' +
+            '</div>' +
+            '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Celular</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.celular || '') + '" data-col-main-celular ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Contraseña</span></div><div class="relative"><input class="input input-bordered w-full pr-12" type="password" placeholder="' + (isNewRecord ? 'Mínimo 8 caracteres' : 'Dejar vacía para conservar la actual') + '" value="" data-col-identidad-password ' + (isMainEditMode ? '' : 'readonly') + '><button type="button" class="absolute inset-y-0 right-3 my-auto flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-transparent p-0" data-col-password-toggle title="Mostrar contraseña" aria-label="Mostrar contraseña"><img src="/templates/icon/boton/ojo.svg" alt="" class="h-5 w-5" data-col-password-icon></button></div></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.usuario || '') + '" data-col-identidad-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo electrónico</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.correo || '') + '" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Área organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.area || '') + '" data-col-area readonly></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nivel organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.nivel || '') + '" data-col-nivel readonly></label>' +
+              '<label class="form-control w-full md:col-span-2"><div class="label"><span class="label-text font-semibold">Jefe inmediato</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.jefe || 'Sin jefe inmediato') + '" readonly></label>' +
+              '<label class="label justify-start gap-3 md:col-span-2"><input type="checkbox" class="checkbox checkbox-sm" data-col-main-colaborador ' + (colaboradorChecked ? 'checked ' : '') + (isMainEditMode ? '' : ' disabled') + '><span class="label-text font-semibold">Colaborador (Mostrar en organigrama)</span></label>' +
+            '</div>' +
+          '</section>' +
+          '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
+            '<div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Pestañas de colaborador">' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isCv ? 'tab-active' : '') + '" data-col-tab="1" data-tab="cv"><img src="/templates/icon/cv.svg" alt="" class="w-4 h-4">CV</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isHabilidades ? 'tab-active' : '') + '" data-col-tab="1" data-tab="habilidades"><img src="/templates/icon/habilidades.svg" alt="" class="w-4 h-4">Habilidades</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isCumplimiento ? 'tab-active' : '') + '" data-col-tab="1" data-tab="cumplimiento"><img src="/templates/icon/crecimiento.svg" alt="" class="w-4 h-4">Cumplimiento</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isIdentidad ? 'tab-active' : '') + '" data-col-tab="1" data-tab="identidad"><img src="/templates/icon/datos_generales.svg" alt="" class="w-4 h-4">Identidad</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isFuncionesPuesto ? 'tab-active' : '') + '" data-col-tab="1" data-tab="funciones-puesto">Funciones del puesto</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isKpis ? 'tab-active' : '') + '" data-col-tab="1" data-tab="kpis"><img src="/templates/icon/kpi.svg" alt="" class="w-4 h-4">KPIs</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isNotas ? 'tab-active' : '') + '" data-col-tab="1" data-tab="notas"><img src="/templates/icon/notificaciones.svg" alt="" class="w-4 h-4">Notas</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isCapacitacion ? 'tab-active' : '') + '" data-col-tab="1" data-tab="capacitacion"><img src="/templates/icon/tablero.svg" alt="" class="w-4 h-4">Capacitación</button>' +
+              '<button type="button" class="tab gap-2 rounded-t-lg ' + (isActivoFijo ? 'tab-active' : '') + '" data-col-tab="1" data-tab="activo-fijo"><img src="/templates/icon/activo_fijo.svg" alt="" class="w-4 h-4">Activo fijo</button>' +
+            '</div>' +
+            '<div class="-mt-px rounded-b-box border border-base-300 bg-base-100 p-4 grid gap-3">' +
+              '<div class="' + (isCv ? '' : 'hidden') + '" data-panel="cv">' +
+                '<div class="flex justify-end mb-2">' +
+                  '<button type="button" class="btn btn-primary btn-sm" data-cv-save>Guardar CV</button>' +
+                '</div>' +
+                '<div class="grid gap-3">' + cvAcordeones + '</div>' +
+              '</div>' +
+              '<div class="' + (isHabilidades ? '' : 'hidden') + '" data-panel="habilidades">' +
+                '<div data-col-habilidades-matrix>' + renderHabilidadesMatrix(current) + '</div>' +
+              '</div>' +
+              '<div class="' + (isCumplimiento ? '' : 'hidden') + '" data-panel="cumplimiento">' +
+                '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
+                  '<div class="rounded-box border border-base-300 bg-base-100 p-3"><h4 class="font-semibold mb-1">Desempeño</h4><p class="text-sm text-base-content/80">' + esc(current.eficiencia || 'N/D') + '</p></div>' +
+                  '<div class="rounded-box border border-base-300 bg-base-100 p-3"><h4 class="font-semibold mb-1">Estado</h4><p class="text-sm text-base-content/80">' + esc(current.estado || 'N/D') + '</p></div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="' + (isIdentidad ? '' : 'hidden') + '" data-panel="identidad">' +
+                '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" placeholder="Nombre del colaborador" value="' + esc(current.nombre || '') + '" data-col-identidad-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" placeholder="usuario" value="' + esc(current.usuario || '') + '" data-col-identidad-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo</span></div><input class="input input-bordered w-full" type="email" placeholder="correo@empresa.com" value="' + esc(current.correo || '') + '" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Rol</span></div><input class="input input-bordered w-full" type="text" placeholder="Rol" value="' + esc(current.rol || '') + '" readonly></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Departamento</span></div><input class="input input-bordered w-full" type="text" placeholder="Departamento" value="' + esc(current.departamento || '') + '"></label>' +
+                  '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Estado</span></div><input class="input input-bordered w-full" type="text" placeholder="Activo" value="' + esc(current.estado || '') + '"></label>' +
+                '</div>' +
+              '</div>' +
+              '<div class="' + (isFuncionesPuesto ? '' : 'hidden') + '" data-panel="funciones-puesto">' +
+                '<div class="grid gap-2">' +
+                  '<p class="text-sm text-base-content/80"><strong>Puesto:</strong> ' + esc(current.puesto || 'N/D') + '</p>' +
+                  '<p class="text-sm text-base-content/80"><strong>Rol:</strong> ' + esc(current.rol || 'N/D') + '</p>' +
+                  '<p class="text-sm text-base-content/60">Sin funciones del puesto configuradas.</p>' +
+                '</div>' +
+              '</div>' +
+              '<div class="' + (isKpis ? '' : 'hidden') + '" data-panel="kpis">' +
+                '<p class="text-sm text-base-content/60">Sin KPIs registrados.</p>' +
+              '</div>' +
+              '<div class="' + (isNotas ? '' : 'hidden') + '" data-panel="notas">' +
+                '<p class="text-sm text-base-content/60">Sin notas registradas.</p>' +
+              '</div>' +
+              '<div class="' + (isCapacitacion ? '' : 'hidden') + '" data-panel="capacitacion">' +
+                '<div class="grid gap-4">' +
+                  '<div><h4 class="font-semibold text-base-content mb-2">Capacitaciones</h4>' + renderSimpleList(formacion, 'Sin capacitaciones registradas.') + '</div>' +
+                  '<div><h4 class="font-semibold text-base-content mb-2">Logros</h4>' + renderSimpleList(logros, 'Sin logros registrados.') + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="' + (isActivoFijo ? '' : 'hidden') + '" data-panel="activo-fijo">' +
+                '<p class="text-sm text-base-content/60">Sin activos fijos asignados.</p>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    Array.from(mount.querySelectorAll('[data-col-tab][data-tab]')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        currentFormTab = btn.getAttribute('data-tab') || 'cv';
+        renderForm();
+      });
+    });
+    bindCvSave(current);
+    bindAccessSave(current);
+    bindPhotoActions(current);
+    bindPasswordToggle();
+    bindPuestoAutofill(current);
+    bindMainActions(current);
+    bindCvRecordActions(current);
+  }
+
+  function renderList() {
+    var rowsHtml = '';
+    var visibles = getVisibleColaboradores();
+    if (!Array.isArray(visibles) || !visibles.length) {
+      rowsHtml = '<tr><td colspan="6" class="text-base-content/60">Sin registros.</td></tr>';
+    } else {
+      rowsHtml = visibles.map(function (emp) {
+        return '<tr data-colab-open-form-row data-colab-key="' + esc(getColaboradorKey(emp)) + '" class="cursor-pointer hover">' +
+          '<td>' + esc(emp.nombre || '') + '</td>' +
+          '<td>' + esc(emp.usuario || '') + '</td>' +
+          '<td>' + esc(emp.correo || '') + '</td>' +
+          '<td>' + esc(emp.rol || '') + '</td>' +
+          '<td>' + esc(emp.departamento || '') + '</td>' +
+          '<td>' + esc(emp.estado || '') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+    mount.innerHTML = '' +
+      '<article class="card bg-base-100 border border-base-300 shadow-sm">' +
+        '<div class="card-body gap-4">' +
+          '<h3 class="card-title">Lista de colaboradores</h3>' +
+          '<div class="overflow-x-auto rounded-box border border-base-300">' +
+            '<table class="table table-zebra w-full text-sm">' +
+              '<thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Departamento</th><th>Estado</th></tr></thead>' +
+              '<tbody>' + rowsHtml + '</tbody>' +
+            '</table>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+  }
+
+  function renderKanban() {
+    var groups = { Activo: [], Inactivo: [], Otro: [] };
+    getVisibleColaboradores().forEach(function (emp) {
+      var st = String(emp.estado || '').trim().toLowerCase();
+      if (st === 'activo') groups.Activo.push(emp);
+      else if (st === 'inactivo') groups.Inactivo.push(emp);
+      else groups.Otro.push(emp);
+    });
+    var lanes = Object.keys(groups).map(function (key) {
+      var cards = groups[key].length
+        ? groups[key].map(function (emp) {
+            return '<article class="rounded-box border border-base-300 bg-base-100 p-3 grid gap-1">' +
+              '<strong class="text-base-content">' + esc(emp.nombre || '') + '</strong>' +
+              '<p class="text-sm text-base-content/80">' + esc(emp.usuario || '') + '</p>' +
+              '<p class="text-sm text-base-content/80">' + esc(emp.departamento || '') + '</p>' +
+            '</article>';
+          }).join('')
+        : '<p class="text-sm text-base-content/60">Sin registros.</p>';
+      return '<div class="rounded-box border border-base-300 bg-base-200 p-3 grid gap-2">' +
+        '<h4 class="font-semibold text-base-content">' + esc(key) + '</h4>' +
+        cards +
+      '</div>';
+    }).join('');
+    mount.innerHTML = '' +
+      '<article class="card bg-base-100 border border-base-300 shadow-sm">' +
+        '<div class="card-body gap-4">' +
+          '<h3 class="card-title">Kanban de colaboradores</h3>' +
+          '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' + lanes + '</div>' +
+        '</div>' +
+      '</article>';
+  }
+
+  function getOrgPathToRoot(id, mapById) {
+    var path = [];
+    var current = mapById[id];
+    var guard = 0;
+    while (current && guard < 200) {
+      path.push(current.id);
+      if (!current.parentId) break;
+      current = mapById[current.parentId];
+      guard += 1;
+    }
+    return path;
+  }
+
+  async function renderOrganigrama() {
+    mount.innerHTML = '' +
+      '<article class="card bg-base-100 border border-base-300 shadow-sm">' +
+        '<div class="card-body gap-4">' +
+          '<h3 class="card-title">Organigrama de colaboradores</h3>' +
+          '<div data-colab-org-chart class="w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3">' +
+            '<p class="text-sm text-base-content/70">Cargando organigrama...</p>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    var orgChartEl = mount.querySelector('[data-colab-org-chart]');
+    if (!(orgChartEl instanceof HTMLElement)) return;
+
+    try {
+      var response = await fetch('/api/colaboradores/organigrama', { headers: { Accept: 'application/json' } });
+      var payload = await response.json().catch(function () { return {}; });
+      if (!response.ok || !payload || payload.success === false) {
+        throw new Error((payload && (payload.error || payload.detail)) || 'No se pudo cargar el organigrama');
+      }
+      var data = Array.isArray(payload.data) ? payload.data.filter(matchesColaboradorSearch) : [];
+      if (!data.length) {
+        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">Sin datos para organigrama.</p>';
+        return;
+      }
+
+      var libOk = await ensureOrgLibrary();
+      if (!libOk) {
+        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">No se pudo cargar la librería de organigrama.</p>';
+        return;
+      }
+
+      var byId = {};
+      data.forEach(function (row) {
+        var rowId = String(row.id || '').trim();
+        if (rowId) byId[rowId] = row;
+      });
+
+      var nodes = data.map(function (row) {
+        var rowId = String(row.id || '').trim() || Math.random().toString(36).slice(2);
+        var bossId = row.jefe_inmediato_id !== null && row.jefe_inmediato_id !== undefined
+          ? String(row.jefe_inmediato_id).trim()
+          : '';
+        return {
+          id: rowId,
+          parentId: bossId && byId[bossId] ? bossId : '',
+          name: String(row.nombre || 'Colaborador'),
+          role: String(row.rol || 'usuario'),
+          user: String(row.usuario || ''),
+          department: String(row.departamento || 'Sin departamento'),
+          position: String(row.puesto || 'Sin puesto'),
+          manager: String(row.jefe || 'Sin jefe inmediato'),
+          image: String(row.imagen || '').trim(),
+          status: String(row.estado || 'Activo')
+        };
+      });
+
+      var roots = nodes.filter(function (n) { return !n.parentId; });
+      if (roots.length > 1) {
+        nodes.push({
+          id: '__ROOT__',
+          parentId: '',
+          name: 'Colaboradores',
+          role: '',
+          user: '',
+          department: '',
+          position: '',
+          manager: '',
+          image: '',
+          status: 'Activo'
+        });
+        nodes = nodes.map(function (n) {
+          if (!n.parentId && n.id !== '__ROOT__') n.parentId = '__ROOT__';
+          return n;
+        });
+      }
+
+      var nodeMap = {};
+      nodes.forEach(function (node) { nodeMap[node.id] = node; });
+      var baseRootId = nodeMap.__ROOT__ ? '__ROOT__' : (roots[0] ? roots[0].id : '');
+      if (!orgExpandedColaboradorId) orgExpandedColaboradorId = baseRootId;
+      var expandedPath = new Set(getOrgPathToRoot(orgExpandedColaboradorId, nodeMap));
+      nodes = nodes.map(function (node) {
+        node._expanded = expandedPath.has(node.id);
+        return node;
+      });
+
+      orgChartEl.innerHTML = '';
+      colabOrgChart = new window.d3.OrgChart()
+        .container(orgChartEl)
+        .data(nodes)
+        .nodeWidth(function () { return 340; })
+        .nodeHeight(function () { return 162; })
+        .childrenMargin(function () { return 48; })
+        .compact(true)
+        .initialExpandLevel(0)
+        .setActiveNodeCentered(true)
+        .nodeButtonWidth(function () { return 36; })
+        .nodeButtonHeight(function () { return 36; })
+        .nodeButtonX(function () { return -18; })
+        .nodeButtonY(function () { return -18; })
+        .buttonContent(function (ctx) {
+          var node = ctx && ctx.node ? ctx.node : null;
+          var expanded = !!(node && node.children);
+          var sign = expanded ? '−' : '+';
+          var count = Number(node && node.data ? node.data._directSubordinates || 0 : 0);
+          return '<div style="width:36px;height:36px;border-radius:9999px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;border:2px solid #fff;box-shadow:0 4px 10px rgba(15,23,42,.22);">' + sign + (count > 0 ? '<span style="font-size:10px;margin-left:2px;">' + count + '</span>' : '') + '</div>';
+        })
+        .nodeContent(function (d) {
+          var item = d && d.data ? d.data : {};
+          var imageHtml = item.image
+            ? '<img src="' + esc(item.image) + '" alt="' + esc(item.name || 'Colaborador') + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
+            : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:800;color:#ffffff;">' + esc((item.name || '?').charAt(0).toUpperCase()) + '</div>';
+          return ''
+            + '<div style="display:grid;grid-template-columns:92px 1fr;height:158px;border:1px solid #dbe2ea;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 14px rgba(15,23,42,.12);font-family:inherit;">'
+            +   '<div style="background:#0f172a;display:flex;align-items:center;justify-content:center;overflow:hidden;">' + imageHtml + '</div>'
+            +   '<div style="padding:12px;display:grid;gap:5px;align-content:start;">'
+            +     '<div style="font-size:22px;font-weight:800;color:#0f172a;line-height:1.08;">' + esc(item.name || 'Colaborador') + '</div>'
+            +     '<div style="font-size:14px;color:#334155;"><strong>Puesto:</strong> ' + esc(item.position || 'Sin puesto') + '</div>'
+            +     '<div style="font-size:14px;color:#334155;"><strong>Departamento:</strong> ' + esc(item.department || 'Sin departamento') + '</div>'
+            +     '<div style="font-size:14px;color:#334155;"><strong>Usuario:</strong> ' + esc(item.user || '—') + '</div>'
+            +   '</div>'
+            + '</div>';
+        })
+        .onNodeClick(function (d) {
+          var clickedId = d && d.data ? d.data.id : '';
+          if (!clickedId) return;
+          orgExpandedColaboradorId = orgExpandedColaboradorId === clickedId ? baseRootId : clickedId;
+          renderOrganigrama();
+        })
+        .render();
+    } catch (error) {
+      orgChartEl.innerHTML = '<p class="text-sm text-error">' + esc(error && error.message ? error.message : 'No se pudo cargar el organigrama.') + '</p>';
+    }
+  }
+
+  function render(view) {
+    currentView = ['form', 'list', 'kanban', 'organigrama'].indexOf(view) >= 0 ? view : 'list';
+    setActiveViewButton(currentView);
+    if (currentView === 'form') return renderForm();
+    if (currentView === 'kanban') return renderKanban();
+    if (currentView === 'organigrama') return renderOrganigrama();
+    return renderList();
+  }
+
+  document.addEventListener('backend-view-change', function (event) {
+    var view = event && event.detail ? event.detail.view : '';
+    if (!view) return;
+    render(view);
+  });
+
+  viewButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      render(btn.getAttribute('data-view') || 'list');
+    });
+  });
+
+  mount.addEventListener('click', function (event) {
+    var target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    var row = target.closest('[data-colab-open-form-row]');
+    if (!(row instanceof HTMLElement)) return;
+    openFormByKey(row.getAttribute('data-colab-key') || '');
+  });
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', function () {
+      var value = window.prompt('Buscar colaborador (nombre, usuario, correo, rol o departamento):', searchTerm || '');
+      if (value === null) return;
+      searchTerm = String(value || '').trim();
+      render(currentView || 'list');
+    });
+  }
+
+  if (newBtn) {
+    newBtn.addEventListener('click', function () {
+      selectedColaboradorKey = '';
+      currentFormTab = 'identidad';
+      isMainEditMode = true;
+      renderForm(createNewColaboradorDraft());
+      currentView = 'form';
+      setActiveViewButton('form');
+    });
+  }
+
+  Promise.all([
+    fetch('/api/colaboradores', { headers: { Accept: 'application/json' } }).then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); }),
+    fetch('/api/puestos-laborales', { headers: { Accept: 'application/json' } }).then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+  ])
+    .then(function (results) {
+      var colabResult = results[0];
+      var puestosResult = results[1];
+      if (!colabResult.ok || !colabResult.json || colabResult.json.success === false) throw new Error('No se pudieron cargar colaboradores');
+      colaboradores = Array.isArray(colabResult.json.data) ? colabResult.json.data : [];
+      puestosLaborales = (puestosResult && puestosResult.ok && puestosResult.json && puestosResult.json.success !== false && Array.isArray(puestosResult.json.data))
+        ? puestosResult.json.data
+        : [];
+      render('list');
+    })
+    .catch(function () {
+      colaboradores = [];
+      puestosLaborales = [];
+      render('list');
+    });
+})();
+</script>

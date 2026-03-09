@@ -1,0 +1,753 @@
+<section id="empresa-usuarios-module" class="w-full space-y-4">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/templates/icon/usuarios.svg"
+        alt="Icono usuarios"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+      />
+      <div class="w-full grid gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Usuarios</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Administra roles y permisos de acceso de los usuarios del sistema.</div>
+      </div>
+    </div>
+  </div>
+
+  <article class="card bg-base-100 border border-base-300 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <h3 class="card-title">Usuarios del sistema</h3>
+        <label class="input input-bordered flex items-center gap-2 w-full md:max-w-sm">
+          <input id="usuarios-search" type="text" class="grow" placeholder="Buscar por nombre, usuario, correo, rol o puesto">
+        </label>
+      </div>
+      <div class="view-buttons page-view-buttons">
+        <button class="view-pill boton_vista active" type="button" data-usuarios-view="list" data-tooltip="Lista" aria-label="Lista">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Lista</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-usuarios-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Kanban</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-usuarios-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Organigrama</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-usuarios-view="form" data-tooltip="Formulario" aria-label="Formulario">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Formulario</span>
+        </button>
+      </div>
+      <div id="usuarios-view"></div>
+    </div>
+  </article>
+
+  <div id="usuarios-access-modal" class="fixed inset-0 z-[70] hidden overflow-y-auto p-4">
+    <button type="button" id="usuarios-access-backdrop" class="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]" aria-label="Cerrar permisos de acceso"></button>
+    <article class="relative z-[71] my-4 mx-auto w-full max-w-6xl rounded-[28px] border border-base-300 bg-base-100 shadow-2xl" style="-webkit-overflow-scrolling:touch;">
+      <div class="sticky top-0 z-[72] flex items-center justify-between gap-3 border-b border-base-300 bg-base-100 px-5 py-4">
+        <div>
+          <h3 class="card-title m-0">Permisos de acceso</h3>
+          <p class="text-sm text-base-content/60">Se abre al dar clic sobre un usuario.</p>
+        </div>
+        <button type="button" id="usuarios-modal-close" class="btn btn-ghost btn-sm">Cerrar</button>
+      </div>
+      <div class="px-5 py-5 pb-8">
+        <div class="grid gap-4" id="usuarios-form-host">
+          <p class="text-sm text-base-content/60">Selecciona un usuario en la lista para editar sus permisos.</p>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<script>
+(function () {
+  var viewHost = document.getElementById('usuarios-view');
+  var formHost = document.getElementById('usuarios-form-host');
+  var searchInput = document.getElementById('usuarios-search');
+  var viewButtons = Array.from(document.querySelectorAll('#empresa-usuarios-module .view-buttons .view-pill[data-usuarios-view]'));
+  var modal = document.getElementById('usuarios-access-modal');
+  var modalBackdrop = document.getElementById('usuarios-access-backdrop');
+  var modalCloseBtn = document.getElementById('usuarios-modal-close');
+  if (!viewHost || !formHost) return;
+
+  var usuarios = [];
+  var selectedKey = '';
+  var searchTerm = '';
+  var assignableRoles = [];
+  var currentView = 'list';
+  var bodyScrollLockY = 0;
+  var orgLibPromise = null;
+  var usuariosOrgChart = null;
+  var orgExpandedUsuarioId = '';
+
+  function lockBodyScroll() {
+    bodyScrollLockY = window.scrollY || window.pageYOffset || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = '-' + String(bodyScrollLockY) + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function unlockBodyScroll() {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    window.scrollTo(0, bodyScrollLockY || 0);
+  }
+
+  function openAccessModal() {
+    if (!modal) return;
+    lockBodyScroll();
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.scrollTop = 0;
+  }
+
+  function closeAccessModal() {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    unlockBodyScroll();
+  }
+
+  function setActiveViewButton(view) {
+    viewButtons.forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-usuarios-view') === view);
+    });
+  }
+
+  var ACCESS_APP_OPTIONS = ['BSC', 'Organización', 'Estrategia y táctica', 'Datos financieros', 'Control y seguimiento', 'KPIs', 'Reportes', 'Empresa', 'Intelicoop', 'CRM', 'Auditoria', 'ActivoFijo', 'Multiempresa'];
+  var ACCESS_LEVEL_OPTIONS = [
+    { key: 'full_access', label: 'Acceso total' },
+    { key: 'read_only', label: 'Solo lectura' },
+    { key: 'department_only', label: 'Solo departamento' },
+    { key: 'user_only', label: 'Solo usuario' },
+    { key: 'special_permissions', label: 'Permisos especiales' }
+  ];
+  var ACCESS_POA_OPTIONS = [
+    { value: 'mis_tareas', label: 'Mis tareas (sin vista Gantt)' },
+    { value: 'todas_tareas', label: 'Todas las tareas (incluye Gantt)' }
+  ];
+  var ACCESS_WEB_ROLE_OPTIONS = [
+    { value: 'editor', label: 'Editor' },
+    { value: 'designer', label: 'Diseñador' }
+  ];
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function normalizeAccessRole(raw) {
+    var role = String(raw || '').trim().toLowerCase();
+    if (role === 'admin') role = 'administrador';
+    if (role === 'super_admin' || role === 'superadmin' || role === 'superadministrdor') role = 'superadministrador';
+    if (!role) role = 'usuario';
+    return role;
+  }
+
+  function normalizePoaAccess(raw) {
+    return String(raw || '').trim().toLowerCase() === 'todas_tareas' ? 'todas_tareas' : 'mis_tareas';
+  }
+
+  function normalizeAccessMatrix(appAccessLevels, fallbackAppAccess) {
+    var normalized = {};
+    ACCESS_APP_OPTIONS.forEach(function (appName) {
+      normalized[appName] = {
+        full_access: false,
+        read_only: false,
+        department_only: false,
+        user_only: false,
+        special_permissions: false
+      };
+      var rawEntry = appAccessLevels && typeof appAccessLevels === 'object' ? appAccessLevels[appName] : null;
+      if (rawEntry && typeof rawEntry === 'object') {
+        ACCESS_LEVEL_OPTIONS.forEach(function (level) {
+          normalized[appName][level.key] = Boolean(rawEntry[level.key]);
+        });
+      }
+    });
+    if (Array.isArray(fallbackAppAccess)) {
+      fallbackAppAccess.forEach(function (appName) {
+        var key = String(appName || '').trim();
+        if (!normalized[key]) return;
+        if (!ACCESS_LEVEL_OPTIONS.some(function (level) { return normalized[key][level.key]; })) {
+          normalized[key].full_access = true;
+        }
+      });
+    }
+    return normalized;
+  }
+
+  function deriveAppAccessFromMatrix(matrix) {
+    return ACCESS_APP_OPTIONS.filter(function (appName) {
+      var entry = matrix && typeof matrix === 'object' ? matrix[appName] : null;
+      return !!entry && ACCESS_LEVEL_OPTIONS.some(function (level) { return Boolean(entry[level.key]); });
+    });
+  }
+
+  function renderAccessRadioGroup(name, options, selectedValue, dataAttrName) {
+    var dataAttr = dataAttrName ? (' ' + dataAttrName + '="1"') : '';
+    return '<div class="grid gap-2">' +
+      (options || []).map(function (opt) {
+        var checked = String(opt.value || '').trim().toLowerCase() === String(selectedValue || '').trim().toLowerCase();
+        return '<label class="label justify-start gap-3 cursor-pointer p-0 min-h-0">' +
+          '<input type="radio" class="radio radio-sm" name="' + esc(name) + '" value="' + esc(opt.value || '') + '"' + dataAttr + (checked ? ' checked' : '') + '>' +
+          '<span class="label-text text-base-content font-semibold">' + esc(opt.label || '') + '</span>' +
+        '</label>';
+      }).join('') +
+      '</div>';
+  }
+
+  function renderAccessCheckboxGroup(options, selectedValues, dataAttrName) {
+    var selected = Array.isArray(selectedValues) ? selectedValues.map(function (v) { return String(v || '').trim().toLowerCase(); }) : [];
+    var dataAttr = dataAttrName ? (' ' + dataAttrName + '="1"') : '';
+    return '<div class="grid gap-2">' +
+      (options || []).map(function (opt) {
+        var value = typeof opt === 'string' ? opt : (opt && opt.value) || '';
+        var label = typeof opt === 'string' ? opt : (opt && opt.label) || '';
+        var checked = selected.indexOf(String(value || '').trim().toLowerCase()) !== -1;
+        return '<label class="label justify-start gap-3 cursor-pointer p-0 min-h-0">' +
+          '<input type="checkbox" class="checkbox checkbox-sm" value="' + esc(value) + '"' + dataAttr + (checked ? ' checked' : '') + '>' +
+          '<span class="label-text text-base-content font-semibold">' + esc(label) + '</span>' +
+        '</label>';
+      }).join('') +
+      '</div>';
+  }
+
+  function renderAccessMatrix(selectedMatrix) {
+    var matrix = normalizeAccessMatrix(selectedMatrix, []);
+    return '<div class="overflow-x-auto">' +
+      '<table class="table table-sm w-full border border-base-300 rounded-box">' +
+        '<thead><tr><th class="min-w-[220px]">Nombre del menu</th>' +
+          ACCESS_LEVEL_OPTIONS.map(function (level) {
+            return '<th class="text-center min-w-[120px]">' + esc(level.label) + '</th>';
+          }).join('') +
+        '</tr></thead>' +
+        '<tbody>' +
+          ACCESS_APP_OPTIONS.map(function (appName) {
+            return '<tr><td class="font-semibold text-base-content">' + esc(appName) + '</td>' +
+              ACCESS_LEVEL_OPTIONS.map(function (level) {
+                return '<td class="text-center">' +
+                  '<input type="checkbox" class="checkbox checkbox-sm" data-access-app-level="1" data-menu-name="' + esc(appName) + '" data-level-key="' + esc(level.key) + '"' + (matrix[appName][level.key] ? ' checked' : '') + '>' +
+                '</td>';
+              }).join('') +
+            '</tr>';
+          }).join('') +
+        '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+  function collectCheckedValues(selector) {
+    return Array.from(formHost.querySelectorAll(selector))
+      .filter(function (el) { return !!el && !!el.checked; })
+      .map(function (el) { return String(el.value || '').trim(); })
+      .filter(Boolean);
+  }
+
+  function collectAccessMatrix() {
+    var matrix = normalizeAccessMatrix(null, []);
+    Array.from(formHost.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
+      var menuName = String(el.getAttribute('data-menu-name') || '').trim();
+      var levelKey = String(el.getAttribute('data-level-key') || '').trim();
+      if (!menuName || !levelKey || !matrix[menuName] || !(levelKey in matrix[menuName])) return;
+      matrix[menuName][levelKey] = Boolean(el.checked);
+    });
+    return matrix;
+  }
+
+  function getKey(item) {
+    if (!item || typeof item !== 'object') return '';
+    if (item.id != null && String(item.id).trim()) return String(item.id).trim();
+    return String(item.usuario || item.correo || item.nombre || '').trim().toLowerCase();
+  }
+
+  function getCurrent() {
+    return usuarios.find(function (item) { return getKey(item) === selectedKey; }) || null;
+  }
+
+  function getVisibleUsuarios() {
+    return usuarios.filter(matchesSearch);
+  }
+
+  function matchesSearch(item) {
+    var term = String(searchTerm || '').trim().toLowerCase();
+    if (!term) return true;
+    var haystack = [
+      item && item.nombre,
+      item && item.usuario,
+      item && item.correo,
+      item && item.rol,
+      item && item.puesto,
+      item && item.departamento
+    ].map(function (v) { return String(v || '').toLowerCase(); }).join(' ');
+    return haystack.indexOf(term) >= 0;
+  }
+
+  function openUserAccessByKey(key) {
+    selectedKey = String(key || '');
+    renderCurrentView();
+    renderForm();
+    openAccessModal();
+  }
+
+  function renderList() {
+    var visible = getVisibleUsuarios();
+    var rowsHtml = !visible.length
+      ? '<tr><td colspan="5" class="text-base-content/60">Sin usuarios.</td></tr>'
+      : visible.map(function (item) {
+      var key = getKey(item);
+      var active = key === selectedKey ? ' class="active"' : '';
+      return '<tr data-usuario-key="' + esc(key) + '" class="cursor-pointer hover">' +
+        '<td><button type="button" class="link link-hover font-semibold"' + active + '>' + esc(item.nombre || '') + '</button></td>' +
+        '<td>' + esc(item.usuario || '') + '</td>' +
+        '<td>' + esc(item.correo || '') + '</td>' +
+        '<td>' + esc(item.rol || '') + '</td>' +
+        '<td>' + esc(item.puesto || '') + '</td>' +
+      '</tr>';
+      }).join('');
+    viewHost.innerHTML = '' +
+      '<div class="overflow-x-auto rounded-box border border-base-300">' +
+        '<table class="table table-zebra table-sm md:table-md">' +
+          '<thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Puesto</th></tr></thead>' +
+          '<tbody id="usuarios-tbody">' + rowsHtml + '</tbody>' +
+        '</table>' +
+      '</div>';
+  }
+
+  function renderKanban() {
+    var groups = { Administradores: [], Autoridades: [], Usuarios: [], Otros: [] };
+    getVisibleUsuarios().forEach(function (item) {
+      var role = normalizeAccessRole(item && (item.rol || item.role));
+      if (role === 'superadministrador' || role === 'administrador' || role === 'administrador_multiempresa') groups.Administradores.push(item);
+      else if (role === 'autoridades') groups.Autoridades.push(item);
+      else if (role === 'usuario' || role === 'departamento') groups.Usuarios.push(item);
+      else groups.Otros.push(item);
+    });
+    var lanes = Object.keys(groups).map(function (groupName) {
+      var cards = groups[groupName].length
+        ? groups[groupName].map(function (item) {
+            return '<button type="button" class="w-full text-left rounded-box border border-base-300 bg-base-100 p-4 grid gap-1 hover:border-base-content/30" data-usuario-key="' + esc(getKey(item)) + '">' +
+              '<strong class="text-base-content text-base">' + esc(item.nombre || '') + '</strong>' +
+              '<span class="text-sm text-base-content/75">' + esc(item.usuario || '') + '</span>' +
+              '<span class="text-sm text-base-content/75">' + esc(item.puesto || 'Sin puesto') + '</span>' +
+              '<span class="text-xs uppercase tracking-wide text-base-content/50">' + esc(item.rol || 'Usuario') + '</span>' +
+            '</button>';
+          }).join('')
+        : '<p class="text-sm text-base-content/60">Sin usuarios.</p>';
+      return '<div class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-3">' +
+        '<h4 class="font-semibold text-base-content text-lg">' + esc(groupName) + '</h4>' +
+        cards +
+      '</div>';
+    }).join('');
+    viewHost.innerHTML = '<div class="grid grid-cols-1 xl:grid-cols-4 gap-4">' + lanes + '</div>';
+  }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) {
+        resolve();
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = function () { resolve(); };
+      script.onerror = function () { reject(new Error('No se pudo cargar ' + src)); };
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureOrgLibrary() {
+    if (window.d3 && window.d3.OrgChart) return true;
+    if (!orgLibPromise) {
+      orgLibPromise = (async function () {
+        await loadScript('/static/vendor/d3.min.js');
+        await loadScript('/static/vendor/d3-flextree.min.js');
+        await loadScript('/static/vendor/d3-org-chart.min.js');
+      })().catch(function () { return false; });
+    }
+    var result = await orgLibPromise;
+    return result !== false && !!(window.d3 && window.d3.OrgChart);
+  }
+
+  function getOrgPathToRoot(id, mapById) {
+    var path = [];
+    var current = mapById[id];
+    var guard = 0;
+    while (current && guard < 200) {
+      path.push(current.id);
+      if (!current.parentId) break;
+      current = mapById[current.parentId];
+      guard += 1;
+    }
+    return path;
+  }
+
+  async function renderOrganigrama() {
+    viewHost.innerHTML = '' +
+      '<article class="card bg-base-100 border border-base-300 shadow-sm">' +
+        '<div class="card-body gap-4">' +
+          '<h3 class="card-title">Organigrama de usuarios</h3>' +
+          '<div data-usuarios-org-chart class="w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3">' +
+            '<p class="text-sm text-base-content/70">Cargando organigrama...</p>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    var orgChartEl = viewHost.querySelector('[data-usuarios-org-chart]');
+    if (!(orgChartEl instanceof HTMLElement)) return;
+
+    try {
+      var data = getVisibleUsuarios();
+      if (!data.length) {
+        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">Sin datos para organigrama.</p>';
+        return;
+      }
+      var libOk = await ensureOrgLibrary();
+      if (!libOk) {
+        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">No se pudo cargar la librería de organigrama.</p>';
+        return;
+      }
+
+      var byId = {};
+      data.forEach(function (row) {
+        var rowId = String(row.id || '').trim();
+        if (rowId) byId[rowId] = row;
+      });
+
+      var nodes = data.map(function (row) {
+        var rowId = String(row.id || '').trim() || Math.random().toString(36).slice(2);
+        var bossId = row.jefe_inmediato_id !== null && row.jefe_inmediato_id !== undefined ? String(row.jefe_inmediato_id).trim() : '';
+        return {
+          id: rowId,
+          parentId: bossId && byId[bossId] ? bossId : '',
+          name: String(row.nombre || 'Usuario'),
+          role: String(row.rol || 'usuario'),
+          user: String(row.usuario || ''),
+          department: String(row.departamento || 'Sin departamento'),
+          position: String(row.puesto || 'Sin puesto'),
+          image: String(row.imagen || '').trim()
+        };
+      });
+
+      var roots = nodes.filter(function (n) { return !n.parentId; });
+      if (roots.length > 1) {
+        nodes.push({ id: '__ROOT__', parentId: '', name: 'Usuarios', role: '', user: '', department: '', position: '', image: '' });
+        nodes = nodes.map(function (n) {
+          if (!n.parentId && n.id !== '__ROOT__') n.parentId = '__ROOT__';
+          return n;
+        });
+      }
+
+      var nodeMap = {};
+      nodes.forEach(function (node) { nodeMap[node.id] = node; });
+      var baseRootId = nodeMap.__ROOT__ ? '__ROOT__' : (roots[0] ? roots[0].id : '');
+      if (!orgExpandedUsuarioId) orgExpandedUsuarioId = baseRootId;
+      var expandedPath = new Set(getOrgPathToRoot(orgExpandedUsuarioId, nodeMap));
+      nodes = nodes.map(function (node) {
+        node._expanded = expandedPath.has(node.id);
+        return node;
+      });
+
+      orgChartEl.innerHTML = '';
+      usuariosOrgChart = new window.d3.OrgChart()
+        .container(orgChartEl)
+        .data(nodes)
+        .nodeWidth(function () { return 340; })
+        .nodeHeight(function () { return 156; })
+        .childrenMargin(function () { return 48; })
+        .compact(true)
+        .initialExpandLevel(0)
+        .setActiveNodeCentered(true)
+        .nodeButtonWidth(function () { return 36; })
+        .nodeButtonHeight(function () { return 36; })
+        .nodeButtonX(function () { return -18; })
+        .nodeButtonY(function () { return -18; })
+        .buttonContent(function (ctx) {
+          var node = ctx && ctx.node ? ctx.node : null;
+          var expanded = !!(node && node.children);
+          var sign = expanded ? '−' : '+';
+          var count = Number(node && node.data ? node.data._directSubordinates || 0 : 0);
+          return '<div style="width:36px;height:36px;border-radius:9999px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;border:2px solid #fff;box-shadow:0 4px 10px rgba(15,23,42,.22);">' + sign + (count > 0 ? '<span style="font-size:10px;margin-left:2px;">' + count + '</span>' : '') + '</div>';
+        })
+        .nodeContent(function (d) {
+          var item = d && d.data ? d.data : {};
+          var imageHtml = item.image
+            ? '<img src="' + esc(item.image) + '" alt="' + esc(item.name || 'Usuario') + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
+            : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:800;color:#ffffff;">' + esc((item.name || '?').charAt(0).toUpperCase()) + '</div>';
+          return ''
+            + '<div style="display:grid;grid-template-columns:92px 1fr;height:152px;border:1px solid #dbe2ea;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 14px rgba(15,23,42,.12);font-family:inherit;">'
+            +   '<div style="background:#0f172a;display:flex;align-items:center;justify-content:center;overflow:hidden;">' + imageHtml + '</div>'
+            +   '<div style="padding:12px;display:grid;gap:5px;align-content:start;">'
+            +     '<div style="font-size:22px;font-weight:800;color:#0f172a;line-height:1.08;">' + esc(item.name || 'Usuario') + '</div>'
+            +     '<div style="font-size:14px;color:#334155;"><strong>Puesto:</strong> ' + esc(item.position || 'Sin puesto') + '</div>'
+            +     '<div style="font-size:14px;color:#334155;"><strong>Departamento:</strong> ' + esc(item.department || 'Sin departamento') + '</div>'
+            +     '<div style="font-size:14px;color:#334155;"><strong>Usuario:</strong> ' + esc(item.user || '—') + '</div>'
+            +   '</div>'
+            + '</div>';
+        })
+        .onNodeClick(function (d) {
+          var clickedId = d && d.data ? d.data.id : '';
+          if (!clickedId) return;
+          orgExpandedUsuarioId = orgExpandedUsuarioId === clickedId ? baseRootId : clickedId;
+          openUserAccessByKey(clickedId);
+        })
+        .render();
+    } catch (error) {
+      orgChartEl.innerHTML = '<p class="text-sm text-error">' + esc(error && error.message ? error.message : 'No se pudo cargar el organigrama.') + '</p>';
+    }
+  }
+
+  function renderFormView() {
+    var visible = getVisibleUsuarios();
+    if (!visible.length) {
+      viewHost.innerHTML = '<article class="card bg-base-100 border border-base-300 shadow-sm"><div class="card-body"><p class="text-sm text-base-content/60">Sin usuarios.</p></div></article>';
+      return;
+    }
+    viewHost.innerHTML = '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' +
+      visible.map(function (item) {
+        return '<div role="button" tabindex="0" class="w-full text-left rounded-[24px] border border-base-300 bg-base-100 p-5 shadow-sm hover:border-base-content/30 cursor-pointer" data-usuario-key="' + esc(getKey(item)) + '">' +
+          '<div class="grid gap-4">' +
+            '<div class="flex items-start justify-between gap-3">' +
+              '<div>' +
+                '<div class="text-2xl font-bold text-base-content">' + esc(item.nombre || '') + '</div>' +
+                '<div class="text-sm text-base-content/60">' + esc(item.usuario || '') + ' · ' + esc(item.rol || 'Usuario') + '</div>' +
+              '</div>' +
+              '<span class="badge badge-outline">Abrir</span>' +
+            '</div>' +
+            '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Nombre</span></div><div class="input input-bordered flex items-center">' + esc(item.nombre || '') + '</div></div>' +
+              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Puesto</span></div><div class="input input-bordered flex items-center">' + esc(item.puesto || '') + '</div></div>' +
+              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Usuario</span></div><div class="input input-bordered flex items-center">' + esc(item.usuario || '') + '</div></div>' +
+              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Correo</span></div><div class="input input-bordered flex items-center">' + esc(item.correo || '') + '</div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+
+  function renderCurrentView() {
+    setActiveViewButton(currentView);
+    if (currentView === 'kanban') return renderKanban();
+    if (currentView === 'organigrama') return renderOrganigrama();
+    if (currentView === 'form') return renderFormView();
+    return renderList();
+  }
+
+  function buildSavePayload(current) {
+    var roleEl = formHost.querySelector('input[name="usuario-acceso-rol"][data-access-role="1"]:checked');
+    var poaEl = formHost.querySelector('input[name="usuario-acceso-poa"][data-access-poa="1"]:checked');
+    var appAccessLevels = collectAccessMatrix();
+    return {
+      id: current.id,
+      nombre: String(current.nombre || '').trim(),
+      usuario: String(current.usuario || '').trim(),
+      correo: String(current.correo || '').trim(),
+      contrasena: '',
+      departamento: String(current.departamento || '').trim(),
+      puesto: String(current.puesto || '').trim(),
+      jefe_inmediato_id: current.jefe_inmediato_id || null,
+      celular: String(current.celular || '').trim(),
+      nivel_organizacional: String(current.nivel_organizacional || current.coach || '').trim(),
+      imagen: String(current.imagen || '').trim(),
+      eficiencia: current.eficiencia,
+      colaborador: Boolean(current.colaborador),
+      rol: roleEl ? String(roleEl.value || '').trim() : normalizeAccessRole(current.rol || current.role || ''),
+      poa_access_level: poaEl ? String(poaEl.value || '').trim() : normalizePoaAccess(current.poa_access_level || ''),
+      app_access_levels: appAccessLevels,
+      app_access: deriveAppAccessFromMatrix(appAccessLevels),
+      menu_blocks: collectCheckedValues('input[type="checkbox"][data-access-menu="1"]'),
+      web_roles: collectCheckedValues('input[type="checkbox"][data-access-web-role="1"]'),
+      cv_contacto: current.cv_contacto || {},
+      cv_perfil_profesional: current.cv_perfil_profesional || '',
+      cv_experiencia: Array.isArray(current.cv_experiencia) ? current.cv_experiencia : [],
+      cv_educacion: Array.isArray(current.cv_educacion) ? current.cv_educacion : [],
+      cv_habilidades: current.cv_habilidades || { tecnicas: [], blandas: [] },
+      cv_idiomas: Array.isArray(current.cv_idiomas) ? current.cv_idiomas : [],
+      cv_formacion: Array.isArray(current.cv_formacion) ? current.cv_formacion : [],
+      cv_logros: Array.isArray(current.cv_logros) ? current.cv_logros : [],
+      cv_voluntariado: Array.isArray(current.cv_voluntariado) ? current.cv_voluntariado : [],
+      cv_info_adicional: current.cv_info_adicional || {},
+      identidad_mision: String(current.identidad_mision || '').trim(),
+      identidad_vision: String(current.identidad_vision || '').trim()
+    };
+  }
+
+  function renderForm() {
+    var current = getCurrent();
+    if (!current) {
+      formHost.innerHTML = '<p class="text-sm text-base-content/60">Selecciona un usuario en la lista para editar sus permisos.</p>';
+      return;
+    }
+    var rawRole = normalizeAccessRole(current.rol || current.role || 'usuario');
+    var roleOptions = assignableRoles.map(function (role) {
+      return {
+        value: role,
+        label: role === 'superadministrador' ? 'Superadministrador'
+          : role === 'administrador' ? 'Administrador'
+          : role === 'autoridades' ? 'Autoridades'
+          : role === 'departamento' ? 'Departamento'
+          : role === 'administrador_multiempresa' ? 'Administrador multiempresa'
+          : 'Usuario'
+      };
+    });
+    if (!roleOptions.some(function (opt) { return opt.value === rawRole; })) {
+      roleOptions.unshift({ value: rawRole, label: rawRole });
+    }
+    var appAccess = Array.isArray(current.app_access) ? current.app_access : [];
+    var appAccessLevels = normalizeAccessMatrix(current.app_access_levels, appAccess);
+    var webRoles = Array.isArray(current.web_roles) ? current.web_roles : [];
+    var menuBlocks = Array.isArray(current.menu_blocks) ? current.menu_blocks : [];
+
+    formHost.innerHTML = '' +
+      '<div class="flex items-start justify-between gap-3">' +
+        '<div>' +
+          '<h3 class="card-title">Permisos de acceso</h3>' +
+          '<p class="text-sm text-base-content/70">' + esc(current.nombre || '') + ' · ' + esc(current.usuario || '') + '</p>' +
+        '</div>' +
+        '<button type="button" class="btn btn-primary btn-sm" id="usuarios-save-btn">Guardar acceso</button>' +
+      '</div>' +
+      '<div class="grid gap-4">' +
+        '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered" type="text" value="' + esc(current.nombre || '') + '" readonly></label>' +
+          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Puesto</span></div><input class="input input-bordered" type="text" value="' + esc(current.puesto || '') + '" readonly></label>' +
+          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered" type="text" value="' + esc(current.usuario || '') + '" readonly></label>' +
+          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Correo</span></div><input class="input input-bordered" type="text" value="' + esc(current.correo || '') + '" readonly></label>' +
+        '</div>' +
+        '<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">' +
+          '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
+            '<h4 class="font-bold text-base-content text-xl mb-3">Roles</h4>' +
+            renderAccessRadioGroup('usuario-acceso-rol', roleOptions, rawRole, 'data-access-role') +
+          '</div>' +
+          '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
+            '<h4 class="font-bold text-base-content text-xl mb-3">POA</h4>' +
+            renderAccessRadioGroup('usuario-acceso-poa', ACCESS_POA_OPTIONS, normalizePoaAccess(current.poa_access_level || ''), 'data-access-poa') +
+          '</div>' +
+          '<div class="rounded-box border border-base-300 bg-base-100 p-3 lg:col-span-2">' +
+            '<h4 class="font-bold text-base-content text-xl mb-1">Bloques del menú</h4>' +
+            '<p class="text-sm text-base-content/70 mb-3">Si un menú no tiene ningún checkbox marcado, el usuario no podrá verlo. Permisos especiales queda reservado por ahora.</p>' +
+            renderAccessMatrix(appAccessLevels) +
+          '</div>' +
+          '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
+            '<h4 class="font-bold text-base-content text-xl mb-3">Página web</h4>' +
+            renderAccessCheckboxGroup(ACCESS_WEB_ROLE_OPTIONS, webRoles, 'data-access-web-role') +
+            '<div class="mt-4">' +
+              '<h5 class="font-semibold text-base-content mb-2">Bloques ocultos del menú</h5>' +
+              renderAccessCheckboxGroup(ACCESS_APP_OPTIONS, menuBlocks, 'data-access-menu') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var saveBtn = document.getElementById('usuarios-save-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Guardando...';
+        fetch('/api/colaboradores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(buildSavePayload(current))
+        })
+          .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+          .then(function (result) {
+            if (!result.ok || !result.json || result.json.success === false) {
+              throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo guardar acceso');
+            }
+            if (result.json && result.json.data) {
+              var key = getKey(result.json.data);
+              usuarios = usuarios.map(function (item) { return getKey(item) === key ? Object.assign({}, item, result.json.data) : item; });
+              selectedKey = key;
+              renderList();
+              renderForm();
+            }
+            window.alert('Acceso guardado correctamente.');
+          })
+          .catch(function (error) {
+            window.alert(error && error.message ? error.message : 'No se pudo guardar acceso');
+          })
+          .finally(function () {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar acceso';
+          });
+      });
+    }
+  }
+
+  viewHost.addEventListener('click', function (event) {
+    var target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    var row = target.closest('[data-usuario-key]');
+    if (!(row instanceof HTMLElement)) return;
+    openUserAccessByKey(row.getAttribute('data-usuario-key') || '');
+  });
+
+  viewHost.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    var target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    var row = target.closest('[data-usuario-key]');
+    if (!(row instanceof HTMLElement)) return;
+    event.preventDefault();
+    openUserAccessByKey(row.getAttribute('data-usuario-key') || '');
+  });
+
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', closeAccessModal);
+  }
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener('click', closeAccessModal);
+  }
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+      closeAccessModal();
+    }
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      searchTerm = String(searchInput.value || '').trim();
+      renderCurrentView();
+    });
+  }
+
+  viewButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      currentView = btn.getAttribute('data-usuarios-view') || 'list';
+      renderCurrentView();
+    });
+  });
+
+  fetch('/api/colaboradores', { headers: { Accept: 'application/json' } })
+    .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+    .then(function (result) {
+      if (!result.ok || !result.json || result.json.success === false) {
+        throw new Error('No se pudieron cargar usuarios');
+      }
+      usuarios = Array.isArray(result.json.data) ? result.json.data : [];
+      assignableRoles = Array.isArray(result.json.assignable_roles) ? result.json.assignable_roles : [];
+      renderCurrentView();
+      renderForm();
+    })
+    .catch(function (error) {
+      viewHost.innerHTML = '<article class="card bg-base-100 border border-base-300 shadow-sm"><div class="card-body"><p class="text-sm text-error">' + esc(error && error.message ? error.message : 'No se pudieron cargar usuarios.') + '</p></div></article>';
+      formHost.innerHTML = '<p class="text-sm text-error">No se pudieron cargar los usuarios.</p>';
+    });
+})();
+</script>
