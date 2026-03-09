@@ -27,7 +27,7 @@ from html import escape
 from fastapi_modulo.db import SessionLocal, Base, engine, DepartamentoOrganizacional
 from fastapi_modulo.personalizacion import personalizacion_router
 from fastapi_modulo.membresia import membresia_router
-from fastapi_modulo.modulos.presupuesto.presupuesto import router as presupuesto_router
+from fastapi_modulo.modulos.proyectando.presupuesto import router as presupuesto_router
 from fastapi_modulo.modulos.empleados.empleados import router as empleados_router
 from fastapi_modulo.modulos.empleados.regiones import router as regiones_router
 from fastapi_modulo.modulos.empleados.departamentos import router as departamentos_router

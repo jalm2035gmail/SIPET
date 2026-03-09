@@ -1,0 +1,89 @@
+<link rel="stylesheet" href="/modulos/proyectando/proyectando.css">
+<section class="proy-shell">
+  <div class="titulo proy-title-card">
+    <div class="proy-title-layout">
+      <img
+        src="/templates/icon/gastos.svg"
+        alt="Icono gastos"
+        width="96"
+        height="96"
+        class="proy-title-icon"
+      />
+      <div class="proy-title-copy">
+        <div class="proy-title-heading">Gastos</div>
+        <div class="proy-title-description">Pantalla reservada para la gestión de gastos.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="proy-actions">
+    <button type="button" class="btn btn-primary">Guardar</button>
+  </div>
+
+  <div class="tabs tabs-lifted proy-tabs" role="tablist" aria-label="Gastos">
+    <button type="button" class="tab tab-active rounded-t-lg whitespace-nowrap" data-ph-tab="principal">Pestaña</button>
+  </div>
+
+  <div class="proy-notebook-body">
+    <section class="card proy-panel-card" data-ph-panel="principal">
+      <div class="card-body space-y-4">
+        <div class="proy-placeholder-note">No tiene acceso. Póngase en contacto con el administrador.</div>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full text-sm proy-year-table" id="ph-table-gastos">
+            <thead></thead>
+            <tbody>
+              <tr><td class="text-base-content/60">Cargando estructura...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      var table = document.getElementById("ph-table-gastos");
+      if (!table) return;
+      var thead = table.querySelector("thead");
+      var tbody = table.querySelector("tbody");
+
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function buildPeriods(primerAnio, proyeccionAnios) {
+        var baseYear = Number(primerAnio);
+        if (!Number.isFinite(baseYear)) baseYear = new Date().getFullYear();
+        var futureYears = Math.max(1, Number(proyeccionAnios || 3) || 3);
+        var periods = [baseYear - 3, baseYear - 2, baseYear - 1];
+        for (var idx = 0; idx < futureYears; idx += 1) periods.push(baseYear + idx);
+        return periods;
+      }
+
+      function renderTable(periods) {
+        thead.innerHTML = "<tr><th class=\"min-w-[240px]\">Rubro</th>"
+          + periods.map(function (year) {
+              return "<th class=\"text-right min-w-[120px]\">" + escapeHtml(year) + "</th>";
+            }).join("")
+          + "</tr>";
+        tbody.innerHTML = "<tr><td>Rubro</td>"
+          + periods.map(function () { return "<td class=\"text-right\"></td>"; }).join("")
+          + "</tr>";
+      }
+
+      fetch("/api/proyectando/datos-preliminares", { credentials: "same-origin" })
+        .then(function (res) { return res.json(); })
+        .then(function (json) {
+          var data = json && json.data ? json.data : {};
+          renderTable(buildPeriods(data.primer_anio_proyeccion, data.anios_proyeccion));
+        })
+        .catch(function () {
+          renderTable(buildPeriods());
+        });
+    })();
+  </script>
+</section>

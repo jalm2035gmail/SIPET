@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi_modulo.modulos.proyectando.data_store import (
     load_crecimiento_general_activo_total_editor,
     load_crecimiento_general_resumen,
+    save_crecimiento_general_financiamiento_standards,
     save_crecimiento_general_activo_total_growth,
 )
 
@@ -12,11 +13,24 @@ router = APIRouter()
 CRECIMIENTO_GENERAL_TEMPLATE_PATH = os.path.join(
     "fastapi_modulo", "templates", "modulos", "proyectando", "crecimiento_general.html"
 )
+CRECIMIENTO_GENERAL_JS_PATH = os.path.join(
+    "fastapi_modulo", "modulos", "proyectando", "crecimiento_general.js"
+)
 
 
 def _get_colores_context() -> dict:
     from fastapi_modulo.main import get_colores_context
     return get_colores_context()
+
+
+@router.get("/modulos/proyectando/crecimiento_general.js")
+def proyectando_crecimiento_general_js():
+    try:
+        with open(CRECIMIENTO_GENERAL_JS_PATH, "r", encoding="utf-8") as fh:
+            content = fh.read()
+    except OSError:
+        content = "console.error('No se pudo cargar crecimiento_general.js');"
+    return HTMLResponse(content=content, media_type="application/javascript")
 
 
 @router.get("/proyectando/crecimiento-general", response_class=HTMLResponse)
@@ -62,6 +76,21 @@ async def guardar_crecimiento_general_activo_total(data: dict = Body(...)):
     if not isinstance(growth_map, dict):
         growth_map = {}
     return {"success": True, "data": save_crecimiento_general_activo_total_growth(growth_map)}
+
+
+@router.post("/api/proyectando/crecimiento-general/financiamiento-activo")
+async def guardar_crecimiento_general_financiamiento_activo(data: dict = Body(...)):
+    payload = data if isinstance(data, dict) else {}
+    standards = payload.get("standards", {})
+    pasivo_pct_map = payload.get("pasivo_pct_map", {})
+    resultado_pct_map = payload.get("resultado_pct_map", {})
+    if not isinstance(standards, dict):
+        standards = {}
+    if not isinstance(pasivo_pct_map, dict):
+        pasivo_pct_map = {}
+    if not isinstance(resultado_pct_map, dict):
+        resultado_pct_map = {}
+    return {"success": True, "data": save_crecimiento_general_financiamiento_standards(standards, pasivo_pct_map, resultado_pct_map)}
 
 
 @router.get("/proyectando/crecimiento-general/activo-total", response_class=HTMLResponse)
