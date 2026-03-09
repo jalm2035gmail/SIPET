@@ -3,17 +3,20 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from fastapi_modulo.modulos.proyectando.datos_preliminares_store import (
-    _parse_json_value,
-    _series_to_numeric,
+from fastapi_modulo.modulos.proyectando.proyectando_store_common import (
+    _float_or_none,
     _format_amount,
     _format_percent,
     _format_whole_amount,
-    _float_or_none,
-    _humanize_financiamiento_label,
     _get_projection_years,
+    _humanize_financiamiento_label,
+    _parse_json_value,
+    _series_to_numeric,
     get_if_period_columns,
     load_datos_preliminares_store,
+    save_datos_preliminares_store,
+)
+from fastapi_modulo.modulos.proyectando.datos_preliminares_store import (
     normalize_ifb_rows_json,
     sync_ifb_activo_total_from_crecimiento,
     sync_ifb_financiamiento_from_crecimiento,
@@ -418,4 +421,3 @@ def save_crecimiento_general_activo_total_growth(growth_map_raw: Dict[str, Any])
     store = sync_ifb_activo_total_from_crecimiento(store)
     save_datos_preliminares_store(store)
     return load_crecimiento_general_activo_total_editor(store)
-
