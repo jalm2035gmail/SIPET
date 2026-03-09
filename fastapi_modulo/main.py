@@ -892,6 +892,7 @@ def _render_backend_base(
         "login_logo_url": login_identity.get("login_logo_url"),
         "sidebar_logo_url": sidebar_logo_url,
         "user_app_access": _get_user_app_access(request),
+        "has_backend_module_access": bool(_get_user_app_access(request)),
         "is_superadmin_user": is_superadmin(request),
         "is_admin_or_superadmin_user": is_admin_or_superadmin(request),
     }

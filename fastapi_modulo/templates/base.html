@@ -68,7 +68,19 @@
             <!-- header de sección eliminado -->
             {% endif %}
             <div class="content-section-body">
+                {% if not is_superadmin_effective and not (has_backend_module_access | default(false)) %}
+                <section class="rounded-box border border-base-300 bg-base-100 p-8 md:p-12" style="min-height: 360px; display:flex; align-items:center; justify-content:center;">
+                    <div style="max-width: 760px; text-align:center;">
+                        <h2 style="margin:0 0 14px; font-size:2rem; font-weight:800; color:var(--sidebar-bottom, #0f172a);">Sin acceso a módulos</h2>
+                        <p style="margin:0; font-size:1.05rem; line-height:1.7; color:var(--navbar-text, #475569);">
+                            Aun no tiene acceso a módulos, contacte al administrador.
+                            <a href="https://wa.me/523327633869?text=Necesito%20acceso%20a%20SIPET" target="_blank" rel="noopener" style="font-weight:700; color:var(--sidebar-bottom, #0f172a); text-decoration:underline;">Solicitar acceso por WhatsApp</a>
+                        </p>
+                    </div>
+                </section>
+                {% else %}
                 {{ content|safe }}
+                {% endif %}
             </div>
         </section>
         </div>
