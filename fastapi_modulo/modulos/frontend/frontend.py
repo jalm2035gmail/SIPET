@@ -340,6 +340,60 @@ def _brand_css_vars() -> str:
         return ""
 
 
+def _frontend_menu_position() -> str:
+    try:
+        import fastapi_modulo.main as _core
+        data = _core._load_login_identity()
+        value = str(data.get("menu_position") or "arriba").strip().lower()
+        return value if value in {"arriba", "abajo"} else "arriba"
+    except Exception:
+        return "arriba"
+
+
+def _mobile_bottom_menu_html() -> str:
+    return """
+<style>
+.sipet-mobile-bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;display:flex;z-index:2000;
+  background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 -4px 16px rgba(0,0,0,.08)
+}
+body.sipet-menu-bottom{padding-bottom:76px}
+.sipet-mobile-bottom-nav a{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:10px 4px;text-decoration:none;color:#94a3b8;font-family:system-ui,sans-serif
+}
+.sipet-mobile-bottom-nav a.is-active{color:#3b82f6}
+.sipet-mobile-bottom-nav__icon{font-size:1.3rem;line-height:1}
+.sipet-mobile-bottom-nav__label{font-size:.65rem;font-weight:600;line-height:1.1}
+@media (min-width: 901px){
+  .sipet-mobile-bottom-nav{
+    left:50%;right:auto;bottom:20px;transform:translateX(-50%);
+    width:min(680px,calc(100vw - 32px));border:1px solid #e2e8f0;border-radius:18px;
+    box-shadow:0 20px 50px rgba(15,23,42,.18)
+  }
+  body.sipet-menu-bottom{padding-bottom:96px}
+  .sipet-mobile-bottom-nav a{padding:12px 8px}
+}
+</style>
+<nav class="sipet-mobile-bottom-nav" aria-label="Menú móvil inferior">
+  <a href="/web/inicio"><span class="sipet-mobile-bottom-nav__icon">🏠</span><span class="sipet-mobile-bottom-nav__label">Inicio</span></a>
+  <a href="/web/funcionalidades"><span class="sipet-mobile-bottom-nav__icon">💳</span><span class="sipet-mobile-bottom-nav__label">Servicios</span></a>
+  <a href="/web/descripcion"><span class="sipet-mobile-bottom-nav__icon">🔍</span><span class="sipet-mobile-bottom-nav__label">Buscar</span></a>
+  <a href="/web/login"><span class="sipet-mobile-bottom-nav__icon">👤</span><span class="sipet-mobile-bottom-nav__label">Perfil</span></a>
+</nav>
+<script>
+(function(){
+  var path=(window.location.pathname||'').replace(/\\/+$/,'')||'/';
+  document.body.classList.add('sipet-menu-bottom');
+  document.querySelectorAll('.sipet-mobile-bottom-nav a[href]').forEach(function(link){
+    var href=(link.getAttribute('href')||'').replace(/\\/+$/,'')||'/';
+    if(href===path || (href!=='/' && path.indexOf(href + '/')===0)){ link.classList.add('is-active'); }
+  });
+})();
+</script>
+"""
+
+
 def _resolve_frontend_logo_url() -> str:
     brand = _load_brand()
     brand_logo = str(brand.get("logo_url") or "").strip()
@@ -380,6 +434,8 @@ def _render_page_html(page: dict) -> HTMLResponse:
     has_forms = 'sipet-form-widget' in (gjs_html or body_content)
     form_script = _FORM_WIDGET_SCRIPT if has_forms else ""
     brand_vars = _brand_css_vars()
+    menu_position = _frontend_menu_position()
+    bottom_menu = _mobile_bottom_menu_html() if menu_position == "abajo" else ""
     return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -396,7 +452,7 @@ def _render_page_html(page: dict) -> HTMLResponse:
   <style>*{{box-sizing:border-box;margin:0;padding:0}}body{{font-family:system-ui,sans-serif;color:#1e293b}}</style>
   {extra_style}
 </head>
-<body>{body_content}{form_script}</body>
+<body>{body_content}{bottom_menu}{form_script}</body>
 </html>""")
 
 

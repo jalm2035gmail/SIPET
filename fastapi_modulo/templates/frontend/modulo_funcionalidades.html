@@ -9,7 +9,39 @@
   <link rel="stylesheet" href="/templates/sipet-funcionalidades.css" />
 </head>
 
-<body>
+<body class="{% if menu_position == 'abajo' %}sipet-menu-bottom{% endif %}">
+  {% if menu_position == 'abajo' %}
+  <style>
+      body.sipet-menu-bottom { padding-bottom: 76px; }
+      body.sipet-menu-bottom .promo-bar,
+      body.sipet-menu-bottom .topbar { display: none; }
+      body.sipet-menu-bottom main { padding-top: 32px; }
+      .sipet-mobile-bottom-nav {
+        position: fixed; bottom: 0; left: 0; right: 0; display: flex; z-index: 2000;
+        background: #fff; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+      }
+      .sipet-mobile-bottom-nav a {
+        flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 3px; padding: 10px 4px; text-decoration: none; color: #94a3b8;
+      }
+      .sipet-mobile-bottom-nav a.is-active { color: #3b82f6; }
+      .sipet-mobile-bottom-nav__icon { font-size: 1.3rem; line-height: 1; }
+      .sipet-mobile-bottom-nav__label { font-size: .65rem; font-weight: 600; line-height: 1.1; }
+    }
+    @media (min-width: 901px) {
+      body.sipet-menu-bottom { padding-bottom: 96px; }
+      body.sipet-menu-bottom .promo-bar,
+      body.sipet-menu-bottom .topbar { display: none; }
+      body.sipet-menu-bottom main { padding-top: 40px; }
+      .sipet-mobile-bottom-nav {
+        left: 50%; right: auto; bottom: 20px; transform: translateX(-50%);
+        width: min(680px, calc(100vw - 32px)); border: 1px solid #e2e8f0; border-radius: 18px;
+        box-shadow: 0 20px 50px rgba(15,23,42,.18);
+      }
+      .sipet-mobile-bottom-nav a { padding: 12px 8px; }
+    }
+  </style>
+  {% endif %}
   <div class="promo-bar" role="note" aria-label="Promoción cuestionario">
     <div class="wrap promo-bar__inner">
       <span>Responda este cuestionario y obtenga hasta un 60% de descuento (solo para 5 cooperativas).</span>
@@ -838,6 +870,14 @@
         })
         .catch(function(){});
     })();
-    </script>
+  </script>
+  {% if menu_position == 'abajo' %}
+  <nav class="sipet-mobile-bottom-nav" aria-label="Menú móvil inferior">
+    <a href="/web/inicio"><span class="sipet-mobile-bottom-nav__icon">🏠</span><span class="sipet-mobile-bottom-nav__label">Inicio</span></a>
+    <a href="/web/funcionalidades" class="is-active"><span class="sipet-mobile-bottom-nav__icon">💳</span><span class="sipet-mobile-bottom-nav__label">Servicios</span></a>
+    <a href="/web/descripcion"><span class="sipet-mobile-bottom-nav__icon">🔍</span><span class="sipet-mobile-bottom-nav__label">Buscar</span></a>
+    <a href="/web/login"><span class="sipet-mobile-bottom-nav__icon">👤</span><span class="sipet-mobile-bottom-nav__label">Perfil</span></a>
+  </nav>
+  {% endif %}
 </body>
 </html>

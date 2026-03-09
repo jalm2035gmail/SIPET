@@ -100,6 +100,7 @@ DEFAULT_LOGIN_IDENTITY = {
     "mobile_bg_filename": "movil.jpg",
     "company_short_name": "AVAN",
     "login_message": "Incrementando el nivel de eficiencia",
+    "menu_position": "arriba",
 }
 PLANTILLAS_STORE_PATH = (os.environ.get("PLANTILLAS_STORE_PATH") or os.path.join(RUNTIME_STORE_DIR, "plantillas_store.json")).strip()
 AUTH_COOKIE_NAME = "auth_session"
@@ -758,6 +759,7 @@ def _get_login_identity_context() -> Dict[str, str]:
         ),
         "login_company_short_name": data.get("company_short_name") or DEFAULT_LOGIN_IDENTITY["company_short_name"],
         "login_message": data.get("login_message") or DEFAULT_LOGIN_IDENTITY["login_message"],
+        "menu_position": data.get("menu_position") or DEFAULT_LOGIN_IDENTITY["menu_position"],
     }
 
 
@@ -2836,6 +2838,7 @@ def web(request: Request):
             "app_favicon_url": login_identity.get("login_favicon_url"),
             "company_logo_url": login_identity.get("login_logo_url"),
             "login_company_short_name": login_identity.get("login_company_short_name"),
+            "menu_position": login_identity.get("menu_position"),
         },
     )
 
@@ -2850,6 +2853,7 @@ def web_descripcion(request: Request):
             "title": "SIPET",
             "app_favicon_url": login_identity.get("login_favicon_url"),
             "company_logo_url": login_identity.get("login_logo_url"),
+            "menu_position": login_identity.get("menu_position"),
         },
     )
 
@@ -2864,6 +2868,7 @@ def web_funcionalidades(request: Request):
             "title": "Funcionalidades | SIPET",
             "app_favicon_url": login_identity.get("login_favicon_url"),
             "company_logo_url": login_identity.get("login_logo_url"),
+            "menu_position": login_identity.get("menu_position"),
         },
     )
 
@@ -6774,6 +6779,9 @@ def _render_identidad_institucional_page(request: Request) -> HTMLResponse:
     favicon_url = _build_login_asset_url(identity.get("favicon_filename"), DEFAULT_LOGIN_IDENTITY["favicon_filename"])
     safe_company_short_name = escape(identity.get("company_short_name", DEFAULT_LOGIN_IDENTITY["company_short_name"]))
     safe_login_message = escape(identity.get("login_message", DEFAULT_LOGIN_IDENTITY["login_message"]))
+    current_menu_position = (identity.get("menu_position") or DEFAULT_LOGIN_IDENTITY["menu_position"]).strip().lower()
+    if current_menu_position not in {"arriba", "abajo"}:
+        current_menu_position = DEFAULT_LOGIN_IDENTITY["menu_position"]
     logo_url = _build_login_asset_url(identity.get("logo_filename"), DEFAULT_LOGIN_IDENTITY["logo_filename"])
     desktop_bg_url = _build_login_asset_url(identity.get("desktop_bg_filename"), DEFAULT_LOGIN_IDENTITY["desktop_bg_filename"])
     mobile_bg_url = _build_login_asset_url(identity.get("mobile_bg_filename"), DEFAULT_LOGIN_IDENTITY["mobile_bg_filename"])
@@ -7067,6 +7075,24 @@ def _render_identidad_institucional_page(request: Request) -> HTMLResponse:
                             }}
                         }})();
                     </script>
+                    <section class="id-card id-card--pad" style="margin-bottom:14px;">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <h2 style="margin:0;font-size:18px;">Posición del menu</h2>
+                                <p style="margin:6px 0 0;color:var(--muted);font-size:13px;">Arriba mantiene el menú actual. Abajo activa la barra móvil inferior en páginas públicas.</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <label class="label cursor-pointer gap-2">
+                                    <input type="radio" name="menu_position" value="arriba" {"checked" if current_menu_position == "arriba" else ""}>
+                                    <span class="font-semibold text-sm" style="color:#0f3d2e;">Arriba</span>
+                                </label>
+                                <label class="label cursor-pointer gap-2">
+                                    <input type="radio" name="menu_position" value="abajo" {"checked" if current_menu_position == "abajo" else ""}>
+                                    <span class="font-semibold text-sm" style="color:#0f3d2e;">Abajo</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
                     <section class="id-stats">
                         <article class="id-stat">
                             <div class="id-stat__k">Nombre corto</div>
@@ -7116,6 +7142,7 @@ def _render_identidad_institucional_page(request: Request) -> HTMLResponse:
                                     <div class="id-help">Sugerencia: frase corta y orientada a valor.</div>
                                 </div>
                                 <div class="id-actions">
+                                    <button class="id-btn id-btn--primary" type="submit" form="identity-form">Guardar</button>
                                     <button class="id-btn id-btn--soft" type="reset">Restablecer</button>
                                 </div>
                             </div>
@@ -7237,6 +7264,7 @@ async def identidad_institucional_save(
     request: Request,
     company_short_name: str = Form(""),
     login_message: str = Form(""),
+    menu_position: str = Form("arriba"),
     favicon: Optional[UploadFile] = File(None),
     logo_empresa: Optional[UploadFile] = File(None),
     fondo_escritorio: Optional[UploadFile] = File(None),
@@ -7250,6 +7278,7 @@ async def identidad_institucional_save(
     current = _load_login_identity()
     current["company_short_name"] = company_short_name.strip() or DEFAULT_LOGIN_IDENTITY["company_short_name"]
     current["login_message"] = login_message.strip() or DEFAULT_LOGIN_IDENTITY["login_message"]
+    current["menu_position"] = "abajo" if str(menu_position).strip().lower() == "abajo" else "arriba"
 
     if str(remove_favicon).strip() == "1":
         _remove_login_image_if_custom(current.get("favicon_filename"))
@@ -7285,6 +7314,11 @@ async def identidad_institucional_save(
         current["mobile_bg_filename"] = new_mobile
 
     _save_login_identity(current)
+    try:
+        from fastapi_modulo.modulos.frontend import frontend as _frontend_module
+        _frontend_module._page_cache.clear()
+    except Exception:
+        pass
     return RedirectResponse(url="/identidad-institucional?saved=1", status_code=303)
 
 # Placeholder para templates
