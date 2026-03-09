@@ -230,6 +230,14 @@
         ACCESS_LEVEL_OPTIONS.forEach(function (level) {
           normalized[appName][level.key] = Boolean(rawEntry[level.key]);
         });
+        var selectedKeys = ACCESS_LEVEL_OPTIONS
+          .filter(function (level) { return normalized[appName][level.key]; })
+          .map(function (level) { return level.key; });
+        if (selectedKeys.length > 1) {
+          ACCESS_LEVEL_OPTIONS.forEach(function (level, index) {
+            normalized[appName][level.key] = index === 0 ? normalized[appName][level.key] : false;
+          });
+        }
       }
     });
     if (Array.isArray(fallbackAppAccess)) {
@@ -321,7 +329,7 @@
         poa_access_level: String(current.poa_access_level || 'mis_tareas').trim(),
         app_access_levels: normalizeAccessMatrix(current.app_access_levels, current.app_access),
         app_access: Array.isArray(current.app_access) ? current.app_access : [],
-        menu_blocks: Array.isArray(current.menu_blocks) ? current.menu_blocks : [],
+        menu_blocks: [],
         web_roles: Array.isArray(current.web_roles) ? current.web_roles : []
       };
     }
@@ -333,9 +341,24 @@
       poa_access_level: poaEl ? String(poaEl.value || '').trim() : normalizePoaAccess(current.poa_access_level || ''),
       app_access_levels: appAccessLevels,
       app_access: deriveAppAccessFromMatrix(appAccessLevels),
-      menu_blocks: collectCheckedValues('input[type="checkbox"][data-access-menu="1"]'),
+      menu_blocks: [],
       web_roles: collectCheckedValues('input[type="checkbox"][data-access-web-role="1"]')
     };
+  }
+
+  function bindAccessMatrixExclusive() {
+    Array.from(mount.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
+      el.addEventListener('change', function () {
+        if (!el.checked) return;
+        var menuName = String(el.getAttribute('data-menu-name') || '').trim();
+        if (!menuName) return;
+        Array.from(mount.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (peer) {
+          if (peer === el) return;
+          if (String(peer.getAttribute('data-menu-name') || '').trim() !== menuName) return;
+          peer.checked = false;
+        });
+      });
+    });
   }
 
   function renderCvValueList(items, emptyText) {

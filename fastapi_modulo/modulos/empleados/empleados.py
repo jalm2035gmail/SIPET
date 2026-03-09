@@ -30,6 +30,8 @@ CV_CONTACT_ALIASES = {
     "portfolio": ("portfolio", "portafolio", "sitio_web", "website"),
 }
 ACCESS_APP_OPTIONS = (
+    "Mi tablero",
+    "Conversaciones",
     "BSC",
     "Organización",
     "Estrategia y táctica",
@@ -39,6 +41,7 @@ ACCESS_APP_OPTIONS = (
     "Reportes",
     "Empresa",
     "Intelicoop",
+    "Brújula",
     "CRM",
     "Auditoria",
     "ActivoFijo",
@@ -152,10 +155,18 @@ def _normalize_app_access_levels(raw_levels: Any, fallback_app_access: Any = Non
             raw_entry = raw_levels.get(app_name)
             if not isinstance(raw_entry, dict):
                 continue
-            normalized[app_name] = {
+            levels_for_app = {
                 level_key: bool(raw_entry.get(level_key, False))
                 for level_key in ACCESS_LEVEL_KEYS
             }
+            selected_keys = [level_key for level_key in ACCESS_LEVEL_KEYS if levels_for_app[level_key]]
+            if len(selected_keys) > 1:
+                first_key = selected_keys[0]
+                levels_for_app = {
+                    level_key: level_key == first_key
+                    for level_key in ACCESS_LEVEL_KEYS
+                }
+            normalized[app_name] = levels_for_app
     fallback_values: List[str] = []
     if isinstance(fallback_app_access, list):
         fallback_values = [str(item).strip() for item in fallback_app_access if str(item).strip() in ACCESS_APP_OPTIONS]

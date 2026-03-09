@@ -179,6 +179,14 @@
         ACCESS_LEVEL_OPTIONS.forEach(function (level) {
           normalized[appName][level.key] = Boolean(rawEntry[level.key]);
         });
+        var selectedKeys = ACCESS_LEVEL_OPTIONS
+          .filter(function (level) { return normalized[appName][level.key]; })
+          .map(function (level) { return level.key; });
+        if (selectedKeys.length > 1) {
+          ACCESS_LEVEL_OPTIONS.forEach(function (level, index) {
+            normalized[appName][level.key] = index === 0 ? normalized[appName][level.key] : false;
+          });
+        }
       }
     });
     if (Array.isArray(fallbackAppAccess)) {
@@ -269,6 +277,21 @@
       matrix[menuName][levelKey] = Boolean(el.checked);
     });
     return matrix;
+  }
+
+  function bindAccessMatrixExclusive() {
+    Array.from(formHost.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
+      el.addEventListener('change', function () {
+        if (!el.checked) return;
+        var menuName = String(el.getAttribute('data-menu-name') || '').trim();
+        if (!menuName) return;
+        Array.from(formHost.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (peer) {
+          if (peer === el) return;
+          if (String(peer.getAttribute('data-menu-name') || '').trim() !== menuName) return;
+          peer.checked = false;
+        });
+      });
+    });
   }
 
   function getKey(item) {
@@ -572,7 +595,7 @@
       poa_access_level: poaEl ? String(poaEl.value || '').trim() : normalizePoaAccess(current.poa_access_level || ''),
       app_access_levels: appAccessLevels,
       app_access: deriveAppAccessFromMatrix(appAccessLevels),
-      menu_blocks: collectCheckedValues('input[type="checkbox"][data-access-menu="1"]'),
+      menu_blocks: [],
       web_roles: collectCheckedValues('input[type="checkbox"][data-access-web-role="1"]'),
       cv_contacto: current.cv_contacto || {},
       cv_perfil_profesional: current.cv_perfil_profesional || '',
@@ -613,7 +636,6 @@
     var appAccess = Array.isArray(current.app_access) ? current.app_access : [];
     var appAccessLevels = normalizeAccessMatrix(current.app_access_levels, appAccess);
     var webRoles = Array.isArray(current.web_roles) ? current.web_roles : [];
-    var menuBlocks = Array.isArray(current.menu_blocks) ? current.menu_blocks : [];
 
     formHost.innerHTML = '' +
       '<div class="flex items-start justify-between gap-3">' +
@@ -647,13 +669,11 @@
           '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
             '<h4 class="font-bold text-base-content text-xl mb-3">Página web</h4>' +
             renderAccessCheckboxGroup(ACCESS_WEB_ROLE_OPTIONS, webRoles, 'data-access-web-role') +
-            '<div class="mt-4">' +
-              '<h5 class="font-semibold text-base-content mb-2">Bloques ocultos del menú</h5>' +
-              renderAccessCheckboxGroup(ACCESS_APP_OPTIONS, menuBlocks, 'data-access-menu') +
-            '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
+
+    bindAccessMatrixExclusive();
 
     var saveBtn = document.getElementById('usuarios-save-btn');
     if (saveBtn) {

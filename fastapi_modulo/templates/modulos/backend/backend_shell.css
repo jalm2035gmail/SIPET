@@ -1429,14 +1429,26 @@ html.ui-sidebar-modern .sidebar-block > summary:focus-visible {
 html.ui-sidebar-modern .sidebar-main-link.is-active,
 html.ui-sidebar-modern .sidebar-block.is-active > summary {
     background: #09163a;
-    color: var(--navbar-text, #1f2933) !important;
+    color: #ffffff !important;
     font-weight: 700;
     box-shadow: 0 10px 22px rgba(9, 22, 58, 0.18);
 }
 html.ui-sidebar-modern .sidebar-main-link.is-active .sidebar-main-icon,
 html.ui-sidebar-modern .sidebar-block.is-active > summary .sidebar-main-icon {
-    color: var(--navbar-text, #1f2933) !important;
+    color: #ffffff !important;
     opacity: 1;
+}
+html.ui-sidebar-modern .sidebar-main-link:hover .sidebar-main-icon,
+html.ui-sidebar-modern .sidebar-main-link:hover .sidebar-main-label,
+html.ui-sidebar-modern .sidebar-main-link:focus-visible .sidebar-main-icon,
+html.ui-sidebar-modern .sidebar-main-link:focus-visible .sidebar-main-label,
+html.ui-sidebar-modern .sidebar-block > summary:hover .sidebar-main-icon,
+html.ui-sidebar-modern .sidebar-block > summary:hover .sidebar-main-label,
+html.ui-sidebar-modern .sidebar-block > summary:focus-visible .sidebar-main-icon,
+html.ui-sidebar-modern .sidebar-block > summary:focus-visible .sidebar-main-label,
+html.ui-sidebar-modern .sidebar-main-link.is-active .sidebar-main-label,
+html.ui-sidebar-modern .sidebar-block.is-active > summary .sidebar-main-label {
+    color: #ffffff !important;
 }
 html.ui-sidebar-modern .sidebar-main-left {
     width: 100%;

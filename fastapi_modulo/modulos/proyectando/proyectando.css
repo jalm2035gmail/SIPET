@@ -1390,33 +1390,33 @@
   font-weight: 700;
 }
 
-.tab-panel[data-panel="reportes"]:fullscreen {
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"]:fullscreen {
   padding: 14px;
   background: var(--page-bg, #f4f6fb);
   overflow: auto;
 }
 
-.tab-panel[data-panel="reportes"] {
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] {
   overflow-x: auto;
   overflow-y: auto;
   max-height: 75vh;
 }
 
-.tab-panel[data-panel="reportes"]:fullscreen .reportes-fullscreen-hint {
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"]:fullscreen .reportes-fullscreen-hint {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.tab-panel[data-panel="reportes"] > .alertas-box,
-.tab-panel[data-panel="reportes"] > .reportes-grid,
-.tab-panel[data-panel="reportes"] > #reporte-ejecucion,
-.tab-panel[data-panel="reportes"] > #reporte-desviaciones,
-.tab-panel[data-panel="reportes"] > #reporte-tendencia,
-.tab-panel[data-panel="reportes"] > #reporte-ejecucion-area,
-.tab-panel[data-panel="reportes"] > #reporte-composicion-gasto,
-.tab-panel[data-panel="reportes"] > #reporte-kpis-sipet,
-.tab-panel[data-panel="reportes"] > #reporte-mapa-calor {
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > .alertas-box,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > .reportes-grid,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-ejecucion,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-desviaciones,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-tendencia,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-ejecucion-area,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-composicion-gasto,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-kpis-sipet,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-mapa-calor {
   display: none !important;
 }
 

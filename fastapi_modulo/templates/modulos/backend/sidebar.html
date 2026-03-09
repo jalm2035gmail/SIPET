@@ -16,14 +16,12 @@
             </span>
         </a>
         {% endif %}
-        {% if is_superadmin_effective or 'Conversaciones' in (user_app_access | default([])) %}
         <a class="sidebar-main-link" href="/notificaciones" data-menu-name="Conversaciones" data-route="/notificaciones">
             <span class="sidebar-main-left">
                 <i class="sidebar-main-icon fa-regular fa-envelope" aria-hidden="true"></i>
                 <span class="sidebar-main-label">Conversaciones</span>
             </span>
         </a>
-        {% endif %}
         {% if is_superadmin_effective or 'Organización' in (user_app_access | default([])) %}
         <a class="sidebar-main-link" href="/inicio/departamentos" data-menu-name="Organización" data-route="/inicio/departamentos">
             <span class="sidebar-main-left">

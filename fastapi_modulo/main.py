@@ -365,14 +365,21 @@ def _get_user_app_access(request: Request) -> list:
         entry = raw.get(user_id, {})
         if not isinstance(entry, dict):
             return []
+        visible = []
+        seen = set()
         direct_access = entry.get("app_access", [])
         if isinstance(direct_access, list):
-            normalized = [str(item).strip() for item in direct_access if str(item).strip()]
-            if normalized:
-                return normalized
+            for item in direct_access:
+                name = str(item).strip()
+                if not name:
+                    continue
+                key = name.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                visible.append(name)
         app_access_levels = entry.get("app_access_levels", {})
         if isinstance(app_access_levels, dict):
-            visible = []
             for app_name, levels in app_access_levels.items():
                 if not isinstance(levels, dict):
                     continue
@@ -383,10 +390,15 @@ def _get_user_app_access(request: Request) -> list:
                     "user_only",
                     "special_permissions",
                 )):
-                    visible.append(str(app_name).strip())
-            if visible:
-                return visible
-        return []
+                    name = str(app_name).strip()
+                    if not name:
+                        continue
+                    key = name.lower()
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    visible.append(name)
+        return visible
     except Exception:
         return []
 
@@ -892,7 +904,6 @@ def _render_backend_base(
         "login_logo_url": login_identity.get("login_logo_url"),
         "sidebar_logo_url": sidebar_logo_url,
         "user_app_access": _get_user_app_access(request),
-        "has_backend_module_access": bool(_get_user_app_access(request)),
         "is_superadmin_user": is_superadmin(request),
         "is_admin_or_superadmin_user": is_admin_or_superadmin(request),
     }
