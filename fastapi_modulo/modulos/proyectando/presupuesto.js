@@ -1,4 +1,5 @@
-  document.addEventListener("DOMContentLoaded", function() {
+  (function() {
+    const initPresupuestoPage = function() {
     const presupuestoTabs = Array.from(document.querySelectorAll(".presupuesto-notebook [data-presupuesto-tab]"));
     const presupuestoPanels = Array.from(document.querySelectorAll(".presupuesto-notebook .presupuesto-tab-panel[data-presupuesto-panel]"));
     const setPresupuestoTab = (tabKey) => {
@@ -1349,4 +1350,11 @@
       });
     });
 
-  });
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initPresupuestoPage, { once: true });
+    } else {
+      initPresupuestoPage();
+    }
+  })();

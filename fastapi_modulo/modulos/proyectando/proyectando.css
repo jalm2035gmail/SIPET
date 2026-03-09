@@ -1408,15 +1408,15 @@
   gap: 6px;
 }
 
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > .alertas-box,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > .reportes-grid,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-ejecucion,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-desviaciones,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-tendencia,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-ejecucion-area,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-composicion-gasto,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-kpis-sipet,
-.presupuesto-tab-panel[data-presupuesto-panel="reportes"] > #reporte-mapa-calor {
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > .alertas-box,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > .reportes-grid,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > #reporte-ejecucion,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > #reporte-desviaciones,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > #reporte-tendencia,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > #reporte-ejecucion-area,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > #reporte-composicion-gasto,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > #reporte-kpis-sipet,
+.presupuesto-tab-panel[data-presupuesto-panel="reportes"][hidden] > #reporte-mapa-calor {
   display: none !important;
 }
 

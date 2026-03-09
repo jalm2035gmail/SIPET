@@ -9,7 +9,7 @@ router = APIRouter()
 PRESUPUESTO_JS_PATH = Path(__file__).with_name("presupuesto.js")
 
 
-@router.get("/modulos/proyectando/presupuesto.js")
+@router.get("/presupuesto.js")
 def proyectando_presupuesto_js():
     try:
         content = PRESUPUESTO_JS_PATH.read_text(encoding="utf-8")
