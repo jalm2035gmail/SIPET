@@ -1,5 +1,8 @@
 {
   "scripts": {
+    "sync:fontawesome": "mkdir -p ./static/webfonts && cp ./node_modules/@fortawesome/fontawesome-free/webfonts/*.woff2 ./static/webfonts/",
+    "prebuild:css": "npm run sync:fontawesome",
+    "prewatch:css": "npm run sync:fontawesome",
     "build:css": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --minify",
     "watch:css": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch"
   },
@@ -10,6 +13,7 @@
     "tailwindcss": "^4.2.1"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "daisyui": "^5.5.19",
     "grapesjs": "^0.22.14"
   }
