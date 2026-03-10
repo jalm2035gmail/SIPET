@@ -100,6 +100,7 @@
             semaforo_rojo: String(item?.semaforo_rojo || '').trim(),
             semaforo_verde: String(item?.semaforo_verde || '').trim(),
             categoria: String(item?.categoria || '').trim(),
+            perspectiva: String(item?.perspectiva || '').trim(),
           });
           const renderAxisKpiEditor = () => {
             if (!planesAxisKpiList) return;
@@ -117,6 +118,7 @@
                   <label class="form-control w-full"><div class="label"><span class="label-text">Nombre</span></div><input class="input input-bordered w-full" data-kpi-field="nombre" data-kpi-index="${idx}" value="${escapeHtml(item.nombre)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
                   <label class="form-control w-full"><div class="label"><span class="label-text">Responsable</span></div><input class="input input-bordered w-full" data-kpi-field="responsable" data-kpi-index="${idx}" value="${escapeHtml(item.responsable)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
                   <label class="form-control w-full"><div class="label"><span class="label-text">Categoría</span></div><input class="input input-bordered w-full" data-kpi-field="categoria" data-kpi-index="${idx}" value="${escapeHtml(item.categoria)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
+                  <label class="form-control w-full"><div class="label"><span class="label-text">Perspectiva</span></div><input class="input input-bordered w-full" data-kpi-field="perspectiva" data-kpi-index="${idx}" value="${escapeHtml(item.perspectiva)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
                   <label class="form-control w-full md:col-span-2 xl:col-span-3"><div class="label"><span class="label-text">Descripción</span></div><textarea class="textarea textarea-bordered w-full" data-kpi-field="descripcion" data-kpi-index="${idx}" ${planesAxisEditMode ? '' : 'disabled'}>${escapeHtml(item.descripcion)}</textarea></label>
                   <label class="form-control w-full md:col-span-2 xl:col-span-3"><div class="label"><span class="label-text">Objetivo</span></div><textarea class="textarea textarea-bordered w-full" data-kpi-field="objetivo" data-kpi-index="${idx}" ${planesAxisEditMode ? '' : 'disabled'}>${escapeHtml(item.objetivo)}</textarea></label>
                   <label class="form-control w-full md:col-span-2 xl:col-span-3"><div class="label"><span class="label-text">Fórmula</span></div><textarea class="textarea textarea-bordered w-full" data-kpi-field="formula" data-kpi-index="${idx}" ${planesAxisEditMode ? '' : 'disabled'}>${escapeHtml(item.formula)}</textarea></label>

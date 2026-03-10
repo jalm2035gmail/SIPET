@@ -177,11 +177,23 @@ def _ensure_axis_kpi_table(db) -> None:
               semaforo_rojo TEXT NOT NULL DEFAULT '',
               semaforo_verde TEXT NOT NULL DEFAULT '',
               categoria VARCHAR(255) NOT NULL DEFAULT '',
+              perspectiva VARCHAR(255) NOT NULL DEFAULT '',
               orden INTEGER NOT NULL DEFAULT 0
             )
             """
         )
     )
+    try:
+        cols = db.execute(text("PRAGMA table_info(strategic_axis_kpis)")).fetchall()
+        col_names = {str(col[1]).strip().lower() for col in cols if len(col) > 1}
+        if "perspectiva" not in col_names:
+            db.execute(
+                text(
+                    "ALTER TABLE strategic_axis_kpis ADD COLUMN perspectiva VARCHAR(255) NOT NULL DEFAULT ''"
+                )
+            )
+    except Exception:
+        pass
 
 
 def _normalize_axis_kpi_items(raw: Any) -> List[Dict[str, str]]:
@@ -208,6 +220,7 @@ def _normalize_axis_kpi_items(raw: Any) -> List[Dict[str, str]]:
                 "semaforo_rojo": str(item.get("semaforo_rojo") or "").strip(),
                 "semaforo_verde": str(item.get("semaforo_verde") or "").strip(),
                 "categoria": str(item.get("categoria") or "").strip(),
+                "perspectiva": str(item.get("perspectiva") or "").strip(),
                 "orden": idx,
             }
         )
@@ -226,7 +239,7 @@ def _axis_kpis_by_axis_ids(db, axis_ids: List[int]) -> Dict[int, List[Dict[str, 
             f"""
             SELECT id, axis_id, nombre, descripcion, objetivo, formula, responsable, fuente_datos,
                    unidad, frecuencia, linea_base, estandar_meta, semaforo_rojo, semaforo_verde,
-                   categoria, orden
+                   categoria, perspectiva, orden
             FROM strategic_axis_kpis
             WHERE axis_id IN ({placeholders})
             ORDER BY axis_id ASC, orden ASC, id ASC
@@ -254,7 +267,8 @@ def _axis_kpis_by_axis_ids(db, axis_ids: List[int]) -> Dict[int, List[Dict[str, 
                 "semaforo_rojo": str(row[12] or ""),
                 "semaforo_verde": str(row[13] or ""),
                 "categoria": str(row[14] or ""),
-                "orden": int(row[15] or 0),
+                "perspectiva": str(row[15] or ""),
+                "orden": int(row[16] or 0),
             }
         )
     return result
@@ -271,11 +285,11 @@ def _replace_axis_kpis(db, axis_id: int, items: Any) -> None:
                 INSERT INTO strategic_axis_kpis (
                   axis_id, nombre, descripcion, objetivo, formula, responsable, fuente_datos,
                   unidad, frecuencia, linea_base, estandar_meta, semaforo_rojo, semaforo_verde,
-                  categoria, orden
+                  categoria, perspectiva, orden
                 ) VALUES (
                   :axis_id, :nombre, :descripcion, :objetivo, :formula, :responsable, :fuente_datos,
                   :unidad, :frecuencia, :linea_base, :estandar_meta, :semaforo_rojo, :semaforo_verde,
-                  :categoria, :orden
+                  :categoria, :perspectiva, :orden
                 )
                 """
             ),
@@ -294,6 +308,7 @@ def _replace_axis_kpis(db, axis_id: int, items: Any) -> None:
                 "semaforo_rojo": item["semaforo_rojo"],
                 "semaforo_verde": item["semaforo_verde"],
                 "categoria": item["categoria"],
+                "perspectiva": item["perspectiva"],
                 "orden": int(item["orden"]),
             },
         )

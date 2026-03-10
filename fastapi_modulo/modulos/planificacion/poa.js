@@ -1,7 +1,7 @@
 (() => {
           const gridEl = document.getElementById("poa-board-grid");
           const openTreeBtn = document.querySelector('.view-pill[data-view="arbol"]');
-          const openKanbanBtn = document.querySelector('.view-pill[data-view="kanban"]');
+          const openGanttBtn = document.querySelector('.view-pill[data-view="gantt"]');
           const openCalendarBtn = document.querySelector('.view-pill[data-view="calendar"]');
           const msgEl = document.getElementById("poa-board-msg");
           const noOwnerMsgEl = document.getElementById("poa-no-owner-msg");
@@ -63,6 +63,7 @@
           const actEveryDaysWrapEl = document.getElementById("poa-act-every-days-wrap");
           const actEveryDaysEl = document.getElementById("poa-act-every-days");
           const actDescEl = document.getElementById("poa-act-desc");
+          const kpiListEl = document.getElementById("poa-kpi-list");
           const actSuggestIaBtn = document.getElementById("poa-act-suggest-ia");
           const actMsgEl = document.getElementById("poa-act-msg");
           const budgetTypeEl = document.getElementById("poa-budget-type");
@@ -230,6 +231,29 @@
             msgEl.textContent = text || "";
             msgEl.style.color = isError ? "#b91c1c" : "#0f3d2e";
           };
+          const renderObjectiveKpis = (objective) => {
+            if (!kpiListEl) return;
+            const list = Array.isArray(objective?.kpis) ? objective.kpis : [];
+            if (!list.length) {
+              kpiListEl.innerHTML = '<div class="poa-sub-meta">Sin KPIs disponibles en este objetivo.</div>';
+              return;
+            }
+            kpiListEl.innerHTML = list.map((item) => {
+              const nombre = escapeHtml(String(item?.nombre || "KPI sin nombre"));
+              const referencia = escapeHtml(String(item?.referencia || ""));
+              const formula = escapeHtml(String(item?.formula || ""));
+              const periodicidad = escapeHtml(String(item?.periodicidad || ""));
+              const estandar = escapeHtml(String(item?.estandar || ""));
+              const meta = [periodicidad, estandar, referencia].filter(Boolean).join(" · ");
+              return `
+                <article class="poa-kpi-item">
+                  <div class="poa-kpi-name">${nombre}</div>
+                  ${formula ? `<div class="poa-kpi-meta">Fórmula: ${formula}</div>` : ""}
+                  ${meta ? `<div class="poa-kpi-meta">${meta}</div>` : ""}
+                </article>
+              `;
+            }).join("");
+          };
           const loadAllCollaboratorNames = async () => {
             if (Array.isArray(allCollaboratorsCache)) return allCollaboratorsCache;
             const response = await fetch("/api/colaboradores", {
@@ -393,8 +417,8 @@
           const applyPoaPermissionsUI = () => {
             const canManage = canManageContent();
             const canViewGantt = !!poaPermissions?.can_view_gantt;
-            if (openKanbanBtn) {
-              const wrapper = openKanbanBtn.closest(".view-pill") || openKanbanBtn;
+            if (openGanttBtn) {
+              const wrapper = openGanttBtn.closest(".view-pill") || openGanttBtn;
               wrapper.style.display = canViewGantt ? "" : "none";
             }
             if (!canViewGantt && ganttModalEl && ganttModalEl.classList.contains("open")) closeGanttModal();
@@ -1209,6 +1233,7 @@
             currentSubactivities = [];
             currentBudgetItems = [];
             currentDeliverables = [];
+            renderObjectiveKpis(currentObjective);
             selectedListActivityId = null;
             editingSubId = null;
             editingBudgetIndex = -1;
@@ -1291,6 +1316,7 @@
             if (objective) {
               currentObjective = objective;
               canValidateDeliverables = !!objective.can_validate_deliverables;
+              renderObjectiveKpis(objective);
               renderImpactedMilestonesOptions(objective, []);
               setDateBounds(objective);
             }
@@ -1351,6 +1377,7 @@
             currentSubactivities = Array.isArray(activity.subactivities) ? activity.subactivities : [];
             currentBudgetItems = normalizeBudgetItems(activity.budget_items || []);
             currentDeliverables = normalizeDeliverables(activity.entregables || []);
+            renderObjectiveKpis(currentObjective);
             if (!currentDeliverables.length && String(activity.entregable || "").trim()) {
               currentDeliverables = [{ id: 0, nombre: String(activity.entregable || "").trim(), validado: false, orden: 1 }];
             }
@@ -1385,6 +1412,7 @@
             }
             currentObjective = objective;
             canValidateDeliverables = !!objective.can_validate_deliverables;
+            renderObjectiveKpis(objective);
             const targetActivityId = Number(options.activityId || 0);
             const shouldLoadExisting = !!(targetActivityId || options.focusSubId);
             const currentList = activitiesByObjective[Number(objective.id || 0)] || [];
@@ -1928,7 +1956,7 @@
           subAddBtn && subAddBtn.addEventListener("click", () => openSubtaskForm(0, 0));
           subRecurrenteEl && subRecurrenteEl.addEventListener("change", syncSubRecurringFields);
           subPeriodicidadEl && subPeriodicidadEl.addEventListener("change", syncSubRecurringFields);
-          openKanbanBtn && openKanbanBtn.addEventListener("click", async () => {
+          openGanttBtn && openGanttBtn.addEventListener("click", async () => {
             if (!poaPermissions.can_view_gantt) return;
             window.location.href = "/poa/gantt";
           });

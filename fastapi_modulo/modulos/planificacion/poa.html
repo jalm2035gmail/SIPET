@@ -21,9 +21,9 @@
           <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/boton/arbol.svg')"></span>
           <span class="view-pill-label boton_vista-label">Arbol</span>
         </button>
-        <button class="view-pill boton_vista" type="button" data-view="kanban" data-tooltip="Kanban" aria-label="Vista Kanban">
+        <button class="view-pill boton_vista" type="button" data-view="gantt" data-tooltip="Gantt" aria-label="Vista Gantt">
           <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/boton/kanban.svg')"></span>
-          <span class="view-pill-label boton_vista-label">Kanban</span>
+          <span class="view-pill-label boton_vista-label">Gantt</span>
         </button>
         <button class="view-pill boton_vista" type="button" data-view="calendar" data-tooltip="Calendario" aria-label="Vista calendario">
           <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/calendario.svg')"></span>
@@ -206,7 +206,15 @@
             <div class="poa-sub-list" id="poa-sub-list"></div>
           </section>
           <section class="poa-tab-panel" data-poa-panel="kpi">
-            <p>Kpis: en construcción.</p>
+            <div class="poa-kpi-panel">
+              <div class="poa-kpi-head">
+                <h4>KPIs del objetivo</h4>
+                <p>Esta actividad toma los indicadores definidos en el objetivo estratégico.</p>
+              </div>
+              <div class="poa-kpi-list" id="poa-kpi-list">
+                <div class="poa-sub-meta">Sin KPIs disponibles en este objetivo.</div>
+              </div>
+            </div>
           </section>
           <section class="poa-tab-panel" data-poa-panel="deliverables">
             <div class="poa-deliv-form">

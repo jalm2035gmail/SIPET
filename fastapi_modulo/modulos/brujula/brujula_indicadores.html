@@ -1,0 +1,660 @@
+<section class="w-full space-y-4" id="brujula-indicadores-app">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/icon/kpi.svg"
+        alt="Icono indicadores"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+      />
+      <div class="w-full grid gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Indicadores</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Tablero de indicadores históricos y proyectados con gestión de definiciones.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Indicadores BRUJULA">
+    <button type="button" class="tab rounded-t-lg tab-active active" data-brujula-ind-tab="matrix">Indicadores</button>
+    <button type="button" class="tab rounded-t-lg" data-brujula-ind-tab="desc">Descripcion de indicadores</button>
+  </div>
+
+  <section class="card rounded-box border border-base-300 bg-base-100 shadow-sm" data-brujula-ind-panel="matrix">
+    <div class="card-body gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="card-title">Matriz de indicadores</h2>
+          <p class="text-base-content/70">Cada fila representa un indicador y cada columna un ano historico o proyectado.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline" id="brujula-ind-add-row">Agregar indicador</button>
+          <button type="button" class="btn btn-primary" id="brujula-ind-save">Guardar</button>
+        </div>
+      </div>
+      <div id="brujula-ind-msg" class="text-sm text-base-content/70 min-h-[1.25rem]" aria-live="polite"></div>
+      <div class="overflow-x-auto rounded-box border border-base-300">
+        <table class="table table-zebra w-full text-sm">
+          <colgroup id="brujula-ind-colgroup"></colgroup>
+          <thead id="brujula-ind-thead"></thead>
+          <tbody id="brujula-ind-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card rounded-box border border-base-300 bg-base-100 shadow-sm hidden" data-brujula-ind-panel="desc">
+    <div class="card-body gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="card-title">Descripcion de indicadores</h2>
+          <p class="text-base-content/70">Selecciona un indicador de la lista para abrir el formulario de descripcion.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <a href="/api/kpis/plantilla.csv" class="btn btn-outline">Descargar plantilla</a>
+          <button type="button" class="btn btn-outline" id="brujula-kpi-import-btn">Importar plantilla</button>
+          <input id="brujula-kpi-import-file" type="file" accept=".csv,text/csv" class="hidden">
+          <button type="button" class="btn btn-primary" id="brujula-kpi-new-btn">Nuevo indicador</button>
+        </div>
+      </div>
+
+      <div id="brujula-kpi-msg" class="text-sm text-base-content/70 min-h-[1.25rem]" aria-live="polite"></div>
+
+      <section id="brujula-kpi-list" class="grid gap-3"></section>
+
+      <section id="brujula-kpi-form" class="hidden">
+        <div class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-lg font-semibold" id="brujula-kpi-form-title">Nuevo indicador</h3>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn btn-ghost btn-sm" id="brujula-kpi-cancel">Cancelar</button>
+              <button type="button" class="btn btn-error btn-sm" id="brujula-kpi-delete">Eliminar</button>
+              <button type="button" class="btn btn-primary btn-sm" id="brujula-kpi-save">Guardar</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Eje estrategico</span></div>
+              <select id="brujula-kpi-axis-id" class="select select-bordered w-full"></select>
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+              <input id="brujula-kpi-nombre" class="input input-bordered w-full" type="text" placeholder="Ingresos por venta">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Responsable</span></div>
+              <input id="brujula-kpi-responsable" class="input input-bordered w-full" type="text" placeholder="Director Comercial">
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Descripcion</span></div>
+              <textarea id="brujula-kpi-descripcion" class="textarea textarea-bordered w-full" rows="3"></textarea>
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Objetivo</span></div>
+              <textarea id="brujula-kpi-objetivo" class="textarea textarea-bordered w-full" rows="3"></textarea>
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Formula</span></div>
+              <textarea id="brujula-kpi-formula" class="textarea textarea-bordered w-full" rows="3"></textarea>
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Fuente de datos</span></div>
+              <input id="brujula-kpi-fuente" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Unidad</span></div>
+              <input id="brujula-kpi-unidad" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Frecuencia</span></div>
+              <input id="brujula-kpi-frecuencia" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Linea base</span></div>
+              <input id="brujula-kpi-linea-base" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Estandar / Meta</span></div>
+              <input id="brujula-kpi-meta" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Categoria</span></div>
+              <input id="brujula-kpi-categoria" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Perspectiva</span></div>
+              <input id="brujula-kpi-perspectiva" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Semaforo rojo</span></div>
+              <input id="brujula-kpi-rojo" class="input input-bordered w-full" type="text">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Semaforo verde</span></div>
+              <input id="brujula-kpi-verde" class="input input-bordered w-full" type="text">
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+</section>
+
+<script>
+(function () {
+  const app = document.getElementById('brujula-indicadores-app');
+  if (!app) return;
+
+  const tabButtons = Array.from(app.querySelectorAll('[data-brujula-ind-tab]'));
+  const tabPanels = Array.from(app.querySelectorAll('[data-brujula-ind-panel]'));
+  const matrixMsgEl = document.getElementById('brujula-ind-msg');
+  const addRowBtn = document.getElementById('brujula-ind-add-row');
+  const saveMatrixBtn = document.getElementById('brujula-ind-save');
+  const colgroupEl = document.getElementById('brujula-ind-colgroup');
+  const theadEl = document.getElementById('brujula-ind-thead');
+  const tbodyEl = document.getElementById('brujula-ind-tbody');
+
+  const kpiMsgEl = document.getElementById('brujula-kpi-msg');
+  const kpiListEl = document.getElementById('brujula-kpi-list');
+  const kpiFormEl = document.getElementById('brujula-kpi-form');
+  const kpiFormTitleEl = document.getElementById('brujula-kpi-form-title');
+  const kpiAxisIdEl = document.getElementById('brujula-kpi-axis-id');
+  const kpiNombreEl = document.getElementById('brujula-kpi-nombre');
+  const kpiResponsableEl = document.getElementById('brujula-kpi-responsable');
+  const kpiDescripcionEl = document.getElementById('brujula-kpi-descripcion');
+  const kpiObjetivoEl = document.getElementById('brujula-kpi-objetivo');
+  const kpiFormulaEl = document.getElementById('brujula-kpi-formula');
+  const kpiFuenteEl = document.getElementById('brujula-kpi-fuente');
+  const kpiUnidadEl = document.getElementById('brujula-kpi-unidad');
+  const kpiFrecuenciaEl = document.getElementById('brujula-kpi-frecuencia');
+  const kpiLineaBaseEl = document.getElementById('brujula-kpi-linea-base');
+  const kpiMetaEl = document.getElementById('brujula-kpi-meta');
+  const kpiCategoriaEl = document.getElementById('brujula-kpi-categoria');
+  const kpiPerspectivaEl = document.getElementById('brujula-kpi-perspectiva');
+  const kpiRojoEl = document.getElementById('brujula-kpi-rojo');
+  const kpiVerdeEl = document.getElementById('brujula-kpi-verde');
+  const kpiImportBtn = document.getElementById('brujula-kpi-import-btn');
+  const kpiImportFileEl = document.getElementById('brujula-kpi-import-file');
+  const kpiNewBtn = document.getElementById('brujula-kpi-new-btn');
+  const kpiCancelBtn = document.getElementById('brujula-kpi-cancel');
+  const kpiDeleteBtn = document.getElementById('brujula-kpi-delete');
+  const kpiSaveBtn = document.getElementById('brujula-kpi-save');
+
+  let matrixPeriods = [];
+  let matrixRows = [];
+  let axesCache = [];
+  let editingAxisId = 0;
+  let editingIndex = -1;
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const showMatrixMsg = (text, isError = false) => {
+    if (!matrixMsgEl) return;
+    matrixMsgEl.textContent = text || '';
+    matrixMsgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+  };
+
+  const showKpiMsg = (text, isError = false) => {
+    if (!kpiMsgEl) return;
+    kpiMsgEl.textContent = text || '';
+    kpiMsgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+  };
+
+  const setTab = (tabKey) => {
+    const target = String(tabKey || 'matrix');
+    tabButtons.forEach((btn) => {
+      const active = btn.getAttribute('data-brujula-ind-tab') === target;
+      btn.classList.toggle('tab-active', active);
+      btn.classList.toggle('active', active);
+    });
+    tabPanels.forEach((panel) => {
+      const show = panel.getAttribute('data-brujula-ind-panel') === target;
+      panel.classList.toggle('hidden', !show);
+    });
+  };
+
+  const normalizeMatrixRow = (item) => {
+    const values = {};
+    matrixPeriods.forEach((period) => {
+      const key = String(period?.key || '');
+      values[key] = String(item?.values?.[key] || '').trim();
+    });
+    return {
+      indicador: String(item?.indicador || '').trim(),
+      values,
+    };
+  };
+
+  const renderMatrixTable = () => {
+    if (!colgroupEl || !theadEl || !tbodyEl) return;
+    colgroupEl.innerHTML = ['<col style="width:280px;min-width:280px">'].concat(
+      matrixPeriods.map(() => '<col style="width:140px;min-width:140px">')
+    ).join('');
+    theadEl.innerHTML = `
+      <tr>
+        <th>Indicador</th>
+        ${matrixPeriods.map((period) => `<th class="text-right">${escapeHtml(period.label)}<div class="text-xs opacity-60">${escapeHtml(period.kind)}</div></th>`).join('')}
+      </tr>
+    `;
+    if (!matrixRows.length) {
+      tbodyEl.innerHTML = '<tr><td colspan="' + String(matrixPeriods.length + 1) + '" class="text-base-content/60">Sin indicadores registrados.</td></tr>';
+      return;
+    }
+    tbodyEl.innerHTML = matrixRows.map((row, rowIndex) => `
+      <tr>
+        <td>
+          <div class="flex items-center gap-2">
+            <input class="input input-bordered input-sm w-full" data-matrix-row="${rowIndex}" data-matrix-field="indicador" value="${escapeHtml(row.indicador)}" placeholder="Nombre del indicador">
+            <button type="button" class="btn btn-ghost btn-xs text-error" data-matrix-remove="${rowIndex}">Eliminar</button>
+          </div>
+        </td>
+        ${matrixPeriods.map((period) => `
+          <td class="text-right">
+            <input class="input input-bordered input-sm w-full text-right" data-matrix-row="${rowIndex}" data-matrix-key="${escapeHtml(period.key)}" value="${escapeHtml(row.values[period.key] || '')}">
+          </td>
+        `).join('')}
+      </tr>
+    `).join('');
+    tbodyEl.querySelectorAll('[data-matrix-field="indicador"]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const rowIndex = Number(input.getAttribute('data-matrix-row') || -1);
+        if (rowIndex < 0 || !matrixRows[rowIndex]) return;
+        matrixRows[rowIndex].indicador = String(input.value || '');
+      });
+    });
+    tbodyEl.querySelectorAll('[data-matrix-key]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const rowIndex = Number(input.getAttribute('data-matrix-row') || -1);
+        const key = String(input.getAttribute('data-matrix-key') || '');
+        if (rowIndex < 0 || !key || !matrixRows[rowIndex]) return;
+        matrixRows[rowIndex].values[key] = String(input.value || '');
+      });
+    });
+    tbodyEl.querySelectorAll('[data-matrix-remove]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const rowIndex = Number(btn.getAttribute('data-matrix-remove') || -1);
+        if (rowIndex < 0) return;
+        matrixRows.splice(rowIndex, 1);
+        renderMatrixTable();
+      });
+    });
+  };
+
+  const loadMatrix = async () => {
+    showMatrixMsg('Cargando indicadores...');
+    const response = await fetch('/api/brujula/indicadores/notebook', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.detail || 'No se pudo cargar indicadores.');
+    }
+    matrixPeriods = Array.isArray(payload?.data?.periods) ? payload.data.periods : [];
+    matrixRows = Array.isArray(payload?.data?.rows) ? payload.data.rows.map((row) => normalizeMatrixRow(row)) : [];
+    renderMatrixTable();
+    showMatrixMsg('');
+  };
+
+  const saveMatrix = async () => {
+    saveMatrixBtn.disabled = true;
+    showMatrixMsg('Guardando indicadores...');
+    try {
+      const rows = matrixRows.map((row) => normalizeMatrixRow(row)).filter((row) => row.indicador);
+      const response = await fetch('/api/brujula/indicadores/notebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ rows }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.detail || 'No se pudo guardar indicadores.');
+      }
+      matrixRows = Array.isArray(payload?.data?.rows) ? payload.data.rows.map((row) => normalizeMatrixRow(row)) : rows;
+      renderMatrixTable();
+      showMatrixMsg('Indicadores guardados.');
+    } catch (error) {
+      showMatrixMsg(error?.message || 'No se pudo guardar indicadores.', true);
+    } finally {
+      saveMatrixBtn.disabled = false;
+    }
+  };
+
+  const normalizeKpi = (item) => ({
+    id: Number(item?.id || 0) || 0,
+    nombre: String(item?.nombre || '').trim(),
+    descripcion: String(item?.descripcion || '').trim(),
+    objetivo: String(item?.objetivo || '').trim(),
+    formula: String(item?.formula || '').trim(),
+    responsable: String(item?.responsable || '').trim(),
+    fuente_datos: String(item?.fuente_datos || '').trim(),
+    unidad: String(item?.unidad || '').trim(),
+    frecuencia: String(item?.frecuencia || '').trim(),
+    linea_base: String(item?.linea_base || '').trim(),
+    estandar_meta: String(item?.estandar_meta || '').trim(),
+    semaforo_rojo: String(item?.semaforo_rojo || '').trim(),
+    semaforo_verde: String(item?.semaforo_verde || '').trim(),
+    categoria: String(item?.categoria || '').trim(),
+    perspectiva: String(item?.perspectiva || '').trim(),
+  });
+
+  const flattenKpis = () => axesCache.flatMap((axis) => {
+    const axisId = Number(axis?.id || 0);
+    const axisName = String(axis?.nombre || 'Sin eje').trim() || 'Sin eje';
+    const axisCode = String(axis?.codigo || '').trim();
+    const list = Array.isArray(axis?.kpis) ? axis.kpis : [];
+    return list.map((item, index) => ({
+      ...normalizeKpi(item),
+      axis_id: axisId,
+      axis_nombre: axisName,
+      axis_codigo: axisCode,
+      index,
+    }));
+  });
+
+  const renderAxisOptions = (selectedAxisId = 0) => {
+    if (!kpiAxisIdEl) return;
+    const options = ['<option value="">Selecciona eje</option>'].concat(
+      axesCache.map((axis) => {
+        const axisId = Number(axis?.id || 0);
+        const selected = axisId === Number(selectedAxisId || 0) ? ' selected' : '';
+        return `<option value="${axisId}"${selected}>${escapeHtml(String(axis?.codigo || ''))} - ${escapeHtml(String(axis?.nombre || 'Sin eje'))}</option>`;
+      })
+    );
+    kpiAxisIdEl.innerHTML = options.join('');
+  };
+
+  const clearKpiForm = () => {
+    editingAxisId = 0;
+    editingIndex = -1;
+    renderAxisOptions(0);
+    kpiNombreEl.value = '';
+    kpiResponsableEl.value = '';
+    kpiDescripcionEl.value = '';
+    kpiObjetivoEl.value = '';
+    kpiFormulaEl.value = '';
+    kpiFuenteEl.value = '';
+    kpiUnidadEl.value = '';
+    kpiFrecuenciaEl.value = '';
+    kpiLineaBaseEl.value = '';
+    kpiMetaEl.value = '';
+    kpiCategoriaEl.value = '';
+    kpiPerspectivaEl.value = '';
+    kpiRojoEl.value = '';
+    kpiVerdeEl.value = '';
+    kpiFormTitleEl.textContent = 'Nuevo indicador';
+    kpiDeleteBtn.disabled = true;
+  };
+
+  const showKpiForm = (item = null) => {
+    if (!kpiFormEl) return;
+    kpiFormEl.classList.remove('hidden');
+    if (!item) {
+      clearKpiForm();
+      if (axesCache[0]) renderAxisOptions(Number(axesCache[0].id || 0));
+      return;
+    }
+    editingAxisId = Number(item.axis_id || 0);
+    editingIndex = Number(item.index || 0);
+    renderAxisOptions(editingAxisId);
+    kpiNombreEl.value = item.nombre || '';
+    kpiResponsableEl.value = item.responsable || '';
+    kpiDescripcionEl.value = item.descripcion || '';
+    kpiObjetivoEl.value = item.objetivo || '';
+    kpiFormulaEl.value = item.formula || '';
+    kpiFuenteEl.value = item.fuente_datos || '';
+    kpiUnidadEl.value = item.unidad || '';
+    kpiFrecuenciaEl.value = item.frecuencia || '';
+    kpiLineaBaseEl.value = item.linea_base || '';
+    kpiMetaEl.value = item.estandar_meta || '';
+    kpiCategoriaEl.value = item.categoria || '';
+    kpiPerspectivaEl.value = item.perspectiva || '';
+    kpiRojoEl.value = item.semaforo_rojo || '';
+    kpiVerdeEl.value = item.semaforo_verde || '';
+    kpiFormTitleEl.textContent = `Editar indicador: ${item.nombre || 'Sin nombre'}`;
+    kpiDeleteBtn.disabled = false;
+  };
+
+  const readKpiForm = () => normalizeKpi({
+    nombre: kpiNombreEl.value,
+    responsable: kpiResponsableEl.value,
+    descripcion: kpiDescripcionEl.value,
+    objetivo: kpiObjetivoEl.value,
+    formula: kpiFormulaEl.value,
+    fuente_datos: kpiFuenteEl.value,
+    unidad: kpiUnidadEl.value,
+    frecuencia: kpiFrecuenciaEl.value,
+    linea_base: kpiLineaBaseEl.value,
+    estandar_meta: kpiMetaEl.value,
+    categoria: kpiCategoriaEl.value,
+    perspectiva: kpiPerspectivaEl.value,
+    semaforo_rojo: kpiRojoEl.value,
+    semaforo_verde: kpiVerdeEl.value,
+  });
+
+  const axisPayload = (axis, nextKpis) => ({
+    nombre: String(axis?.nombre || '').trim(),
+    base_code: String(axis?.base_code || '').trim() || String(axis?.codigo || '').split('-', 1)[0],
+    orden: Number(axis?.orden || 1) || 1,
+    lider_departamento: String(axis?.lider_departamento || '').trim(),
+    responsabilidad_directa: String(axis?.responsabilidad_directa || '').trim(),
+    fecha_inicial: String(axis?.fecha_inicial || '').trim(),
+    fecha_final: String(axis?.fecha_final || '').trim(),
+    descripcion: String(axis?.descripcion || '').trim(),
+    kpis: nextKpis.map((item, index) => ({ ...normalizeKpi(item), orden: index + 1 })),
+  });
+
+  const saveAxisKpis = async (axis, nextKpis) => {
+    const response = await fetch(`/api/strategic-axes/${encodeURIComponent(String(axis.id || ''))}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(axisPayload(axis, nextKpis)),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.detail || 'No se pudo guardar el indicador.');
+    }
+    return payload?.data || null;
+  };
+
+  const renderKpiList = () => {
+    const rows = flattenKpis();
+    if (!rows.length) {
+      kpiListEl.innerHTML = '<div class="text-base-content/60">Sin indicadores registrados.</div>';
+      return;
+    }
+    kpiListEl.innerHTML = rows.map((item) => `
+      <button type="button" class="card border border-base-300 bg-base-100 text-left hover:border-primary/30 hover:bg-base-200 transition" data-kpi-open="${item.axis_id}:${item.index}">
+        <div class="card-body p-4 gap-2">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 class="font-semibold text-base-content">${escapeHtml(item.nombre || 'Sin nombre')}</h3>
+              <div class="text-sm text-base-content/60">${escapeHtml(item.axis_codigo || '')} · ${escapeHtml(item.axis_nombre || 'Sin eje')}</div>
+            </div>
+            <span class="badge badge-outline">${escapeHtml(item.frecuencia || 'Sin frecuencia')}</span>
+          </div>
+          <div class="text-sm text-base-content/70">${escapeHtml(item.perspectiva || 'Sin perspectiva')}</div>
+          <div class="text-sm text-base-content/70">Meta: ${escapeHtml(item.estandar_meta || 'Sin meta')}</div>
+        </div>
+      </button>
+    `).join('');
+    kpiListEl.querySelectorAll('[data-kpi-open]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raw = String(btn.getAttribute('data-kpi-open') || '');
+        const [axisIdRaw, indexRaw] = raw.split(':');
+        const target = flattenKpis().find((item) => Number(item.axis_id) === Number(axisIdRaw) && Number(item.index) === Number(indexRaw));
+        if (target) showKpiForm(target);
+      });
+    });
+  };
+
+  const loadAxes = async () => {
+    showKpiMsg('Cargando descripciones...');
+    const response = await fetch('/api/strategic-axes', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.detail || 'No se pudo cargar indicadores.');
+    }
+    axesCache = Array.isArray(payload?.data) ? payload.data : [];
+    renderAxisOptions(editingAxisId);
+    renderKpiList();
+    showKpiMsg('');
+  };
+
+  const importKpisTemplate = async (file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    showKpiMsg('Importando plantilla de indicadores...');
+    if (kpiImportBtn) kpiImportBtn.disabled = true;
+    try {
+      const response = await fetch('/api/brujula/indicadores/importar', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.detail || 'No se pudo importar la plantilla.');
+      }
+      const summary = payload?.summary || {};
+      await loadAxes();
+      await loadMatrix();
+      showKpiMsg(`Importacion completada. Creados: ${Number(summary.created || 0)}. Actualizados: ${Number(summary.updated || 0)}. Omitidos: ${Number(summary.skipped || 0)}.`);
+    } catch (error) {
+      const isNetworkError = error instanceof TypeError && String(error.message || '').toLowerCase().includes('fetch');
+      showKpiMsg(
+        isNetworkError
+          ? 'No se pudo conectar con el servidor para importar la plantilla. Recarga la pagina e intenta de nuevo.'
+          : (error?.message || 'No se pudo importar la plantilla.'),
+        true
+      );
+    } finally {
+      if (kpiImportBtn) kpiImportBtn.disabled = false;
+      if (kpiImportFileEl) kpiImportFileEl.value = '';
+    }
+  };
+
+  const saveKpi = async () => {
+    const axisId = Number(kpiAxisIdEl.value || 0);
+    const data = readKpiForm();
+    if (!axisId) {
+      showKpiMsg('Selecciona un eje estrategico.', true);
+      return;
+    }
+    if (!data.nombre) {
+      showKpiMsg('El nombre es obligatorio.', true);
+      return;
+    }
+    const targetAxis = axesCache.find((axis) => Number(axis?.id || 0) === axisId);
+    if (!targetAxis) {
+      showKpiMsg('El eje seleccionado no es valido.', true);
+      return;
+    }
+    kpiSaveBtn.disabled = true;
+    kpiDeleteBtn.disabled = true;
+    try {
+      if (editingAxisId > 0 && editingIndex >= 0) {
+        const previousAxis = axesCache.find((axis) => Number(axis?.id || 0) === editingAxisId);
+        if (previousAxis) {
+          const previousKpis = Array.isArray(previousAxis.kpis) ? previousAxis.kpis.map((item) => normalizeKpi(item)) : [];
+          previousKpis.splice(editingIndex, 1);
+          previousAxis.kpis = previousKpis;
+          if (editingAxisId !== axisId) {
+            await saveAxisKpis(previousAxis, previousKpis);
+          }
+        }
+      }
+      const nextKpis = Array.isArray(targetAxis.kpis) ? targetAxis.kpis.map((item) => normalizeKpi(item)) : [];
+      if (editingAxisId === axisId && editingIndex >= 0) {
+        nextKpis.splice(editingIndex, 0, data);
+      } else {
+        nextKpis.push(data);
+      }
+      await saveAxisKpis(targetAxis, nextKpis);
+      await loadAxes();
+      clearKpiForm();
+      kpiFormEl.classList.add('hidden');
+      showKpiMsg('Indicador guardado.');
+      await loadMatrix();
+    } catch (error) {
+      showKpiMsg(error?.message || 'No se pudo guardar el indicador.', true);
+    } finally {
+      kpiSaveBtn.disabled = false;
+      kpiDeleteBtn.disabled = false;
+    }
+  };
+
+  const deleteKpi = async () => {
+    if (!(editingAxisId > 0 && editingIndex >= 0)) return;
+    const axis = axesCache.find((item) => Number(item?.id || 0) === editingAxisId);
+    if (!axis) return;
+    if (!window.confirm('¿Eliminar este indicador?')) return;
+    kpiDeleteBtn.disabled = true;
+    try {
+      const nextKpis = Array.isArray(axis.kpis) ? axis.kpis.map((item) => normalizeKpi(item)) : [];
+      nextKpis.splice(editingIndex, 1);
+      await saveAxisKpis(axis, nextKpis);
+      await loadAxes();
+      clearKpiForm();
+      kpiFormEl.classList.add('hidden');
+      showKpiMsg('Indicador eliminado.');
+      await loadMatrix();
+    } catch (error) {
+      showKpiMsg(error?.message || 'No se pudo eliminar el indicador.', true);
+    } finally {
+      kpiDeleteBtn.disabled = false;
+    }
+  };
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setTab(btn.getAttribute('data-brujula-ind-tab') || 'matrix'));
+  });
+  addRowBtn.addEventListener('click', () => {
+    const values = {};
+    matrixPeriods.forEach((period) => { values[String(period.key || '')] = ''; });
+    matrixRows.push({ indicador: '', values });
+    renderMatrixTable();
+  });
+  saveMatrixBtn.addEventListener('click', saveMatrix);
+  if (kpiImportBtn && kpiImportFileEl) {
+    kpiImportBtn.addEventListener('click', () => kpiImportFileEl.click());
+    kpiImportFileEl.addEventListener('change', () => {
+      const file = kpiImportFileEl.files && kpiImportFileEl.files[0];
+      importKpisTemplate(file);
+    });
+  }
+  kpiNewBtn.addEventListener('click', () => {
+    clearKpiForm();
+    showKpiForm(null);
+  });
+  kpiCancelBtn.addEventListener('click', () => {
+    clearKpiForm();
+    kpiFormEl.classList.add('hidden');
+    showKpiMsg('');
+  });
+  kpiSaveBtn.addEventListener('click', saveKpi);
+  kpiDeleteBtn.addEventListener('click', deleteKpi);
+
+  clearKpiForm();
+  kpiFormEl.classList.add('hidden');
+  setTab('matrix');
+  Promise.all([loadMatrix(), loadAxes()]).catch((error) => {
+    showMatrixMsg(error?.message || 'No se pudo cargar indicadores.', true);
+    showKpiMsg(error?.message || 'No se pudo cargar descripciones.', true);
+  });
+})();
+</script>

@@ -1,5 +1,5 @@
-<section class="w-full">
-  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6 mb-4">
+<section class="w-full space-y-4" id="kpis-app">
+  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
     <div class="w-full flex flex-col md:flex-row items-center gap-10">
       <img
         src="/icon/kpi.svg"
@@ -8,362 +8,542 @@
         height="96"
         class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
       />
-      <div class="w-full grid gap-2 content-center">
+      <div class="w-full grid gap-3 content-center">
         <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">KPIs</div>
-        <div class="block w-full text-base sm:text-lg text-base-content/70">Gestión y seguimiento de indicadores clave de desempeño.</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Gestión centralizada de KPIs estratégicos definidos en los ejes.</div>
+        <div class="view-buttons page-view-buttons">
+          <button type="button" class="view-pill boton_vista active" data-kpi-view="list">
+            <span class="view-pill-label boton_vista-label">Lista</span>
+          </button>
+          <button type="button" class="view-pill boton_vista" data-kpi-view="kanban">
+            <span class="view-pill-label boton_vista-label">Kanban</span>
+          </button>
+          <button type="button" class="view-pill boton_vista" data-kpi-view="form">
+            <span class="view-pill-label boton_vista-label">Form</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
-  <!-- ── KPI Tracking UI ────────────────────────────────────────────────── -->
-  <article class="card border border-base-300 bg-base-100 shadow-sm">
-    <header class="flex items-center justify-between gap-2 flex-wrap p-4 pb-2">
-      <h2 class="text-lg font-semibold">Panel KPI</h2>
-      <button id="btn-abrir-registro" class="btn btn-sm btn-primary" type="button">+ Registrar medición</button>
-    </header>
-    <div class="p-4 pt-2 space-y-4">
 
-      <!-- ── Estado global de carga ──────────────────────────────────────── -->
-      <div id="kpi-loading" class="flex items-center gap-2 text-base-content/50 text-sm py-4">
-        <span class="loading loading-spinner loading-sm"></span> Cargando KPIs…
-      </div>
-
-      <!-- ── Tarjetas de estado ──────────────────────────────────────────── -->
-      <div id="kpi-cards-grid" class="hidden grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
-        <!-- generado por JS -->
-      </div>
-
-      <!-- ── Historial del KPI seleccionado ─────────────────────────────── -->
-      <div id="kpi-historial-section" class="hidden card border border-base-300 bg-base-100 shadow-sm">
-        <header class="flex items-center justify-between gap-2 flex-wrap p-4 pb-2">
-          <h3 class="text-base font-semibold" id="kpi-historial-titulo">Historial</h3>
-          <button id="btn-cerrar-historial" class="btn btn-xs btn-ghost" type="button">✕ Cerrar</button>
-        </header>
-        <div class="p-4 pt-2">
-          <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
-            <table class="table table-zebra w-full text-sm">
-              <thead>
-                <tr>
-                  <th>Periodo</th>
-                  <th class="text-right">Valor (%)</th>
-                  <th>Notas</th>
-                  <th>Registrado</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="kpi-historial-tbody">
-                <tr><td colspan="5" class="text-center text-base-content/40 py-4">Sin mediciones</td></tr>
-              </tbody>
-            </table>
-          </div>
+  <section class="card rounded-box border border-base-300 bg-base-100 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="card-title">Catálogo de KPIs</h2>
+          <p class="text-base-content/70">Los cambios se guardan actualizando el eje estratégico al que pertenece cada KPI.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="/api/kpis/plantilla.csv" class="btn btn-outline">Descargar plantilla</a>
+          <button type="button" class="btn btn-outline" id="kpis-import-btn">Importar plantilla</button>
+          <input id="kpis-import-file" type="file" accept=".csv,text/csv" class="hidden">
+          <button type="button" class="btn btn-primary" id="kpis-new-btn">Nuevo KPI</button>
         </div>
       </div>
 
-      <!-- ── Modal registro de medición ────────────────────────────────── -->
-      <div id="kpi-registro-modal" class="fixed inset-0 z-[2500] hidden items-center justify-center bg-base-content/45">
-        <div class="card bg-base-100 shadow-xl w-full max-w-md mx-4">
-          <div class="card-body gap-4">
-            <h3 class="card-title text-base">Registrar medición</h3>
-            <div class="form-control">
-              <label class="label"><span class="label-text">Indicador</span></label>
-              <select id="reg-kpi-id" class="select select-bordered select-sm w-full">
-                <option value="">-- Selecciona un KPI --</option>
-              </select>
-            </div>
-            <div class="form-control">
-              <label class="label"><span class="label-text">Valor (%)</span></label>
-              <input id="reg-valor" type="number" step="0.01" class="input input-bordered input-sm w-full" placeholder="Ej: 7.5">
-            </div>
-            <div class="form-control">
-              <label class="label"><span class="label-text">Periodo</span></label>
-              <input id="reg-periodo" type="text" class="input input-bordered input-sm w-full" placeholder="Ej: Enero 2025 / Q1-2025">
-            </div>
-            <div class="form-control">
-              <label class="label"><span class="label-text">Notas <span class="text-base-content/40">(opcional)</span></span></label>
-              <textarea id="reg-notas" class="textarea textarea-bordered textarea-sm w-full" rows="2" placeholder="Observaciones…"></textarea>
-            </div>
-            <div id="reg-error" class="text-error text-xs hidden"></div>
-            <div class="flex gap-2 justify-end pt-2">
-              <button id="btn-reg-cancelar" class="btn btn-sm btn-ghost" type="button">Cancelar</button>
-              <button id="btn-reg-guardar" class="btn btn-sm btn-primary" type="button">Guardar</button>
+      <div id="kpis-msg" class="text-sm text-base-content/70 min-h-[1.25rem]" aria-live="polite"></div>
+
+      <section id="kpis-view-list" class="grid gap-3"></section>
+
+      <section id="kpis-view-kanban" class="hidden">
+        <div id="kpis-kanban-grid" class="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3"></div>
+      </section>
+
+      <section id="kpis-view-form" class="hidden">
+        <div class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-lg font-semibold" id="kpis-form-title">Nuevo KPI</h3>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn btn-ghost btn-sm" id="kpis-form-cancel">Cancelar</button>
+              <button type="button" class="btn btn-error btn-sm" id="kpis-form-delete">Eliminar</button>
+              <button type="button" class="btn btn-primary btn-sm" id="kpis-form-save">Guardar</button>
             </div>
           </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Eje estratégico</span></div>
+              <select id="kpis-axis-id" class="select select-bordered w-full"></select>
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+              <input id="kpis-nombre" class="input input-bordered w-full" type="text" placeholder="Ingresos por venta">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Responsable (Owner)</span></div>
+              <input id="kpis-responsable" class="input input-bordered w-full" type="text" placeholder="Director Comercial">
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Descripción</span></div>
+              <textarea id="kpis-descripcion" class="textarea textarea-bordered w-full" rows="3" placeholder="Mide el total de ingresos brutos generados por ventas."></textarea>
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Objetivo</span></div>
+              <textarea id="kpis-objetivo" class="textarea textarea-bordered w-full" rows="3" placeholder="Aumentar la facturación respecto al año anterior."></textarea>
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Fórmula</span></div>
+              <textarea id="kpis-formula" class="textarea textarea-bordered w-full" rows="3" placeholder="Suma del total de facturas emitidas en el mes."></textarea>
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Fuente de datos</span></div>
+              <input id="kpis-fuente" class="input input-bordered w-full" type="text" placeholder="Módulo de Facturación (ERP)">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Unidad</span></div>
+              <input id="kpis-unidad" class="input input-bordered w-full" type="text" placeholder="Euros (€)">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Frecuencia</span></div>
+              <input id="kpis-frecuencia" class="input input-bordered w-full" type="text" placeholder="Mensual">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Línea base</span></div>
+              <input id="kpis-linea-base" class="input input-bordered w-full" type="text" placeholder="Promedio último semestre: 50.000€">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Estándar / Meta</span></div>
+              <input id="kpis-meta" class="input input-bordered w-full" type="text" placeholder="60.000€">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Categoría</span></div>
+              <input id="kpis-categoria" class="input input-bordered w-full" type="text" placeholder="Financiera / Ventas">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Perspectiva</span></div>
+              <input id="kpis-perspectiva" class="input input-bordered w-full" type="text" placeholder="Financiera / Cliente / Procesos / Aprendizaje">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Semáforo (Rojo)</span></div>
+              <input id="kpis-rojo" class="input input-bordered w-full" type="text" placeholder="< 50.000€">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Semáforo (Verde)</span></div>
+              <input id="kpis-verde" class="input input-bordered w-full" type="text" placeholder="> 55.000€">
+            </label>
+          </div>
         </div>
-      </div>
-
-      <!-- ── Sugerencia IA (debajo de tarjetas, legacy) ────────────────── -->
-      <div id="sugerencia-kpi-ia" class="mt-2"></div>
-      <script>
-      /* ── KPI Tracking – estado global ──────────────────────────────── */
-      let _kpiDefs = [];
-      const _kpiStatusIcon = { ok: '🟢', warning: '🟡', alert: '🔴', sin_meta: '⚪' };
-      const _kpiStatusLabel = { ok: 'En meta', warning: 'Advertencia', alert: 'Fuera de meta', sin_meta: 'Sin medición' };
-      const _kpiStatusClass = { ok: 'badge-success', warning: 'badge-warning', alert: 'badge-error', sin_meta: 'badge-ghost' };
-
-      const _kpiEscHtml = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-      /* Convierte referencia "8%", "5-8%", "5%8%" → número display */
-      const _kpiMetaDisplay = (referencia) => {
-        if (!referencia) return '—';
-        const s = referencia.trim();
-        const range = s.match(/^([\d.]+)%?[-–]([\d.]+)%?$/);
-        if (range) return `${range[1]}% – ${range[2]}%`;
-        return s;
-      };
-
-      /* ── Render de tarjetas ─────────────────────────────────────────── */
-      const _kpiRenderCards = (defs) => {
-        const grid = document.getElementById('kpi-cards-grid');
-        const loading = document.getElementById('kpi-loading');
-        if (!grid) return;
-        if (!defs.length) {
-          if (loading) {
-            loading.classList.remove('hidden');
-            loading.innerHTML = '<span class="text-base-content/40 text-sm">No hay KPIs definidos.</span>';
-          }
-          return;
-        }
-        if (loading) loading.classList.add('hidden');
-        grid.classList.remove('hidden');
-        grid.innerHTML = defs.map((k) => {
-          const st = k.status || 'sin_meta';
-          const icon = _kpiStatusIcon[st] || '⚪';
-          const badge = _kpiStatusClass[st] || 'badge-ghost';
-          const label = _kpiStatusLabel[st] || st;
-          const val = k.ultimo_valor != null ? `${Number(k.ultimo_valor).toFixed(1)}%` : '—';
-          const meta = _kpiMetaDisplay(k.referencia);
-          const fecha = k.ultima_fecha ? k.ultima_fecha.slice(0,10) : '—';
-          let bar = '';
-          if (k.ultimo_valor != null && k.referencia) {
-            const ref = parseFloat(String(k.referencia).replace('%',''));
-            if (!isNaN(ref) && ref > 0) {
-              const pct = Math.min(100, Math.round((k.ultimo_valor / ref) * 100));
-              const barColor = st === 'ok' ? 'bg-success' : st === 'warning' ? 'bg-warning' : 'bg-error';
-              bar = `<progress class="progress ${barColor} w-full mt-2" value="${pct}" max="100"></progress>`;
-            }
-          }
-          return `<div class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer kpi-card" data-kpi-id="${k.id}" title="Ver historial">
-            <div class="card-body p-4 gap-1">
-              <div class="flex items-start justify-between gap-2">
-                <p class="font-semibold text-sm leading-tight">${_kpiEscHtml(k.nombre)}</p>
-                <span class="badge ${badge} badge-sm shrink-0">${icon} ${_kpiEscHtml(label)}</span>
-              </div>
-              <p class="text-xs text-base-content/50 truncate">${_kpiEscHtml(k.proposito || '')}</p>
-              <div class="flex items-end justify-between gap-2 mt-2">
-                <div>
-                  <span class="text-2xl font-bold">${_kpiEscHtml(val)}</span>
-                  <span class="text-xs text-base-content/40 ml-1">actual</span>
-                </div>
-                <div class="text-right">
-                  <span class="text-xs text-base-content/40">meta</span><br>
-                  <span class="text-sm font-medium">${_kpiEscHtml(meta)}</span>
-                </div>
-              </div>
-              ${bar}
-              <p class="text-xs text-base-content/40 mt-1">Última medición: ${_kpiEscHtml(fecha)}</p>
-            </div>
-          </div>`;
-        }).join('');
-
-        /* click → historial */
-        grid.querySelectorAll('.kpi-card').forEach((card) => {
-          card.addEventListener('click', () => _kpiLoadHistorial(Number(card.dataset.kpiId)));
-        });
-      };
-
-      /* ── Historial ──────────────────────────────────────────────────── */
-      const _kpiLoadHistorial = async (kpiId) => {
-        const sec = document.getElementById('kpi-historial-section');
-        const tbody = document.getElementById('kpi-historial-tbody');
-        const titulo = document.getElementById('kpi-historial-titulo');
-        const kpi = _kpiDefs.find((k) => k.id === kpiId);
-        if (titulo) titulo.textContent = `Historial — ${kpi ? kpi.nombre : kpiId}`;
-        if (sec) sec.classList.remove('hidden');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-base-content/40 py-4"><span class="loading loading-dots loading-xs"></span></td></tr>';
-        try {
-          const res = await fetch(`/api/kpis/mediciones?kpi_id=${kpiId}`, { credentials: 'same-origin' });
-          const data = await res.json().catch(() => ({}));
-          const rows = (data.items || []);
-          if (!rows.length) {
-            if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-base-content/40 py-4">Sin mediciones registradas</td></tr>';
-            return;
-          }
-          if (tbody) tbody.innerHTML = rows.map((r) => `
-            <tr>
-              <td>${_kpiEscHtml(r.periodo || '—')}</td>
-              <td class="text-right font-mono">${_kpiEscHtml(r.valor != null ? Number(r.valor).toFixed(2) : '—')}</td>
-              <td class="text-xs text-base-content/60">${_kpiEscHtml(r.notas || '')}</td>
-              <td class="text-xs text-base-content/40">${_kpiEscHtml((r.created_at || '').slice(0,16).replace('T',' '))}</td>
-              <td><button type="button" class="btn btn-xs btn-ghost text-error" data-del-id="${r.id}" title="Eliminar">✕</button></td>
-            </tr>`).join('');
-          /* delete handlers */
-          (tbody || document).querySelectorAll('[data-del-id]').forEach((btn) => {
-            btn.addEventListener('click', () => _kpiDeleteMedicion(Number(btn.dataset.delId), kpiId));
-          });
-        } catch (_) {
-          if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-error text-sm py-4">Error al cargar historial</td></tr>';
-        }
-        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      };
-
-      const _kpiDeleteMedicion = async (medicionId, kpiId) => {
-        if (!confirm('¿Eliminar esta medición?')) return;
-        try {
-          await fetch(`/api/kpis/medicion/${medicionId}`, { method: 'DELETE', credentials: 'same-origin' });
-          await _kpiLoadHistorial(kpiId);
-          _kpiLoadDefs();
-        } catch (_) {}
-      };
-
-      /* ── Cargar definiciones ────────────────────────────────────────── */
-      const _kpiLoadDefs = async () => {
-        const loading = document.getElementById('kpi-loading');
-        const grid = document.getElementById('kpi-cards-grid');
-        if (loading) loading.classList.remove('hidden');
-        if (grid) grid.classList.add('hidden');
-        try {
-          const res = await fetch('/api/kpis/definiciones', { credentials: 'same-origin' });
-          const data = await res.json().catch(() => ({}));
-          _kpiDefs = data.items || [];
-          /* populate select */
-          const sel = document.getElementById('reg-kpi-id');
-          if (sel) {
-            sel.innerHTML = '<option value="">-- Selecciona un KPI --</option>' +
-              _kpiDefs.map((k) => `<option value="${k.id}">${_kpiEscHtml(k.nombre)}</option>`).join('');
-          }
-          _kpiRenderCards(_kpiDefs);
-        } catch (_) {
-          if (loading) {
-            loading.classList.remove('hidden');
-            loading.innerHTML = '<span class="text-error text-sm">Error al cargar KPIs</span>';
-          }
-        }
-      };
-
-      /* ── Modal registro ─────────────────────────────────────────────── */
-      const _kpiOpenModal = (kpiId = null) => {
-        const modal = document.getElementById('kpi-registro-modal');
-        const errEl = document.getElementById('reg-error');
-        if (errEl) errEl.classList.add('hidden');
-        if (kpiId) {
-          const sel = document.getElementById('reg-kpi-id');
-          if (sel) sel.value = String(kpiId);
-        }
-        if (modal) {
-          modal.classList.remove('hidden');
-          modal.classList.add('flex');
-        }
-      };
-      const _kpiCloseModal = () => {
-        const modal = document.getElementById('kpi-registro-modal');
-        if (modal) {
-          modal.classList.add('hidden');
-          modal.classList.remove('flex');
-        }
-      };
-
-      document.getElementById('btn-abrir-registro')?.addEventListener('click', () => _kpiOpenModal());
-      document.getElementById('btn-reg-cancelar')?.addEventListener('click', _kpiCloseModal);
-      document.getElementById('kpi-registro-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) _kpiCloseModal();
-      });
-      document.getElementById('btn-cerrar-historial')?.addEventListener('click', () => {
-        const sec = document.getElementById('kpi-historial-section');
-        if (sec) sec.classList.add('hidden');
-      });
-
-      document.getElementById('btn-reg-guardar')?.addEventListener('click', async () => {
-        const kpiId = document.getElementById('reg-kpi-id')?.value;
-        const valor = document.getElementById('reg-valor')?.value;
-        const periodo = document.getElementById('reg-periodo')?.value?.trim();
-        const notas = document.getElementById('reg-notas')?.value?.trim();
-        const errEl = document.getElementById('reg-error');
-        if (!kpiId) { if (errEl) { errEl.textContent = 'Selecciona un indicador'; errEl.classList.remove('hidden'); } return; }
-        if (valor === '' || isNaN(Number(valor))) { if (errEl) { errEl.textContent = 'Ingresa un valor numérico'; errEl.classList.remove('hidden'); } return; }
-        if (!periodo) { if (errEl) { errEl.textContent = 'Ingresa el periodo'; errEl.classList.remove('hidden'); } return; }
-        if (errEl) errEl.classList.add('hidden');
-        const btn = document.getElementById('btn-reg-guardar');
-        if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
-        try {
-          const res = await fetch('/api/kpis/medicion', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ kpi_id: Number(kpiId), valor: Number(valor), periodo, notas: notas || null }),
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok || data.success === false) throw new Error(data.error || 'Error al guardar');
-          _kpiCloseModal();
-          document.getElementById('reg-valor').value = '';
-          document.getElementById('reg-periodo').value = '';
-          document.getElementById('reg-notas').value = '';
-          await _kpiLoadDefs();
-          _kpiLoadHistorial(Number(kpiId));
-        } catch (err) {
-          if (errEl) { errEl.textContent = err.message; errEl.classList.remove('hidden'); }
-        } finally {
-          if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
-        }
-      });
-
-      /* ── IA editor (preservado) ─────────────────────────────────────── */
-      const openKpiIaEditor = ({ title = 'Sugerencia IA', suggestion = '' } = {}) => new Promise((resolve) => {
-        let overlay = document.getElementById('kpi-ia-overlay');
-        if (!overlay) {
-          overlay = document.createElement('div');
-          overlay.id = 'kpi-ia-overlay';
-          overlay.className = 'fixed inset-0 z-[2600] hidden items-center justify-center bg-base-content/40';
-          overlay.innerHTML = `
-            <div class="w-[min(760px,92vw)] max-h-[86vh] overflow-auto card bg-base-100 border border-base-300 shadow-2xl">
-              <div class="card-body gap-3">
-                <div class="flex items-center justify-between gap-2">
-                  <h4 id="kpi-ia-title" class="m-0 text-lg font-semibold text-base-content">Sugerencia IA</h4>
-                  <button type="button" id="kpi-ia-close" class="btn btn-sm btn-outline">Cerrar</button>
-                </div>
-                <p class="m-0 text-sm text-base-content/60">Edita el texto antes de aplicarlo.</p>
-                <textarea id="kpi-ia-text" class="textarea textarea-bordered w-full min-h-[220px]"></textarea>
-                <div class="mt-1 flex gap-2 justify-end">
-                  <button type="button" id="kpi-ia-discard" class="btn btn-sm btn-outline btn-error">Descartar</button>
-                  <button type="button" id="kpi-ia-apply" class="btn btn-sm btn-primary">Aplicar</button>
-                </div>
-              </div>
-            </div>
-          `;
-          document.body.appendChild(overlay);
-        }
-        const titleEl = document.getElementById('kpi-ia-title');
-        const textEl = document.getElementById('kpi-ia-text');
-        const closeEl = document.getElementById('kpi-ia-close');
-        const discardEl = document.getElementById('kpi-ia-discard');
-        const applyEl = document.getElementById('kpi-ia-apply');
-        if (titleEl) titleEl.textContent = title;
-        if (textEl) textEl.value = String(suggestion || '');
-        const finish = (result) => {
-          overlay.classList.add('hidden');
-          overlay.classList.remove('flex');
-          document.body.style.overflow = '';
-          resolve(result);
-        };
-        if (closeEl) closeEl.onclick = () => finish({ action: 'close', text: textEl ? textEl.value : '' });
-        if (discardEl) discardEl.onclick = () => finish({ action: 'discard', text: textEl ? textEl.value : '' });
-        if (applyEl) applyEl.onclick = () => finish({ action: 'apply', text: textEl ? textEl.value : '' });
-        overlay.onclick = (e) => { if (e.target === overlay) finish({ action: 'close', text: textEl ? textEl.value : '' }); };
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-        if (textEl) textEl.focus();
-      });
-
-      const isIaEnabledForKpi = async () => {
-        try {
-          const res = await fetch('/api/ia/flags?module=kpis&feature_key=suggest_objective_text', { headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' });
-          const data = await res.json().catch(() => ({}));
-          return !!(res.ok && data?.success === true && data?.data?.enabled);
-        } catch (_) { return false; }
-      };
-
-      /* ── Init ───────────────────────────────────────────────────────── */
-      _kpiLoadDefs();
-      </script>
+      </section>
     </div>
-  </article>
+  </section>
 </section>
+
+<script>
+(function () {
+  const app = document.getElementById('kpis-app');
+  if (!app) return;
+
+  const msgEl = document.getElementById('kpis-msg');
+  const listViewEl = document.getElementById('kpis-view-list');
+  const kanbanViewEl = document.getElementById('kpis-view-kanban');
+  const kanbanGridEl = document.getElementById('kpis-kanban-grid');
+  const formViewEl = document.getElementById('kpis-view-form');
+  const formTitleEl = document.getElementById('kpis-form-title');
+  const axisIdEl = document.getElementById('kpis-axis-id');
+  const nombreEl = document.getElementById('kpis-nombre');
+  const responsableEl = document.getElementById('kpis-responsable');
+  const descripcionEl = document.getElementById('kpis-descripcion');
+  const objetivoEl = document.getElementById('kpis-objetivo');
+  const formulaEl = document.getElementById('kpis-formula');
+  const fuenteEl = document.getElementById('kpis-fuente');
+  const unidadEl = document.getElementById('kpis-unidad');
+  const frecuenciaEl = document.getElementById('kpis-frecuencia');
+  const lineaBaseEl = document.getElementById('kpis-linea-base');
+  const metaEl = document.getElementById('kpis-meta');
+  const categoriaEl = document.getElementById('kpis-categoria');
+  const perspectivaEl = document.getElementById('kpis-perspectiva');
+  const rojoEl = document.getElementById('kpis-rojo');
+  const verdeEl = document.getElementById('kpis-verde');
+  const saveBtn = document.getElementById('kpis-form-save');
+  const cancelBtn = document.getElementById('kpis-form-cancel');
+  const deleteBtn = document.getElementById('kpis-form-delete');
+  const newBtn = document.getElementById('kpis-new-btn');
+  const importBtn = document.getElementById('kpis-import-btn');
+  const importFileEl = document.getElementById('kpis-import-file');
+  const viewButtons = Array.from(document.querySelectorAll('[data-kpi-view]'));
+
+  let axesCache = [];
+  let currentView = 'list';
+  let editingAxisId = 0;
+  let editingIndex = -1;
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const showMsg = (text, isError = false) => {
+    if (!msgEl) return;
+    msgEl.textContent = text || '';
+    msgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+  };
+
+  const normalizeKpi = (item) => ({
+    id: Number(item?.id || 0) || 0,
+    nombre: String(item?.nombre || '').trim(),
+    descripcion: String(item?.descripcion || '').trim(),
+    objetivo: String(item?.objetivo || '').trim(),
+    formula: String(item?.formula || '').trim(),
+    responsable: String(item?.responsable || '').trim(),
+    fuente_datos: String(item?.fuente_datos || '').trim(),
+    unidad: String(item?.unidad || '').trim(),
+    frecuencia: String(item?.frecuencia || '').trim(),
+    linea_base: String(item?.linea_base || '').trim(),
+    estandar_meta: String(item?.estandar_meta || '').trim(),
+    semaforo_rojo: String(item?.semaforo_rojo || '').trim(),
+    semaforo_verde: String(item?.semaforo_verde || '').trim(),
+    categoria: String(item?.categoria || '').trim(),
+    perspectiva: String(item?.perspectiva || '').trim(),
+  });
+
+  const flattenKpis = () => axesCache.flatMap((axis) => {
+    const axisId = Number(axis?.id || 0);
+    const axisName = String(axis?.nombre || 'Sin eje').trim() || 'Sin eje';
+    const axisCode = String(axis?.codigo || '').trim();
+    const list = Array.isArray(axis?.kpis) ? axis.kpis : [];
+    return list.map((item, index) => ({
+      ...normalizeKpi(item),
+      axis_id: axisId,
+      axis_nombre: axisName,
+      axis_codigo: axisCode,
+      index,
+    }));
+  });
+
+  const setView = (view) => {
+    currentView = ['list', 'kanban', 'form'].includes(view) ? view : 'list';
+    listViewEl.classList.toggle('hidden', currentView !== 'list');
+    kanbanViewEl.classList.toggle('hidden', currentView !== 'kanban');
+    formViewEl.classList.toggle('hidden', currentView !== 'form');
+    viewButtons.forEach((btn) => btn.classList.toggle('active', btn.getAttribute('data-kpi-view') === currentView));
+  };
+
+  const renderAxisOptions = (selectedAxisId = 0) => {
+    if (!axisIdEl) return;
+    const options = ['<option value="">Selecciona eje</option>'].concat(
+      axesCache.map((axis) => {
+        const axisId = Number(axis?.id || 0);
+        const selected = axisId === Number(selectedAxisId || 0) ? ' selected' : '';
+        return `<option value="${axisId}"${selected}>${escapeHtml(String(axis?.codigo || ''))} - ${escapeHtml(String(axis?.nombre || 'Sin eje'))}</option>`;
+      })
+    );
+    axisIdEl.innerHTML = options.join('');
+  };
+
+  const clearForm = () => {
+    editingAxisId = 0;
+    editingIndex = -1;
+    renderAxisOptions(0);
+    nombreEl.value = '';
+    responsableEl.value = '';
+    descripcionEl.value = '';
+    objetivoEl.value = '';
+    formulaEl.value = '';
+    fuenteEl.value = '';
+    unidadEl.value = '';
+    frecuenciaEl.value = '';
+    lineaBaseEl.value = '';
+    metaEl.value = '';
+    categoriaEl.value = '';
+    perspectivaEl.value = '';
+    rojoEl.value = '';
+    verdeEl.value = '';
+    formTitleEl.textContent = 'Nuevo KPI';
+    deleteBtn.disabled = true;
+  };
+
+  const fillForm = (item = null) => {
+    if (!item) {
+      clearForm();
+      if (axesCache[0]) renderAxisOptions(Number(axesCache[0].id || 0));
+      setView('form');
+      return;
+    }
+    editingAxisId = Number(item.axis_id || 0);
+    editingIndex = Number(item.index || 0);
+    renderAxisOptions(editingAxisId);
+    nombreEl.value = item.nombre || '';
+    responsableEl.value = item.responsable || '';
+    descripcionEl.value = item.descripcion || '';
+    objetivoEl.value = item.objetivo || '';
+    formulaEl.value = item.formula || '';
+    fuenteEl.value = item.fuente_datos || '';
+    unidadEl.value = item.unidad || '';
+    frecuenciaEl.value = item.frecuencia || '';
+    lineaBaseEl.value = item.linea_base || '';
+    metaEl.value = item.estandar_meta || '';
+    categoriaEl.value = item.categoria || '';
+    perspectivaEl.value = item.perspectiva || '';
+    rojoEl.value = item.semaforo_rojo || '';
+    verdeEl.value = item.semaforo_verde || '';
+    formTitleEl.textContent = `Editar KPI: ${item.nombre || 'Sin nombre'}`;
+    deleteBtn.disabled = false;
+    setView('form');
+  };
+
+  const readForm = () => normalizeKpi({
+    nombre: nombreEl.value,
+    responsable: responsableEl.value,
+    descripcion: descripcionEl.value,
+    objetivo: objetivoEl.value,
+    formula: formulaEl.value,
+    fuente_datos: fuenteEl.value,
+    unidad: unidadEl.value,
+    frecuencia: frecuenciaEl.value,
+    linea_base: lineaBaseEl.value,
+    estandar_meta: metaEl.value,
+    categoria: categoriaEl.value,
+    perspectiva: perspectivaEl.value,
+    semaforo_rojo: rojoEl.value,
+    semaforo_verde: verdeEl.value,
+  });
+
+  const axisPayload = (axis, nextKpis) => ({
+    nombre: String(axis?.nombre || '').trim(),
+    base_code: String(axis?.base_code || '').trim() || String(axis?.codigo || '').split('-', 1)[0],
+    orden: Number(axis?.orden || 1) || 1,
+    lider_departamento: String(axis?.lider_departamento || '').trim(),
+    responsabilidad_directa: String(axis?.responsabilidad_directa || '').trim(),
+    fecha_inicial: String(axis?.fecha_inicial || '').trim(),
+    fecha_final: String(axis?.fecha_final || '').trim(),
+    descripcion: String(axis?.descripcion || '').trim(),
+    kpis: nextKpis.map((item, index) => ({ ...normalizeKpi(item), orden: index + 1 })),
+  });
+
+  const saveAxisKpis = async (axis, nextKpis) => {
+    const response = await fetch(`/api/strategic-axes/${encodeURIComponent(String(axis.id || ''))}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(axisPayload(axis, nextKpis)),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.detail || 'No se pudo guardar el KPI.');
+    }
+    return payload?.data || null;
+  };
+
+  const renderList = () => {
+    const rows = flattenKpis();
+    if (!rows.length) {
+      listViewEl.innerHTML = '<div class="text-base-content/60">Sin KPIs registrados.</div>';
+      return;
+    }
+    listViewEl.innerHTML = rows.map((item) => `
+      <button type="button" class="card border border-base-300 bg-base-100 text-left hover:border-primary/30 hover:bg-base-200 transition" data-kpi-open="${item.axis_id}:${item.index}">
+        <div class="card-body p-4 gap-2">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 class="font-semibold text-base-content">${escapeHtml(item.nombre || 'Sin nombre')}</h3>
+              <div class="text-sm text-base-content/60">${escapeHtml(item.axis_codigo || '')} · ${escapeHtml(item.axis_nombre || 'Sin eje')}</div>
+            </div>
+            <span class="badge badge-outline">${escapeHtml(item.frecuencia || 'Sin frecuencia')}</span>
+          </div>
+          <div class="text-sm text-base-content/70">${escapeHtml(item.categoria || 'Sin categoría')}</div>
+          <div class="text-sm text-base-content/70">Perspectiva: ${escapeHtml(item.perspectiva || 'Sin perspectiva')}</div>
+          <div class="text-sm text-base-content/70">Responsable: ${escapeHtml(item.responsable || 'Sin responsable')}</div>
+          <div class="text-sm text-base-content/70">Meta: ${escapeHtml(item.estandar_meta || 'Sin meta')}</div>
+        </div>
+      </button>
+    `).join('');
+    listViewEl.querySelectorAll('[data-kpi-open]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raw = String(btn.getAttribute('data-kpi-open') || '');
+        const [axisIdRaw, indexRaw] = raw.split(':');
+        const target = flattenKpis().find((item) => Number(item.axis_id) === Number(axisIdRaw) && Number(item.index) === Number(indexRaw));
+        if (target) fillForm(target);
+      });
+    });
+  };
+
+  const renderKanban = () => {
+    if (!kanbanGridEl) return;
+    if (!axesCache.length) {
+      kanbanGridEl.innerHTML = '<div class="text-base-content/60">Sin ejes registrados.</div>';
+      return;
+    }
+    kanbanGridEl.innerHTML = axesCache.map((axis) => {
+      const rows = Array.isArray(axis?.kpis) ? axis.kpis : [];
+      const cards = rows.length
+        ? rows.map((item, index) => `
+            <button type="button" class="rounded-box border border-base-300 bg-base-100 p-3 text-left hover:border-primary/30 hover:bg-base-200 transition" data-kpi-open="${Number(axis?.id || 0)}:${index}">
+              <div class="font-semibold text-base-content">${escapeHtml(String(item?.nombre || 'Sin nombre'))}</div>
+              <div class="text-sm text-base-content/60">${escapeHtml(String(item?.categoria || 'Sin categoría'))}</div>
+              <div class="text-sm text-base-content/60">${escapeHtml(String(item?.perspectiva || 'Sin perspectiva'))}</div>
+              <div class="text-sm text-base-content/60">${escapeHtml(String(item?.responsable || 'Sin responsable'))}</div>
+            </button>
+          `).join('')
+        : '<div class="text-sm text-base-content/60">Sin KPIs.</div>';
+      return `
+        <section class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-3">
+          <header class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-semibold text-base-content">${escapeHtml(String(axis?.codigo || ''))} - ${escapeHtml(String(axis?.nombre || 'Sin eje'))}</h3>
+              <p class="text-sm text-base-content/60">${rows.length} KPI(s)</p>
+            </div>
+          </header>
+          <div class="grid gap-3">${cards}</div>
+        </section>
+      `;
+    }).join('');
+    kanbanGridEl.querySelectorAll('[data-kpi-open]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raw = String(btn.getAttribute('data-kpi-open') || '');
+        const [axisIdRaw, indexRaw] = raw.split(':');
+        const targetAxis = axesCache.find((item) => Number(item?.id || 0) === Number(axisIdRaw));
+        const target = targetAxis && Array.isArray(targetAxis.kpis)
+          ? { ...normalizeKpi(targetAxis.kpis[Number(indexRaw) || 0]), axis_id: Number(axisIdRaw), axis_nombre: targetAxis.nombre, axis_codigo: targetAxis.codigo, index: Number(indexRaw) || 0 }
+          : null;
+        if (target) fillForm(target);
+      });
+    });
+  };
+
+  const renderAll = () => {
+    renderAxisOptions(editingAxisId);
+    renderList();
+    renderKanban();
+  };
+
+  const loadAxes = async () => {
+    showMsg('Cargando KPIs...');
+    const response = await fetch('/api/strategic-axes', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.detail || 'No se pudo cargar KPIs.');
+    }
+    axesCache = Array.isArray(payload?.data) ? payload.data : [];
+    renderAll();
+    showMsg('');
+  };
+
+  const importKpis = async (file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    showMsg('Importando plantilla de KPIs...');
+    if (importBtn) importBtn.disabled = true;
+    try {
+      const response = await fetch('/api/kpis/importar', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.detail || 'No se pudo importar la plantilla.');
+      }
+      const summary = payload?.summary || {};
+      await loadAxes();
+      showMsg(`Importación completada. Creados: ${Number(summary.created || 0)}. Actualizados: ${Number(summary.updated || 0)}. Omitidos: ${Number(summary.skipped || 0)}.`);
+    } catch (error) {
+      showMsg(error?.message || 'No se pudo importar la plantilla.', true);
+    } finally {
+      if (importBtn) importBtn.disabled = false;
+      if (importFileEl) importFileEl.value = '';
+    }
+  };
+
+  const saveKpi = async () => {
+    const axisId = Number(axisIdEl.value || 0);
+    const data = readForm();
+    if (!axisId) {
+      showMsg('Selecciona un eje estratégico.', true);
+      axisIdEl.focus();
+      return;
+    }
+    if (!data.nombre) {
+      showMsg('El nombre del KPI es obligatorio.', true);
+      nombreEl.focus();
+      return;
+    }
+    const targetAxis = axesCache.find((axis) => Number(axis?.id || 0) === axisId);
+    if (!targetAxis) {
+      showMsg('El eje seleccionado no es válido.', true);
+      return;
+    }
+    saveBtn.disabled = true;
+    deleteBtn.disabled = true;
+    try {
+      if (editingAxisId > 0 && editingIndex >= 0) {
+        const previousAxis = axesCache.find((axis) => Number(axis?.id || 0) === editingAxisId);
+        if (previousAxis) {
+          const previousKpis = Array.isArray(previousAxis.kpis) ? previousAxis.kpis.map((item) => normalizeKpi(item)) : [];
+          previousKpis.splice(editingIndex, 1);
+          previousAxis.kpis = previousKpis;
+          if (editingAxisId !== axisId) {
+            await saveAxisKpis(previousAxis, previousKpis);
+          }
+        }
+      }
+      const nextKpis = Array.isArray(targetAxis.kpis) ? targetAxis.kpis.map((item) => normalizeKpi(item)) : [];
+      if (editingAxisId === axisId && editingIndex >= 0) {
+        nextKpis.splice(editingIndex, 0, data);
+      } else {
+        nextKpis.push(data);
+      }
+      await saveAxisKpis(targetAxis, nextKpis);
+      await loadAxes();
+      clearForm();
+      setView('list');
+      showMsg('KPI guardado.');
+    } catch (error) {
+      showMsg(error?.message || 'No se pudo guardar el KPI.', true);
+    } finally {
+      saveBtn.disabled = false;
+      deleteBtn.disabled = false;
+    }
+  };
+
+  const deleteKpi = async () => {
+    if (!(editingAxisId > 0 && editingIndex >= 0)) return;
+    const axis = axesCache.find((item) => Number(item?.id || 0) === editingAxisId);
+    if (!axis) return;
+    if (!window.confirm('¿Eliminar este KPI?')) return;
+    deleteBtn.disabled = true;
+    try {
+      const nextKpis = Array.isArray(axis.kpis) ? axis.kpis.map((item) => normalizeKpi(item)) : [];
+      nextKpis.splice(editingIndex, 1);
+      await saveAxisKpis(axis, nextKpis);
+      await loadAxes();
+      clearForm();
+      setView('list');
+      showMsg('KPI eliminado.');
+    } catch (error) {
+      showMsg(error?.message || 'No se pudo eliminar el KPI.', true);
+    } finally {
+      deleteBtn.disabled = false;
+    }
+  };
+
+  viewButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setView(btn.getAttribute('data-kpi-view') || 'list'));
+  });
+  newBtn.addEventListener('click', () => fillForm(null));
+  if (importBtn && importFileEl) {
+    importBtn.addEventListener('click', () => importFileEl.click());
+    importFileEl.addEventListener('change', () => {
+      const file = importFileEl.files && importFileEl.files[0];
+      importKpis(file);
+    });
+  }
+  cancelBtn.addEventListener('click', () => {
+    clearForm();
+    setView('list');
+    showMsg('');
+  });
+  saveBtn.addEventListener('click', saveKpi);
+  deleteBtn.addEventListener('click', deleteKpi);
+
+  clearForm();
+  setView('list');
+  loadAxes().catch((error) => showMsg(error?.message || 'No se pudo cargar KPIs.', true));
+})();
+</script>

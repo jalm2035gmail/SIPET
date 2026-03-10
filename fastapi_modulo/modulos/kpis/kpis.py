@@ -4,6 +4,16 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 router = APIRouter()
+_KPIS_LOCKED_CONTENT = """
+<section class="w-full max-w-3xl mx-auto">
+  <article class="card rounded-box border border-base-300 bg-base-100 shadow-sm">
+    <div class="card-body gap-4 text-center">
+      <h2 class="text-2xl font-bold">KPIs</h2>
+      <p class="text-base-content/70">No tiene acceso, contacte al administrador.</p>
+    </div>
+  </article>
+</section>
+"""
 KPIS_TEMPLATE_PATH = os.path.join("fastapi_modulo", "templates", "modulos", "kpis", "kpis.html")
 KPIS_INDICADORES_TEMPLATE_PATH = os.path.join(
     "fastapi_modulo", "templates", "modulos", "kpis", "indicadores.html"
@@ -33,8 +43,8 @@ def kpis_page(request: Request):
     return render_backend_page(
         request,
         title="KPIs",
-        description="Gestión y seguimiento de indicadores clave de desempeño.",
-        content=_load_kpis_template(),
+        description="Acceso restringido al módulo KPIs.",
+        content=_KPIS_LOCKED_CONTENT,
         hide_floating_actions=True,
         show_page_header=False,
     )
