@@ -4,6 +4,7 @@
     var plOrgLibPromise = null;
     var plOrgChart = null;
     var plCurrentView = 'form';
+    var plLastSavedId = '';
     var plFilters = { search: '', nivel: '' };
     var plHabCatalog = {};
     var plHabIndex = {};
@@ -117,6 +118,23 @@
         });
     }
 
+    function getOrderedPuestos(items) {
+        var rows = Array.isArray(items) ? items.slice() : [];
+        rows.sort(function(a, b) {
+            var aId = String((a && a.id) || '');
+            var bId = String((b && b.id) || '');
+            var savedId = String(plLastSavedId || '');
+            if (savedId) {
+                if (aId === savedId && bId !== savedId) return -1;
+                if (bId === savedId && aId !== savedId) return 1;
+            }
+            var aName = String((a && a.nombre) || '').trim();
+            var bName = String((b && b.nombre) || '').trim();
+            return aName.localeCompare(bName, 'es', { sensitivity: 'base' });
+        });
+        return rows;
+    }
+
     function loadAreas() {
         var fallbackAreas = Array.isArray(areas) ? areas.slice() : [];
         return fetch('/api/inicio/departamentos')
@@ -139,22 +157,51 @@
             });
     }
 
+    function setSaveMessage(text, isError) {
+        var ok = document.getElementById('pl-msg');
+        var err = document.getElementById('pl-msg-error');
+        if (ok) ok.style.display = 'none';
+        if (err) {
+            err.style.display = 'none';
+            err.textContent = '';
+        }
+        if (!text) return;
+        var target = isError ? err : ok;
+        if (!target) return;
+        target.textContent = text;
+        target.style.display = 'inline';
+        if (!isError) {
+            setTimeout(function() {
+                if (target.textContent === text) target.style.display = 'none';
+            }, 2200);
+        }
+    }
+
     // Load puestos
     function loadPuestos() {
-        fetch('/api/puestos-laborales')
+        return fetch('/api/puestos-laborales')
             .then(function(r){ return r.json(); })
-            .then(function(res){ puestos = res.data || []; renderTable(); });
+            .then(function(res){
+                puestos = (res && Array.isArray(res.data)) ? res.data : [];
+                renderTable();
+                return puestos;
+            })
+            .catch(function() {
+                puestos = [];
+                renderTable();
+                return puestos;
+            });
     }
 
     function renderTable() {
         var tbody = document.getElementById('pl-tbody');
         var cnt = document.getElementById('pl-count');
         if (!tbody) return;
-        var visiblePuestos = getFilteredPuestos();
+        var visiblePuestos = getOrderedPuestos(getFilteredPuestos());
         if (cnt) cnt.textContent = visiblePuestos.length ? '(' + visiblePuestos.length + ')' : '';
         setAreaOptions();
         if (!visiblePuestos.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="pl-empty">No hay puestos registrados aún.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="pl-empty">No hay puestos registrados aún.</td></tr>';
             return;
         }
         tbody.innerHTML = '';
@@ -165,12 +212,35 @@
                 '<td><strong>' + _esc(p.nombre) + '</strong></td>' +
                 '<td class="area-cell">' + _esc(p.area || '—') + '</td>' +
                 '<td class="area-cell">' + _esc(p.nivel || '—') + '</td>' +
-                '<td class="desc-cell">' + _esc(p.descripcion || '—') + '</td>';
+                '<td class="desc-cell">' + _esc(p.descripcion || '—') + '</td>' +
+                '<td class="actions-cell">' +
+                    '<div class="flex items-center justify-end gap-1">' +
+                        '<button type="button" class="pl-act-btn edit pl-row-edit" data-id="' + _esc(p.id) + '" aria-label="Editar" title="Editar">' +
+                            '<span class="pl-act-btn-icon" aria-hidden="true" style="--pl-act-icon:url(\'/templates/icon/boton/editar.svg\')"></span>' +
+                        '</button>' +
+                        '<button type="button" class="pl-act-btn del pl-row-del" data-id="' + _esc(p.id) + '" aria-label="Eliminar" title="Eliminar">' +
+                            '<span class="pl-act-btn-icon" aria-hidden="true" style="--pl-act-icon:url(\'/templates/icon/boton/eliminar.svg\')"></span>' +
+                        '</button>' +
+                    '</div>' +
+                '</td>';
             tr.addEventListener('click', function() {
                 startEdit(p.id);
                 setPlView('form');
             });
             tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll('.pl-row-edit').forEach(function(btn) {
+            btn.addEventListener('click', function(ev) {
+                ev.stopPropagation();
+                startEdit(btn.getAttribute('data-id'));
+                setPlView('form');
+            });
+        });
+        tbody.querySelectorAll('.pl-row-del').forEach(function(btn) {
+            btn.addEventListener('click', function(ev) {
+                ev.stopPropagation();
+                deletePuesto(btn.getAttribute('data-id'));
+            });
         });
         if (plCurrentView === 'kanban') renderKanbanView();
         if (plCurrentView === 'organigrama') renderOrganigramaView();
@@ -180,7 +250,7 @@
         var host = document.getElementById('pl-kanban-host');
         if (!host) return;
         var groups = { 'Sin área': [] };
-        (getFilteredPuestos() || []).forEach(function(p) {
+        getOrderedPuestos(getFilteredPuestos()).forEach(function(p) {
             var area = String((p && p.area) || '').trim() || 'Sin área';
             if (!groups[area]) groups[area] = [];
             groups[area].push(p);
@@ -389,7 +459,7 @@
             }
         }
         Object.keys(map).forEach(function(key) {
-            if (map[key]) map[key].style.display = key === plCurrentView ? '' : 'none';
+            if (map[key]) map[key].style.display = key === plCurrentView ? 'block' : 'none';
         });
         document.querySelectorAll('[data-pl-view]').forEach(function(btn) {
             var isActive = btn.getAttribute('data-pl-view') === plCurrentView;
@@ -752,16 +822,25 @@
         _renderFormHab();
         document.getElementById('pl-form-title').textContent = 'Nuevo puesto laboral';
         document.getElementById('pl-btn-cancel').style.display = 'none';
-        document.getElementById('pl-msg').style.display = 'none';
+        setSaveMessage('');
     }
 
     document.getElementById('pl-btn-cancel').addEventListener('click', resetForm);
 
     document.getElementById('pl-btn-save').addEventListener('click', function() {
+        var saveBtn = document.getElementById('pl-btn-save');
         var nombre = document.getElementById('pl-nombre').value.trim();
-        if (!nombre) { document.getElementById('pl-nombre').focus(); return; }
+        if (!nombre) {
+            setSaveMessage('Capture el nombre del puesto.', true);
+            document.getElementById('pl-nombre').focus();
+            return;
+        }
         var area = document.getElementById('pl-area').value.trim();
-        if (!area) { document.getElementById('pl-area').focus(); return; }
+        if (!area) {
+            setSaveMessage('Seleccione un área válida.', true);
+            document.getElementById('pl-area').focus();
+            return;
+        }
         var payload = {
             id:          document.getElementById('pl-edit-id').value || undefined,
             nombre:      nombre,
@@ -770,6 +849,8 @@
             descripcion: document.getElementById('pl-desc').value.trim(),
             habilidades_requeridas: _getFormHabPayload(),
         };
+        setSaveMessage('');
+        if (saveBtn) saveBtn.disabled = true;
         fetch('/api/puestos-laborales', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -778,13 +859,20 @@
         .then(function(r){ return r.json(); })
         .then(function(res){
             if (res.success) {
-                puestos = res.data;
-                renderTable();
-                resetForm();
-                var msg = document.getElementById('pl-msg');
-                msg.style.display = 'inline';
-                setTimeout(function(){ msg.style.display = 'none'; }, 2000);
+                plLastSavedId = String((res && res.puesto && res.puesto.id) || '');
+                return loadPuestos().then(function() {
+                    resetForm();
+                    setPlView('list');
+                    setSaveMessage('✓ Guardado: ' + nombre, false);
+                });
             }
+            setSaveMessage((res && res.error) || 'No se pudo guardar el puesto.', true);
+        })
+        .catch(function() {
+            setSaveMessage('No se pudo guardar el puesto.', true);
+        })
+        .finally(function() {
+            if (saveBtn) saveBtn.disabled = false;
         });
     });
 

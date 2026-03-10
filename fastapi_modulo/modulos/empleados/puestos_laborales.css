@@ -118,6 +118,10 @@
     display: none;
 }
 
+.pl-msg-error {
+    color: var(--color-error, #dc2626);
+}
+
 .pl-act-btn {
     border: none;
     background: none;
@@ -126,6 +130,15 @@
     border-radius: 6px;
     font-size: 0.82rem;
     transition: background 0.12s;
+}
+
+.pl-act-btn-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+    background-color: currentColor;
+    -webkit-mask: var(--pl-act-icon) center / contain no-repeat;
+    mask: var(--pl-act-icon) center / contain no-repeat;
 }
 
 .pl-act-btn.edit,
