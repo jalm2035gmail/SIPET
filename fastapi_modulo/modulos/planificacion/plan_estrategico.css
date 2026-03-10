@@ -480,6 +480,36 @@
                 color:#334155;
               }
               .axm-foundacion-tool:hover{ background:#e2e8f0; }
+              .axm-combo{ position:relative; }
+              .axm-combo-list{
+                display:none;
+                position:absolute;
+                z-index:200;
+                top:calc(100% + 2px);
+                left:0;
+                right:0;
+                max-height:220px;
+                overflow-y:auto;
+                background:#fff;
+                border:1px solid #94a3b8;
+                border-radius:10px;
+                box-shadow:0 6px 18px rgba(16,24,40,.12);
+                padding:4px 0;
+                margin:0;
+                list-style:none;
+              }
+              .axm-combo-list.open{ display:block; }
+              .axm-combo-list li{
+                padding:8px 14px;
+                font-size:.875rem;
+                color:#1e293b;
+                cursor:pointer;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+              }
+              .axm-combo-list li:hover,
+              .axm-combo-list li[aria-selected=true]{ background:#f1f5f9; }
               .axm-foundacion-editor{
                 min-height:120px;
                 border:1px solid #cbd5e1;
@@ -494,6 +524,11 @@
               .axm-foundacion-editor[contenteditable=true]{
                 background:#fff;
                 border-color:#94a3b8;
+              }
+              .planes-axis-editor{
+                width:100%;
+                min-height:120px;
+                overflow:auto;
               }
               .axm-foundacion-source{
                 width:100%;
@@ -707,6 +742,19 @@
                 text-align:left;
                 cursor:pointer;
                 transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+              }
+              .planes-obj-item--no-owner{
+                border-color:#fca5a5;
+                background:#fff5f5;
+              }
+              .planes-obj-item--no-owner:hover{
+                border-color:#ef4444;
+              }
+              .planes-obj-no-owner{
+                margin-top:6px;
+                color:#dc2626;
+                font-weight:600;
+                font-size:.82rem;
               }
               .planes-obj-item:hover{
                 background:#ffffff;

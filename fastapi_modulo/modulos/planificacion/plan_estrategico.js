@@ -1,20 +1,37 @@
 (function () {
           const buttons = Array.from(document.querySelectorAll('[data-planes-view]'));
+          const planesQuery = new URLSearchParams(window.location.search || '');
+          const planesAxisEditorShell = document.getElementById('planes-axis-editor-shell');
+          const planesAxisListShell = document.getElementById('planes-axis-list-shell');
           const panels = {
             list: document.getElementById('planes-view-list'),
             kanban: document.getElementById('planes-view-kanban'),
             organigrama: document.getElementById('planes-view-organigrama'),
           };
+          const syncAxisShells = (view) => {
+            const isFormView = view === 'form';
+            if (planesAxisEditorShell) {
+              planesAxisEditorShell.style.display = isFormView ? '' : 'none';
+            }
+            if (planesAxisListShell) {
+              planesAxisListShell.style.display = isFormView ? 'none' : '';
+            }
+          };
           function setView(view) {
-            const target = ['list', 'kanban', 'organigrama'].includes(view) ? view : 'list';
+            const target = ['form', 'list', 'kanban', 'organigrama'].includes(view) ? view : 'list';
             Object.keys(panels).forEach((key) => {
               const panel = panels[key];
               if (!panel) return;
-              panel.classList.toggle('hidden', key !== target);
+              const visible = target === 'form' ? key === 'list' : key === target;
+              panel.classList.toggle('hidden', !visible);
             });
             buttons.forEach((btn) => {
               btn.classList.toggle('active', (btn.getAttribute('data-planes-view') || '') === target);
             });
+            syncAxisShells(target);
+            if (target === 'form') {
+              setStrategicTab('ejes');
+            }
             if (target === 'organigrama') {
               renderStrategicTree(planesOrganigramaHostEl, { inline: true });
             }
@@ -25,21 +42,237 @@
           });
 
           const planesAddAxisBtn = document.getElementById('planes-add-axis-btn');
+          const planesAxisEditorTitle = document.getElementById('planes-axis-editor-title');
+          const planesAxisNewBtn = document.getElementById('planes-axis-new-btn');
+          const planesAxisEditBtn = document.getElementById('planes-axis-edit-btn');
+          const planesAxisSaveBtn = document.getElementById('planes-axis-save-btn');
+          const planesAxisDeleteBtn = document.getElementById('planes-axis-delete-btn');
+          const planesAxisBackBtn = document.getElementById('planes-axis-back-btn');
+          const planesAxisMsg = document.getElementById('planes-axis-msg');
+          const planesAxisNombre = document.getElementById('planes-axis-nombre');
+          const planesAxisBaseCode = document.getElementById('planes-axis-base-code');
+          const planesAxisOrden = document.getElementById('planes-axis-orden');
+          const planesAxisDepartamento = document.getElementById('planes-axis-departamento');
+          const planesAxisResponsable = document.getElementById('planes-axis-responsable');
+          const planesAxisFechaInicial = document.getElementById('planes-axis-fecha-inicial');
+          const planesAxisFechaFinal = document.getElementById('planes-axis-fecha-final');
+          const planesAxisDescripcion = document.getElementById('planes-axis-descripcion');
+          const planesAxisFormatButtons = Array.from(document.querySelectorAll('[data-planes-axis-cmd]'));
           const planesImportBtn = document.getElementById('planes-import-csv-btn');
           const planesImportFile = document.getElementById('planes-import-csv-file');
           const planesImportMsg = document.getElementById('planes-import-csv-msg');
+          let planesAxesCache = [];
+          let planesAxisCurrentId = '';
+          let planesAxisEditMode = false;
           const setPlanesImportMsg = (text, isError = false) => {
             if (!planesImportMsg) return;
             planesImportMsg.textContent = text || '';
             planesImportMsg.style.color = isError ? '#b91c1c' : '#0f3d2e';
           };
+          const setPlanesAxisMsg = (text, isError = false) => {
+            if (!planesAxisMsg) return;
+            planesAxisMsg.textContent = text || '';
+            planesAxisMsg.style.color = isError ? '#b91c1c' : '#0f3d2e';
+          };
+          const renderAxisDescription = (value) => {
+            if (!planesAxisDescripcion) return;
+            const raw = String(value || '').trim();
+            if (!raw) {
+              planesAxisDescripcion.innerHTML = '<span class="text-base-content/50">Sin descripción.</span>';
+              planesAxisDescripcion.dataset.empty = 'true';
+              return;
+            }
+            planesAxisDescripcion.dataset.empty = 'false';
+            const looksLikeHtml = /<[^>]+>/.test(raw);
+            planesAxisDescripcion.innerHTML = looksLikeHtml
+              ? raw
+              : escapeHtml(raw).replace(/\n/g, '<br>');
+          };
+          const focusAxisDescriptionAtEnd = () => {
+            if (!planesAxisDescripcion || typeof window.getSelection !== 'function' || typeof document.createRange !== 'function') return;
+            planesAxisDescripcion.focus();
+            const selection = window.getSelection();
+            if (!selection) return;
+            const range = document.createRange();
+            range.selectNodeContents(planesAxisDescripcion);
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          };
+          const setAxisEditorDisabled = (disabled) => {
+            [
+              planesAxisNombre,
+              planesAxisBaseCode,
+              planesAxisOrden,
+              planesAxisDepartamento,
+              planesAxisResponsable,
+              planesAxisFechaInicial,
+              planesAxisFechaFinal,
+            ].forEach((el) => {
+              if (!el) return;
+              el.disabled = !!disabled;
+            });
+            if (planesAxisDescripcion) {
+              planesAxisDescripcion.setAttribute('contenteditable', disabled ? 'false' : 'true');
+              planesAxisDescripcion.classList.toggle('cursor-text', !disabled);
+              if (!disabled && planesAxisDescripcion.dataset.empty === 'true') {
+                planesAxisDescripcion.innerHTML = '';
+                planesAxisDescripcion.dataset.empty = 'false';
+              }
+            }
+            planesAxisFormatButtons.forEach((btn) => {
+              btn.disabled = !!disabled;
+            });
+            if (planesAxisSaveBtn) planesAxisSaveBtn.disabled = !!disabled;
+            if (planesAxisDeleteBtn) planesAxisDeleteBtn.disabled = !!disabled || !planesAxisCurrentId;
+          };
+          const readAxisFormPayload = () => ({
+            nombre: String(planesAxisNombre?.value || '').trim(),
+            base_code: String(planesAxisBaseCode?.value || '').trim(),
+            orden: String(planesAxisOrden?.value || '').trim(),
+            lider_departamento: String(planesAxisDepartamento?.value || '').trim(),
+            responsabilidad_directa: String(planesAxisResponsable?.value || '').trim(),
+            fecha_inicial: String(planesAxisFechaInicial?.value || '').trim(),
+            fecha_final: String(planesAxisFechaFinal?.value || '').trim(),
+            descripcion: String(planesAxisDescripcion?.innerHTML || '').trim(),
+          });
+          const fillAxisEditor = (axis, editMode = false) => {
+            const current = axis && typeof axis === 'object' ? axis : null;
+            planesAxisCurrentId = current && current.id != null ? String(current.id) : '';
+            planesAxisEditMode = !!editMode;
+            if (planesAxisEditorTitle) {
+              planesAxisEditorTitle.textContent = planesAxisCurrentId
+                ? `${planesAxisEditMode ? 'Editar' : 'Eje'}: ${String(current?.codigo || 'Sin código')} - ${String(current?.nombre || 'Sin nombre')}`
+                : 'Nuevo eje estratégico';
+            }
+            if (planesAxisNombre) planesAxisNombre.value = String(current?.nombre || '');
+            if (planesAxisBaseCode) planesAxisBaseCode.value = String(current?.base_code || '').trim();
+            if (planesAxisOrden) planesAxisOrden.value = String(current?.orden || (planesAxesCache.length + 1) || 1);
+            if (planesAxisDepartamento) planesAxisDepartamento.value = String(current?.lider_departamento || '');
+            if (typeof window.__planesFillResponsables === 'function') {
+              window.__planesFillResponsables(String(current?.lider_departamento || ''));
+            }
+            if (planesAxisResponsable) planesAxisResponsable.value = String(current?.responsabilidad_directa || '');
+            if (planesAxisFechaInicial) planesAxisFechaInicial.value = String(current?.fecha_inicial || '');
+            if (planesAxisFechaFinal) planesAxisFechaFinal.value = String(current?.fecha_final || '');
+            renderAxisDescription(current?.descripcion || '');
+            if (planesAxisEditBtn) planesAxisEditBtn.disabled = !planesAxisCurrentId;
+            setAxisEditorDisabled(!planesAxisEditMode);
+          };
+          const selectAxisForEditing = (axisId, editMode = true) => {
+            const target = planesAxesCache.find((axis) => String(axis?.id || '') === String(axisId || '')) || null;
+            if (!target) return;
+            try {
+              const nextQuery = new URLSearchParams(window.location.search || '');
+              nextQuery.set('tab', 'ejes');
+              nextQuery.set('open', 'axis');
+              nextQuery.set('axis_id', String(axisId || ''));
+              nextQuery.set('view', 'form');
+              window.history.replaceState({}, '', `${window.location.pathname}?${nextQuery.toString()}`);
+            } catch (_err) {}
+            setView('form');
+            fillAxisEditor(target, editMode);
+            setStrategicTab('ejes');
+            const panel = document.getElementById('planes-tab-panel-ejes');
+            if (panel && typeof panel.scrollIntoView === 'function') {
+              panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          };
           if (planesAddAxisBtn) {
             planesAddAxisBtn.addEventListener('click', () => {
+              setView('form');
               setStrategicTab('ejes', true);
-              const ejesPanel = document.getElementById('planes-tab-panel-ejes');
-              const ejesLink = ejesPanel ? ejesPanel.querySelector('a[href="/ejes-estrategicos"]') : null;
-              if (ejesLink) {
-                ejesLink.focus();
+              fillAxisEditor(null, true);
+              setPlanesAxisMsg('');
+              if (planesAxisNombre) planesAxisNombre.focus();
+            });
+          }
+          if (planesAxisNewBtn) {
+            planesAxisNewBtn.addEventListener('click', () => {
+              setView('form');
+              fillAxisEditor(null, true);
+              setPlanesAxisMsg('');
+              if (planesAxisNombre) planesAxisNombre.focus();
+            });
+          }
+          if (planesAxisBackBtn) {
+            planesAxisBackBtn.addEventListener('click', () => {
+              setView('list');
+            });
+          }
+          if (planesAxisEditBtn) {
+            planesAxisEditBtn.addEventListener('click', () => {
+              if (!planesAxisCurrentId) return;
+              selectAxisForEditing(planesAxisCurrentId, true);
+              setPlanesAxisMsg('Modo edición habilitado.');
+              focusAxisDescriptionAtEnd();
+            });
+          }
+          planesAxisFormatButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const cmd = btn.getAttribute('data-planes-axis-cmd') || '';
+              if (!cmd || !planesAxisDescripcion || planesAxisDescripcion.getAttribute('contenteditable') !== 'true') return;
+              planesAxisDescripcion.focus();
+              try {
+                document.execCommand(cmd, false, null);
+              } catch (_err) {}
+            });
+          });
+          if (planesAxisSaveBtn) {
+            planesAxisSaveBtn.addEventListener('click', async () => {
+              const payload = readAxisFormPayload();
+              if (!payload.nombre) {
+                setPlanesAxisMsg('El nombre del eje es obligatorio.', true);
+                if (planesAxisNombre) planesAxisNombre.focus();
+                return;
+              }
+              planesAxisSaveBtn.disabled = true;
+              try {
+                const targetId = String(planesAxisCurrentId || '').trim();
+                const response = await fetch(targetId ? `/api/strategic-axes/${encodeURIComponent(targetId)}` : '/api/strategic-axes', {
+                  method: targetId ? 'PUT' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'same-origin',
+                  body: JSON.stringify(payload),
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || data?.success === false) {
+                  throw new Error(data?.error || data?.detail || 'No se pudo guardar el eje.');
+                }
+                setPlanesAxisMsg('Eje guardado.');
+                await loadTracking();
+                const savedId = String(data?.data?.id || targetId || '').trim();
+                if (savedId) selectAxisForEditing(savedId, false);
+              } catch (error) {
+                setPlanesAxisMsg(error?.message || 'No se pudo guardar el eje.', true);
+              } finally {
+                planesAxisSaveBtn.disabled = false;
+              }
+            });
+          }
+          if (planesAxisDeleteBtn) {
+            planesAxisDeleteBtn.addEventListener('click', async () => {
+              const targetId = String(planesAxisCurrentId || '').trim();
+              if (!targetId) return;
+              if (!window.confirm('¿Eliminar este eje estratégico?')) return;
+              planesAxisDeleteBtn.disabled = true;
+              try {
+                const response = await fetch(`/api/strategic-axes/${encodeURIComponent(targetId)}`, {
+                  method: 'DELETE',
+                  credentials: 'same-origin',
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || data?.success === false) {
+                  throw new Error(data?.error || data?.detail || 'No se pudo eliminar el eje.');
+                }
+                setPlanesAxisMsg('Eje eliminado.');
+                planesAxisCurrentId = '';
+                await loadTracking();
+                fillAxisEditor(null, true);
+              } catch (error) {
+                setPlanesAxisMsg(error?.message || 'No se pudo eliminar el eje.', true);
+              } finally {
+                planesAxisDeleteBtn.disabled = false;
               }
             });
           }
@@ -563,22 +796,35 @@
             host.innerHTML = axisList.map((axis) => {
               const code = escapeHtml(axis?.codigo || 'Sin código');
               const name = escapeHtml(axis?.nombre || 'Sin nombre');
-              const owner = escapeHtml(axis?.responsabilidad_directa || 'Sin responsable');
+              const rawOwner = String(axis?.responsabilidad_directa || '').trim();
+              const noOwner = !rawOwner;
+              const owner = escapeHtml(rawOwner || 'Sin responsable');
               const progress = Math.max(0, Math.min(100, Number(axis?.avance || 0)));
               const objectivesCount = Number(axis?.objetivos_count || (Array.isArray(axis?.objetivos) ? axis.objetivos.length : 0)) || 0;
+              const axisId = String(axis?.id || '').trim();
+              const active = axisId && axisId === String(planesAxisCurrentId || '');
+              const borderClass = active ? 'border-primary bg-base-100' : noOwner ? 'border-error bg-error/5' : 'border-base-300';
               return `
-                <article class="card bg-base-200 border border-base-300 rounded-xl">
+                <button type="button" class="card bg-base-200 border ${borderClass} rounded-xl text-left transition hover:border-primary/30 hover:bg-base-100" data-planes-edit-axis="${axisId}">
                   <div class="card-body p-4">
                     <div class="flex flex-wrap items-start justify-between gap-2">
                       <h4 class="font-semibold text-base-content">${code} - ${name}</h4>
                       <span class="badge badge-outline">${progress}%</span>
                     </div>
-                    <div class="text-sm text-base-content/70">Responsable: ${owner}</div>
+                    <div class="text-sm ${noOwner ? 'text-error font-medium' : 'text-base-content/70'}">Responsable: ${owner}</div>
                     <div class="text-sm text-base-content/70">Objetivos: ${objectivesCount}</div>
                   </div>
-                </article>
+                </button>
               `;
             }).join('');
+            host.querySelectorAll('[data-planes-edit-axis]').forEach((button) => {
+              button.addEventListener('click', () => {
+                const axisId = String(button.getAttribute('data-planes-edit-axis') || '').trim();
+                if (!axisId) return;
+                selectAxisForEditing(axisId, true);
+                renderStrategicAxesPanel(planesAxesCache);
+              });
+            });
           };
 
           const renderStrategicObjectivesPanel = (axes) => {
@@ -586,17 +832,113 @@
             const host = document.getElementById('planes-objetivos-list');
             const titleEl = document.getElementById('planes-objetivos-selected-axis-title');
             const addBtn = document.getElementById('planes-add-objective-btn');
+            const objShell = document.getElementById('planes-obj-editor-shell');
+            const objTitleEl = document.getElementById('planes-obj-editor-title');
+            const objNombreEl = document.getElementById('planes-obj-nombre');
+            const objHitoEl = document.getElementById('planes-obj-hito');
+            const objLiderEl = document.getElementById('planes-obj-lider');
+            const objFiEl = document.getElementById('planes-obj-fecha-inicial');
+            const objFfEl = document.getElementById('planes-obj-fecha-final');
+            const objMsgEl = document.getElementById('planes-obj-msg');
+            const objCancelBtn = document.getElementById('planes-obj-cancel-btn');
+            const objSaveBtn = document.getElementById('planes-obj-save-btn');
+            const objDeleteBtn = document.getElementById('planes-obj-delete-btn');
             if (!host || !axesHost) return;
+
+            const showObjForm = (show) => {
+              if (objShell) objShell.style.display = show ? '' : 'none';
+              if (host) host.style.display = show ? 'none' : '';
+            };
+
+            const fillObjForm = async (obj, axisId, isNew) => {
+              if (objTitleEl) objTitleEl.textContent = isNew ? 'Nuevo objetivo estratégico' : 'Editar objetivo estratégico';
+              if (objNombreEl) objNombreEl.value = isNew ? '' : (obj?.nombre || '');
+              if (objHitoEl) objHitoEl.value = isNew ? '' : (obj?.hito || '');
+              if (objLiderEl) objLiderEl.value = isNew ? '' : (obj?.lider || '');
+              if (objFiEl) objFiEl.value = isNew ? '' : (obj?.fecha_inicial || '');
+              if (objFfEl) objFfEl.value = isNew ? '' : (obj?.fecha_final || '');
+              if (objMsgEl) objMsgEl.textContent = '';
+              if (objDeleteBtn) objDeleteBtn.style.display = isNew ? 'none' : '';
+              window.__planesEditingObjId = isNew ? null : (obj?.id || null);
+              window.__planesEditingObjAxisId = axisId;
+              if (typeof window.__planesLoadObjLiderOptions === 'function') {
+                await window.__planesLoadObjLiderOptions(axisId);
+              }
+              showObjForm(true);
+            };
+
             const axisList = Array.isArray(axes) ? axes : [];
+
+            if (objCancelBtn) objCancelBtn.onclick = () => showObjForm(false);
+
+            if (objSaveBtn) {
+              objSaveBtn.onclick = async () => {
+                const axisId = window.__planesEditingObjAxisId;
+                const objId = window.__planesEditingObjId;
+                const nombre = (objNombreEl?.value || '').trim();
+                if (!nombre) { if (objMsgEl) objMsgEl.textContent = 'El nombre es obligatorio.'; return; }
+                const payload = {
+                  nombre,
+                  hito: (objHitoEl?.value || '').trim(),
+                  lider: (objLiderEl?.value || '').trim(),
+                  fecha_inicial: objFiEl?.value || null,
+                  fecha_final: objFfEl?.value || null,
+                };
+                if (objMsgEl) objMsgEl.textContent = 'Guardando...';
+                try {
+                  const url = objId ? `/api/strategic-objectives/${objId}` : `/api/strategic-axes/${axisId}/objectives`;
+                  const r = await fetch(url, {
+                    method: objId ? 'PUT' : 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                  });
+                  const resp = await r.json();
+                  if (resp?.success) {
+                    showObjForm(false);
+                    const lr = await fetch('/api/strategic-axes', { method: 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } });
+                    const lp = await lr.json();
+                    const updatedAxes = (lp?.success && Array.isArray(lp.data)) ? lp.data : [];
+                    planesAxesCache = updatedAxes;
+                    renderPlanesTrackingBoard(updatedAxes);
+                    renderStrategicAxesPanel(updatedAxes);
+                    renderStrategicObjectivesPanel(updatedAxes);
+                  } else {
+                    if (objMsgEl) objMsgEl.textContent = resp?.error || 'Error al guardar.';
+                  }
+                } catch (_) {
+                  if (objMsgEl) objMsgEl.textContent = 'Error de red.';
+                }
+              };
+            }
+
+            if (objDeleteBtn) {
+              objDeleteBtn.onclick = async () => {
+                const objId = window.__planesEditingObjId;
+                if (!objId) return;
+                if (!confirm('¿Eliminar este objetivo estratégico?')) return;
+                try {
+                  const r = await fetch(`/api/strategic-objectives/${objId}`, { method: 'DELETE', credentials: 'same-origin' });
+                  const resp = await r.json();
+                  if (resp?.success) {
+                    showObjForm(false);
+                    const lr = await fetch('/api/strategic-axes', { method: 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } });
+                    const lp = await lr.json();
+                    const updatedAxes = (lp?.success && Array.isArray(lp.data)) ? lp.data : [];
+                    planesAxesCache = updatedAxes;
+                    renderPlanesTrackingBoard(updatedAxes);
+                    renderStrategicAxesPanel(updatedAxes);
+                    renderStrategicObjectivesPanel(updatedAxes);
+                  }
+                } catch (_) {}
+              };
+            }
+
             if (addBtn) {
               addBtn.onclick = () => {
                 const selected = axisList.find((axis) => String(axis?.id || '') === String(window.__planesSelectedAxisId || '')) || axisList[0] || null;
-                const axisId = selected && selected.id != null ? String(selected.id) : '';
-                const qs = new URLSearchParams();
-                qs.set('tab', 'objetivos');
-                qs.set('open', 'objective');
-                if (axisId) qs.set('axis_id', axisId);
-                window.location.href = `/ejes-estrategicos?${qs.toString()}`;
+                if (!selected) return;
+                fillObjForm(null, selected.id, true);
               };
             }
             if (!axisList.length) {
@@ -640,23 +982,30 @@
               const code = escapeHtml(obj?.codigo || 'Sin código');
               const hito = escapeHtml(obj?.hito || 'N/D');
               const avance = Math.max(0, Math.min(100, Number(obj?.avance || 0)));
-              const fechaInicio = escapeHtml(obj?.fecha_inicio || obj?.inicio || 'N/D');
-              const fechaFin = escapeHtml(obj?.fecha_fin || obj?.fin || 'N/D');
+              const fechaInicio = escapeHtml(obj?.fecha_inicio || obj?.fecha_inicial || obj?.inicio || 'N/D');
+              const fechaFin = escapeHtml(obj?.fecha_fin || obj?.fecha_final || obj?.fin || 'N/D');
+              const rawLider = String(obj?.lider || '').trim();
+              const noLider = !rawLider;
+              const lider = escapeHtml(rawLider || 'Sin responsable asignado');
               return `
-                <button type="button" class="planes-obj-item" data-planes-objective-id="${String(obj?.id || '')}" data-planes-objective-axis-id="${String(selectedAxis?.id || '')}">
+                <button type="button" class="planes-obj-item${noLider ? ' planes-obj-item--no-owner' : ''}" data-planes-objective-id="${String(obj?.id || '')}" data-planes-objective-axis-id="${String(selectedAxis?.id || '')}">
                   <h5>${name}</h5>
                   <div class="planes-obj-code">${code}</div>
                   <div class="planes-obj-meta">Hito: ${hito} · Avance: ${avance}% · Fecha inicial: ${fechaInicio} · Fecha final: ${fechaFin}</div>
+                  <div class="text-sm ${noLider ? 'text-error font-medium' : 'text-base-content/70'}">Responsable: ${lider}</div>
                 </button>
               `;
             }).join('');
             host.querySelectorAll('[data-planes-objective-id]').forEach((button) => {
               button.addEventListener('click', () => {
                 const objectiveId = String(button.getAttribute('data-planes-objective-id') || '').trim();
+                const btnAxisId = String(button.getAttribute('data-planes-objective-axis-id') || '').trim();
                 if (!objectiveId) return;
-                const qs = new URLSearchParams();
-                qs.set('objective_id', objectiveId);
-                window.location.href = `/poa?${qs.toString()}`;
+                const axisEntry = axisList.find((a) => String(a?.id || '') === btnAxisId);
+                const obj = Array.isArray(axisEntry?.objetivos)
+                  ? axisEntry.objetivos.find((o) => String(o?.id || '') === objectiveId)
+                  : null;
+                fillObjForm(obj, btnAxisId, false);
               });
             });
           };
@@ -670,13 +1019,21 @@
               });
               const payload = await response.json();
               const axes = (payload && payload.success && Array.isArray(payload.data)) ? payload.data : [];
+              planesAxesCache = axes;
               renderPlanesTrackingBoard(axes);
               renderStrategicAxesPanel(axes);
               renderStrategicObjectivesPanel(axes);
+              const openMode = String(planesQuery.get('open') || '').trim().toLowerCase();
+              const axisIdFromQuery = String(planesQuery.get('axis_id') || '').trim();
+              setView('list');
+              renderStrategicAxesPanel(axes);
             } catch (_err) {
+              planesAxesCache = [];
               renderPlanesTrackingBoard([]);
               renderStrategicAxesPanel([]);
               renderStrategicObjectivesPanel([]);
+              setView('list');
+              fillAxisEditor(null, true);
             }
           };
 
@@ -686,7 +1043,125 @@
             el.addEventListener('click', (event) => event.preventDefault());
           });
 
+          (async () => {
+            const makeCombo = (inputEl, dropdownEl, getOptions) => {
+              if (!inputEl || !dropdownEl) return;
+              let activeIdx = -1;
+              const open = (items) => {
+                dropdownEl.innerHTML = '';
+                activeIdx = -1;
+                if (!items.length) { dropdownEl.classList.remove('open'); return; }
+                items.forEach((text, i) => {
+                  const li = document.createElement('li');
+                  li.textContent = text;
+                  li.setAttribute('role', 'option');
+                  li.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    inputEl.value = text;
+                    dropdownEl.classList.remove('open');
+                    inputEl.dispatchEvent(new Event('combo-select', { bubbles: true }));
+                  });
+                  dropdownEl.appendChild(li);
+                });
+                dropdownEl.classList.add('open');
+              };
+              const filter = () => {
+                const q = inputEl.value.trim().toLowerCase();
+                const opts = getOptions();
+                open(q ? opts.filter((o) => o.toLowerCase().includes(q)) : opts);
+              };
+              inputEl.addEventListener('input', filter);
+              inputEl.addEventListener('focus', filter);
+              inputEl.addEventListener('keydown', (e) => {
+                const items = dropdownEl.querySelectorAll('li');
+                if (!items.length) return;
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  activeIdx = Math.min(activeIdx + 1, items.length - 1);
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  activeIdx = Math.max(activeIdx - 1, 0);
+                } else if (e.key === 'Enter' && activeIdx >= 0) {
+                  e.preventDefault();
+                  inputEl.value = items[activeIdx].textContent;
+                  dropdownEl.classList.remove('open');
+                  inputEl.dispatchEvent(new Event('combo-select', { bubbles: true }));
+                  return;
+                } else if (e.key === 'Escape') {
+                  dropdownEl.classList.remove('open'); return;
+                } else { return; }
+                items.forEach((li, i) => li.setAttribute('aria-selected', i === activeIdx ? 'true' : 'false'));
+                items[activeIdx]?.scrollIntoView({ block: 'nearest' });
+              });
+              inputEl.addEventListener('blur', () => {
+                setTimeout(() => dropdownEl.classList.remove('open'), 150);
+              });
+            };
+
+            try {
+              const [depRes, colRes] = await Promise.all([
+                fetch('/api/inicio/departamentos', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
+                fetch('/api/colaboradores', { credentials: 'same-origin', headers: { Accept: 'application/json' } }),
+              ]);
+              const depPayload = await depRes.json();
+              const colPayload = await colRes.json();
+              const departamentos = (Array.isArray(depPayload?.data) ? depPayload.data : [])
+                .map((d) => String(d?.name || '').trim()).filter(Boolean).sort((a, b) => a.localeCompare(b));
+              window.__planesColaboradoresAll = Array.isArray(colPayload) ? colPayload : (Array.isArray(colPayload?.data) ? colPayload.data : []);
+
+              const getResponsableOptions = () => {
+                const dep = String(planesAxisDepartamento?.value || '').trim().toLowerCase();
+                const all = window.__planesColaboradoresAll || [];
+                const filtered = dep
+                  ? all.filter((c) => String(c?.departamento || '').trim().toLowerCase() === dep)
+                  : all;
+                return filtered.map((c) => String(c?.nombre || '').trim()).filter(Boolean).sort((a, b) => a.localeCompare(b));
+              };
+
+              const depDropdown = document.getElementById('planes-axis-departamento-dropdown');
+              const colDropdown = document.getElementById('planes-axis-responsable-dropdown');
+              makeCombo(planesAxisDepartamento, depDropdown, () => departamentos);
+              makeCombo(planesAxisResponsable, colDropdown, getResponsableOptions);
+
+              const fillResponsables = (depName) => {
+                window.__planesFillResponsables_dep = depName;
+              };
+              window.__planesFillResponsables = fillResponsables;
+
+              if (planesAxisDepartamento) {
+                planesAxisDepartamento.addEventListener('combo-select', () => {
+                  if (planesAxisResponsable) planesAxisResponsable.value = '';
+                });
+                planesAxisDepartamento.addEventListener('input', () => {
+                  if (planesAxisResponsable) planesAxisResponsable.value = '';
+                });
+              }
+
+              // Objective lider combo (options loaded dynamically per axis)
+              window.__planesObjLiderOptions = [];
+              const objLiderInput = document.getElementById('planes-obj-lider');
+              const objLiderDropdown = document.getElementById('planes-obj-lider-dropdown');
+              makeCombo(objLiderInput, objLiderDropdown, () => window.__planesObjLiderOptions || []);
+
+              window.__planesLoadObjLiderOptions = async (axisId) => {
+                if (!axisId) { window.__planesObjLiderOptions = []; return; }
+                try {
+                  const r = await fetch(`/api/strategic-axes/${axisId}/collaborators`, {
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                  });
+                  const payload = await r.json();
+                  const names = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []);
+                  window.__planesObjLiderOptions = names
+                    .map((n) => (typeof n === 'string' ? n : String(n?.nombre || n || '')))
+                    .filter(Boolean)
+                    .sort((a, b) => a.localeCompare(b));
+                } catch (_) { window.__planesObjLiderOptions = []; }
+              };
+            } catch (_err) {}
+          })();
+
           loadTracking();
-          setStrategicTab('fundamentacion');
-          setView('list');
+          setStrategicTab(planesQuery.get('tab') || 'fundamentacion');
+          setView(planesQuery.get('view') === 'kanban' || planesQuery.get('view') === 'organigrama' ? planesQuery.get('view') : 'list');
         })();

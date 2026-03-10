@@ -17,6 +17,10 @@
           </div>
         </div>
         <div class="view-buttons page-view-buttons" id="planes-view-switch">
+          <button class="view-pill boton_vista" type="button" data-planes-view="form" data-tooltip="Formulario" aria-label="Formulario">
+            <i class="boton_vista-icono fa-solid fa-window-maximize" aria-hidden="true"></i>
+            <span class="view-pill-label boton_vista-label">Form</span>
+          </button>
           <button class="view-pill boton_vista active" type="button" data-planes-view="list" data-tooltip="Lista" aria-label="Lista">
             <i class="boton_vista-icono fa-solid fa-table-cells" aria-hidden="true"></i>
             <span class="view-pill-label boton_vista-label">List</span>
@@ -258,10 +262,71 @@
                 <div class="card-body">
                   <h3 class="card-title">Ejes estratégicos</h3>
                   <p class="text-base-content/70">Listado de ejes estratégicos registrados en el plan.</p>
-                  <div id="planes-ejes-list" class="grid gap-3 mt-2">
-                    <div class="text-base-content/60">Cargando ejes...</div>
+                  <div id="planes-axis-editor-shell" class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-3 mt-2" style="display:none;">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <h4 class="font-semibold text-base-content" id="planes-axis-editor-title">Nuevo eje estratégico</h4>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" class="btn btn-ghost btn-sm" id="planes-axis-back-btn">← Volver</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="planes-axis-new-btn">Nuevo</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="planes-axis-edit-btn">Editar</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="planes-axis-save-btn">Guardar</button>
+                        <button type="button" class="btn btn-error btn-sm" id="planes-axis-delete-btn">Eliminar</button>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                      <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+                        <input id="planes-axis-nombre" class="input input-bordered w-full" type="text" placeholder="Nombre del eje">
+                      </label>
+                      <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">Código base</span></div>
+                        <input id="planes-axis-base-code" class="input input-bordered w-full" type="text" placeholder="Ej. m1">
+                      </label>
+                      <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">Orden</span></div>
+                        <input id="planes-axis-orden" class="input input-bordered w-full" type="number" min="1" step="1" placeholder="1">
+                      </label>
+                      <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">Departamento líder</span></div>
+                        <div class="axm-combo" id="planes-axis-departamento-combo">
+                          <input id="planes-axis-departamento" class="input input-bordered w-full" type="text" placeholder="Buscar o escribir departamento..." autocomplete="off">
+                          <ul class="axm-combo-list" id="planes-axis-departamento-dropdown" role="listbox"></ul>
+                        </div>
+                      </label>
+                      <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">Responsabilidad directa</span></div>
+                        <div class="axm-combo" id="planes-axis-responsable-combo">
+                          <input id="planes-axis-responsable" class="input input-bordered w-full" type="text" placeholder="Buscar o escribir colaborador..." autocomplete="off">
+                          <ul class="axm-combo-list" id="planes-axis-responsable-dropdown" role="listbox"></ul>
+                        </div>
+                      </label>
+                      <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">Fecha inicial</span></div>
+                        <input id="planes-axis-fecha-inicial" class="input input-bordered w-full" type="date">
+                      </label>
+                      <label class="form-control w-full">
+                        <div class="label"><span class="label-text font-semibold">Fecha final</span></div>
+                        <input id="planes-axis-fecha-final" class="input input-bordered w-full" type="date">
+                      </label>
+                      <label class="form-control w-full md:col-span-2 xl:col-span-3">
+                        <div class="label"><span class="label-text font-semibold">Descripción</span></div>
+                        <div class="axm-foundacion-toolbar">
+                          <button type="button" class="axm-foundacion-tool" data-planes-axis-cmd="bold">Negrita</button>
+                          <button type="button" class="axm-foundacion-tool" data-planes-axis-cmd="italic">Itálica</button>
+                          <button type="button" class="axm-foundacion-tool" data-planes-axis-cmd="underline">Subrayar</button>
+                          <button type="button" class="axm-foundacion-tool" data-planes-axis-cmd="insertUnorderedList">Lista</button>
+                          <button type="button" class="axm-foundacion-tool" data-planes-axis-cmd="insertOrderedList">Numerada</button>
+                        </div>
+                        <div id="planes-axis-descripcion" class="axm-foundacion-editor planes-axis-editor" contenteditable="false" tabindex="0" role="textbox" aria-multiline="true" spellcheck="true"></div>
+                      </label>
+                    </div>
+                    <div id="planes-axis-msg" class="text-sm text-base-content/70 min-h-[1.25rem]" aria-live="polite"></div>
                   </div>
-                  <a href="/ejes-estrategicos" class="btn btn-primary mt-2">Ir al editor de ejes</a>
+                  <div id="planes-axis-list-shell" class="grid gap-2">
+                    <div id="planes-ejes-list" class="grid gap-3 mt-2">
+                      <div class="text-base-content/60">Cargando ejes...</div>
+                    </div>
+                  </div>
                 </div>
               </section>
               <section id="planes-tab-panel-objetivos" class="card bg-base-100 border border-base-300 rounded-2xl" style="display:none;" data-panel-display="block">
@@ -280,6 +345,43 @@
                         <div class="view-buttons" style="margin:0;">
                           <button type="button" id="planes-add-objective-btn" class="boton_vista boton_vista-eliptico active">Agregar objetivo</button>
                         </div>
+                      </div>
+                      <!-- Formulario inline de objetivo -->
+                      <div id="planes-obj-editor-shell" class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-3 mb-3" style="display:none;">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                          <h4 class="font-semibold text-base-content" id="planes-obj-editor-title">Nuevo objetivo estratégico</h4>
+                          <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" class="btn btn-ghost btn-sm" id="planes-obj-cancel-btn">← Cancelar</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="planes-obj-save-btn">Guardar</button>
+                            <button type="button" class="btn btn-error btn-sm" id="planes-obj-delete-btn">Eliminar</button>
+                          </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <label class="form-control w-full md:col-span-2">
+                            <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+                            <input id="planes-obj-nombre" class="input input-bordered w-full" type="text" placeholder="Nombre del objetivo">
+                          </label>
+                          <label class="form-control w-full">
+                            <div class="label"><span class="label-text font-semibold">Líder responsable</span></div>
+                            <div class="axm-combo" id="planes-obj-lider-combo">
+                              <input id="planes-obj-lider" class="input input-bordered w-full" type="text" placeholder="Buscar colaborador del departamento..." autocomplete="off">
+                              <ul class="axm-combo-list" id="planes-obj-lider-dropdown" role="listbox"></ul>
+                            </div>
+                          </label>
+                          <label class="form-control w-full">
+                            <div class="label"><span class="label-text font-semibold">Hito principal</span></div>
+                            <input id="planes-obj-hito" class="input input-bordered w-full" type="text" placeholder="Descripción del hito">
+                          </label>
+                          <label class="form-control w-full">
+                            <div class="label"><span class="label-text font-semibold">Fecha inicial</span></div>
+                            <input id="planes-obj-fecha-inicial" class="input input-bordered w-full" type="date">
+                          </label>
+                          <label class="form-control w-full">
+                            <div class="label"><span class="label-text font-semibold">Fecha final</span></div>
+                            <input id="planes-obj-fecha-final" class="input input-bordered w-full" type="date">
+                          </label>
+                        </div>
+                        <div id="planes-obj-msg" class="text-sm text-base-content/70 min-h-[1.25rem]" aria-live="polite"></div>
                       </div>
                       <div id="planes-objetivos-list" class="planes-obj-list">
                         <div class="text-base-content/60">Cargando objetivos...</div>
