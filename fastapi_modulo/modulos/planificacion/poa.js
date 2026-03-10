@@ -1,7 +1,7 @@
 (() => {
           const gridEl = document.getElementById("poa-board-grid");
           const openTreeBtn = document.querySelector('.view-pill[data-view="arbol"]');
-          const openGanttBtn = document.querySelector('.view-pill[data-view="gantt"]');
+          const openKanbanBtn = document.querySelector('.view-pill[data-view="kanban"]');
           const openCalendarBtn = document.querySelector('.view-pill[data-view="calendar"]');
           const msgEl = document.getElementById("poa-board-msg");
           const noOwnerMsgEl = document.getElementById("poa-no-owner-msg");
@@ -9,6 +9,8 @@
           const ownerChartTotalEl = document.getElementById("poa-owner-chart-total");
           const ownerChartEmptyEl = document.getElementById("poa-owner-chart-empty");
           const ownerChartListEl = document.getElementById("poa-owner-chart-list");
+          const ownerChartEl = document.getElementById("poa-owner-chart");
+          const ownerChartToggleEl = document.getElementById("poa-owner-chart-toggle");
           const treeModalEl = document.getElementById("poa-tree-modal");
           const treeCloseBtn = document.getElementById("poa-tree-close");
           const treeHostEl = document.getElementById("poa-tree-host");
@@ -40,6 +42,7 @@
           const deleteActBtn = document.getElementById("poa-act-delete");
           const actListEl = document.getElementById("poa-act-list");
           const actListMsgEl = document.getElementById("poa-act-list-msg");
+          const actListPanelEl = modalEl ? modalEl.querySelector(".poa-act-list-panel") : null;
           const formGridEl = modalEl ? modalEl.querySelector(".poa-form-grid") : null;
           const tabsWrapEl = document.getElementById("poa-tabs");
           const subAddBtn = document.getElementById("poa-sub-add");
@@ -177,6 +180,7 @@
             can_view_gantt: false,
           };
           let poaIaEnabled = false;
+          let allCollaboratorsCache = null;
 
           const escapeHtml = (value) => String(value || "")
             .replaceAll("&", "&amp;")
@@ -226,6 +230,21 @@
             msgEl.textContent = text || "";
             msgEl.style.color = isError ? "#b91c1c" : "#0f3d2e";
           };
+          const loadAllCollaboratorNames = async () => {
+            if (Array.isArray(allCollaboratorsCache)) return allCollaboratorsCache;
+            const response = await fetch("/api/colaboradores", {
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+            });
+            const payload = await response.json().catch(() => ({}));
+            const rows = Array.isArray(payload?.data) ? payload.data : [];
+            allCollaboratorsCache = rows
+              .map((item) => String(item?.nombre || "").trim())
+              .filter(Boolean)
+              .filter((name, index, arr) => arr.indexOf(name) === index)
+              .sort((a, b) => a.localeCompare(b, "es"));
+            return allCollaboratorsCache;
+          };
           window.addEventListener("error", (event) => {
             const msg = String(event?.message || "Error JavaScript no controlado").trim();
             showMsg(`Error JS: ${msg}`, true);
@@ -235,6 +254,18 @@
             const msg = String(reason?.message || reason || "Promesa rechazada sin control").trim();
             showMsg(`Error JS: ${msg}`, true);
           });
+          const syncOwnerChartState = () => {
+            if (!ownerChartEl || !ownerChartToggleEl) return;
+            const expanded = !ownerChartEl.classList.contains("collapsed");
+            ownerChartToggleEl.setAttribute("aria-expanded", expanded ? "true" : "false");
+            ownerChartToggleEl.setAttribute("aria-label", expanded ? "Contraer concentración por usuario" : "Mostrar concentración por usuario");
+          };
+          ownerChartToggleEl && ownerChartToggleEl.addEventListener("click", () => {
+            if (!ownerChartEl) return;
+            ownerChartEl.classList.toggle("collapsed");
+            syncOwnerChartState();
+          });
+          syncOwnerChartState();
           const renderOwnerActivityChart = (activities) => {
             if (!ownerChartListEl || !ownerChartEmptyEl || !ownerChartTotalEl) return;
             const list = Array.isArray(activities) ? activities : [];
@@ -339,6 +370,7 @@
             if (saveTopBtn) saveTopBtn.disabled = isList;
             if (saveTopBtn) saveTopBtn.style.opacity = isList ? "0.55" : "1";
             if (saveTopBtn) saveTopBtn.style.cursor = isList ? "not-allowed" : "pointer";
+            if (actListPanelEl) actListPanelEl.style.display = isList ? "block" : "none";
             if (formGridEl) formGridEl.style.display = isList ? "none" : "block";
             if (tabsWrapEl) tabsWrapEl.style.display = isList ? "none" : "flex";
             if (isList) {
@@ -361,8 +393,8 @@
           const applyPoaPermissionsUI = () => {
             const canManage = canManageContent();
             const canViewGantt = !!poaPermissions?.can_view_gantt;
-            if (openGanttBtn) {
-              const wrapper = openGanttBtn.closest(".view-pill") || openGanttBtn;
+            if (openKanbanBtn) {
+              const wrapper = openKanbanBtn.closest(".view-pill") || openKanbanBtn;
               wrapper.style.display = canViewGantt ? "" : "none";
             }
             if (!canViewGantt && ganttModalEl && ganttModalEl.classList.contains("open")) closeGanttModal();
@@ -1014,10 +1046,13 @@
             subModalEl.classList.remove("open");
             document.body.style.overflow = modalEl && modalEl.classList.contains("open") ? "hidden" : "";
           };
-          const nextCode = (objectiveCode) => {
+          const nextCode = (objectiveCode, objectiveId = 0) => {
             const code = String(objectiveCode || "").trim().toLowerCase();
-            if (!code) return "m1-01-01-aa-bb-cc-dd-ee";
-            return `${code}-aa-bb-cc-dd-ee`;
+            const targetObjectiveId = Number(objectiveId || 0);
+            const currentActivities = targetObjectiveId ? (activitiesByObjective[targetObjectiveId] || []) : [];
+            const nextOrder = currentActivities.length + 1;
+            if (!code) return `obj-00-00-${String(nextOrder).padStart(2, "0")}`;
+            return `${code}-${String(nextOrder).padStart(2, "0")}`;
           };
           const buildBranchText = (activityName = "Actividad", slots = {}) => {
             const axisLabel = String(currentObjective?.axis_name || "Eje estratégico").trim() || "Eje estratégico";
@@ -1074,19 +1109,8 @@
           };
           const fillCollaborators = async (objective) => {
             if (!actOwnerEl || !actAssignedEl) return;
-            const axisId = Number(objective?.eje_id || 0);
-            if (!axisId) {
-              actOwnerEl.innerHTML = '<option value="">Selecciona responsable</option>';
-              actAssignedEl.innerHTML = "";
-              return;
-            }
             try {
-              const response = await fetch(`/api/strategic-axes/${axisId}/collaborators`, {
-                headers: { "Content-Type": "application/json" },
-                credentials: "same-origin",
-              });
-              const payload = await response.json().catch(() => ({}));
-              const list = Array.isArray(payload.data) ? payload.data : [];
+              const list = await loadAllCollaboratorNames();
               actOwnerEl.innerHTML = '<option value="">Selecciona responsable</option>' + list.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
               actAssignedEl.innerHTML = list.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
             } catch (_err) {
@@ -1217,10 +1241,13 @@
             actListEl.innerHTML = list.map((item) => {
               const id = Number(item.id || 0);
               const active = id === Number(selectedListActivityId || 0) ? "active" : "";
+              const rawOwner = String(item.responsable || "").trim();
+              const noOwner = !rawOwner;
+              const ownerText = escapeHtml(rawOwner || "Sin responsable");
               return `
-                <article class="poa-act-item ${active}" data-poa-activity-id="${id}">
+                <article class="poa-act-item ${active}${noOwner ? ' poa-act-no-owner' : ''}" data-poa-activity-id="${id}">
                   <div><strong>${escapeHtml(item.nombre || "Actividad sin nombre")}</strong></div>
-                  <div class="meta">${escapeHtml(item.codigo || "sin código")} · ${escapeHtml(item.responsable || "Sin responsable")}</div>
+                  <div class="meta">${escapeHtml(item.codigo || "sin código")} · <span class="${noOwner ? 'poa-no-owner-text' : ''}">${ownerText}</span></div>
                 </article>
               `;
             }).join("");
@@ -1435,10 +1462,14 @@
             subListEl.innerHTML = orderSubtasks(currentSubactivities).map((item) => {
               const level = Number(item.nivel || 1);
               const marginLeft = Math.max(0, (level - 1) * 18);
+              const rawSubOwner = String(item.responsable || "").trim();
+              const noSubOwner = !rawSubOwner;
+              const subOwnerText = escapeHtml(rawSubOwner || "Sin responsable");
+              const subCode = escapeHtml(String(item.codigo || "sin código"));
               return `
-              <article class="poa-sub-item" data-sub-id="${Number(item.id || 0)}" data-level="${level}" style="margin-left:${marginLeft}px">
-                <h5>${escapeHtml(item.nombre || "Subtarea sin nombre")}</h5>
-                <div class="poa-sub-meta">Nivel ${level} · ${escapeHtml(fmtDate(item.fecha_inicial))} - ${escapeHtml(fmtDate(item.fecha_final))} · Responsable: ${escapeHtml(item.responsable || "N/D")}</div>
+              <article class="poa-sub-item${noSubOwner ? ' poa-act-no-owner' : ''}" data-sub-id="${Number(item.id || 0)}" data-level="${level}" style="margin-left:${marginLeft}px">
+                <h5>${subCode} · ${escapeHtml(item.nombre || "Subtarea sin nombre")}</h5>
+                <div class="poa-sub-meta">Nivel ${level} · ${escapeHtml(fmtDate(item.fecha_inicial))} - ${escapeHtml(fmtDate(item.fecha_final))} · Responsable: <span class="${noSubOwner ? 'poa-no-owner-text' : ''}">${subOwnerText}</span></div>
                 ${canManage ? `
                 <div class="poa-sub-actions">
                   <button type="button" class="poa-sub-btn" data-sub-add-child="${Number(item.id || 0)}">Agregar hija</button>
@@ -1463,19 +1494,8 @@
           };
           const fillSubCollaborators = async () => {
             if (!subOwnerEl || !subAssignedEl || !currentObjective) return;
-            const axisId = Number(currentObjective.eje_id || 0);
-            if (!axisId) {
-              subOwnerEl.innerHTML = '<option value="">Selecciona responsable</option>';
-              subAssignedEl.innerHTML = "";
-              return;
-            }
             try {
-              const response = await fetch(`/api/strategic-axes/${axisId}/collaborators`, {
-                headers: { "Content-Type": "application/json" },
-                credentials: "same-origin",
-              });
-              const payload = await response.json().catch(() => ({}));
-              const list = Array.isArray(payload.data) ? payload.data : [];
+              const list = await loadAllCollaboratorNames();
               subOwnerEl.innerHTML = '<option value="">Selecciona responsable</option>' + list.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
               subAssignedEl.innerHTML = list.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
             } catch (_err) {
@@ -1779,7 +1799,8 @@
                 if (latest) {
                   populateActivityForm(latest);
                   if (assignedByEl) assignedByEl.textContent = `Asignado por: ${latest?.created_by || currentObjective.lider || "N/D"}`;
-                  setActivityEditorMode("edit");
+                  setActivityEditorMode("list");
+                  showActListMsg("Actividad guardada. Selecciona una actividad para abrir sus subtareas o usa 'Nuevo'.");
                 } else {
                   renderActivityList();
                 }
@@ -1891,14 +1912,23 @@
             }
           };
           closeBtn && closeBtn.addEventListener("click", closeModal);
-          cancelBtn && cancelBtn.addEventListener("click", closeModal);
+          cancelBtn && cancelBtn.addEventListener("click", () => {
+            const hasSelectedActivity = !!Number(selectedListActivityId || currentActivityId || 0);
+            if (hasSelectedActivity && currentObjective) {
+              setActivityEditorMode("list");
+              renderActivityList();
+              showActListMsg("Selecciona una actividad para abrir sus subtareas o usa 'Nuevo'.");
+              return;
+            }
+            closeModal();
+          });
           subCloseBtn && subCloseBtn.addEventListener("click", closeSubModal);
           subCancelBtn && subCancelBtn.addEventListener("click", closeSubModal);
           subSaveBtn && subSaveBtn.addEventListener("click", saveSubtask);
           subAddBtn && subAddBtn.addEventListener("click", () => openSubtaskForm(0, 0));
           subRecurrenteEl && subRecurrenteEl.addEventListener("change", syncSubRecurringFields);
           subPeriodicidadEl && subPeriodicidadEl.addEventListener("change", syncSubRecurringFields);
-          openGanttBtn && openGanttBtn.addEventListener("click", async () => {
+          openKanbanBtn && openKanbanBtn.addEventListener("click", async () => {
             if (!poaPermissions.can_view_gantt) return;
             window.location.href = "/poa/gantt";
           });
@@ -2202,7 +2232,7 @@
                     <div class="meta">Fecha final: ${escapeHtml(fmtDate(obj.fecha_final))}</div>
                     <div class="meta">Actividades: ${countActivities}</div>
                     <span class="code">${escapeHtml(obj.codigo || "xx-yy-zz")}</span>
-                    <div class="code-next">${escapeHtml(nextCode(obj.codigo || ""))}</div>
+                    <div class="code-next">${escapeHtml(nextCode(obj.codigo || "", Number(obj.id || 0)))}</div>
                   </article>
                 `;
               }).join("");

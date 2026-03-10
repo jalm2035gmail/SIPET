@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/modulos/planificacion/poa.css">
+<link rel="stylesheet" href="/modulos/planificacion/poa.css?v=20260310c">
     <section class="poa-board-wrap">
       
       <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
@@ -18,15 +18,15 @@
       </div>
       <div class="view-buttons page-view-buttons" id="poa-view-switch">
         <button class="view-pill boton_vista" type="button" data-view="arbol" data-tooltip="Arbol" aria-label="Arbol de avance">
-          <i class="boton_vista-icono fa-solid fa-tree" aria-hidden="true"></i>
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/boton/arbol.svg')"></span>
           <span class="view-pill-label boton_vista-label">Arbol</span>
         </button>
-        <button class="view-pill boton_vista" type="button" data-view="gantt" data-tooltip="Gantt" aria-label="Vista Gantt">
-          <i class="boton_vista-icono fa-solid fa-chart-gantt" aria-hidden="true"></i>
-          <span class="view-pill-label boton_vista-label">Gantt</span>
+        <button class="view-pill boton_vista" type="button" data-view="kanban" data-tooltip="Kanban" aria-label="Vista Kanban">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/boton/kanban.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Kanban</span>
         </button>
         <button class="view-pill boton_vista" type="button" data-view="calendar" data-tooltip="Calendario" aria-label="Vista calendario">
-          <i class="boton_vista-icono fa-regular fa-calendar-days" aria-hidden="true"></i>
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/calendario.svg')"></span>
           <span class="view-pill-label boton_vista-label">Calendario</span>
         </button>
       </div>
@@ -50,16 +50,21 @@
         <div class="axm-track-missing" id="poa-no-owner-msg" aria-live="polite"></div>
         <div class="axm-track-missing" id="poa-no-subowner-msg" aria-live="polite"></div>
       </div>
-      <section class="poa-owner-chart" id="poa-owner-chart">
+      <section class="poa-owner-chart collapsed" id="poa-owner-chart">
         <div class="poa-owner-chart-head">
-          <div>
+          <button type="button" class="poa-owner-chart-toggle" id="poa-owner-chart-toggle" aria-label="Mostrar concentración por usuario" aria-expanded="false">
+            <span class="poa-owner-chart-toggle-icon" aria-hidden="true">▾</span>
+          </button>
+          <div class="poa-owner-chart-heading">
             <h3 class="poa-owner-chart-title">Concentración de actividades por usuario</h3>
             <p class="poa-owner-chart-sub">Distribución de actividades POA asignadas por responsable.</p>
           </div>
           <span class="poa-owner-chart-total" id="poa-owner-chart-total">Total: 0</span>
         </div>
-        <div class="poa-owner-chart-empty" id="poa-owner-chart-empty">Sin actividades con responsable.</div>
-        <div class="poa-owner-chart-list" id="poa-owner-chart-list"></div>
+        <div class="poa-owner-chart-body" id="poa-owner-chart-body">
+          <div class="poa-owner-chart-empty" id="poa-owner-chart-empty">Sin actividades con responsable.</div>
+          <div class="poa-owner-chart-list" id="poa-owner-chart-list"></div>
+        </div>
       </section>
       <div class="poa-board-grid" id="poa-board-grid"></div>
       <div class="poa-modal" id="poa-activity-modal" role="dialog" aria-modal="true" aria-labelledby="poa-activity-title">
@@ -153,7 +158,7 @@
             <div class="poa-row">
               <div class="poa-field">
                 <label for="poa-act-recurrente">Recurrente</label>
-                <label>
+                <label class="poa-check-label">
                   <input id="poa-act-recurrente" type="checkbox">
                   Habilitar recurrencia
                 </label>
@@ -250,7 +255,7 @@
               </div>
               <div class="poa-row">
                 <div class="poa-field">
-                  <label>
+                  <label class="poa-check-label">
                     <input id="poa-budget-approved" type="checkbox">
                     Autorizado
                   </label>
@@ -338,7 +343,7 @@
             <div class="poa-row">
               <div class="poa-field">
                 <label for="poa-sub-recurrente">Recurrente</label>
-                <label>
+                <label class="poa-check-label">
                   <input id="poa-sub-recurrente" type="checkbox">
                   Habilitar recurrencia
                 </label>
@@ -373,5 +378,5 @@
         </section>
       </div>
 
-      <script src="/modulos/planificacion/poa.js"></script>
+      <script src="/modulos/planificacion/poa.js?v=20260310c"></script>
     </section>

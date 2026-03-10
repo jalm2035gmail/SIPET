@@ -157,6 +157,153 @@ def _normalize_foundation_text(raw: Any) -> str:
     return str(raw or "").strip()
 
 
+def _ensure_axis_kpi_table(db) -> None:
+    db.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS strategic_axis_kpis (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              axis_id INTEGER NOT NULL,
+              nombre VARCHAR(255) NOT NULL DEFAULT '',
+              descripcion TEXT NOT NULL DEFAULT '',
+              objetivo TEXT NOT NULL DEFAULT '',
+              formula TEXT NOT NULL DEFAULT '',
+              responsable VARCHAR(255) NOT NULL DEFAULT '',
+              fuente_datos TEXT NOT NULL DEFAULT '',
+              unidad VARCHAR(120) NOT NULL DEFAULT '',
+              frecuencia VARCHAR(120) NOT NULL DEFAULT '',
+              linea_base TEXT NOT NULL DEFAULT '',
+              estandar_meta TEXT NOT NULL DEFAULT '',
+              semaforo_rojo TEXT NOT NULL DEFAULT '',
+              semaforo_verde TEXT NOT NULL DEFAULT '',
+              categoria VARCHAR(255) NOT NULL DEFAULT '',
+              orden INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+    )
+
+
+def _normalize_axis_kpi_items(raw: Any) -> List[Dict[str, str]]:
+    rows = raw if isinstance(raw, list) else []
+    cleaned: List[Dict[str, str]] = []
+    for idx, item in enumerate(rows, start=1):
+        if not isinstance(item, dict):
+            continue
+        nombre = str(item.get("nombre") or "").strip()
+        if not nombre:
+            continue
+        cleaned.append(
+            {
+                "nombre": nombre,
+                "descripcion": str(item.get("descripcion") or "").strip(),
+                "objetivo": str(item.get("objetivo") or "").strip(),
+                "formula": str(item.get("formula") or "").strip(),
+                "responsable": str(item.get("responsable") or "").strip(),
+                "fuente_datos": str(item.get("fuente_datos") or "").strip(),
+                "unidad": str(item.get("unidad") or "").strip(),
+                "frecuencia": str(item.get("frecuencia") or "").strip(),
+                "linea_base": str(item.get("linea_base") or "").strip(),
+                "estandar_meta": str(item.get("estandar_meta") or "").strip(),
+                "semaforo_rojo": str(item.get("semaforo_rojo") or "").strip(),
+                "semaforo_verde": str(item.get("semaforo_verde") or "").strip(),
+                "categoria": str(item.get("categoria") or "").strip(),
+                "orden": idx,
+            }
+        )
+    return cleaned
+
+
+def _axis_kpis_by_axis_ids(db, axis_ids: List[int]) -> Dict[int, List[Dict[str, Any]]]:
+    result: Dict[int, List[Dict[str, Any]]] = {}
+    if not axis_ids:
+        return result
+    _ensure_axis_kpi_table(db)
+    db.commit()
+    placeholders = ", ".join([f":id_{idx}" for idx, _ in enumerate(axis_ids)])
+    rows = db.execute(
+        text(
+            f"""
+            SELECT id, axis_id, nombre, descripcion, objetivo, formula, responsable, fuente_datos,
+                   unidad, frecuencia, linea_base, estandar_meta, semaforo_rojo, semaforo_verde,
+                   categoria, orden
+            FROM strategic_axis_kpis
+            WHERE axis_id IN ({placeholders})
+            ORDER BY axis_id ASC, orden ASC, id ASC
+            """
+        ),
+        {f"id_{idx}": int(axis_id) for idx, axis_id in enumerate(axis_ids)},
+    ).fetchall()
+    for row in rows:
+        axis_id = int(row[1] or 0)
+        if axis_id <= 0:
+            continue
+        result.setdefault(axis_id, []).append(
+            {
+                "id": int(row[0] or 0),
+                "nombre": str(row[2] or ""),
+                "descripcion": str(row[3] or ""),
+                "objetivo": str(row[4] or ""),
+                "formula": str(row[5] or ""),
+                "responsable": str(row[6] or ""),
+                "fuente_datos": str(row[7] or ""),
+                "unidad": str(row[8] or ""),
+                "frecuencia": str(row[9] or ""),
+                "linea_base": str(row[10] or ""),
+                "estandar_meta": str(row[11] or ""),
+                "semaforo_rojo": str(row[12] or ""),
+                "semaforo_verde": str(row[13] or ""),
+                "categoria": str(row[14] or ""),
+                "orden": int(row[15] or 0),
+            }
+        )
+    return result
+
+
+def _replace_axis_kpis(db, axis_id: int, items: Any) -> None:
+    clean = _normalize_axis_kpi_items(items)
+    _ensure_axis_kpi_table(db)
+    db.execute(text("DELETE FROM strategic_axis_kpis WHERE axis_id = :aid"), {"aid": int(axis_id)})
+    for item in clean:
+        db.execute(
+            text(
+                """
+                INSERT INTO strategic_axis_kpis (
+                  axis_id, nombre, descripcion, objetivo, formula, responsable, fuente_datos,
+                  unidad, frecuencia, linea_base, estandar_meta, semaforo_rojo, semaforo_verde,
+                  categoria, orden
+                ) VALUES (
+                  :axis_id, :nombre, :descripcion, :objetivo, :formula, :responsable, :fuente_datos,
+                  :unidad, :frecuencia, :linea_base, :estandar_meta, :semaforo_rojo, :semaforo_verde,
+                  :categoria, :orden
+                )
+                """
+            ),
+            {
+                "axis_id": int(axis_id),
+                "nombre": item["nombre"],
+                "descripcion": item["descripcion"],
+                "objetivo": item["objetivo"],
+                "formula": item["formula"],
+                "responsable": item["responsable"],
+                "fuente_datos": item["fuente_datos"],
+                "unidad": item["unidad"],
+                "frecuencia": item["frecuencia"],
+                "linea_base": item["linea_base"],
+                "estandar_meta": item["estandar_meta"],
+                "semaforo_rojo": item["semaforo_rojo"],
+                "semaforo_verde": item["semaforo_verde"],
+                "categoria": item["categoria"],
+                "orden": int(item["orden"]),
+            },
+        )
+
+
+def _delete_axis_kpis(db, axis_id: int) -> None:
+    _ensure_axis_kpi_table(db)
+    db.execute(text("DELETE FROM strategic_axis_kpis WHERE axis_id = :aid"), {"aid": int(axis_id)})
+
+
 def _ensure_objective_kpi_table(db) -> None:
     db.execute(
         text(
@@ -164,6 +311,7 @@ def _ensure_objective_kpi_table(db) -> None:
             CREATE TABLE IF NOT EXISTS strategic_objective_kpis (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               objective_id INTEGER NOT NULL,
+              axis_kpi_id INTEGER NOT NULL DEFAULT 0,
               nombre VARCHAR(255) NOT NULL DEFAULT '',
               proposito TEXT NOT NULL DEFAULT '',
               formula TEXT NOT NULL DEFAULT '',
@@ -178,6 +326,12 @@ def _ensure_objective_kpi_table(db) -> None:
     try:
         cols = db.execute(text("PRAGMA table_info(strategic_objective_kpis)")).fetchall()
         col_names = {str(col[1]).strip().lower() for col in cols if len(col) > 1}
+        if "axis_kpi_id" not in col_names:
+            db.execute(
+                text(
+                    "ALTER TABLE strategic_objective_kpis ADD COLUMN axis_kpi_id INTEGER NOT NULL DEFAULT 0"
+                )
+            )
         if "referencia" not in col_names:
             db.execute(
                 text(
@@ -192,17 +346,24 @@ def _normalize_kpi_items(raw: Any) -> List[Dict[str, str]]:
     rows = raw if isinstance(raw, list) else []
     allowed = {"mayor", "menor", "entre", "igual"}
     cleaned: List[Dict[str, str]] = []
+    seen_axis_ids = set()
     for idx, item in enumerate(rows, start=1):
         if not isinstance(item, dict):
             continue
         nombre = str(item.get("nombre") or "").strip()
+        axis_kpi_id = int(item.get("axis_kpi_id") or 0)
         if not nombre:
+            continue
+        if axis_kpi_id > 0 and axis_kpi_id in seen_axis_ids:
             continue
         estandar = str(item.get("estandar") or "").strip().lower()
         if estandar not in allowed:
             estandar = ""
+        if axis_kpi_id > 0:
+            seen_axis_ids.add(axis_kpi_id)
         cleaned.append(
             {
+                "axis_kpi_id": axis_kpi_id,
                 "nombre": nombre,
                 "proposito": str(item.get("proposito") or "").strip(),
                 "formula": str(item.get("formula") or "").strip(),
@@ -225,7 +386,7 @@ def _kpis_by_objective_ids(db, objective_ids: List[int]) -> Dict[int, List[Dict[
     rows = db.execute(
         text(
             f"""
-            SELECT id, objective_id, nombre, proposito, formula, periodicidad, estandar, referencia, orden
+            SELECT id, objective_id, axis_kpi_id, nombre, proposito, formula, periodicidad, estandar, referencia, orden
             FROM strategic_objective_kpis
             WHERE objective_id IN ({placeholders})
             ORDER BY objective_id ASC, orden ASC, id ASC
@@ -240,13 +401,14 @@ def _kpis_by_objective_ids(db, objective_ids: List[int]) -> Dict[int, List[Dict[
         result.setdefault(objective_id, []).append(
             {
                 "id": int(row[0] or 0),
-                "nombre": str(row[2] or ""),
-                "proposito": str(row[3] or ""),
-                "formula": str(row[4] or ""),
-                "periodicidad": str(row[5] or ""),
-                "estandar": str(row[6] or ""),
-                "referencia": str(row[7] or ""),
-                "orden": int(row[8] or 0),
+                "axis_kpi_id": int(row[2] or 0),
+                "nombre": str(row[3] or ""),
+                "proposito": str(row[4] or ""),
+                "formula": str(row[5] or ""),
+                "periodicidad": str(row[6] or ""),
+                "estandar": str(row[7] or ""),
+                "referencia": str(row[8] or ""),
+                "orden": int(row[9] or 0),
             }
         )
     return result
@@ -261,14 +423,15 @@ def _replace_objective_kpis(db, objective_id: int, items: Any) -> None:
             text(
                 """
                 INSERT INTO strategic_objective_kpis (
-                  objective_id, nombre, proposito, formula, periodicidad, estandar, referencia, orden
+                  objective_id, axis_kpi_id, nombre, proposito, formula, periodicidad, estandar, referencia, orden
                 ) VALUES (
-                  :objective_id, :nombre, :proposito, :formula, :periodicidad, :estandar, :referencia, :orden
+                  :objective_id, :axis_kpi_id, :nombre, :proposito, :formula, :periodicidad, :estandar, :referencia, :orden
                 )
                 """
             ),
             {
                 "objective_id": int(objective_id),
+                "axis_kpi_id": int(item["axis_kpi_id"]),
                 "nombre": item["nombre"],
                 "proposito": item["proposito"],
                 "formula": item["formula"],
@@ -1089,21 +1252,10 @@ def export_strategic_plan_doc():
             for obj in axis.get("objetivos") or []:
                 kpis = obj.get("kpis") or []
                 if kpis:
-                    kpi_rows = "".join(
-                        "<tr>"
-                        f"<td>{escape(str(k.get('nombre') or ''))}</td>"
-                        f"<td>{escape(str(k.get('proposito') or ''))}</td>"
-                        f"<td>{escape(str(k.get('formula') or ''))}</td>"
-                        f"<td>{escape(str(k.get('periodicidad') or ''))}</td>"
-                        f"<td>{escape(str(k.get('estandar') or ''))}</td>"
-                        "</tr>"
+                    kpis_html = "<ul>" + "".join(
+                        f"<li>{escape(str(k.get('nombre') or ''))}</li>"
                         for k in kpis
-                    )
-                    kpis_html = (
-                        "<table class='kpi-table'>"
-                        "<thead><tr><th>Nombre</th><th>Propósito</th><th>Fórmula</th><th>Periodicidad</th><th>Estándar</th></tr></thead>"
-                        f"<tbody>{kpi_rows}</tbody></table>"
-                    )
+                    ) + "</ul>"
                 else:
                     kpis_html = "<p>Sin KPIs registrados.</p>"
                 objectives_html.append(
@@ -1215,6 +1367,7 @@ def list_strategic_axes(request: Request):
         if not axes:
             axes = db.query(StrategicAxisConfig).order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc()).all()
         payload_axes = [_serialize_strategic_axis(axis) for axis in axes]
+        axis_kpis_by_axis = _axis_kpis_by_axis_ids(db, [int(axis.get("id") or 0) for axis in payload_axes if int(axis.get("id") or 0) > 0])
         objective_ids = sorted({int(obj.get("id") or 0) for axis in payload_axes for obj in axis.get("objetivos", []) if int(obj.get("id") or 0)})
         kpis_by_objective = _kpis_by_objective_ids(db, objective_ids)
         milestones_by_objective = _milestones_by_objective_ids(db, objective_ids)
@@ -1232,6 +1385,7 @@ def list_strategic_axes(request: Request):
             activity_progress_by_objective.setdefault(int(activity.objective_id), []).append(progress)
         mv_agg: Dict[str, List[int]] = {}
         for axis_data in payload_axes:
+            axis_data["kpis"] = axis_kpis_by_axis.get(int(axis_data.get("id") or 0), [])
             objective_progress: List[int] = []
             for obj in axis_data.get("objetivos", []):
                 obj_id = int(obj.get("id") or 0)
@@ -1335,8 +1489,13 @@ def create_strategic_axis(request: Request, data: dict = Body(...)):
         )
         db.add(axis)
         db.commit()
+        if "kpis" in data:
+            _replace_axis_kpis(db, int(axis.id), data.get("kpis"))
+            db.commit()
         db.refresh(axis)
-        return JSONResponse({"success": True, "data": _serialize_strategic_axis(axis)})
+        payload = _serialize_strategic_axis(axis)
+        payload["kpis"] = _axis_kpis_by_axis_ids(db, [int(axis.id)]).get(int(axis.id), [])
+        return JSONResponse({"success": True, "data": payload})
     except (sqlite3.OperationalError, SQLAlchemyError):
         db.rollback()
         return JSONResponse({"success": False, "error": "No se pudo escribir en la base de datos (modo solo lectura o bloqueo)."}, status_code=500)
@@ -1381,8 +1540,13 @@ def update_strategic_axis(axis_id: int, data: dict = Body(...)):
         axis.orden = axis_order
         db.add(axis)
         db.commit()
+        if "kpis" in data:
+            _replace_axis_kpis(db, int(axis.id), data.get("kpis"))
+            db.commit()
         db.refresh(axis)
-        return JSONResponse({"success": True, "data": _serialize_strategic_axis(axis)})
+        payload = _serialize_strategic_axis(axis)
+        payload["kpis"] = _axis_kpis_by_axis_ids(db, [int(axis.id)]).get(int(axis.id), [])
+        return JSONResponse({"success": True, "data": payload})
     except (sqlite3.OperationalError, SQLAlchemyError):
         db.rollback()
         return JSONResponse({"success": False, "error": "No se pudo escribir en la base de datos (modo solo lectura o bloqueo)."}, status_code=500)
@@ -1397,6 +1561,7 @@ def delete_strategic_axis(axis_id: int):
         axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
         if not axis:
             return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
+        _delete_axis_kpis(db, int(axis.id))
         db.delete(axis)
         db.commit()
         return JSONResponse({"success": True})

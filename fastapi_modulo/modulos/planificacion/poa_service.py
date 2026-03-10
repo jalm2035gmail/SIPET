@@ -9,6 +9,7 @@ from sqlalchemy import func, text
 
 from fastapi_modulo.modulos.empleados.empleados import _load_colab_meta, _normalize_poa_access_level
 from fastapi_modulo.modulos.planificacion.plan_estrategico_service import (
+    _ensure_objective_milestone_table,
     _milestones_by_objective_ids,
     _serialize_strategic_objective,
 )
@@ -452,7 +453,63 @@ def _descendant_subactivity_ids(db, activity_id: int, root_id: int) -> List[int]
     return collected
 
 
-def _serialize_poa_subactivity(item: POASubactivity) -> Dict[str, Any]:
+def _compose_activity_code(objective_code: str, order_value: int) -> str:
+    base = str(objective_code or "").strip().lower()
+    if not base:
+      base = "obj-00-00"
+    return f"{base}-{int(order_value or 0):02d}"
+
+
+def _compose_subactivity_code(parent_code: str, order_value: int) -> str:
+    base = str(parent_code or "").strip().lower()
+    if not base:
+      base = "act-00"
+    return f"{base}-{int(order_value or 0):02d}"
+
+
+def _activity_code_map_for_objectives(
+    objectives: List[Any],
+    activities: List[Any],
+) -> Dict[int, str]:
+    objective_code_by_id = {int(obj.id): str(getattr(obj, "codigo", "") or "").strip().lower() for obj in objectives if getattr(obj, "id", None)}
+    grouped: Dict[int, List[Any]] = {}
+    for activity in activities or []:
+        grouped.setdefault(int(activity.objective_id or 0), []).append(activity)
+    code_map: Dict[int, str] = {}
+    for objective_id, rows in grouped.items():
+        parent_code = objective_code_by_id.get(int(objective_id), "")
+        ordered = sorted(rows, key=lambda item: (int(getattr(item, "id", 0) or 0), str(getattr(item, "nombre", "") or "").lower()))
+        for idx, item in enumerate(ordered, start=1):
+            activity_id = int(getattr(item, "id", 0) or 0)
+            existing = str(getattr(item, "codigo", "") or "").strip()
+            code_map[activity_id] = existing or _compose_activity_code(parent_code, idx)
+    return code_map
+
+
+def _subactivity_code_map_for_activity(subactivities: List[Any], activity_code: str) -> Dict[int, str]:
+    by_parent: Dict[int, List[Any]] = {}
+    for sub in subactivities or []:
+        parent_id = int(getattr(sub, "parent_subactivity_id", 0) or 0)
+        by_parent.setdefault(parent_id, []).append(sub)
+    code_map: Dict[int, str] = {}
+
+    def visit(parent_id: int, parent_code: str) -> None:
+        siblings = sorted(
+            by_parent.get(parent_id, []),
+            key=lambda item: (int(getattr(item, "id", 0) or 0), str(getattr(item, "nombre", "") or "").lower()),
+        )
+        for idx, item in enumerate(siblings, start=1):
+            sub_id = int(getattr(item, "id", 0) or 0)
+            existing = str(getattr(item, "codigo", "") or "").strip()
+            code = existing or _compose_subactivity_code(parent_code, idx)
+            code_map[sub_id] = code
+            visit(sub_id, code)
+
+    visit(0, activity_code)
+    return code_map
+
+
+def _serialize_poa_subactivity(item: POASubactivity, code_override: str = "") -> Dict[str, Any]:
     _bind_core_symbols()
     today = datetime.utcnow().date()
     done = bool(item.fecha_final and today >= item.fecha_final)
@@ -462,7 +519,7 @@ def _serialize_poa_subactivity(item: POASubactivity) -> Dict[str, Any]:
         "parent_subactivity_id": item.parent_subactivity_id,
         "nivel": item.nivel or 1,
         "nombre": item.nombre or "",
-        "codigo": item.codigo or "",
+        "codigo": code_override or item.codigo or "",
         "responsable": item.responsable or "",
         "entregable": item.entregable or "",
         "fecha_inicial": _date_to_iso(item.fecha_inicial),
@@ -481,6 +538,8 @@ def _serialize_poa_activity(
     budget_items: List[Dict[str, Any]] | None = None,
     hitos_impacta: List[Dict[str, Any]] | None = None,
     deliverables: List[Dict[str, Any]] | None = None,
+    code_override: str = "",
+    sub_code_map: Dict[int, str] | None = None,
 ) -> Dict[str, Any]:
     _bind_core_symbols()
     today = datetime.utcnow().date()
@@ -493,7 +552,7 @@ def _serialize_poa_activity(
         "id": item.id,
         "objective_id": item.objective_id,
         "nombre": item.nombre or "",
-        "codigo": item.codigo or "",
+        "codigo": code_override or item.codigo or "",
         "responsable": item.responsable or "",
         "entregable": item.entregable or "",
         "fecha_inicial": _date_to_iso(item.fecha_inicial),
@@ -515,7 +574,7 @@ def _serialize_poa_activity(
         "hitos_impacta": hitos_impacta or [],
         "entregables": deliverables or [],
         "subactivities": [
-            _serialize_poa_subactivity(sub)
+            _serialize_poa_subactivity(sub, (sub_code_map or {}).get(int(sub.id or 0), ""))
             for sub in sorted(subactivities, key=lambda x: ((x.nivel or 1), x.id or 0))
         ],
     }
@@ -626,6 +685,7 @@ def poa_board_data(request: Request):
             .all()
             if objective_ids else []
         )
+        activity_code_map = _activity_code_map_for_objectives(objectives, activities)
         activity_ids = [item.id for item in activities]
         subactivities = (
             db.query(POASubactivity)
@@ -710,6 +770,11 @@ def poa_board_data(request: Request):
                             budgets_by_activity.get(int(activity.id), []),
                             impacted_milestones_by_activity.get(int(activity.id), []),
                             deliverables_by_activity.get(int(activity.id), []),
+                            activity_code_map.get(int(activity.id or 0), ""),
+                            _subactivity_code_map_for_activity(
+                                sub_by_activity.get(activity.id, []),
+                                activity_code_map.get(int(activity.id or 0), "") or str(activity.codigo or ""),
+                            ),
                         ),
                         "can_change_status": bool((activity.responsable or "").strip().lower() in alias_set),
                     }
@@ -851,10 +916,17 @@ def create_poa_activity(request: Request, data: dict = Body(...)):
         if parent_error:
             return JSONResponse({"success": False, "error": parent_error}, status_code=400)
         created_by = session_username
+        sibling_activities = (
+            db.query(POAActivity)
+            .filter(POAActivity.objective_id == objective_id)
+            .order_by(POAActivity.id.asc())
+            .all()
+        )
+        next_activity_order = len(sibling_activities) + 1
         activity = POAActivity(
             objective_id=objective_id,
             nombre=nombre,
-            codigo=(data.get("codigo") or "").strip(),
+            codigo=(data.get("codigo") or "").strip() or _compose_activity_code(objective.codigo or "", next_activity_order),
             responsable=responsable,
             entregable=str(normalized_deliverables[0].get("nombre") or "").strip(),
             fecha_inicial=start_date,
@@ -960,7 +1032,19 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
         if parent_error:
             return JSONResponse({"success": False, "error": parent_error}, status_code=400)
         activity.nombre = nombre
-        activity.codigo = (data.get("codigo") or "").strip()
+        if not str(activity.codigo or "").strip():
+            sibling_activities = (
+                db.query(POAActivity)
+                .filter(POAActivity.objective_id == int(objective.id))
+                .order_by(POAActivity.id.asc())
+                .all()
+            )
+            next_activity_order = 1
+            for idx, item in enumerate(sibling_activities, start=1):
+                if int(item.id or 0) == int(activity.id or 0):
+                    next_activity_order = idx
+                    break
+            activity.codigo = _compose_activity_code(objective.codigo or "", next_activity_order)
         activity.responsable = responsable
         activity.entregable = str(normalized_deliverables[0].get("nombre") or "").strip()
         activity.fecha_inicial = start_date
@@ -1331,12 +1415,23 @@ def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body
             if child_error:
                 return JSONResponse({"success": False, "error": child_error}, status_code=400)
         assigned_by = session_username
+        sibling_subs = (
+            db.query(POASubactivity)
+            .filter(
+                POASubactivity.activity_id == int(activity.id),
+                POASubactivity.parent_subactivity_id == (parent_sub.id if parent_sub else None),
+            )
+            .order_by(POASubactivity.id.asc())
+            .all()
+        )
+        parent_code = str((parent_sub.codigo if parent_sub else activity.codigo) or "").strip()
+        next_sub_order = len(sibling_subs) + 1
         sub = POASubactivity(
             activity_id=activity.id,
             parent_subactivity_id=parent_sub.id if parent_sub else None,
             nivel=sub_level,
             nombre=nombre,
-            codigo=(data.get("codigo") or "").strip(),
+            codigo=(data.get("codigo") or "").strip() or _compose_subactivity_code(parent_code, next_sub_order),
             responsable=responsable,
             entregable=(data.get("entregable") or "").strip(),
             fecha_inicial=start_date,
@@ -1426,7 +1521,23 @@ def update_poa_subactivity(request: Request, subactivity_id: int, data: dict = B
             if child_error:
                 return JSONResponse({"success": False, "error": child_error}, status_code=400)
         sub.nombre = nombre
-        sub.codigo = (data.get("codigo") or "").strip()
+        if not str(sub.codigo or "").strip():
+            sibling_subs = (
+                db.query(POASubactivity)
+                .filter(
+                    POASubactivity.activity_id == int(activity.id),
+                    POASubactivity.parent_subactivity_id == sub.parent_subactivity_id,
+                )
+                .order_by(POASubactivity.id.asc())
+                .all()
+            )
+            next_sub_order = 1
+            for idx, item in enumerate(sibling_subs, start=1):
+                if int(item.id or 0) == int(sub.id or 0):
+                    next_sub_order = idx
+                    break
+            parent_code = str((parent_sub.codigo if parent_sub else activity.codigo) or "").strip()
+            sub.codigo = _compose_subactivity_code(parent_code, next_sub_order)
         sub.responsable = responsable
         sub.entregable = (data.get("entregable") or "").strip()
         sub.fecha_inicial = start_date
