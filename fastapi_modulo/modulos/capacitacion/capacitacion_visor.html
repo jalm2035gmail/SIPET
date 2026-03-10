@@ -1,0 +1,200 @@
+<style>
+  .visor-shell {
+    background: #0f172a;
+    min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 24px 16px 60px;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .visor-header {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  #visor-pres-title {
+    color: #f1f5f9;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .visor-header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .visor-icon-btn {
+    background: rgba(255,255,255,.1);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    width: 36px; height: 36px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s;
+  }
+  .visor-icon-btn:hover { background: rgba(255,255,255,.22); }
+  .visor-icon-btn:disabled { opacity: .35; cursor: default; }
+
+  /* 16:9 responsive canvas */
+  .visor-slide-wrapper {
+    width: 100%;
+    max-width: 960px;
+    position: relative;
+  }
+  .visor-slide-ratio {
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 */
+    position: relative;
+  }
+  #visor-slide-area {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 8px 48px rgba(0,0,0,.5);
+  }
+
+  /* Elements inside slide */
+  .visor-element {
+    position: absolute;
+    box-sizing: border-box;
+  }
+  .visor-el-texto {
+    width: 100%; height: 100%;
+    display: flex; align-items: center;
+    overflow: hidden;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .visor-el-imagen {
+    width: 100%; height: 100%; overflow: hidden;
+  }
+  .visor-el-imagen img { width: 100%; height: 100%; display: block; }
+  .visor-el-boton {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+    user-select: none;
+    transition: opacity .12s;
+  }
+  .visor-el-boton:hover { opacity: .88; }
+  .visor-el-forma { width: 100%; height: 100%; box-sizing: border-box; }
+  .visor-el-embed { width: 100%; height: 100%; overflow: hidden; }
+  .visor-el-embed iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* Navigation bar */
+  .visor-nav {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 20px;
+  }
+  #visor-prev, #visor-next {
+    background: rgba(255,255,255,.12);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    width: 44px; height: 44px;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s;
+  }
+  #visor-prev:hover, #visor-next:hover { background: rgba(255,255,255,.28); }
+  #visor-prev:disabled, #visor-next:disabled { opacity: .25; cursor: default; }
+  #visor-counter {
+    color: #94a3b8;
+    font-size: 14px;
+    min-width: 72px;
+    text-align: center;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Dot indicators */
+  .visor-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 400px;
+  }
+  .visor-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+  }
+  .visor-dot.active { background: #4f46e5; transform: scale(1.3); }
+  .visor-dot:hover  { background: rgba(255,255,255,.6); }
+
+  /* Loading / Error states */
+  #visor-loading {
+    color: #64748b; font-size: 15px; padding: 60px 0; text-align: center;
+  }
+</style>
+
+<div id="visor-root" class="visor-shell"
+     data-js-url="/api/capacitacion/assets/capacitacion_visor.js?v=20260309"
+     data-pres-id="__PRES_ID__">
+
+  <div class="visor-header">
+    <h1 id="visor-pres-title">Cargando...</h1>
+    <div class="visor-header-right">
+      <button id="visor-edit-btn"  class="visor-icon-btn" title="Editar">✏</button>
+      <button id="visor-fullscreen" class="visor-icon-btn" title="Pantalla completa">⛶</button>
+    </div>
+  </div>
+
+  <div class="visor-slide-wrapper">
+    <div class="visor-slide-ratio">
+      <div id="visor-slide-area">
+        <div id="visor-loading">Cargando presentación...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="visor-nav">
+    <button id="visor-prev" disabled>&#8592;</button>
+    <div class="visor-dots" id="visor-dots"></div>
+    <span id="visor-counter">— / —</span>
+    <button id="visor-next" disabled>&#8594;</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var root  = document.getElementById('visor-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

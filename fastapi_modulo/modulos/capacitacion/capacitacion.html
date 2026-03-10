@@ -1,0 +1,501 @@
+<style>
+  .cap-shell {
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+  /* Hero */
+  .cap-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .cap-hero-head { display: flex; align-items: center; gap: 14px; }
+  .cap-hero-logo { width: 54px; height: 54px; object-fit: contain; flex: 0 0 auto; }
+  .cap-hero-copy h1 { margin: 0; font-size: 28px; line-height: 1.05; letter-spacing: -0.03em; color: #0f172a; }
+  .cap-hero-copy p  { margin: 6px 0 0; color: #334155; font-size: 14px; }
+  /* KPIs */
+  .cap-kpi-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cap-kpi-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.1);
+    border-radius: 14px;
+    padding: 12px 18px;
+    min-width: 120px;
+    text-align: center;
+  }
+  .cap-kpi-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin-bottom: 4px; }
+  .cap-kpi-value { font-size: 26px; font-weight: 700; color: #0f172a; }
+  .cap-kpi-value.is-green { color: #16a34a; }
+  /* Toolbar */
+  .cap-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .cap-search {
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    background: #fff;
+  }
+  .cap-select {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 13px;
+    background: #fff;
+    color: #0f172a;
+    cursor: pointer;
+  }
+  .cap-toolbar-spacer { flex: 1; }
+  /* Tabs nav */
+  .cap-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(15,23,42,.1);
+    padding-bottom: 2px;
+  }
+  .cap-tab {
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .cap-tab:hover { color: #0f172a; }
+  .cap-tab.is-active { color: #0f172a; border-bottom-color: #0f172a; font-weight: 600; }
+  /* Panels */
+  .cap-panel { display: none; }
+  .cap-panel.is-active { display: block; }
+  /* Card grid */
+  .cap-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .cap-course-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .2s;
+  }
+  .cap-course-card:hover { box-shadow: 0 4px 20px rgba(15,23,42,.1); }
+  .cap-card-image {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    flex: 0 0 auto;
+  }
+  .cap-card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .cap-card-title { font-size: 14px; font-weight: 600; line-height: 1.3; color: #0f172a; margin: 0; }
+  .cap-card-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .cap-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .cap-badge.basico        { background: #dcfce7; color: #15803d; }
+  .cap-badge.intermedio    { background: #fef9c3; color: #a16207; }
+  .cap-badge.avanzado      { background: #ffedd5; color: #c2410c; }
+  .cap-badge.borrador      { background: #f1f5f9; color: #64748b; }
+  .cap-badge.publicado     { background: #dcfce7; color: #15803d; }
+  .cap-badge.archivado     { background: #f1f5f9; color: #64748b; }
+  .cap-badge.pendiente     { background: #e0f2fe; color: #0369a1; }
+  .cap-badge.en_progreso   { background: #fef9c3; color: #a16207; }
+  .cap-badge.completado    { background: #dcfce7; color: #15803d; }
+  .cap-badge.reprobado     { background: #fee2e2; color: #dc2626; }
+  .cap-badge.obligatorio   { background: #fee2e2; color: #dc2626; }
+  .cap-progress-bar {
+    height: 6px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .cap-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: #16a34a;
+    transition: width .3s;
+  }
+  .cap-card-footer { padding: 0 16px 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .cap-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .cap-btn:hover { opacity: .85; }
+  .cap-btn.is-primary   { background: #0f172a; color: #fff; }
+  .cap-btn.is-outline   { background: transparent; color: #0f172a; border: 1px solid #0f172a; }
+  .cap-btn.is-green     { background: #16a34a; color: #fff; }
+  .cap-btn.is-danger    { background: #dc2626; color: #fff; }
+  .cap-btn.is-sm        { padding: 4px 10px; font-size: 12px; border-radius: 7px; }
+  .cap-btn.is-wide      { width: 100%; }
+  .cap-btn:disabled     { opacity: .5; cursor: not-allowed; }
+  /* Table view */
+  .cap-table-wrap { overflow-x: auto; }
+  .cap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .cap-table th, .cap-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(15,23,42,.07);
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .cap-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #475569;
+    background: #f8fafc;
+  }
+  .cap-table td.wrap-cell { white-space: normal; max-width: 240px; }
+  .cap-table tbody tr:hover { background: #f8fafc; }
+  /* Kanban */
+  .cap-kanban {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+  .cap-kanban-col {
+    background: #f8fafc;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cap-kanban-col-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #475569;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cap-kanban-count {
+    background: #e2e8f0;
+    color: #475569;
+    border-radius: 999px;
+    font-size: 11px;
+    padding: 1px 7px;
+    font-weight: 600;
+  }
+  .cap-kanban-item {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: box-shadow .15s;
+  }
+  .cap-kanban-item:hover { box-shadow: 0 2px 10px rgba(15,23,42,.1); }
+  .cap-kanban-item-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #0f172a; }
+  .cap-kanban-item-meta  { font-size: 11px; color: #64748b; margin-bottom: 7px; }
+  /* Status/empty messages */
+  .cap-status-msg { color: #64748b; font-size: 14px; padding: 8px 0; }
+  .cap-empty { text-align: center; padding: 48px 20px; color: #94a3b8; font-size: 14px; }
+  /* Form / modal */
+  .cap-form { display: grid; gap: 10px; }
+  .cap-form-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .cap-form input, .cap-form select, .cap-form textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 14px;
+    background: #fff;
+    box-sizing: border-box;
+    color: #0f172a;
+  }
+  .cap-form textarea { resize: vertical; min-height: 72px; }
+  .cap-form label { font-size: 13px; color: #475569; }
+  .cap-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .cap-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #334155;
+    margin: 16px 0 10px;
+  }
+  .cap-card-plain {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  /* Modal overlay */
+  .cap-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    background: rgba(15, 23, 42, .45);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .cap-modal-box {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.1);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 640px;
+    box-shadow: 0 8px 40px rgba(15,23,42,.18);
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .cap-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px 16px;
+    border-bottom: 1px solid rgba(15,23,42,.08);
+  }
+  .cap-modal-title { font-size: 17px; font-weight: 700; margin: 0; }
+  .cap-modal-body  { padding: 20px 22px; }
+  .cap-modal-footer{ display: flex; gap: 8px; flex-wrap: wrap; padding: 0 22px 18px; }
+  /* Responsive */
+  @media (max-width: 640px) {
+    .cap-hero { flex-direction: column; }
+    .cap-card-grid { grid-template-columns: 1fr; }
+    .cap-kanban { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="cap-shell" id="cap-root" data-js-url="/api/capacitacion/assets/capacitacion.js?v=20260309">
+
+  <!-- Hero -->
+  <section class="cap-hero">
+    <div class="cap-hero-head">
+      <div class="cap-hero-logo" aria-hidden="true">
+        <svg viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg" width="54" height="54">
+          <rect width="54" height="54" rx="14" fill="#0f172a"/>
+          <path d="M12 36l15-22 15 22" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="27" cy="20" r="5" stroke="#fff" stroke-width="2.5"/>
+          <rect x="19" y="38" width="16" height="3" rx="1.5" fill="#fff"/>
+        </svg>
+      </div>
+      <div class="cap-hero-copy">
+        <h1>Capacitación</h1>
+        <p>Cursos, evaluaciones y certificados para colaboradores.</p>
+      </div>
+    </div>
+    <div class="cap-kpi-grid" id="cap-kpis">
+      <article class="cap-kpi-card">
+        <span class="cap-kpi-label">Cursos publicados</span>
+        <strong class="cap-kpi-value" id="cap-kpi-cursos">—</strong>
+      </article>
+      <article class="cap-kpi-card">
+        <span class="cap-kpi-label">Mis inscripciones</span>
+        <strong class="cap-kpi-value" id="cap-kpi-inscritos">—</strong>
+      </article>
+      <article class="cap-kpi-card">
+        <span class="cap-kpi-label">En progreso</span>
+        <strong class="cap-kpi-value" id="cap-kpi-progreso">—</strong>
+      </article>
+      <article class="cap-kpi-card">
+        <span class="cap-kpi-label">Completados</span>
+        <strong class="cap-kpi-value is-green" id="cap-kpi-completados">—</strong>
+      </article>
+    </div>
+  </section>
+
+  <!-- Barra de filtros + view pills -->
+  <div class="cap-toolbar">
+    <input class="cap-search" id="cap-search" type="text" placeholder="Buscar curso…" />
+    <select class="cap-select" id="cap-filter-cat">
+      <option value="">Todas las categorías</option>
+    </select>
+    <select class="cap-select" id="cap-filter-nivel">
+      <option value="">Todos los niveles</option>
+      <option value="basico">Básico</option>
+      <option value="intermedio">Intermedio</option>
+      <option value="avanzado">Avanzado</option>
+    </select>
+    <select class="cap-select" id="cap-filter-estado-curso">
+      <option value="publicado">Publicados</option>
+      <option value="">Todos los estados</option>
+      <option value="borrador">Borrador</option>
+      <option value="archivado">Archivado</option>
+    </select>
+    <div class="cap-toolbar-spacer"></div>
+    <!-- View pills (usa styles del sistema global) -->
+    <div class="view-buttons page-view-buttons">
+      <button class="view-pill boton_vista active" type="button" data-cap-view="tarjetas" aria-label="Tarjetas">
+        <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+        <span class="view-pill-label boton_vista-label">Tarjetas</span>
+      </button>
+      <button class="view-pill boton_vista" type="button" data-cap-view="tabla" aria-label="Tabla">
+        <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/lista.svg')"></span>
+        <span class="view-pill-label boton_vista-label">Tabla</span>
+      </button>
+      <button class="view-pill boton_vista" type="button" data-cap-view="kanban" aria-label="Kanban">
+        <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+        <span class="view-pill-label boton_vista-label">Kanban</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs de sección -->
+  <nav class="cap-tabs" id="cap-tabs">
+    <button class="cap-tab is-active" type="button" data-cap-tab="catalogo">Catálogo</button>
+    <button class="cap-tab" type="button" data-cap-tab="mi-progreso">Mi progreso</button>
+    <button class="cap-tab cap-tab--admin" type="button" data-cap-tab="gestion" style="display:none">Gestión</button>
+  </nav>
+
+  <!-- ── Panel: Catálogo ────────────────────────────────────── -->
+  <div class="cap-panel is-active" data-cap-panel="catalogo">
+    <p class="cap-status-msg" id="cap-catalogo-status"></p>
+    <div id="cap-view-host"></div>
+  </div>
+
+  <!-- ── Panel: Mi progreso ──────────────────────────────────── -->
+  <div class="cap-panel" data-cap-panel="mi-progreso">
+    <div class="cap-card-plain">
+      <p class="cap-section-title">Mis inscripciones</p>
+      <p class="cap-status-msg" id="cap-progreso-status">Cargando…</p>
+      <div id="cap-progreso-table"></div>
+    </div>
+  </div>
+
+  <!-- ── Panel: Gestión (admin) ──────────────────────────────── -->
+  <div class="cap-panel" data-cap-panel="gestion">
+
+    <!-- Categorías -->
+    <div class="cap-card-plain" style="margin-bottom:16px;">
+      <p class="cap-section-title" style="margin-top:0;">Categorías</p>
+      <form class="cap-form" id="cap-form-categoria">
+        <div class="cap-form-grid">
+          <input name="nombre" placeholder="Nombre *" required />
+          <input name="color"  placeholder="Color (ej. #22c55e)" />
+          <input name="descripcion" placeholder="Descripción" />
+        </div>
+        <div class="cap-actions">
+          <button class="cap-btn is-primary" type="submit">Guardar categoría</button>
+        </div>
+        <p class="cap-status-msg" id="cap-cat-status"></p>
+      </form>
+      <div id="cap-cat-table"></div>
+    </div>
+
+    <!-- Cursos -->
+    <div class="cap-card-plain">
+      <p class="cap-section-title" style="margin-top:0;">Cursos</p>
+      <form class="cap-form" id="cap-form-curso">
+        <div class="cap-form-grid">
+          <input  name="nombre"             placeholder="Nombre *" required />
+          <select name="categoria_id"        id="cap-curso-cat-select"><option value="">Sin categoría</option></select>
+          <select name="nivel">
+            <option value="basico">Básico</option>
+            <option value="intermedio">Intermedio</option>
+            <option value="avanzado">Avanzado</option>
+          </select>
+          <select name="estado">
+            <option value="borrador">Borrador</option>
+            <option value="publicado">Publicado</option>
+            <option value="archivado">Archivado</option>
+          </select>
+          <input  name="responsable"        placeholder="Responsable" />
+          <input  name="duracion_horas"     placeholder="Duración (horas)" type="number" min="0" step="0.5" />
+          <input  name="puntaje_aprobacion" placeholder="Puntaje aprobación %" type="number" min="0" max="100" value="70" />
+          <input  name="fecha_inicio"       type="date" />
+          <input  name="fecha_fin"          type="date" />
+        </div>
+        <textarea name="descripcion" placeholder="Descripción"></textarea>
+        <textarea name="objetivo"    placeholder="Objetivo"></textarea>
+        <input   name="imagen_url"   placeholder="URL de imagen de portada" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:9px 12px;font-size:14px;" />
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" name="es_obligatorio" style="width:auto;border:none;padding:0;" /> Curso obligatorio
+        </label>
+        <input type="hidden" name="__curso_id" value="" />
+        <div class="cap-actions">
+          <button class="cap-btn is-primary" type="submit" id="cap-curso-submit-btn">Crear curso</button>
+          <button class="cap-btn is-outline" type="button" id="cap-curso-cancel-btn" style="display:none">Cancelar edición</button>
+        </div>
+        <p class="cap-status-msg" id="cap-curso-form-status"></p>
+      </form>
+      <p class="cap-section-title">Cursos registrados</p>
+      <p class="cap-status-msg" id="cap-gestion-cursos-status">Cargando…</p>
+      <div class="cap-table-wrap" id="cap-gestion-cursos-table"></div>
+    </div>
+  </div>
+
+</div><!-- /cap-shell -->
+
+<!-- ── Modal: Inscribirse ───────────────────────────────────────────── -->
+<div id="cap-inscribir-modal" style="display:none;position:fixed;inset:0;z-index:70;">
+  <div class="cap-modal-overlay" id="cap-inscribir-overlay">
+    <div class="cap-modal-box">
+      <div class="cap-modal-header">
+        <h3 class="cap-modal-title" id="cap-modal-curso-title">Inscribirse al curso</h3>
+        <button class="cap-btn is-outline is-sm" type="button" id="cap-modal-close">Cerrar</button>
+      </div>
+      <div class="cap-modal-body">
+        <p id="cap-modal-curso-desc" style="color:#475569;font-size:14px;margin:0 0 14px;"></p>
+        <p id="cap-modal-inscribir-status" class="cap-status-msg"></p>
+      </div>
+      <div class="cap-modal-footer">
+        <button class="cap-btn is-primary" type="button" id="cap-modal-inscribir-btn">Confirmar inscripción</button>
+        <button class="cap-btn is-outline" type="button" id="cap-modal-close2">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var root = document.getElementById('cap-root');
+    if (!root) return;
+    var jsUrl = root.getAttribute('data-js-url');
+    if (!jsUrl) return;
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  })();
+</script>

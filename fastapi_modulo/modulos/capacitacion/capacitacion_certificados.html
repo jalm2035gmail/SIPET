@@ -1,0 +1,215 @@
+<style>
+  .mcs-shell {
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+  .mcs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .mcs-title { font-size: 22px; font-weight: 700; margin: 0; }
+  .mcs-subtitle { font-size: 14px; color: #64748b; margin: 4px 0 0; }
+
+  /* Estado vacío */
+  .mcs-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+    font-size: 14px;
+  }
+  .mcs-empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* Grid de certificados */
+  .mcs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+
+  /* Tarjeta certificado */
+  .mcs-cert-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .mcs-cert-header {
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%);
+    padding: 20px 20px 16px;
+    position: relative;
+  }
+  .mcs-cert-icon { font-size: 32px; margin-bottom: 8px; }
+  .mcs-cert-curso {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    line-height: 1.4;
+  }
+  .mcs-cert-seal {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    border: 2px solid rgba(255,255,255,.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .mcs-cert-body { padding: 16px 20px; flex: 1; }
+  .mcs-cert-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+  }
+  .mcs-cert-row:last-child { border-bottom: none; }
+  .mcs-cert-row-label { color: #64748b; }
+  .mcs-cert-row-value { font-weight: 600; color: #1e293b; }
+  .mcs-folio-badge {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 2px 8px;
+    color: #475569;
+    letter-spacing: 1px;
+  }
+  .mcs-puntaje { color: #16a34a !important; font-size: 15px !important; }
+  .mcs-cert-footer {
+    padding: 12px 20px 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  /* Botones */
+  .mcs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s, transform .1s;
+  }
+  .mcs-btn:hover { opacity: .85; transform: translateY(-1px); }
+  .mcs-btn.is-primary { background: #4f46e5; color: #fff; }
+  .mcs-btn.is-outline {
+    background: transparent;
+    color: #475569;
+    border: 1.5px solid #cbd5e1;
+  }
+
+  /* Verificador rápido */
+  .mcs-verify-bar {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .mcs-verify-bar label { font-size: 13px; font-weight: 600; color: #475569; white-space: nowrap; }
+  .mcs-verify-input {
+    flex: 1;
+    min-width: 160px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    outline: none;
+    text-transform: uppercase;
+  }
+  .mcs-verify-input:focus { border-color: #4f46e5; }
+
+  /* Loading */
+  .mcs-loading {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: mcs-spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes mcs-spin { to { transform: rotate(360deg); } }
+  .mcs-status { text-align: center; padding: 40px; color: #64748b; font-size: 14px; }
+</style>
+
+<div id="mcs-root" class="mcs-shell"
+     data-js-url="/api/capacitacion/assets/capacitacion_certificados.js?v=20260309">
+
+  <!-- Header -->
+  <div class="mcs-header">
+    <div>
+      <h2 class="mcs-title">🎓 Mis certificados</h2>
+      <p class="mcs-subtitle">Certificados obtenidos al completar cursos.</p>
+    </div>
+    <a href="/capacitacion" class="mcs-btn is-outline">← Catálogo</a>
+  </div>
+
+  <!-- Verificador de folio -->
+  <div class="mcs-verify-bar">
+    <label>🔍 Verificar folio:</label>
+    <input id="mcs-folio-input" class="mcs-verify-input" type="text" placeholder="Ej. 3A1F9B2C..." maxlength="20" />
+    <button id="mcs-btn-verificar" class="mcs-btn is-outline">Verificar</button>
+    <span id="mcs-verify-result" style="font-size:13px;"></span>
+  </div>
+
+  <!-- Estado carga -->
+  <div id="mcs-status" class="mcs-status">
+    <span class="mcs-loading"></span> Cargando certificados…
+  </div>
+
+  <!-- Grid -->
+  <div id="mcs-grid" class="mcs-grid" style="display:none;"></div>
+
+  <!-- Vacío -->
+  <div id="mcs-empty" style="display:none;">
+    <div class="mcs-empty">
+      <div class="mcs-empty-icon">🎓</div>
+      <p>Aún no tienes certificados.<br>Completa un curso para obtener el tuyo.</p>
+      <a href="/capacitacion" class="mcs-btn is-primary" style="margin-top:12px;display:inline-flex;">Ver cursos</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var root   = document.getElementById('mcs-root');
+  var jsUrl  = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

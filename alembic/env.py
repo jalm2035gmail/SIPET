@@ -32,6 +32,13 @@ sys.path.insert(0, BACKEND_DIR)
 import app.models  # noqa: F401
 from app.models.base import Base
 
+# Registrar modelos del módulo de capacitación para soporte de autogenerate
+sys.path.insert(0, PROJECT_DIR)
+try:
+    import fastapi_modulo.modulos.capacitacion.cap_db_models  # noqa: F401
+except Exception:
+    pass
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

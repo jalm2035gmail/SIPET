@@ -62,6 +62,7 @@ from fastapi_modulo.modulos.auditoria.auditoria import router as auditoria_route
 from fastapi_modulo.modulos.activo_fijo.activo_fijo import router as activo_fijo_router
 from fastapi_modulo.modulos.multiempresa.multiempresa import router as multiempresa_router
 from fastapi_modulo.modulos.brujula.brujuia import router as brujula_router
+from fastapi_modulo.modulos.capacitacion.capacitacion import router as capacitacion_router
 from fastapi_modulo.ajustes_ia import router as ajustes_ia_router
 from fastapi_modulo.modulos.ia_router import ia_router
 from fastapi import Response, Form, Body
@@ -1973,6 +1974,7 @@ app.include_router(auditoria_router)
 app.include_router(activo_fijo_router)
 app.include_router(multiempresa_router)
 app.include_router(brujula_router)
+app.include_router(capacitacion_router)
 
 app.include_router(reportes_router)
 app.include_router(ajustes_ia_router)

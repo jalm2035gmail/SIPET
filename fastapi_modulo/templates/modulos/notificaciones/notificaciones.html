@@ -23,11 +23,6 @@
 
         <div class="wa-index-status" id="wa-index-status" style="display:none">Cargando índice...</div>
 
-        <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Conversaciones">
-          <button type="button" class="tab tab-active rounded-t-lg" data-wa-tab="1" data-tab="avan">AVAN</button>
-          <button type="button" class="tab rounded-t-lg" data-wa-tab="1" data-tab="users">Usuarios</button>
-        </div>
-
         <div class="wa-search-wrap">
           <input type="text" id="wa-search" placeholder="Buscar conversación…">
         </div>
@@ -115,7 +110,6 @@
     const modalList      = $("#wa-modal-list");
     const sendBtn        = $("#wa-send-btn");
 
-    let activeTab        = "avan";
     let currentConvId    = "";
     let currentConvType  = "";
     let avanConvs        = [];
@@ -156,16 +150,30 @@
       indexStatusEl.style.color = isErr ? "#b42318" : "#54656f";
     };
 
+    const getUnifiedConversations = () => {
+      const latestAvan = avanConvs.length ? avanConvs[0] : null;
+      const avanEntry = {
+        conv_id: latestAvan?.conv_id || "conv-avan",
+        type: "avan",
+        label: "AVAN",
+        img: "/templates/imagenes/lobo.jpg",
+        last_at: latestAvan?.last_at || "",
+        last_message: latestAvan?.last_message || "Nueva conversación con AVAN",
+        unread: 0,
+      };
+      return [avanEntry].concat(dmConvs);
+    };
+
     // ── Render sidebar ──────────────────────────────────────────────────
     const renderList = () => {
       const term = (searchEl?.value ?? "").trim().toLowerCase();
-      const source = activeTab === "avan" ? avanConvs : dmConvs;
+      const source = getUnifiedConversations();
       const filtered = source.filter((c) => {
         if (!term) return true;
         return `${c.label??""} ${c.last_message??""} ${c.conv_id??""}`.toLowerCase().includes(term);
       });
       if (!filtered.length) {
-        listEl.innerHTML = `<div class="wa-empty">${activeTab==="avan" ? "Sin conversaciones con AVAN." : "Sin conversaciones. Presiona + para iniciar una."}</div>`;
+        listEl.innerHTML = `<div class="wa-empty">Sin conversaciones. Presiona + para iniciar una.</div>`;
         return;
       }
       listEl.innerHTML = filtered.map((c) => {
@@ -272,6 +280,10 @@
       chatAvatarEl.innerHTML     = avatarHtml(label, img);
       topkWrap.style.display     = type === "avan" ? "flex" : "none";
       delBtn.style.display       = type === "dm"   ? "inline-flex" : "none";
+      if (type === "avan" && !avanConvs.find((item) => item.conv_id === convId)) {
+        renderMessages([{message_text:"Conversación iniciada. Escribe tu mensaje.", is_mine:false, created_at:""}], "avan");
+        return;
+      }
       try {
         const url = type === "avan"
           ? `/api/v1/ia/rag/conversations/${encodeURIComponent(convId)}`
@@ -335,7 +347,7 @@
 
     // ── New conversation ────────────────────────────────────────────────
     const startNew = () => {
-      if (activeTab === "avan") {
+      if (currentConvType === "avan" || !currentConvType) {
         currentConvId = `conv-${Date.now()}`; currentConvType = "avan";
         chatTitleEl.textContent = "AVAN"; chatSubtitleEl.textContent = "Nueva conversación con AVAN";
         chatAvatarEl.innerHTML = `<img src="/templates/imagenes/lobo.jpg" alt="AVAN">`;
@@ -451,8 +463,7 @@
         const res = await fetch("/api/v1/conversaciones/unread-count");
         const d = await res.json();
         const n = d?.data?.count ?? 0;
-        const tab = document.querySelector('[data-wa-tab][data-tab="users"]');
-        if (tab) tab.textContent = n > 0 ? `Usuarios (${n})` : "Usuarios";
+        newBtn?.setAttribute("title", n > 0 ? `Nueva conversación · ${n} mensajes no leídos` : "Nueva conversación");
       } catch { /* ignore */ }
     };
 
@@ -467,16 +478,6 @@
     };
 
     // ── Events ──────────────────────────────────────────────────────────
-    document.querySelectorAll("[data-wa-tab][data-tab]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll("[data-wa-tab][data-tab]").forEach((x) => { x.classList.remove("active"); x.classList.remove("tab-active"); });
-        btn.classList.add("active");
-        btn.classList.add("tab-active");
-        activeTab = btn.getAttribute("data-tab") || "avan";
-        indexStatusEl.style.display = activeTab === "avan" ? "block" : "none";
-        renderList();
-      });
-    });
     searchEl?.addEventListener("input", renderList);
     formEl?.addEventListener("submit", sendMsg);
     indexBtn?.addEventListener("click", runIndex);
@@ -496,6 +497,12 @@
       await loadAll();
       refreshIndexStatus();
       refreshUnread();
+      if (!currentConvId) {
+        const first = getUnifiedConversations()[0];
+        if (first?.conv_id) {
+          await openConv(first.conv_id, first.type);
+        }
+      }
       setInterval(loadAll, 12000);
       setInterval(refreshUnread, 15000);
       setInterval(refreshIndexStatus, 30000);

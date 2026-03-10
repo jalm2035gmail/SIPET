@@ -1,0 +1,342 @@
+<style>
+  .db-shell {
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+  /* Header */
+  .db-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .db-title   { font-size: 22px; font-weight: 700; margin: 0; }
+  .db-subtitle{ font-size: 14px; color: #64748b; margin: 4px 0 0; }
+
+  /* ── KPI bar ── */
+  .db-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .db-kpi {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 14px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .db-kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+    background: var(--kpi-color, #6366f1);
+  }
+  .db-kpi-val  { font-size: 28px; font-weight: 800; color: #1e293b; }
+  .db-kpi-label{ font-size: 12px; color: #64748b; margin-top: 2px; }
+  .db-kpi-sub  { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  /* ── Fila de gráficos/tablas simples ── */
+  .db-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 720px) { .db-row { grid-template-columns: 1fr; } }
+
+  /* Cards */
+  .db-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    padding: 20px 22px;
+  }
+  .db-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Bar chart visual */
+  .db-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .db-bar-label { min-width: 120px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .db-bar-track { flex: 1; height: 8px; border-radius: 4px; background: #f1f5f9; overflow: hidden; }
+  .db-bar-fill  { height: 100%; border-radius: 4px; transition: width .4s; }
+  .db-bar-count { min-width: 32px; text-align: right; font-weight: 600; color: #1e293b; }
+
+  /* Estado colors */
+  .db-bar-fill.completado  { background: #16a34a; }
+  .db-bar-fill.en_progreso { background: #2563eb; }
+  .db-bar-fill.pendiente   { background: #94a3b8; }
+  .db-bar-fill.reprobado   { background: #dc2626; }
+  .db-bar-fill.dept        { background: #6366f1; }
+
+  /* ── Tabla de inscripciones ── */
+  .db-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    align-items: flex-end;
+  }
+  .db-filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .db-filter-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
+  .db-select, .db-input {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    outline: none;
+    color: #334155;
+    background: #fff;
+    min-width: 140px;
+  }
+  .db-select:focus, .db-input:focus { border-color: #4f46e5; }
+  .db-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s;
+    align-self: flex-end;
+  }
+  .db-btn:hover { opacity: .85; }
+  .db-btn.is-primary { background: #4f46e5; color: #fff; }
+  .db-btn.is-outline { background: transparent; color: #475569; border: 1.5px solid #cbd5e1; }
+  .db-btn.is-success { background: #16a34a; color: #fff; }
+
+  /* Tabla */
+  .db-table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+  }
+  table.db-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .db-table th {
+    background: #f8fafc;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    white-space: nowrap;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .db-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f8fafc;
+    color: #334155;
+    vertical-align: middle;
+  }
+  .db-table tr:last-child td { border-bottom: none; }
+  .db-table tr:hover td { background: #fafafa; }
+
+  /* Badges estado */
+  .db-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+  }
+  .db-badge.completado  { background: #dcfce7; color: #15803d; }
+  .db-badge.en_progreso { background: #dbeafe; color: #1d4ed8; }
+  .db-badge.pendiente   { background: #f1f5f9; color: #64748b; }
+  .db-badge.reprobado   { background: #fee2e2; color: #b91c1c; }
+
+  /* Progress mini */
+  .db-mini-bar { height: 5px; border-radius: 3px; background: #e2e8f0; overflow: hidden; min-width: 60px; }
+  .db-mini-fill{ height: 100%; border-radius: 3px; background: #6366f1; }
+
+  /* Paginación */
+  .db-pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #475569;
+    flex-wrap: wrap;
+  }
+  .db-page-btn {
+    padding: 5px 12px;
+    border-radius: 7px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+  }
+  .db-page-btn:hover { border-color: #4f46e5; color: #4f46e5; }
+  .db-page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Loading */
+  .db-loading {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2.5px solid #e2e8f0;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: db-spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes db-spin { to { transform: rotate(360deg); } }
+  .db-status { text-align: center; padding: 40px; color: #64748b; font-size: 14px; }
+</style>
+
+<div id="db-root" class="db-shell"
+     data-js-url="/api/capacitacion/assets/capacitacion_dashboard.js?v=20260309">
+
+  <!-- Header -->
+  <div class="db-header">
+    <div>
+      <h2 class="db-title">📊 Dashboard de Capacitación</h2>
+      <p class="db-subtitle">Indicadores de cobertura, progreso y desempeño organizacional.</p>
+    </div>
+    <a href="/capacitacion" class="db-btn is-outline">← Catálogo</a>
+  </div>
+
+  <!-- KPI grid -->
+  <div id="db-kpi-grid" class="db-kpi-grid">
+    <div class="db-status"><span class="db-loading"></span> Cargando…</div>
+  </div>
+
+  <!-- Gráficos distribución -->
+  <div class="db-row">
+    <div class="db-card">
+      <p class="db-card-title">📋 Inscripciones por estado</p>
+      <div id="db-chart-estados"></div>
+    </div>
+    <div class="db-card">
+      <p class="db-card-title">🏢 Inscripciones por departamento</p>
+      <div id="db-chart-depts"></div>
+    </div>
+  </div>
+
+  <!-- Top cursos -->
+  <div class="db-card" style="margin-bottom:20px;">
+    <p class="db-card-title">🏆 Top cursos completados</p>
+    <div id="db-chart-top-cursos"></div>
+  </div>
+
+  <!-- Tabla inscripciones -->
+  <div class="db-card">
+    <p class="db-card-title" style="margin-bottom:16px;">📋 Inscripciones</p>
+
+    <!-- Filtros -->
+    <div class="db-filters">
+      <div class="db-filter-group">
+        <label class="db-filter-label">Curso</label>
+        <select id="db-filter-curso" class="db-select">
+          <option value="">Todos los cursos</option>
+        </select>
+      </div>
+      <div class="db-filter-group">
+        <label class="db-filter-label">Estado</label>
+        <select id="db-filter-estado" class="db-select">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_progreso">En progreso</option>
+          <option value="completado">Completado</option>
+          <option value="reprobado">Reprobado</option>
+        </select>
+      </div>
+      <div class="db-filter-group">
+        <label class="db-filter-label">Departamento</label>
+        <input id="db-filter-dept" class="db-input" type="text" placeholder="Filtrar…" style="min-width:130px;" />
+      </div>
+      <div class="db-filter-group">
+        <label class="db-filter-label">Desde</label>
+        <input id="db-filter-desde" class="db-input" type="date" style="min-width:130px;" />
+      </div>
+      <div class="db-filter-group">
+        <label class="db-filter-label">Hasta</label>
+        <input id="db-filter-hasta" class="db-input" type="date" style="min-width:130px;" />
+      </div>
+      <button id="db-btn-filtrar" class="db-btn is-primary">Filtrar</button>
+      <button id="db-btn-limpiar" class="db-btn is-outline">Limpiar</button>
+      <a id="db-btn-csv" href="#" class="db-btn is-success" download>⬇ CSV</a>
+    </div>
+
+    <!-- Tabla -->
+    <div id="db-table-status" class="db-status" style="display:none;">
+      <span class="db-loading"></span> Cargando inscripciones…
+    </div>
+    <div id="db-table-wrap" class="db-table-wrap" style="display:none;">
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Colaborador</th>
+            <th>Departamento</th>
+            <th>Curso</th>
+            <th>Estado</th>
+            <th>Avance</th>
+            <th>Puntaje</th>
+            <th>Inscrito</th>
+            <th>Completado</th>
+          </tr>
+        </thead>
+        <tbody id="db-table-body"></tbody>
+      </table>
+    </div>
+    <div id="db-table-empty" style="display:none;text-align:center;padding:24px;font-size:14px;color:#94a3b8;">
+      Sin resultados para los filtros aplicados.
+    </div>
+
+    <!-- Paginación -->
+    <div id="db-pagination" class="db-pagination" style="display:none;">
+      <button id="db-btn-prev-page" class="db-page-btn" disabled>← Anterior</button>
+      <span id="db-page-info"></span>
+      <button id="db-btn-next-page" class="db-page-btn">Siguiente →</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var root  = document.getElementById('db-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

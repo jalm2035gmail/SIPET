@@ -1,0 +1,275 @@
+<style>
+  /* ── Shell wrapper ── */
+  .cv-shell {
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .cv-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .cv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s;
+  }
+  .cv-btn:hover { opacity: .85; }
+  .cv-btn.is-outline { background: transparent; color: #475569; border: 1.5px solid #cbd5e1; }
+  .cv-btn.is-print   { background: #4f46e5; color: #fff; }
+
+  /* ── Certificado visual ── */
+  .cv-certificate {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 40px rgba(15,23,42,.12);
+    position: relative;
+  }
+  /* Detalles decorativos */
+  .cv-cert-deco-top {
+    height: 10px;
+    background: linear-gradient(90deg, #312e81 0%, #6366f1 50%, #a78bfa 100%);
+  }
+  .cv-cert-deco-bottom {
+    height: 10px;
+    background: linear-gradient(90deg, #a78bfa 0%, #6366f1 50%, #312e81 100%);
+  }
+  .cv-cert-inner {
+    padding: 40px 48px;
+    text-align: center;
+    position: relative;
+  }
+  /* Marca de agua de fondo */
+  .cv-cert-watermark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .cv-cert-watermark span {
+    font-size: 180px;
+    opacity: .03;
+    font-weight: 900;
+    transform: rotate(-25deg);
+    user-select: none;
+  }
+  .cv-cert-logo  { font-size: 40px; margin-bottom: 8px; }
+  .cv-cert-org   { font-size: 13px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px; }
+  .cv-cert-line  { width: 60px; height: 2px; background: linear-gradient(90deg,#6366f1,#a78bfa); margin: 16px auto; border-radius: 2px; }
+  .cv-cert-award { font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 6px; }
+  .cv-cert-name  { font-size: 30px; font-weight: 800; color: #1e293b; margin: 0 0 4px; line-height: 1.2; }
+  .cv-cert-by    { font-size: 13px; color: #475569; margin: 0 0 10px; }
+  .cv-cert-course {
+    font-size: 22px;
+    font-weight: 700;
+    color: #312e81;
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+  .cv-cert-score {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin: 6px 0 16px;
+  }
+  .cv-cert-meta {
+    display: inline-flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed #e2e8f0;
+    width: 100%;
+  }
+  .cv-cert-meta-item { text-align: center; }
+  .cv-cert-meta-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  .cv-cert-meta-value { font-size: 13px; font-weight: 700; color: #475569; margin-top: 2px; }
+  .cv-folio-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 2px;
+    margin-top: 18px;
+  }
+  .cv-seal {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid #6366f1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto 0;
+    background: #eef2ff;
+  }
+  .cv-seal-icon  { font-size: 28px; }
+  .cv-seal-label { font-size: 8px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+
+  /* Loading */
+  .cv-status { text-align: center; padding: 40px; color: #64748b; font-size: 14px; }
+  .cv-loading {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: cv-spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes cv-spin { to { transform: rotate(360deg); } }
+
+  /* Print */
+  @media print {
+    .cv-actions { display: none !important; }
+    .cv-shell { padding: 0; max-width: 100%; }
+    .cv-certificate {
+      border-radius: 0;
+      box-shadow: none;
+      page-break-inside: avoid;
+    }
+  }
+</style>
+
+<div id="cv-root" class="cv-shell">
+  <!-- Acciones -->
+  <div class="cv-actions">
+    <a href="/capacitacion/mis-certificados" class="cv-btn is-outline">← Mis certificados</a>
+    <button class="cv-btn is-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+
+  <!-- Estado carga -->
+  <div id="cv-status" class="cv-status">
+    <span class="cv-loading"></span> Cargando certificado…
+  </div>
+
+  <!-- Certificado (oculto hasta cargar) -->
+  <div id="cv-certificate" class="cv-certificate" style="display:none;">
+    <div class="cv-cert-deco-top"></div>
+    <div class="cv-cert-inner">
+      <!-- Marca de agua -->
+      <div class="cv-cert-watermark"><span>✓</span></div>
+      <!-- Logo / org -->
+      <div class="cv-cert-logo">🏛️</div>
+      <div id="cv-cert-org" class="cv-cert-org">SIPET — Sistema de Personal y Empleados</div>
+      <div class="cv-cert-line"></div>
+      <!-- Texto formal -->
+      <div class="cv-cert-award">Certifica que</div>
+      <h1 id="cv-cert-name" class="cv-cert-name"></h1>
+      <p class="cv-cert-by">ha completado satisfactoriamente el curso</p>
+      <h2 id="cv-cert-course" class="cv-cert-course"></h2>
+      <span id="cv-cert-score" class="cv-cert-score"></span>
+      <!-- Sello -->
+      <div class="cv-seal">
+        <span class="cv-seal-icon">✔</span>
+        <span class="cv-seal-label">Verificado</span>
+      </div>
+      <!-- Meta -->
+      <div class="cv-cert-meta">
+        <div class="cv-cert-meta-item">
+          <div class="cv-cert-meta-label">Fecha de emisión</div>
+          <div id="cv-cert-fecha" class="cv-cert-meta-value"></div>
+        </div>
+        <div class="cv-cert-meta-item">
+          <div class="cv-cert-meta-label">Folio</div>
+          <div id="cv-cert-folio-meta" class="cv-cert-meta-value" style="font-family:'Courier New',monospace;letter-spacing:1px;"></div>
+        </div>
+      </div>
+      <!-- Folio verificable -->
+      <div class="cv-folio-box">
+        🔐 Folio: <span id="cv-cert-folio"></span>
+        &nbsp;·&nbsp;
+        <a id="cv-verify-link" href="#" style="color:#4f46e5;font-family:inherit;">Verificar en línea</a>
+      </div>
+    </div>
+    <div class="cv-cert-deco-bottom"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function fmtFecha(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  var pathMatch = window.location.pathname.match(/\/capacitacion\/certificado\/(\d+)/);
+  var certId = pathMatch ? parseInt(pathMatch[1], 10) : 0;
+  var statusEl = document.getElementById('cv-status');
+  var certEl   = document.getElementById('cv-certificate');
+
+  if (!certId) {
+    if (statusEl) statusEl.textContent = 'Certificado no encontrado.';
+    return;
+  }
+
+  fetch('/api/capacitacion/certificados/' + certId, { headers: { 'Content-Type': 'application/json' } })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+    .then(function (res) {
+      if (!res.ok || !res.data) {
+        if (statusEl) statusEl.textContent = 'Certificado no encontrado.';
+        return;
+      }
+      var c = res.data;
+      if (statusEl) statusEl.style.display = 'none';
+      if (certEl)   certEl.style.display = '';
+
+      var n = document.getElementById('cv-cert-name');
+      var co = document.getElementById('cv-cert-course');
+      var sc = document.getElementById('cv-cert-score');
+      var fe = document.getElementById('cv-cert-fecha');
+      var fo = document.getElementById('cv-cert-folio');
+      var fm = document.getElementById('cv-cert-folio-meta');
+      var vl = document.getElementById('cv-verify-link');
+
+      if (n)  n.textContent  = c.colaborador_nombre || '—';
+      if (co) co.textContent = c.curso_nombre || '—';
+      if (sc) sc.textContent = c.puntaje_final != null ? 'Puntaje: ' + c.puntaje_final.toFixed(1) + '%' : '';
+      if (fe) fe.textContent = fmtFecha(c.fecha_emision);
+      if (fo) fo.textContent = c.folio;
+      if (fm) fm.textContent = c.folio;
+      if (vl) vl.href = '/capacitacion/verificar/' + encodeURIComponent(c.folio);
+
+      document.title = 'Certificado — ' + (c.colaborador_nombre || '') + ' — ' + (c.curso_nombre || '');
+    })
+    .catch(function () {
+      if (statusEl) statusEl.textContent = 'Error al cargar el certificado.';
+    });
+})();
+</script>

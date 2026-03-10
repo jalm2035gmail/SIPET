@@ -1,0 +1,1489 @@
+{
+  "rows": [
+    {
+      "rubro": "Int normal vigente",
+      "months": {
+        "01": {
+          "proyectado": 1780000,
+          "realizado": 1374882
+        },
+        "02": {
+          "proyectado": 1780000,
+          "realizado": 1400000
+        },
+        "03": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 1780000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 1780000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Int normal vencido",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 229061
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 200000
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Gastos por intereses",
+      "months": {
+        "01": {
+          "proyectado": 445000,
+          "realizado": 442302
+        },
+        "02": {
+          "proyectado": 445000,
+          "realizado": 500000
+        },
+        "03": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 445000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 445000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Estimacion prev. p.",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 717654
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 800000
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Otros ingresos",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Int moratorio vigente",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 10159
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 12000
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Int moratorio vencido",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 36079
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 30000
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Intereses de disponibilidades",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Intereses de inversiones",
+      "months": {
+        "01": {
+          "proyectado": 1130000,
+          "realizado": 1035897
+        },
+        "02": {
+          "proyectado": 1130000,
+          "realizado": 1100000
+        },
+        "03": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 1130000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 1130000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Otros productos",
+      "months": {
+        "01": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 500,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Comisiones y tarifas cobradas",
+      "months": {
+        "01": {
+          "proyectado": 500,
+          "realizado": 373
+        },
+        "02": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 500,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 500,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Comisiones y tarifas pagadas",
+      "months": {
+        "01": {
+          "proyectado": 23000,
+          "realizado": 21297
+        },
+        "02": {
+          "proyectado": 23000,
+          "realizado": 20000
+        },
+        "03": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 23000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 23000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Salarios",
+      "months": {
+        "01": {
+          "proyectado": 590000,
+          "realizado": 588360
+        },
+        "02": {
+          "proyectado": 590000,
+          "realizado": 590000
+        },
+        "03": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 590000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 590000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Aguinaldo",
+      "months": {
+        "01": {
+          "proyectado": 47000,
+          "realizado": 48200
+        },
+        "02": {
+          "proyectado": 47000,
+          "realizado": 49000
+        },
+        "03": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 47000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Gratificaciones",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Prestaciones",
+      "months": {
+        "01": {
+          "proyectado": 215000,
+          "realizado": 105167
+        },
+        "02": {
+          "proyectado": 215000,
+          "realizado": 106000
+        },
+        "03": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 215000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 215000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Honorarios",
+      "months": {
+        "01": {
+          "proyectado": 58000,
+          "realizado": 131506
+        },
+        "02": {
+          "proyectado": 58000,
+          "realizado": 130000
+        },
+        "03": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 58000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 58000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Gastos de promocion y publicidad",
+      "months": {
+        "01": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 20000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 20000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Aportaciones al fondo de proteccion",
+      "months": {
+        "01": {
+          "proyectado": 47000,
+          "realizado": 45338
+        },
+        "02": {
+          "proyectado": 47000,
+          "realizado": 46000
+        },
+        "03": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 47000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Impuestos y derechos diversos",
+      "months": {
+        "01": {
+          "proyectado": 63000,
+          "realizado": 116079
+        },
+        "02": {
+          "proyectado": 63000,
+          "realizado": 117000
+        },
+        "03": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 63000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 63000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Gastos no deducibles",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Gastos en tecnologia",
+      "months": {
+        "01": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 38000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 38000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Depreciaciones",
+      "months": {
+        "01": {
+          "proyectado": 47000,
+          "realizado": 46954
+        },
+        "02": {
+          "proyectado": 47000,
+          "realizado": 47000
+        },
+        "03": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 47000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 47000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Amortizaciones",
+      "months": {
+        "01": {
+          "proyectado": 52000,
+          "realizado": 11811
+        },
+        "02": {
+          "proyectado": 52000,
+          "realizado": 12000
+        },
+        "03": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 52000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 52000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Costo neto del periodo",
+      "months": {
+        "01": {
+          "proyectado": 19000,
+          "realizado": 18836
+        },
+        "02": {
+          "proyectado": 19000,
+          "realizado": 19000
+        },
+        "03": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 19000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 19000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Otros gastos de administracion y promocion",
+      "months": {
+        "01": {
+          "proyectado": 193000,
+          "realizado": 178338
+        },
+        "02": {
+          "proyectado": 193000,
+          "realizado": 190000
+        },
+        "03": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 193000,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 193000,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Operaciones discontinuas",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    },
+    {
+      "rubro": "Utilidad o perdida",
+      "months": {
+        "01": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "02": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "03": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "04": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "05": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "06": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "07": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "08": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "09": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "10": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "11": {
+          "proyectado": 0,
+          "realizado": 0
+        },
+        "12": {
+          "proyectado": 0,
+          "realizado": 0
+        }
+      }
+    }
+  ],
+  "updated_at": "2026-03-09T20:35:37.464962+00:00"
+}

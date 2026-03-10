@@ -1,0 +1,151 @@
+avance 
+
+✅ fase 1 = 100%  — Modelo de datos (Alembic + SQLAlchemy + Pydantic)
+✅ fase 2 = 100%  — Capa de servicio y rutas (API completa)
+✅ fase 3 = 100%  — Frontend: Catálogo de cursos
+✅ fase 4 = 100%  — Frontend: Player de curso
+✅ fase 5 = 100%  — Frontend: Motor de evaluaciones
+✅ fase 6 = 100%  — Frontend: Certificados
+   fase 7 = 100%
+   fase 8 = 100%  — Integración y acceso (sidebar, permisos)
+   fase 9 = 100%  — Gamificación
+✅ fase 10= 100%  — Presentaciones tipo Genially
+
+avance total = 100%
+
+Módulo de Capacitación — Fases de desarrollo
+Contexto de referencia: Odoo 18 eLearning (canales, cursos, diapositivas, inscripciones, certificados, karma)
+Stack: FastAPI + Jinja2 + SQLAlchemy + Alembic + DaisyUI v5/Tailwind v4
+
+✅ Fase 1 — Modelo de datos (Alembic)
+Tablas creadas (migración 20260309_add_capacitacion_tables.py):
+
+✅ cap_categoria    — etiquetas de clasificación (nombre, descripción, color)
+✅ cap_curso        — catálogo de cursos (nombre, nivel, estado, responsable, duración, puntaje_aprobacion, imagen, fechas, obligatorio)
+✅ cap_leccion      — contenido del curso (título, tipo: video/documento/texto/enlace, contenido, url_archivo, duración_min, orden)
+✅ cap_inscripcion  — relación colaborador ↔ curso (estado: pendiente/en_progreso/completado/reprobado, pct_avance, puntaje_final)
+✅ cap_progreso_leccion — avance por lección (inscripcion_id, leccion_id, completada, intentos, tiempo_seg)
+✅ cap_evaluacion   — cuestionarios por curso (puntaje_minimo, max_intentos, preguntas_por_intento, tiempo_limite_min)
+✅ cap_pregunta     — banco de preguntas (enunciado, tipo: opcion_multiple/verdadero_falso/texto_libre, puntaje)
+✅ cap_opcion       — respuestas posibles (texto, es_correcta, orden)
+✅ cap_intento_evaluacion — historial (puntaje, aprobado, respuestas_json, fecha_inicio, fecha_fin)
+✅ cap_certificado  — emisión de certificados (folio único, puntaje_final, fecha_emision, url_pdf)
+
+Archivos creados en fase 1:
+✅ alembic/versions/20260309_add_capacitacion_tables.py
+✅ fastapi_modulo/modulos/capacitacion/cap_db_models.py
+✅ fastapi_modulo/modulos/capacitacion/cap_schemas.py
+
+✅ Fase 2 — Capa de servicio y rutas (capacitacion.py, cap_service.py)
+✅ CRUD de cursos y lecciones (cap_service.py)
+✅ Inscripción de colaboradores — individual y masiva (cap_inscripcion_service.py)
+✅ Registro de progreso por lección con recálculo de pct_avance
+✅ Motor de evaluaciones: preguntas aleatorias, calificar, registrar intento (cap_evaluacion_service.py)
+✅ Certificación automática al alcanzar puntaje_minimo_aprobacion (folio UUID)
+✅ Router FastAPI con 35 endpoints (capacitacion.py) registrado en main.py
+✅ API endpoints:
+✅ GET  /api/capacitacion/categorias
+✅ POST /api/capacitacion/categorias
+✅ GET  /api/capacitacion/cursos
+✅ POST /api/capacitacion/cursos
+✅ PUT  /api/capacitacion/cursos/{id}
+✅ DELETE /api/capacitacion/cursos/{id}
+✅ GET  /api/capacitacion/cursos/{id}/lecciones
+✅ POST /api/capacitacion/cursos/{id}/lecciones
+✅ PUT  /api/capacitacion/lecciones/{id}
+✅ DELETE /api/capacitacion/lecciones/{id}
+✅ PUT  /api/capacitacion/cursos/{id}/lecciones/reordenar
+✅ POST /api/capacitacion/inscribir
+✅ POST /api/capacitacion/inscribir-masivo
+✅ GET  /api/capacitacion/mis-inscripciones
+✅ GET  /api/capacitacion/inscripciones/{id}/progreso
+✅ POST /api/capacitacion/progreso
+✅ POST /api/capacitacion/evaluacion/iniciar
+✅ POST /api/capacitacion/evaluacion/enviar
+✅ GET  /api/capacitacion/certificados/{id}
+✅ GET  /api/capacitacion/verificar/{folio}
+✅ GET  /api/capacitacion/mis-certificados
+
+Archivos creados en fase 2:
+✅ fastapi_modulo/modulos/capacitacion/cap_service.py
+✅ fastapi_modulo/modulos/capacitacion/cap_inscripcion_service.py
+✅ fastapi_modulo/modulos/capacitacion/cap_evaluacion_service.py
+✅ fastapi_modulo/modulos/capacitacion/capacitacion.py
+
+✅ Fase 3 — Frontend: Catálogo de cursos
+✅ Vista tarjetas — grid con imagen, categoría, nivel, progreso, botón inscribirse/continuar
+✅ Vista tabla — listado con filtros por categoría, nivel, estado, búsqueda
+✅ Vista kanban — columnas: No iniciado / En progreso / Completado
+✅ Toolbar con filtros: búsqueda, categoría, nivel, estado del curso
+✅ View pills (tarjetas | tabla | kanban) con patrón .view-pill.boton_vista
+✅ KPI bar: cursos publicados, mis inscripciones, en progreso, completados
+✅ Tab "Mi progreso" — tabla de inscripciones propias con avance y puntaje
+✅ Tab "Gestión" (solo admin) — CRUD de categorías y cursos inline
+✅ Modal de inscripción con confirmación
+✅ Auto-detección de rol admin para mostrar tab Gestión
+
+Archivos creados en fase 3:
+✅ fastapi_modulo/modulos/capacitacion/capacitacion.html
+✅ fastapi_modulo/modulos/capacitacion/capacitacion.js
+
+✅ Fase 4 — Frontend: Pantalla de curso (player)
+✅ Índice lateral de lecciones con indicador de completado (checkmark)
+✅ Área central de reproducción: embed video (YouTube/Vimeo/local), visor PDF, texto enriquecido, o enlace externo
+✅ Barra de progreso del curso
+✅ Botón "Marcar como completada" por lección — auto-avance a siguiente lección
+✅ Acceso a la evaluación final cuando todas las lecciones obligatorias estén completadas
+✅ Panel lateral con datos del curso: duración, instructor, fecha límite, puntaje mínimo
+✅ Auto-inscripción al pulsar "Marcar como completada" si no estaba inscrito
+✅ Rutas: GET /capacitacion/curso/{curso_id} y GET /api/capacitacion/assets/capacitacion_player.js
+
+Archivos creados en fase 4:
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_player.html
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_player.js
+
+✅ Fase 5 — Frontend: Motor de evaluaciones
+✅ Pantalla de inicio: instrucciones, puntaje mínimo, intentos permitidos, tiempo límite
+✅ Formulario de preguntas una por una con mapa de navegación (dots)
+✅ Tipos soportados: opción múltiple, verdadero/falso, texto libre
+✅ Temporizador con auto-envío al llegar a cero
+✅ Pantalla de resultados: puntaje, aprobado/reprobado, revisión de respuestas
+✅ Banner de certificado emitido en resultados
+✅ Reintentar si quedan intentos disponibles
+✅ Rutas: GET /capacitacion/evaluacion/{eval_id} y GET /api/capacitacion/assets/capacitacion_eval.js
+
+Archivos creados en fase 5:
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_eval.html
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_eval.js
+
+✅ Fase 6 — Certificados
+✅ Certificado visual imprimible (template HTML + print-to-PDF nativo del navegador)
+✅ Folio único por colaborador-curso (generado en Fase 2)
+✅ Página "Mis certificados" con grid de tarjetas + verificador rápido por folio
+✅ Verificación pública: GET /capacitacion/verificar/{folio} — muestra datos del certificado
+✅ Vista detalle del certificado: GET /capacitacion/certificado/{cert_id} — imprimible / guardable como PDF
+✅ Link de compartir verificación desde la tarjeta de certificado
+✅ Auto-verificación si el folio llega en la URL
+
+Archivos creados en fase 6:
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_certificados.html
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_certificados.js
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_cert_view.html
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_verificar.html
+✅ fastapi_modulo/modulos/capacitacion/capacitacion_verificar.js
+
+Fase 7 — Dashboard y reportes
+Vista admin: tabla de inscripciones con filtros (curso, departamento, estado, fecha), exportación CSV/Excel
+Vista colaborador (/mi-progreso): cursos inscritos, avance, certificados obtenidos, próximas evaluaciones
+Indicadores de la organización: % cobertura de capacitación, cursos con mayor deserción, tiempo promedio de completado, distribución por departamento
+Integración con módulo de Empleados para cruce con estructura organizacional
+
+fase 8 = sistema de gamificacion
+
+fase 9 = sistema de presentaciones tipo https://app.genially.com/
+
+
+Fase 8 — Integración y acceso
+Alta de módulo en sidebar.html con control de acceso user_app_access
+Registro del permiso "Capacitación" en ACCESS_APP_OPTIONS en empleados.py
+Entrada en backend_nav_catalog.html
+IC compatible con sistema de roles existente (superadmin / lectura / departamento)
+Versionado de CSS/JS con query string (patrón ?v=YYYYMMDD)

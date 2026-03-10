@@ -1,0 +1,253 @@
+<style>
+  .pg-shell {
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+    max-width: 960px;
+  }
+  .pg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .pg-title    { font-size: 22px; font-weight: 700; margin: 0; }
+  .pg-subtitle { font-size: 14px; color: #64748b; margin: 4px 0 0; }
+
+  /* KPIs */
+  .pg-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .pg-kpi {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 14px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pg-kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 14px 14px 0 0;
+    background: var(--kpi-color, #6366f1);
+  }
+  .pg-kpi-val   { font-size: 28px; font-weight: 800; color: #1e293b; }
+  .pg-kpi-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  /* Tabs */
+  .pg-tabs { display: flex; gap: 0; margin-bottom: 18px; border-bottom: 2px solid #f1f5f9; }
+  .pg-tab {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .pg-tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+  .pg-tab:hover  { color: #4f46e5; }
+
+  /* Card */
+  .pg-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 18px;
+  }
+  .pg-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 14px;
+  }
+
+  /* Tabla cursos */
+  .pg-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #f1f5f9; }
+  table.pg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pg-table th {
+    background: #f8fafc;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #64748b;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    white-space: nowrap;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .pg-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #f8fafc;
+    color: #334155;
+    vertical-align: middle;
+  }
+  .pg-table tr:last-child td { border-bottom: none; }
+  .pg-table tr:hover td { background: #fafafa; }
+
+  /* Badges */
+  .pg-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+  }
+  .pg-badge.completado  { background: #dcfce7; color: #15803d; }
+  .pg-badge.en_progreso { background: #dbeafe; color: #1d4ed8; }
+  .pg-badge.pendiente   { background: #f1f5f9; color: #64748b; }
+  .pg-badge.reprobado   { background: #fee2e2; color: #b91c1c; }
+
+  /* Progress */
+  .pg-mini-bar  { height: 5px; border-radius: 3px; background: #e2e8f0; overflow: hidden; min-width: 60px; }
+  .pg-mini-fill { height: 100%; border-radius: 3px; background: #6366f1; }
+
+  /* Certificados grid */
+  .pg-certs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .pg-cert-card {
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pg-cert-name  { font-size: 14px; font-weight: 700; color: #1e293b; }
+  .pg-cert-folio { font-size: 11px; color: #94a3b8; }
+  .pg-cert-date  { font-size: 12px; color: #64748b; }
+  .pg-cert-link  { margin-top: 4px; display: inline-block; font-size: 12px; font-weight: 600; color: #4f46e5; text-decoration: none; }
+  .pg-cert-link:hover { text-decoration: underline; }
+
+  /* Buttons */
+  .pg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s;
+  }
+  .pg-btn:hover { opacity: .85; }
+  .pg-btn.is-primary { background: #4f46e5; color: #fff; }
+  .pg-btn.is-outline { background: transparent; color: #475569; border: 1.5px solid #cbd5e1; }
+
+  /* Status / loading */
+  .pg-loading {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2.5px solid #e2e8f0;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: pg-spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes pg-spin { to { transform: rotate(360deg); } }
+  .pg-status { text-align: center; padding: 32px; color: #64748b; font-size: 14px; }
+  .pg-empty  { text-align: center; padding: 24px; font-size: 14px; color: #94a3b8; }
+</style>
+
+<div id="pg-root" class="pg-shell"
+     data-js-url="/api/capacitacion/assets/capacitacion_progreso.js?v=20260309">
+
+  <!-- Header -->
+  <div class="pg-header">
+    <div>
+      <h2 class="pg-title">📈 Mi Progreso</h2>
+      <p class="pg-subtitle">Tus cursos, avances y certificados obtenidos.</p>
+    </div>
+    <a href="/capacitacion" class="pg-btn is-outline">← Catálogo</a>
+  </div>
+
+  <!-- KPIs -->
+  <div id="pg-kpi-grid" class="pg-kpi-grid">
+    <div class="pg-status"><span class="pg-loading"></span> Cargando…</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="pg-tabs">
+    <button class="pg-tab active" data-tab="cursos">Mis cursos</button>
+    <button class="pg-tab" data-tab="certificados">Certificados</button>
+  </div>
+
+  <!-- Panel: Mis cursos -->
+  <div id="pg-panel-cursos">
+    <div class="pg-card">
+      <p class="pg-card-title">📚 Cursos inscritos</p>
+      <div id="pg-cursos-status" class="pg-status"><span class="pg-loading"></span> Cargando…</div>
+      <div id="pg-cursos-wrap" class="pg-table-wrap" style="display:none;">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Curso</th>
+              <th>Estado</th>
+              <th>Avance</th>
+              <th>Puntaje</th>
+              <th>Inscrito</th>
+              <th>Completado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="pg-cursos-body"></tbody>
+        </table>
+      </div>
+      <div id="pg-cursos-empty" class="pg-empty" style="display:none;">
+        No estás inscrito en ningún curso todavía.
+        <br><a href="/capacitacion" style="color:#4f46e5;font-weight:600;margin-top:8px;display:inline-block;">→ Ver catálogo de cursos</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel: Certificados -->
+  <div id="pg-panel-certificados" style="display:none;">
+    <div class="pg-card">
+      <p class="pg-card-title">🏅 Certificados obtenidos</p>
+      <div id="pg-certs-status" class="pg-status"><span class="pg-loading"></span> Cargando…</div>
+      <div id="pg-certs-grid" class="pg-certs-grid" style="display:none;"></div>
+      <div id="pg-certs-empty" class="pg-empty" style="display:none;">
+        Aún no tienes certificados. Completa un curso para obtener el tuyo.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var root  = document.getElementById('pg-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

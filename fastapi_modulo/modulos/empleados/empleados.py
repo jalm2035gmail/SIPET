@@ -46,6 +46,7 @@ ACCESS_APP_OPTIONS = (
     "Auditoria",
     "ActivoFijo",
     "Multiempresa",
+    "Capacitacion",
 )
 ACCESS_LEVEL_KEYS = (
     "full_access",

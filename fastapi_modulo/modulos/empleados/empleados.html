@@ -174,6 +174,30 @@
       '</ul>';
   }
 
+  function renderJefeInmediatoSelect(current) {
+    var currentId = current && current.id !== null && current.id !== undefined ? String(current.id).trim() : '';
+    var selectedId = current && current.jefe_inmediato_id !== null && current.jefe_inmediato_id !== undefined
+      ? String(current.jefe_inmediato_id).trim()
+      : '';
+    var options = (Array.isArray(colaboradores) ? colaboradores : [])
+      .filter(function (item) {
+        if (!item || typeof item !== 'object') return false;
+        var itemId = item.id !== null && item.id !== undefined ? String(item.id).trim() : '';
+        return itemId && itemId !== currentId;
+      })
+      .sort(function (a, b) {
+        return String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' });
+      })
+      .map(function (item) {
+        var itemId = String(item.id || '').trim();
+        var selected = itemId === selectedId ? ' selected' : '';
+        var label = String(item.nombre || item.usuario || ('Colaborador ' + itemId)).trim();
+        return '<option value="' + esc(itemId) + '"' + selected + '>' + esc(label) + '</option>';
+      })
+      .join('');
+    return '<option value="">Sin jefe inmediato</option>' + options;
+  }
+
   function normalizeAccessRole(value) {
     var raw = String(value || '').trim().toLowerCase();
     if (raw === 'superadministrador' || raw === 'superadmin' || raw === 'admin' || raw === 'administrador') return 'administrador';
@@ -687,6 +711,7 @@
     var puestoEl = mount.querySelector('[data-col-puesto]');
     var celularEl = mount.querySelector('[data-col-main-celular]');
     var colaboradorEl = mount.querySelector('[data-col-main-colaborador]');
+    var jefeEl = mount.querySelector('[data-col-main-jefe-inmediato]');
     if (nombreEl && 'value' in nombreEl) payload.nombre = String(nombreEl.value || '').trim();
     if (usuarioEl && 'value' in usuarioEl) payload.usuario = String(usuarioEl.value || '').trim();
     if (correoEl && 'value' in correoEl) payload.correo = String(correoEl.value || '').trim();
@@ -694,6 +719,10 @@
     if (puestoEl && 'value' in puestoEl) payload.puesto = String(puestoEl.value || '').trim();
     if (celularEl && 'value' in celularEl) payload.celular = String(celularEl.value || '').trim();
     if (colaboradorEl) payload.colaborador = Boolean(colaboradorEl.checked);
+    if (jefeEl && 'value' in jefeEl) {
+      var jefeRaw = String(jefeEl.value || '').trim();
+      payload.jefe_inmediato_id = jefeRaw ? Number(jefeRaw) : null;
+    }
     var derived = getPuestoDerivedFields(payload.puesto, current);
     payload.departamento = derived.area;
     payload.nivel_organizacional = derived.nivel;
@@ -1353,7 +1382,7 @@
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo electrónico</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.correo || '') + '" autocomplete="off" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Área organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.area || '') + '" data-col-area readonly></label>' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nivel organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.nivel || '') + '" data-col-nivel readonly></label>' +
-              '<label class="form-control w-full md:col-span-2"><div class="label"><span class="label-text font-semibold">Jefe inmediato</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.jefe || 'Sin jefe inmediato') + '" readonly></label>' +
+              '<label class="form-control w-full md:col-span-2"><div class="label"><span class="label-text font-semibold">Jefe inmediato</span></div><select class="select select-bordered w-full" data-col-main-jefe-inmediato ' + (isMainEditMode ? '' : 'disabled') + '>' + renderJefeInmediatoSelect(current) + '</select></label>' +
               '<label class="label justify-start gap-3 md:col-span-2"><input type="checkbox" class="checkbox checkbox-sm" data-col-main-colaborador ' + (colaboradorChecked ? 'checked ' : '') + (isMainEditMode ? '' : ' disabled') + '><span class="label-text font-semibold">Colaborador (Mostrar en organigrama)</span></label>' +
             '</div>' +
           '</section>' +
