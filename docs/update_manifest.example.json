@@ -1,0 +1,11 @@
+{
+  "channel": "avancoop",
+  "version": "1.01.00",
+  "strategy": "git-pull",
+  "branch": "main",
+  "allowed_hosts": [
+    "avancoop.org",
+    "www.avancoop.org"
+  ],
+  "notes": "Actualizacion controlada de SIPET con respaldo previo de SQLite."
+}

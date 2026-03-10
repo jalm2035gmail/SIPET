@@ -10,21 +10,27 @@ import hmac
 import time
 import unicodedata
 import shutil
+import shlex
+import subprocess
 from datetime import datetime, date as Date, timedelta
+from pathlib import Path
+from urllib.parse import quote_plus
 from urllib.parse import urlparse
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, ConfigDict
+from dotenv import load_dotenv
 from fastapi import Request, UploadFile, HTTPException
 from fastapi import File
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Text, JSON, UniqueConstraint, func, inspect
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+from sqlalchemy.orm import declarative_base, relationship
 from cryptography.fernet import Fernet, InvalidToken
 from textwrap import dedent
 from html import escape
-from fastapi_modulo.db import SessionLocal, Base, engine, DepartamentoOrganizacional
+from fastapi_modulo import db as core_db
+from fastapi_modulo.db import DepartamentoOrganizacional
 from fastapi_modulo.personalizacion import personalizacion_router
 from fastapi_modulo.membresia import membresia_router
 from fastapi_modulo.modulos.proyectando.presupuesto import router as presupuesto_router
@@ -83,8 +89,12 @@ from reportes.reportes import (
 templates = Jinja2Templates(directory="fastapi_modulo")
 date = Date
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+
 HIDDEN_SYSTEM_USERS = {"0konomiyaki"}
 PROCESS_STARTED_AT = time.time()
+SIPET_VERSION = "1.00.00"
 APP_ENV_DEFAULT = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "development").strip().lower()
 DEFAULT_SIPET_DATA_DIR = (os.environ.get("SIPET_DATA_DIR") or os.path.expanduser("~/.sipet/data")).strip()
 RUNTIME_STORE_DIR = (os.environ.get("RUNTIME_STORE_DIR") or f"fastapi_modulo/runtime_store/{APP_ENV_DEFAULT}").strip()
@@ -331,6 +341,72 @@ def get_current_tenant(request: Request) -> str:
     if header_tenant and is_superadmin(request):
         return _normalize_tenant_id(header_tenant)
     return _normalize_tenant_id(os.environ.get("DEFAULT_TENANT_ID", "default"))
+
+
+def _get_request_database_info(request: Optional[Request] = None) -> Dict[str, str]:
+    host = ""
+    if request is not None:
+        forwarded_host = request.headers.get("x-forwarded-host")
+        host = (forwarded_host or request.headers.get("host") or request.url.hostname or "").strip()
+    return core_db.get_current_database_info(host)
+
+
+def _normalize_host_identifier(value: Optional[str]) -> str:
+    raw = (value or "").strip().lower()
+    if not raw:
+        return ""
+    if "://" in raw:
+        raw = raw.split("://", 1)[1]
+    raw = raw.split("/", 1)[0]
+    raw = raw.split(",", 1)[0].strip()
+    if ":" in raw and raw.count(":") == 1:
+        raw = raw.split(":", 1)[0]
+    return raw
+
+
+def _parse_host_value_map(raw_value: str) -> Dict[str, str]:
+    mapping: Dict[str, str] = {}
+    raw = (raw_value or "").strip()
+    if not raw:
+        return mapping
+    for chunk in raw.split(","):
+        host, sep, value = chunk.partition("=")
+        if not sep:
+            continue
+        normalized_host = _normalize_host_identifier(host)
+        normalized_value = str(value or "").strip()
+        if normalized_host and normalized_value:
+            mapping[normalized_host] = normalized_value
+    return mapping
+
+
+UPDATE_SOURCE_MAP = _parse_host_value_map(
+    os.environ.get("UPDATE_SOURCE_MAP")
+    or (
+        "avancoop.org=https://actualizaciones.circulocooperativo.com/avancoop/manifest.json,"
+        "www.avancoop.org=https://actualizaciones.circulocooperativo.com/avancoop/manifest.json,"
+        "cajapolotitlan.circulocooperativo.com=https://actualizaciones.circulocooperativo.com/polotitlan/manifest.json,"
+        "sipet.circulocooperativo.com=https://actualizaciones.circulocooperativo.com/sipet/manifest.json"
+    )
+)
+UPDATE_CHANNEL_MAP = _parse_host_value_map(
+    os.environ.get("UPDATE_CHANNEL_MAP")
+    or (
+        "avancoop.org=avancoop,"
+        "www.avancoop.org=avancoop,"
+        "cajapolotitlan.circulocooperativo.com=polotitlan,"
+        "sipet.circulocooperativo.com=railway"
+    )
+)
+UPDATE_STRATEGY_MAP = _parse_host_value_map(
+    os.environ.get("UPDATE_STRATEGY_MAP")
+    or (
+        "avancoop.org=git-pull,"
+        "www.avancoop.org=git-pull,"
+        "cajapolotitlan.circulocooperativo.com=git-pull,"
+        "sipet.circulocooperativo.com=manual"
+    )
+)
 
 
 def is_superadmin(request: Request) -> bool:
@@ -949,64 +1025,9 @@ def backend_screen(
         floating_buttons=floating_buttons,
     )
 
-# Configuración de BD por entorno (Railway/Local)
-def _resolve_database_url() -> str:
-    raw_url = (
-        os.environ.get("DATABASE_URL")
-        or os.environ.get("POSTGRES_URL")
-        or os.environ.get("POSTGRESQL_URL")
-        or ""
-    ).strip()
-    if raw_url:
-        if raw_url.startswith("postgres://"):
-            return raw_url.replace("postgres://", "postgresql://", 1)
-        return raw_url
-    is_railway = any(str(value or "").strip() for key, value in os.environ.items() if key.startswith("RAILWAY_"))
-    is_prod_like = APP_ENV_DEFAULT in {"production", "prod"} or is_railway
-    default_sqlite_name = f"strategic_planning_{APP_ENV_DEFAULT}.db"
-    sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or "").strip()
-    if not sqlite_db_path and is_prod_like:
-        # Railway puede iniciar sin DATABASE_URL si el servicio aún no tiene una BD adjunta.
-        # Preferimos degradar a SQLite local para que el contenedor abra el puerto y exponga /health.
-        sqlite_db_path = os.path.join("/tmp", default_sqlite_name)
-        print(
-            "[db] DATABASE_URL no configurada en producción/Railway; "
-            f"usando fallback SQLite temporal en {sqlite_db_path}."
-        )
-    if sqlite_db_path and os.path.basename(sqlite_db_path).lower() == "strategic_planning.db" and not is_prod_like:
-        sqlite_db_path = default_sqlite_name
-    if not sqlite_db_path:
-        # Compatibilidad: prioriza la BD local del proyecto si ya existe.
-        # Evita inconsistencias entre módulos que terminan leyendo ~/.sipet/data.
-        project_candidate = os.path.abspath(default_sqlite_name)
-        legacy_project_candidate = os.path.abspath("strategic_planning.db")
-        if os.path.exists(project_candidate):
-            sqlite_db_path = project_candidate
-        elif os.path.exists(legacy_project_candidate):
-            sqlite_db_path = legacy_project_candidate
-    if not sqlite_db_path:
-        os.makedirs(DEFAULT_SIPET_DATA_DIR, exist_ok=True)
-        sqlite_db_path = os.path.join(DEFAULT_SIPET_DATA_DIR, default_sqlite_name)
-    elif not os.path.isabs(sqlite_db_path):
-        os.makedirs(DEFAULT_SIPET_DATA_DIR, exist_ok=True)
-        sqlite_db_path = os.path.join(DEFAULT_SIPET_DATA_DIR, sqlite_db_path)
-    if os.path.isabs(sqlite_db_path):
-        return f"sqlite:///{sqlite_db_path}"
-    return f"sqlite:///./{sqlite_db_path}"
-
-
-def _extract_sqlite_path(db_url: str) -> Optional[str]:
-    if not db_url.startswith("sqlite:///"):
-        return None
-    path = db_url.replace("sqlite:///", "", 1).split("?", 1)[0]
-    if path.startswith("./"):
-        return path[2:]
-    return path
-
-
-DATABASE_URL = _resolve_database_url()
+DATABASE_URL = core_db.DATABASE_URL
 IS_SQLITE_DATABASE = DATABASE_URL.startswith("sqlite:///")
-PRIMARY_DB_PATH = _extract_sqlite_path(DATABASE_URL)
+PRIMARY_DB_PATH = core_db.get_current_database_info().get("path") or None
 APP_ENV = APP_ENV_DEFAULT
 SESSION_MAX_AGE_SECONDS = int((os.environ.get("SESSION_MAX_AGE_SECONDS") or "28800").strip() or "28800")
 COOKIE_SECURE = (os.environ.get("COOKIE_SECURE") or "").strip().lower() in {"1", "true", "yes", "on"} or APP_ENV in {
@@ -1031,10 +1052,19 @@ CSRF_PROTECTION_ENABLED = (os.environ.get("CSRF_PROTECTION_ENABLED") or "true").
     "yes",
     "on",
 }
-ENGINE_CONNECT_ARGS = {"check_same_thread": False} if IS_SQLITE_DATABASE else {}
-engine = create_engine(DATABASE_URL, connect_args=ENGINE_CONNECT_ARGS)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+UPDATE_CHECK_TIMEOUT_SECONDS = float((os.environ.get("UPDATE_CHECK_TIMEOUT_SECONDS") or "6").strip() or "6")
+UPDATE_LOG_DIR = os.path.abspath(
+    (os.environ.get("UPDATE_LOG_DIR") or os.path.join(RUNTIME_STORE_DIR, "updates")).strip()
+)
+AUTO_UPDATE_ENABLED = (os.environ.get("AUTO_UPDATE_ENABLED") or "true").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 Base = declarative_base()
+engine = core_db.engine
+SessionLocal = core_db.SessionLocal
 
 class Colores(Base):
     __tablename__ = "colores"
@@ -2026,13 +2056,17 @@ async def seed_default_users_on_startup():
 
 
 @app.get("/health")
-def healthcheck():
+def healthcheck(request: Request):
     payload = {"status": "ok"}
     if HEALTH_INCLUDE_DETAILS:
+        db_info = _get_request_database_info(request)
         payload.update(
             {
                 "environment": APP_ENV,
-                "database_engine": "sqlite" if IS_SQLITE_DATABASE else "postgresql",
+                "database_engine": db_info["engine"],
+                "database_name": db_info["name"],
+                "database_path": db_info["path"],
+                "request_host": db_info["host"],
             }
         )
     return payload
@@ -2110,6 +2144,11 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 
 @app.middleware("http")
 async def enforce_backend_login(request: Request, call_next):
+    host_token = core_db.set_request_host(
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or request.url.hostname
+    )
     path = request.url.path
     public_paths = {
         "/web",
@@ -2139,39 +2178,48 @@ async def enforce_backend_login(request: Request, call_next):
         or path.startswith("/docs/")
         or path.startswith("/redoc/")
     ):
-        return await call_next(request)
+        try:
+            return await call_next(request)
+        finally:
+            core_db.reset_request_host(host_token)
 
     session_token = request.cookies.get(AUTH_COOKIE_NAME, "")
     session_data = _read_session_cookie(session_token)
     if not session_data:
-        if path.startswith("/api/") or path.startswith("/guardar-colores"):
-            return JSONResponse({"success": False, "error": "No autenticado"}, status_code=401)
-        return templates.TemplateResponse(
-            "not_found.html",
-            _not_found_context(request),
-            status_code=404,
-        )
+        try:
+            if path.startswith("/api/") or path.startswith("/guardar-colores"):
+                return JSONResponse({"success": False, "error": "No autenticado"}, status_code=401)
+            return templates.TemplateResponse(
+                "not_found.html",
+                _not_found_context(request),
+                status_code=404,
+            )
+        finally:
+            core_db.reset_request_host(host_token)
 
-    request.state.user_name = session_data["username"]
-    request.state.user_role = session_data["role"]
-    request.state.tenant_id = _normalize_tenant_id(session_data.get("tenant_id"))
+    try:
+        request.state.user_name = session_data["username"]
+        request.state.user_role = session_data["role"]
+        request.state.tenant_id = _normalize_tenant_id(session_data.get("tenant_id"))
 
-    if (
-        CSRF_PROTECTION_ENABLED
-        and request.method in {"POST", "PUT", "PATCH", "DELETE"}
-        and not path.startswith("/web/passkey/")
-        and not path.startswith("/identidad-institucional")
-        and not _is_same_origin_request(request)
-    ):
-        if path.startswith("/api/") or path.startswith("/guardar-colores"):
-            return JSONResponse({"success": False, "error": "CSRF validation failed"}, status_code=403)
-        return templates.TemplateResponse(
-            "not_found.html",
-            _not_found_context(request, title="Solicitud no válida"),
-            status_code=403,
-        )
+        if (
+            CSRF_PROTECTION_ENABLED
+            and request.method in {"POST", "PUT", "PATCH", "DELETE"}
+            and not path.startswith("/web/passkey/")
+            and not path.startswith("/identidad-institucional")
+            and not _is_same_origin_request(request)
+        ):
+            if path.startswith("/api/") or path.startswith("/guardar-colores"):
+                return JSONResponse({"success": False, "error": "CSRF validation failed"}, status_code=403)
+            return templates.TemplateResponse(
+                "not_found.html",
+                _not_found_context(request, title="Solicitud no válida"),
+                status_code=403,
+            )
 
-    return await call_next(request)
+        return await call_next(request)
+    finally:
+        core_db.reset_request_host(host_token)
 
 
 def hash_password(password: str) -> str:
@@ -6642,10 +6690,255 @@ def _format_bytes(size: int) -> str:
     return f"{value:.2f} {units[idx]}"
 
 
+def _ensure_update_runtime_dir() -> Path:
+    path = Path(UPDATE_LOG_DIR)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _get_update_files(host: str) -> Dict[str, Path]:
+    base_dir = _ensure_update_runtime_dir()
+    safe_host = re.sub(r"[^a-z0-9._-]+", "-", (host or "default").lower()).strip("-") or "default"
+    host_dir = base_dir / safe_host
+    host_dir.mkdir(parents=True, exist_ok=True)
+    return {
+        "dir": host_dir,
+        "history": host_dir / "history.json",
+        "log": host_dir / "update.log",
+        "manifest": host_dir / "last_manifest.json",
+        "job": host_dir / "job.json",
+        "backup_dir": host_dir / "backups",
+    }
+
+
+def _read_json_file(path: Path, default):
+    try:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return default
+
+
+def _write_json_file(path: Path, payload) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+
+
+def _append_update_history(host: str, entry: Dict[str, Any]) -> None:
+    files = _get_update_files(host)
+    history = _read_json_file(files["history"], [])
+    if not isinstance(history, list):
+        history = []
+    history.append(entry)
+    _write_json_file(files["history"], history[-20:])
+
+
+def _version_parts(value: str) -> List[int]:
+    parts: List[int] = []
+    for token in re.findall(r"\d+", str(value or "")):
+        try:
+            parts.append(int(token))
+        except ValueError:
+            parts.append(0)
+    return parts or [0]
+
+
+def _is_version_newer(candidate: str, current: str) -> bool:
+    left = _version_parts(candidate)
+    right = _version_parts(current)
+    max_len = max(len(left), len(right))
+    left.extend([0] * (max_len - len(left)))
+    right.extend([0] * (max_len - len(right)))
+    return left > right
+
+
+def _get_update_context(request: Request) -> Dict[str, Any]:
+    db_info = _get_request_database_info(request)
+    host = db_info["host"] or _normalize_host_identifier(request.headers.get("host") or request.url.hostname or "")
+    manifest_url = UPDATE_SOURCE_MAP.get(host, "")
+    channel = UPDATE_CHANNEL_MAP.get(host, host or "default")
+    strategy = UPDATE_STRATEGY_MAP.get(host, "git-pull")
+    files = _get_update_files(host or "default")
+    last_manifest = _read_json_file(files["manifest"], {})
+    last_job = _read_json_file(files["job"], {})
+    history = _read_json_file(files["history"], [])
+    return {
+        "host": host,
+        "db_info": db_info,
+        "version": SIPET_VERSION,
+        "manifest_url": manifest_url,
+        "channel": channel,
+        "strategy": strategy,
+        "auto_update_enabled": AUTO_UPDATE_ENABLED,
+        "railway": any(str(value or "").strip() for key, value in os.environ.items() if key.startswith("RAILWAY_")),
+        "files": files,
+        "last_manifest": last_manifest if isinstance(last_manifest, dict) else {},
+        "last_job": last_job if isinstance(last_job, dict) else {},
+        "history": history[-5:] if isinstance(history, list) else [],
+    }
+
+
+def _fetch_update_manifest(manifest_url: str) -> Dict[str, Any]:
+    if not manifest_url:
+        raise RuntimeError("No hay origen de actualización configurado para este sitio.")
+    timeout = httpx.Timeout(UPDATE_CHECK_TIMEOUT_SECONDS, connect=min(3.0, UPDATE_CHECK_TIMEOUT_SECONDS))
+    response = httpx.get(manifest_url, timeout=timeout, follow_redirects=True)
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError("El manifest de actualización no es válido.")
+    return payload
+
+
+def _validate_update_manifest(context: Dict[str, Any], manifest: Dict[str, Any]) -> Dict[str, Any]:
+    allowed_hosts = manifest.get("allowed_hosts") or []
+    if isinstance(allowed_hosts, str):
+        allowed_hosts = [allowed_hosts]
+    normalized_allowed_hosts = {_normalize_host_identifier(item) for item in allowed_hosts if str(item or "").strip()}
+    if normalized_allowed_hosts and context["host"] not in normalized_allowed_hosts:
+        raise RuntimeError("El manifest no autoriza este host.")
+    manifest_channel = str(manifest.get("channel") or "").strip()
+    if manifest_channel and manifest_channel != context["channel"]:
+        raise RuntimeError("El canal del manifest no corresponde a este sitio.")
+    declared_strategy = str(manifest.get("strategy") or context["strategy"]).strip() or context["strategy"]
+    if declared_strategy != context["strategy"]:
+        raise RuntimeError("La estrategia del manifest no coincide con la estrategia permitida para este host.")
+    latest_version = str(manifest.get("version") or "").strip()
+    if not latest_version:
+        raise RuntimeError("El manifest no incluye una versión destino.")
+    return {
+        "version": latest_version,
+        "strategy": declared_strategy,
+        "branch": str(manifest.get("branch") or "main").strip() or "main",
+        "notes": str(manifest.get("notes") or "").strip(),
+        "package_url": str(manifest.get("package_url") or "").strip(),
+        "raw": manifest,
+        "update_available": _is_version_newer(latest_version, context["version"]),
+    }
+
+
+def _snapshot_update_state(context: Dict[str, Any], manifest_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    latest_version = ""
+    update_available = False
+    if manifest_info:
+        latest_version = manifest_info["version"]
+        update_available = bool(manifest_info["update_available"])
+    elif isinstance(context["last_manifest"], dict):
+        latest_version = str(context["last_manifest"].get("version") or "").strip()
+        if latest_version:
+            update_available = _is_version_newer(latest_version, context["version"])
+    return {
+        "host": context["host"],
+        "channel": context["channel"],
+        "strategy": context["strategy"],
+        "current_version": context["version"],
+        "latest_version": latest_version,
+        "update_available": update_available,
+        "manifest_url": context["manifest_url"],
+        "database_name": context["db_info"]["name"],
+        "database_path": context["db_info"]["path"],
+        "last_job": context["last_job"],
+        "history": context["history"],
+        "auto_update_enabled": context["auto_update_enabled"],
+        "railway": context["railway"],
+    }
+
+
+def _start_update_job(context: Dict[str, Any], manifest_info: Dict[str, Any]) -> Dict[str, Any]:
+    if not AUTO_UPDATE_ENABLED:
+        raise RuntimeError("La actualización automática está deshabilitada en este entorno.")
+    if context["railway"] or context["strategy"] == "manual":
+        raise RuntimeError("Este sitio está configurado para actualización manual.")
+
+    status_result = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    dirty_lines = [
+        line.strip()
+        for line in (status_result.stdout or "").splitlines()
+        if line.strip() and not line.strip().endswith("uvicorn.log")
+    ]
+    if status_result.returncode != 0:
+        raise RuntimeError("No se pudo validar el estado del repositorio local.")
+    if dirty_lines:
+        raise RuntimeError("Hay cambios locales sin confirmar. Limpia el repositorio antes de actualizar.")
+
+    files = context["files"]
+    files["backup_dir"].mkdir(parents=True, exist_ok=True)
+    db_path = str(context["db_info"].get("path") or "").strip()
+    backup_path = ""
+    if context["db_info"]["engine"] == "sqlite" and db_path and os.path.exists(db_path):
+        backup_name = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{os.path.basename(db_path)}"
+        backup_path = str(files["backup_dir"] / backup_name)
+        shutil.copy2(db_path, backup_path)
+
+    job_id = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    log_path = files["log"]
+    branch = manifest_info["branch"]
+    env = os.environ.copy()
+    env["RUN_ALEMBIC_ON_RESTART"] = "1"
+    if db_path:
+        env["SQLITE_DB_PATH"] = db_path
+    script = (
+        f"cd {shlex.quote(PROJECT_ROOT)} && "
+        "if [ -f .venv/bin/activate ]; then . .venv/bin/activate; fi && "
+        f"git pull --ff-only origin {shlex.quote(branch)} && "
+        "if [ -f requirements.txt ]; then pip install -r requirements.txt; fi && "
+        "bash reiniciar.sh"
+    )
+    with open(log_path, "a", encoding="utf-8") as log_file:
+        log_file.write(
+            f"\n[{datetime.utcnow().isoformat()}] Inicio actualización {job_id} -> {manifest_info['version']}\n"
+        )
+        process = subprocess.Popen(
+            ["bash", "-lc", script],
+            cwd=PROJECT_ROOT,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            env=env,
+            start_new_session=True,
+        )
+
+    job_payload = {
+        "job_id": job_id,
+        "status": "running",
+        "started_at": datetime.utcnow().isoformat(),
+        "target_version": manifest_info["version"],
+        "current_version": context["version"],
+        "branch": branch,
+        "channel": context["channel"],
+        "manifest_url": context["manifest_url"],
+        "strategy": context["strategy"],
+        "pid": process.pid,
+        "log_path": str(log_path),
+        "backup_path": backup_path,
+    }
+    _write_json_file(files["job"], job_payload)
+    _append_update_history(
+        context["host"],
+        {
+            "timestamp": datetime.utcnow().isoformat(),
+            "status": "started",
+            "target_version": manifest_info["version"],
+            "job_id": job_id,
+            "backup_path": backup_path,
+        },
+    )
+    return job_payload
+
+
 def _render_ajustes_configuracion_page(request: Request) -> HTMLResponse:
     db = SessionLocal()
-    db_name = "PostgreSQL"
-    db_file_path = "N/A"
+    db_info = _get_request_database_info(request)
+    update_context = _get_update_context(request)
+    current_engine = core_db.get_current_engine()
+    db_name = db_info["name"] or "postgresql"
+    db_file_path = os.path.abspath(db_info["path"]) if db_info["path"] else "N/A"
     db_size_bytes = 0
     tables_count = 0
     users_count = 0
@@ -6663,13 +6956,11 @@ def _render_ajustes_configuracion_page(request: Request) -> HTMLResponse:
         db.close()
 
     try:
-        tables_count = len(inspect(engine).get_table_names())
+        tables_count = len(inspect(current_engine).get_table_names())
     except Exception:
         tables_count = 0
 
-    if IS_SQLITE_DATABASE and PRIMARY_DB_PATH:
-        db_file_path = os.path.abspath(PRIMARY_DB_PATH)
-        db_name = os.path.basename(db_file_path) or "sqlite.db"
+    if db_info["engine"] == "sqlite" and db_info["path"]:
         try:
             db_size_bytes = os.path.getsize(db_file_path) if os.path.exists(db_file_path) else 0
         except Exception:
@@ -6677,7 +6968,7 @@ def _render_ajustes_configuracion_page(request: Request) -> HTMLResponse:
 
     disk_total = disk_used = disk_free = 0
     try:
-        target_path = db_file_path if (IS_SQLITE_DATABASE and db_file_path != "N/A") else runtime_store_path
+        target_path = db_file_path if (db_info["engine"] == "sqlite" and db_file_path != "N/A") else runtime_store_path
         usage = shutil.disk_usage(os.path.dirname(target_path) or ".")
         disk_total, disk_used, disk_free = usage.total, usage.used, usage.free
     except Exception:
@@ -6688,8 +6979,9 @@ def _render_ajustes_configuracion_page(request: Request) -> HTMLResponse:
         <h3 style="margin:0;font-size:1.12rem;color:#0f172a;">Configuración del sistema</h3>
         <p style="margin:0;color:#475569;">Datos principales de base de datos y salud operativa.</p>
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+            <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>SIPET Versión</strong><div>{escape(SIPET_VERSION)}</div></article>
             <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Entorno</strong><div>{escape(APP_ENV)}</div></article>
-            <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Motor BD</strong><div>{"SQLite" if IS_SQLITE_DATABASE else "PostgreSQL"}</div></article>
+            <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Motor BD</strong><div>{escape(db_info["engine"].capitalize())}</div></article>
             <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Nombre BD</strong><div>{escape(db_name)}</div></article>
             <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Ruta BD</strong><div style="word-break:break-all;">{escape(db_file_path)}</div></article>
             <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Tamaño BD</strong><div>{_format_bytes(db_size_bytes)}</div></article>
@@ -6701,6 +6993,98 @@ def _render_ajustes_configuracion_page(request: Request) -> HTMLResponse:
             <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Disco total</strong><div>{_format_bytes(disk_total)}</div></article>
             <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Disco libre</strong><div>{_format_bytes(disk_free)}</div></article>
         </div>
+    </section>
+    <section style="background:#fff;border:1px solid #dbe3ef;border-radius:14px;padding:16px;display:grid;gap:12px;max-width:980px;margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div>
+                <h3 style="margin:0;font-size:1.12rem;color:#0f172a;">Actualización de SIPET</h3>
+                <p style="margin:4px 0 0;color:#475569;">Canal controlado por host para evitar mezclar código y base de datos.</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="sipet-update-check" type="button" style="display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">
+                    Verificar actualización
+                </button>
+                <button id="sipet-update-run" type="button" style="display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:10px;border:1px solid #0f172a;background:#0f172a;color:#fff;font-weight:700;cursor:pointer;">
+                    Actualizar
+                </button>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+            <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Host</strong><div>{escape(update_context["host"] or "N/A")}</div></article>
+            <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Canal</strong><div>{escape(update_context["channel"])}</div></article>
+            <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Estrategia</strong><div>{escape(update_context["strategy"])}</div></article>
+            <article style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;"><strong>Origen</strong><div style="word-break:break-all;">{escape(update_context["manifest_url"] or "No configurado")}</div></article>
+        </div>
+        <div id="sipet-update-panel" style="border:1px solid #e2e8f0;border-radius:10px;padding:12px;background:#f8fafc;color:#0f172a;">
+            <strong>Estado</strong>
+            <div style="margin-top:6px;">Versión actual: {escape(SIPET_VERSION)}</div>
+            <div>Última verificada: {escape(str(update_context["last_manifest"].get("version") or "No verificada"))}</div>
+            <div>Último trabajo: {escape(str(update_context["last_job"].get("status") or "Sin ejecuciones"))}</div>
+        </div>
+        <script>
+        (function () {{
+          const panel = document.getElementById('sipet-update-panel');
+          const checkBtn = document.getElementById('sipet-update-check');
+          const runBtn = document.getElementById('sipet-update-run');
+
+          function renderState(data) {{
+            const lastJob = data.last_job || {{}};
+            const history = Array.isArray(data.history) ? data.history : [];
+            const historyHtml = history.length
+              ? history.slice().reverse().map(function (item) {{
+                  return '<li>' + (item.timestamp || '') + ' - ' + (item.status || '') + ' - ' + (item.target_version || '') + '</li>';
+                }}).join('')
+              : '<li>Sin historial</li>';
+            panel.innerHTML =
+              '<strong>Estado</strong>' +
+              '<div style="margin-top:6px;">Version actual: ' + (data.current_version || '-') + '</div>' +
+              '<div>Version disponible: ' + (data.latest_version || 'No verificada') + '</div>' +
+              '<div>Actualizacion disponible: ' + (data.update_available ? 'Si' : 'No') + '</div>' +
+              '<div>Canal: ' + (data.channel || '-') + '</div>' +
+              '<div>BD: ' + (data.database_name || '-') + '</div>' +
+              '<div>Ultimo trabajo: ' + (lastJob.status || 'Sin ejecuciones') + '</div>' +
+              '<div>Log: ' + (lastJob.log_path || 'N/A') + '</div>' +
+              '<div style="margin-top:8px;">Historial reciente:</div>' +
+              '<ul style="margin:6px 0 0 18px;padding:0;">' + historyHtml + '</ul>';
+          }}
+
+          async function send(url, method) {{
+            const response = await fetch(url, {{
+              method: method || 'GET',
+              credentials: 'same-origin',
+              headers: {{ 'Accept': 'application/json' }}
+            }});
+            const data = await response.json();
+            if (!response.ok || data.success === false) {{
+              throw new Error(data.error || 'No se pudo completar la solicitud');
+            }}
+            return data;
+          }}
+
+          checkBtn.addEventListener('click', async function () {{
+            panel.innerHTML = '<strong>Estado</strong><div style="margin-top:6px;">Verificando actualizacion...</div>';
+            try {{
+              const data = await send('/api/ajustes/actualizacion/verificar', 'POST');
+              renderState(data);
+            }} catch (error) {{
+              panel.innerHTML = '<strong>Estado</strong><div style="margin-top:6px;color:#b91c1c;">' + error.message + '</div>';
+            }}
+          }});
+
+          runBtn.addEventListener('click', async function () {{
+            if (!window.confirm('Se generará un respaldo y se ejecutará la actualización de esta instancia. ¿Continuar?')) {{
+              return;
+            }}
+            panel.innerHTML = '<strong>Estado</strong><div style="margin-top:6px;">Iniciando actualizacion...</div>';
+            try {{
+              const data = await send('/api/ajustes/actualizacion/aplicar', 'POST');
+              renderState(data);
+            }} catch (error) {{
+              panel.innerHTML = '<strong>Estado</strong><div style="margin-top:6px;color:#b91c1c;">' + error.message + '</div>';
+            }}
+          }});
+        }})();
+        </script>
     </section>
     """
     return render_backend_page(
@@ -6719,6 +7103,80 @@ def ajustes_configuracion_page(request: Request):
     return _render_ajustes_configuracion_page(request)
 
 
+@app.get("/api/ajustes/actualizacion")
+def ajustes_actualizacion_estado(request: Request):
+    require_admin_or_superadmin(request)
+    context = _get_update_context(request)
+    return {"success": True, **_snapshot_update_state(context)}
+
+
+@app.post("/api/ajustes/actualizacion/verificar")
+def ajustes_actualizacion_verificar(request: Request):
+    require_admin_or_superadmin(request)
+    context = _get_update_context(request)
+    try:
+        manifest = _fetch_update_manifest(context["manifest_url"])
+        manifest_info = _validate_update_manifest(context, manifest)
+        snapshot = {
+            "checked_at": datetime.utcnow().isoformat(),
+            "version": manifest_info["version"],
+            "strategy": manifest_info["strategy"],
+            "branch": manifest_info["branch"],
+            "channel": context["channel"],
+            "notes": manifest_info["notes"],
+            "manifest_url": context["manifest_url"],
+        }
+        _write_json_file(context["files"]["manifest"], snapshot)
+        _append_update_history(
+            context["host"],
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "status": "checked",
+                "target_version": manifest_info["version"],
+            },
+        )
+        context = _get_update_context(request)
+        return {"success": True, **_snapshot_update_state(context, manifest_info)}
+    except Exception as exc:
+        _append_update_history(
+            context["host"],
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "status": "check_error",
+                "target_version": "",
+                "error": str(exc),
+            },
+        )
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+
+
+@app.post("/api/ajustes/actualizacion/aplicar")
+def ajustes_actualizacion_aplicar(request: Request):
+    require_admin_or_superadmin(request)
+    context = _get_update_context(request)
+    try:
+        manifest = _fetch_update_manifest(context["manifest_url"])
+        manifest_info = _validate_update_manifest(context, manifest)
+        if not manifest_info["update_available"]:
+            return {"success": True, **_snapshot_update_state(context, manifest_info)}
+        job_payload = _start_update_job(context, manifest_info)
+        context = _get_update_context(request)
+        state = _snapshot_update_state(context, manifest_info)
+        state["last_job"] = job_payload
+        return {"success": True, **state}
+    except Exception as exc:
+        _append_update_history(
+            context["host"],
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "status": "start_error",
+                "target_version": "",
+                "error": str(exc),
+            },
+        )
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+
+
 @app.get("/empresa/base-datos", response_class=HTMLResponse)
 def empresa_base_datos_page(request: Request):
     require_admin_or_superadmin(request)
@@ -6728,9 +7186,10 @@ def empresa_base_datos_page(request: Request):
 @app.get("/empresa/base-datos/exportar")
 def empresa_base_datos_exportar(request: Request):
     require_admin_or_superadmin(request)
-    if not IS_SQLITE_DATABASE or not PRIMARY_DB_PATH:
+    db_info = _get_request_database_info(request)
+    if db_info["engine"] != "sqlite" or not db_info["path"]:
         raise HTTPException(status_code=400, detail="Exportación por archivo disponible solo en SQLite")
-    db_path = os.path.abspath(PRIMARY_DB_PATH)
+    db_path = os.path.abspath(db_info["path"])
     if not os.path.exists(db_path):
         raise HTTPException(status_code=404, detail="No se encontró el archivo de base de datos")
     filename = f"sipet_backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.db"
@@ -6740,12 +7199,13 @@ def empresa_base_datos_exportar(request: Request):
 @app.post("/empresa/base-datos/importar", response_class=HTMLResponse)
 async def empresa_base_datos_importar(request: Request, db_file: UploadFile = File(...)):
     require_admin_or_superadmin(request)
-    if not IS_SQLITE_DATABASE or not PRIMARY_DB_PATH:
+    db_info = _get_request_database_info(request)
+    if db_info["engine"] != "sqlite" or not db_info["path"]:
         return RedirectResponse(
             url="/empresa/base-datos?status=error&msg=Importación%20por%20archivo%20solo%20disponible%20en%20SQLite",
             status_code=303,
         )
-    db_path = os.path.abspath(PRIMARY_DB_PATH)
+    db_path = os.path.abspath(db_info["path"])
     ext = os.path.splitext((db_file.filename or "").lower())[1]
     if ext not in {".db", ".sqlite", ".sqlite3"}:
         return RedirectResponse(
@@ -6766,12 +7226,7 @@ async def empresa_base_datos_importar(request: Request, db_file: UploadFile = Fi
         with sqlite3.connect(tmp_path) as conn:
             conn.execute("PRAGMA schema_version;").fetchone()
 
-        engine.dispose()
-        try:
-            from fastapi_modulo import db as core_db
-            core_db.engine.dispose()
-        except Exception:
-            pass
+        core_db.dispose_engine_for_host(db_info["host"])
 
         if os.path.exists(db_path):
             shutil.copy2(db_path, backup_path)

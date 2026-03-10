@@ -1,9 +1,64 @@
+import json
 import os
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text, Float
+from contextvars import ContextVar
 from datetime import datetime
+from typing import Dict, Optional
 
-def _resolve_database_url() -> str:
+from dotenv import load_dotenv
+from sqlalchemy import Column, DateTime, Float, Integer, String, Text, create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+
+APP_ENV_DEFAULT = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "development").strip().lower()
+DEFAULT_SIPET_DATA_DIR = (os.environ.get("SIPET_DATA_DIR") or os.path.expanduser("~/.sipet/data")).strip()
+_REQUEST_HOST: ContextVar[str] = ContextVar("sipet_request_host", default="")
+_ENGINE_CACHE: Dict[str, Engine] = {}
+_SESSION_FACTORY_CACHE: Dict[str, sessionmaker] = {}
+
+
+def _normalize_host(value: Optional[str]) -> str:
+    raw = (value or "").strip().lower()
+    if not raw:
+        return ""
+    if "://" in raw:
+        raw = raw.split("://", 1)[1]
+    raw = raw.split("/", 1)[0]
+    raw = raw.split(",", 1)[0].strip()
+    if ":" in raw and raw.count(":") == 1:
+        raw = raw.split(":", 1)[0]
+    return raw
+
+
+def _normalize_database_url(raw_url: str) -> str:
+    if raw_url.startswith("postgres://"):
+        return raw_url.replace("postgres://", "postgresql://", 1)
+    return raw_url
+
+
+def _resolve_sqlite_path(raw_path: str) -> str:
+    candidate = (raw_path or "").strip()
+    if not candidate:
+        default_name = f"strategic_planning_{APP_ENV_DEFAULT}.db"
+        return os.path.join(PROJECT_ROOT, default_name)
+    if os.path.isabs(candidate):
+        return candidate
+    return os.path.abspath(os.path.join(PROJECT_ROOT, candidate))
+
+
+def _coerce_database_target_to_url(target: str) -> str:
+    raw = (target or "").strip()
+    if not raw:
+        raise RuntimeError("Destino de base de datos vacío.")
+    if "://" in raw:
+        return _normalize_database_url(raw)
+    sqlite_path = _resolve_sqlite_path(raw)
+    return f"sqlite:///{sqlite_path}"
+
+
+def _resolve_default_database_url() -> str:
     raw_url = (
         os.environ.get("DATABASE_URL")
         or os.environ.get("POSTGRES_URL")
@@ -11,55 +66,147 @@ def _resolve_database_url() -> str:
         or ""
     ).strip()
     if raw_url:
-        if raw_url.startswith("postgres://"):
-            return raw_url.replace("postgres://", "postgresql://", 1)
-        return raw_url
-    app_env = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "development").strip().lower()
-    is_railway = any(str(value or "").strip() for key, value in os.environ.items() if key.startswith("RAILWAY_"))
-    is_prod_like = app_env in {"production", "prod"} or is_railway
-    default_sqlite_name = f"strategic_planning_{app_env}.db"
+        return _normalize_database_url(raw_url)
+
     sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or "").strip()
-    if not sqlite_db_path and is_prod_like:
-        # Railway puede iniciar sin DATABASE_URL si el servicio aún no tiene una BD adjunta.
-        # Preferimos degradar a SQLite local para que el contenedor abra el puerto y exponga /health.
-        sqlite_db_path = os.path.join("/tmp", default_sqlite_name)
+    if sqlite_db_path:
+        return _coerce_database_target_to_url(sqlite_db_path)
+
+    is_railway = any(str(value or "").strip() for key, value in os.environ.items() if key.startswith("RAILWAY_"))
+    is_prod_like = APP_ENV_DEFAULT in {"production", "prod"} or is_railway
+    default_name = f"strategic_planning_{APP_ENV_DEFAULT}.db"
+    if is_prod_like:
+        fallback_path = os.path.join("/tmp", default_name)
         print(
             "[db] DATABASE_URL no configurada en producción/Railway; "
-            f"usando fallback SQLite temporal en {sqlite_db_path}."
+            f"usando fallback SQLite temporal en {fallback_path}."
         )
-    if sqlite_db_path and os.path.basename(sqlite_db_path).lower() == "strategic_planning.db" and not is_prod_like:
-        sqlite_db_path = default_sqlite_name
-    if not sqlite_db_path:
-        # Compatibilidad: prioriza la BD local del proyecto si ya existe.
-        # Evita "desaparición" de datos cuando se migra implícitamente a ~/.sipet/data.
-        project_candidate = os.path.abspath(default_sqlite_name)
-        legacy_project_candidate = os.path.abspath("strategic_planning.db")
-        if os.path.exists(project_candidate):
-            sqlite_db_path = project_candidate
-        elif os.path.exists(legacy_project_candidate):
-            sqlite_db_path = legacy_project_candidate
-    data_dir = (os.environ.get("SIPET_DATA_DIR") or os.path.expanduser("~/.sipet/data")).strip()
-    if not sqlite_db_path:
-        os.makedirs(data_dir, exist_ok=True)
-        sqlite_db_path = os.path.join(data_dir, default_sqlite_name)
-    elif not os.path.isabs(sqlite_db_path):
-        os.makedirs(data_dir, exist_ok=True)
-        sqlite_db_path = os.path.join(data_dir, sqlite_db_path)
-    if os.path.isabs(sqlite_db_path):
-        return f"sqlite:///{sqlite_db_path}"
-    return f"sqlite:///./{sqlite_db_path}"
+        return f"sqlite:///{fallback_path}"
+
+    return f"sqlite:///{os.path.join(PROJECT_ROOT, default_name)}"
 
 
-DATABASE_URL = _resolve_database_url()
-CONNECT_ARGS = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite:///") else {}
+def _load_host_database_map() -> Dict[str, str]:
+    mapping: Dict[str, str] = {
+        "avancoop.org": "avandbcoop.db",
+        "www.avancoop.org": "avandbcoop.db",
+        "cajapolotitlan.circulocooperativo.com": "strategic_planning_development.db",
+    }
+    raw_json = (os.environ.get("HOST_DATABASE_MAP_JSON") or "").strip()
+    if raw_json:
+        try:
+            data = json.loads(raw_json)
+            if isinstance(data, dict):
+                for host, target in data.items():
+                    normalized_host = _normalize_host(str(host))
+                    normalized_target = str(target or "").strip()
+                    if normalized_host and normalized_target:
+                        mapping[normalized_host] = normalized_target
+        except Exception as exc:
+            print(f"[db] No se pudo leer HOST_DATABASE_MAP_JSON: {exc}")
 
-# Engine y SessionLocal
-engine = create_engine(DATABASE_URL, connect_args=CONNECT_ARGS, echo=False)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    raw_pairs = (os.environ.get("HOST_DATABASE_MAP") or "").strip()
+    if raw_pairs:
+        for chunk in raw_pairs.split(","):
+            host, separator, target = chunk.partition("=")
+            if not separator:
+                continue
+            normalized_host = _normalize_host(host)
+            normalized_target = str(target or "").strip()
+            if normalized_host and normalized_target:
+                mapping[normalized_host] = normalized_target
 
-# Modelo DepartamentoOrganizacional
-from sqlalchemy.orm import declarative_base
+    return mapping
+
+
+HOST_DATABASE_MAP = _load_host_database_map()
+DATABASE_URL = _resolve_default_database_url()
+
+
+def _extract_sqlite_path(db_url: str) -> Optional[str]:
+    if not db_url.startswith("sqlite:///"):
+        return None
+    return db_url.replace("sqlite:///", "", 1).split("?", 1)[0]
+
+
+def set_request_host(host: Optional[str]):
+    return _REQUEST_HOST.set(_normalize_host(host))
+
+
+def reset_request_host(token) -> None:
+    _REQUEST_HOST.reset(token)
+
+
+def get_request_host() -> str:
+    return _REQUEST_HOST.get("")
+
+
+def get_database_url_for_host(host: Optional[str] = None) -> str:
+    normalized_host = _normalize_host(host) or get_request_host()
+    if normalized_host and normalized_host in HOST_DATABASE_MAP:
+        return _coerce_database_target_to_url(HOST_DATABASE_MAP[normalized_host])
+    return DATABASE_URL
+
+
+def get_engine_for_host(host: Optional[str] = None) -> Engine:
+    db_url = get_database_url_for_host(host)
+    engine_instance = _ENGINE_CACHE.get(db_url)
+    if engine_instance is not None:
+        return engine_instance
+    connect_args = {"check_same_thread": False} if db_url.startswith("sqlite:///") else {}
+    engine_instance = create_engine(db_url, connect_args=connect_args, echo=False)
+    _ENGINE_CACHE[db_url] = engine_instance
+    return engine_instance
+
+
+def get_session_factory_for_host(host: Optional[str] = None) -> sessionmaker:
+    db_url = get_database_url_for_host(host)
+    session_factory = _SESSION_FACTORY_CACHE.get(db_url)
+    if session_factory is not None:
+        return session_factory
+    session_factory = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=get_engine_for_host(host),
+    )
+    _SESSION_FACTORY_CACHE[db_url] = session_factory
+    return session_factory
+
+
+def get_current_engine() -> Engine:
+    return get_engine_for_host()
+
+
+def get_current_database_info(host: Optional[str] = None) -> Dict[str, str]:
+    db_url = get_database_url_for_host(host)
+    sqlite_path = _extract_sqlite_path(db_url)
+    info = {
+        "host": _normalize_host(host) or get_request_host() or "",
+        "url": db_url,
+        "engine": "sqlite" if sqlite_path else "postgresql",
+        "path": sqlite_path or "",
+        "name": os.path.basename(sqlite_path) if sqlite_path else "postgresql",
+    }
+    return info
+
+
+def dispose_engine_for_host(host: Optional[str] = None) -> None:
+    db_url = get_database_url_for_host(host)
+    engine_instance = _ENGINE_CACHE.pop(db_url, None)
+    _SESSION_FACTORY_CACHE.pop(db_url, None)
+    if engine_instance is not None:
+        engine_instance.dispose()
+
+
+class _DynamicSessionLocal:
+    def __call__(self, **kwargs):
+        return get_session_factory_for_host()(**kwargs)
+
+
+engine = get_engine_for_host()
+SessionLocal = _DynamicSessionLocal()
 Base = declarative_base()
+
 
 class IAInteraction(Base):
     __tablename__ = "ia_interactions"
@@ -77,6 +224,7 @@ class IAInteraction(Base):
     status = Column(String, default="pending")
     error_message = Column(String, default="")
 
+
 class IAConfig(Base):
     __tablename__ = "ia_config"
     id = Column(Integer, primary_key=True, index=True)
@@ -90,14 +238,16 @@ class IAConfig(Base):
     ai_num_predict = Column(Integer, default=700)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
 class IAFeatureFlag(Base):
     __tablename__ = "ia_feature_flags"
     id = Column(Integer, primary_key=True, index=True)
     feature_key = Column(String, nullable=False)
-    enabled = Column(Integer, default=1)  # 1=habilitado, 0=deshabilitado
-    role = Column(String, nullable=True)  # Si es None, aplica global
+    enabled = Column(Integer, default=1)
+    role = Column(String, nullable=True)
     module = Column(String, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 class IASuggestionDraft(Base):
     __tablename__ = "ia_suggestion_drafts"
@@ -106,7 +256,7 @@ class IASuggestionDraft(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = Column(String, nullable=True)
     username = Column(String, nullable=True)
-    status = Column(String, default="generated")  # generated | applied | discarded | error
+    status = Column(String, default="generated")
     target_module = Column(String, default="")
     target_entity = Column(String, default="")
     target_entity_id = Column(String, default="")
@@ -119,6 +269,7 @@ class IASuggestionDraft(Base):
     discard_reason = Column(Text, default="")
     error_message = Column(Text, default="")
     interaction_id = Column(Integer, default=0)
+
 
 class IAJob(Base):
     __tablename__ = "ia_jobs"
@@ -134,7 +285,7 @@ class IAJob(Base):
     feature_key = Column(String, default="suggest_objective_text")
     job_type = Column(String, default="suggest_objective_text")
     queue = Column(String, default="default")
-    status = Column(String, default="pending")  # pending | in_progress | completed | error | canceled
+    status = Column(String, default="pending")
     progress = Column(Integer, default=0)
     attempts = Column(Integer, default=0)
     max_attempts = Column(Integer, default=1)
@@ -143,6 +294,7 @@ class IAJob(Base):
     error_message = Column(Text, default="")
     provider = Column(String, default="")
     model_name = Column(String, default="")
+
 
 class DepartamentoOrganizacional(Base):
     __tablename__ = "organizational_departments"
