@@ -10,6 +10,7 @@ from sqlalchemy import func, text
 from fastapi_modulo.modulos.empleados.empleados import _load_colab_meta, _normalize_poa_access_level
 from fastapi_modulo.modulos.planificacion.plan_estrategico_service import (
     _ensure_objective_milestone_table,
+    _kpis_by_objective_ids,
     _milestones_by_objective_ids,
     _serialize_strategic_objective,
 )
@@ -210,6 +211,165 @@ def _replace_activity_budgets(db, activity_id: int, items: Any) -> List[Dict[str
 def _delete_activity_budgets(db, activity_id: int) -> None:
     _ensure_poa_budget_table(db)
     db.execute(text("DELETE FROM poa_activity_budgets WHERE activity_id = :aid"), {"aid": int(activity_id)})
+
+
+def _ensure_poa_activity_kpi_table(db) -> None:
+    db.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS poa_activity_kpis (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              activity_id INTEGER NOT NULL,
+              objective_kpi_id INTEGER NOT NULL DEFAULT 0,
+              nombre VARCHAR(255) NOT NULL DEFAULT '',
+              proposito TEXT NOT NULL DEFAULT '',
+              formula TEXT NOT NULL DEFAULT '',
+              periodicidad VARCHAR(100) NOT NULL DEFAULT '',
+              estandar VARCHAR(20) NOT NULL DEFAULT '',
+              referencia VARCHAR(120) NOT NULL DEFAULT '',
+              orden INTEGER NOT NULL DEFAULT 0
+            )
+            """
+        )
+    )
+    try:
+        cols = db.execute(text("PRAGMA table_info(poa_activity_kpis)")).fetchall()
+        col_names = {str(col[1]).strip().lower() for col in cols if len(col) > 1}
+        if "objective_kpi_id" not in col_names:
+            db.execute(text("ALTER TABLE poa_activity_kpis ADD COLUMN objective_kpi_id INTEGER NOT NULL DEFAULT 0"))
+        if "proposito" not in col_names:
+            db.execute(text("ALTER TABLE poa_activity_kpis ADD COLUMN proposito TEXT NOT NULL DEFAULT ''"))
+        if "formula" not in col_names:
+            db.execute(text("ALTER TABLE poa_activity_kpis ADD COLUMN formula TEXT NOT NULL DEFAULT ''"))
+        if "periodicidad" not in col_names:
+            db.execute(text("ALTER TABLE poa_activity_kpis ADD COLUMN periodicidad VARCHAR(100) NOT NULL DEFAULT ''"))
+        if "estandar" not in col_names:
+            db.execute(text("ALTER TABLE poa_activity_kpis ADD COLUMN estandar VARCHAR(20) NOT NULL DEFAULT ''"))
+        if "referencia" not in col_names:
+            db.execute(text("ALTER TABLE poa_activity_kpis ADD COLUMN referencia VARCHAR(120) NOT NULL DEFAULT ''"))
+    except Exception:
+        pass
+
+
+def _normalize_activity_kpi_items(raw: Any) -> List[Dict[str, Any]]:
+    rows = raw if isinstance(raw, list) else []
+    cleaned: List[Dict[str, Any]] = []
+    seen_ids: Set[int] = set()
+    for idx, item in enumerate(rows, start=1):
+        if not isinstance(item, dict):
+            continue
+        try:
+            objective_kpi_id = int(item.get("objective_kpi_id") or item.get("id") or 0)
+        except (TypeError, ValueError):
+            objective_kpi_id = 0
+        if objective_kpi_id <= 0 or objective_kpi_id in seen_ids:
+            continue
+        seen_ids.add(objective_kpi_id)
+        cleaned.append(
+            {
+                "objective_kpi_id": objective_kpi_id,
+                "nombre": str(item.get("nombre") or "").strip(),
+                "proposito": str(item.get("proposito") or "").strip(),
+                "formula": str(item.get("formula") or "").strip(),
+                "periodicidad": str(item.get("periodicidad") or "").strip(),
+                "estandar": str(item.get("estandar") or "").strip(),
+                "referencia": str(item.get("referencia") or "").strip(),
+                "orden": idx,
+            }
+        )
+    return cleaned
+
+
+def _activity_kpis_by_activity_ids(db, activity_ids: List[int]) -> Dict[int, List[Dict[str, Any]]]:
+    result: Dict[int, List[Dict[str, Any]]] = {}
+    if not activity_ids:
+        return result
+    _ensure_poa_activity_kpi_table(db)
+    db.commit()
+    placeholders = ", ".join([f":id_{idx}" for idx, _ in enumerate(activity_ids)])
+    rows = db.execute(
+        text(
+            f"""
+            SELECT id, activity_id, objective_kpi_id, nombre, proposito, formula, periodicidad, estandar, referencia, orden
+            FROM poa_activity_kpis
+            WHERE activity_id IN ({placeholders})
+            ORDER BY activity_id ASC, orden ASC, id ASC
+            """
+        ),
+        {f"id_{idx}": int(activity_id) for idx, activity_id in enumerate(activity_ids)},
+    ).fetchall()
+    for row in rows:
+        activity_id = int(row[1] or 0)
+        if activity_id <= 0:
+            continue
+        result.setdefault(activity_id, []).append(
+            {
+                "id": int(row[0] or 0),
+                "objective_kpi_id": int(row[2] or 0),
+                "nombre": str(row[3] or ""),
+                "proposito": str(row[4] or ""),
+                "formula": str(row[5] or ""),
+                "periodicidad": str(row[6] or ""),
+                "estandar": str(row[7] or ""),
+                "referencia": str(row[8] or ""),
+                "orden": int(row[9] or 0),
+            }
+        )
+    return result
+
+
+def _replace_activity_kpis(db, activity_id: int, objective_id: int, items: Any) -> List[Dict[str, Any]]:
+    clean = _normalize_activity_kpi_items(items)
+    _ensure_poa_activity_kpi_table(db)
+    allowed_rows = _kpis_by_objective_ids(db, [int(objective_id)]).get(int(objective_id), [])
+    allowed_by_id = {int(item.get("id") or 0): item for item in allowed_rows if int(item.get("id") or 0) > 0}
+    validated: List[Dict[str, Any]] = []
+    for idx, item in enumerate(clean, start=1):
+        source = allowed_by_id.get(int(item["objective_kpi_id"]))
+        if not source:
+            continue
+        validated.append(
+            {
+                "objective_kpi_id": int(source.get("id") or 0),
+                "nombre": str(source.get("nombre") or item.get("nombre") or "").strip(),
+                "proposito": str(source.get("proposito") or item.get("proposito") or "").strip(),
+                "formula": str(source.get("formula") or item.get("formula") or "").strip(),
+                "periodicidad": str(source.get("periodicidad") or item.get("periodicidad") or "").strip(),
+                "estandar": str(source.get("estandar") or item.get("estandar") or "").strip(),
+                "referencia": str(source.get("referencia") or item.get("referencia") or "").strip(),
+                "orden": idx,
+            }
+        )
+    db.execute(text("DELETE FROM poa_activity_kpis WHERE activity_id = :aid"), {"aid": int(activity_id)})
+    for item in validated:
+        db.execute(
+            text(
+                """
+                INSERT INTO poa_activity_kpis (
+                  activity_id, objective_kpi_id, nombre, proposito, formula, periodicidad, estandar, referencia, orden
+                ) VALUES (
+                  :activity_id, :objective_kpi_id, :nombre, :proposito, :formula, :periodicidad, :estandar, :referencia, :orden
+                )
+                """
+            ),
+            {
+                "activity_id": int(activity_id),
+                "objective_kpi_id": int(item["objective_kpi_id"]),
+                "nombre": item["nombre"],
+                "proposito": item["proposito"],
+                "formula": item["formula"],
+                "periodicidad": item["periodicidad"],
+                "estandar": item["estandar"],
+                "referencia": item["referencia"],
+                "orden": int(item["orden"]),
+            },
+        )
+    return validated
+
+
+def _delete_activity_kpis(db, activity_id: int) -> None:
+    _ensure_poa_activity_kpi_table(db)
+    db.execute(text("DELETE FROM poa_activity_kpis WHERE activity_id = :aid"), {"aid": int(activity_id)})
 
 
 def _ensure_poa_deliverables_table(db) -> None:
@@ -537,6 +697,7 @@ def _serialize_poa_activity(
     subactivities: List[POASubactivity],
     budget_items: List[Dict[str, Any]] | None = None,
     hitos_impacta: List[Dict[str, Any]] | None = None,
+    kpis: List[Dict[str, Any]] | None = None,
     deliverables: List[Dict[str, Any]] | None = None,
     code_override: str = "",
     sub_code_map: Dict[int, str] | None = None,
@@ -572,6 +733,7 @@ def _serialize_poa_activity(
         "descripcion": item.descripcion or "",
         "budget_items": budget_items or [],
         "hitos_impacta": hitos_impacta or [],
+        "kpis": kpis or [],
         "entregables": deliverables or [],
         "subactivities": [
             _serialize_poa_subactivity(sub, (sub_code_map or {}).get(int(sub.id or 0), ""))
@@ -677,7 +839,6 @@ def poa_board_data(request: Request):
         )
         axis_name_map = {axis.id: axis.nombre for axis in axes}
         milestones_by_objective = _milestones_by_objective_ids(db, objective_ids)
-
         activities = (
             db.query(POAActivity)
             .filter(POAActivity.objective_id.in_(objective_ids))
@@ -757,6 +918,7 @@ def poa_board_data(request: Request):
                     {
                         **_serialize_strategic_objective(obj),
                         "axis_name": axis_name_map.get(obj.eje_id, ""),
+                        "kpis": [],
                         "hitos": milestones_by_objective.get(int(obj.id), []),
                         "can_validate_deliverables": bool(objective_can_validate.get(int(obj.id), False)),
                     }
@@ -769,6 +931,7 @@ def poa_board_data(request: Request):
                             sub_by_activity.get(activity.id, []),
                             budgets_by_activity.get(int(activity.id), []),
                             impacted_milestones_by_activity.get(int(activity.id), []),
+                            [],
                             deliverables_by_activity.get(int(activity.id), []),
                             activity_code_map.get(int(activity.id or 0), ""),
                             _subactivity_code_map_for_activity(
@@ -944,13 +1107,16 @@ def create_poa_activity(request: Request, data: dict = Body(...)):
         budget_rows: List[Dict[str, Any]] = []
         linked_milestones: List[Dict[str, Any]] = []
         deliverable_rows: List[Dict[str, Any]] = _replace_activity_deliverables(db, int(activity.id), normalized_deliverables)
+        kpi_rows: List[Dict[str, Any]] = []
         if "budget_items" in data:
             budget_rows = _replace_activity_budgets(db, int(activity.id), data.get("budget_items"))
+        if "kpis" in data:
+            kpi_rows = _replace_activity_kpis(db, int(activity.id), int(objective.id), data.get("kpis"))
         if "impacted_milestone_ids" in data:
             _replace_activity_milestone_links(db, int(activity.id), impacted_milestone_ids)
             linked_milestones = _activity_milestones_by_activity_ids(db, [int(activity.id)]).get(int(activity.id), [])
             db.commit()
-        return JSONResponse({"success": True, "data": _serialize_poa_activity(activity, [], budget_rows, linked_milestones, deliverable_rows)})
+        return JSONResponse({"success": True, "data": _serialize_poa_activity(activity, [], budget_rows, linked_milestones, kpi_rows, deliverable_rows)})
     finally:
         db.close()
 
@@ -1057,9 +1223,12 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
         db.add(activity)
         budget_rows: List[Dict[str, Any]] = []
         linked_milestones: List[Dict[str, Any]] = []
+        kpi_rows: List[Dict[str, Any]] = []
         deliverable_rows: List[Dict[str, Any]] = _replace_activity_deliverables(db, int(activity.id), normalized_deliverables)
         if "budget_items" in data:
             budget_rows = _replace_activity_budgets(db, int(activity.id), data.get("budget_items"))
+        if "kpis" in data:
+            kpi_rows = _replace_activity_kpis(db, int(activity.id), int(objective.id), data.get("kpis"))
         if "impacted_milestone_ids" in data:
             _replace_activity_milestone_links(db, int(activity.id), impacted_milestone_ids)
         db.commit()
@@ -1067,10 +1236,12 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
         subs = db.query(POASubactivity).filter(POASubactivity.activity_id == activity.id).all()
         if not budget_rows:
             budget_rows = _budgets_by_activity_ids(db, [int(activity.id)]).get(int(activity.id), [])
+        if not kpi_rows:
+            kpi_rows = _activity_kpis_by_activity_ids(db, [int(activity.id)]).get(int(activity.id), [])
         if not deliverable_rows:
             deliverable_rows = _deliverables_by_activity_ids(db, [int(activity.id)]).get(int(activity.id), [])
         linked_milestones = _activity_milestones_by_activity_ids(db, [int(activity.id)]).get(int(activity.id), [])
-        return JSONResponse({"success": True, "data": _serialize_poa_activity(activity, subs, budget_rows, linked_milestones, deliverable_rows)})
+        return JSONResponse({"success": True, "data": _serialize_poa_activity(activity, subs, budget_rows, linked_milestones, kpi_rows, deliverable_rows)})
     finally:
         db.close()
 
@@ -1090,6 +1261,7 @@ def delete_poa_activity(request: Request, activity_id: int):
             return JSONResponse({"success": False, "error": "No autorizado para eliminar esta actividad"}, status_code=403)
         db.query(POASubactivity).filter(POASubactivity.activity_id == activity.id).delete()
         _delete_activity_budgets(db, int(activity.id))
+        _delete_activity_kpis(db, int(activity.id))
         _delete_activity_deliverables(db, int(activity.id))
         _delete_activity_milestone_links(db, int(activity.id))
         db.delete(activity)

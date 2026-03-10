@@ -75,10 +75,6 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Eje estrategico</span></div>
-              <select id="brujula-kpi-axis-id" class="select select-bordered w-full"></select>
-            </label>
-            <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Nombre</span></div>
               <input id="brujula-kpi-nombre" class="input input-bordered w-full" type="text" placeholder="Ingresos por venta">
             </label>
@@ -159,7 +155,6 @@
   const kpiListEl = document.getElementById('brujula-kpi-list');
   const kpiFormEl = document.getElementById('brujula-kpi-form');
   const kpiFormTitleEl = document.getElementById('brujula-kpi-form-title');
-  const kpiAxisIdEl = document.getElementById('brujula-kpi-axis-id');
   const kpiNombreEl = document.getElementById('brujula-kpi-nombre');
   const kpiResponsableEl = document.getElementById('brujula-kpi-responsable');
   const kpiDescripcionEl = document.getElementById('brujula-kpi-descripcion');
@@ -183,9 +178,9 @@
 
   let matrixPeriods = [];
   let matrixRows = [];
-  let axesCache = [];
-  let editingAxisId = 0;
-  let editingIndex = -1;
+  let kpiDefinitionsCache = [];
+  let editingIndicatorId = 0;
+  const pageQuery = new URLSearchParams(window.location.search || '');
 
   const escapeHtml = (value) => String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -346,36 +341,8 @@
     perspectiva: String(item?.perspectiva || '').trim(),
   });
 
-  const flattenKpis = () => axesCache.flatMap((axis) => {
-    const axisId = Number(axis?.id || 0);
-    const axisName = String(axis?.nombre || 'Sin eje').trim() || 'Sin eje';
-    const axisCode = String(axis?.codigo || '').trim();
-    const list = Array.isArray(axis?.kpis) ? axis.kpis : [];
-    return list.map((item, index) => ({
-      ...normalizeKpi(item),
-      axis_id: axisId,
-      axis_nombre: axisName,
-      axis_codigo: axisCode,
-      index,
-    }));
-  });
-
-  const renderAxisOptions = (selectedAxisId = 0) => {
-    if (!kpiAxisIdEl) return;
-    const options = ['<option value="">Selecciona eje</option>'].concat(
-      axesCache.map((axis) => {
-        const axisId = Number(axis?.id || 0);
-        const selected = axisId === Number(selectedAxisId || 0) ? ' selected' : '';
-        return `<option value="${axisId}"${selected}>${escapeHtml(String(axis?.codigo || ''))} - ${escapeHtml(String(axis?.nombre || 'Sin eje'))}</option>`;
-      })
-    );
-    kpiAxisIdEl.innerHTML = options.join('');
-  };
-
   const clearKpiForm = () => {
-    editingAxisId = 0;
-    editingIndex = -1;
-    renderAxisOptions(0);
+    editingIndicatorId = 0;
     kpiNombreEl.value = '';
     kpiResponsableEl.value = '';
     kpiDescripcionEl.value = '';
@@ -399,12 +366,9 @@
     kpiFormEl.classList.remove('hidden');
     if (!item) {
       clearKpiForm();
-      if (axesCache[0]) renderAxisOptions(Number(axesCache[0].id || 0));
       return;
     }
-    editingAxisId = Number(item.axis_id || 0);
-    editingIndex = Number(item.index || 0);
-    renderAxisOptions(editingAxisId);
+    editingIndicatorId = Number(item.id || 0);
     kpiNombreEl.value = item.nombre || '';
     kpiResponsableEl.value = item.responsable || '';
     kpiDescripcionEl.value = item.descripcion || '';
@@ -421,6 +385,26 @@
     kpiVerdeEl.value = item.semaforo_verde || '';
     kpiFormTitleEl.textContent = `Editar indicador: ${item.nombre || 'Sin nombre'}`;
     kpiDeleteBtn.disabled = false;
+  };
+
+  const selectKpiFromQuery = () => {
+    const tab = String(pageQuery.get('tab') || '').trim();
+    const indicator = String(pageQuery.get('indicator') || '').trim().toLowerCase();
+    const mode = String(pageQuery.get('mode') || '').trim().toLowerCase();
+    if (tab === 'desc') {
+      setTab('desc');
+    }
+    if (mode === 'new') {
+      clearKpiForm();
+      showKpiForm(null);
+      return;
+    }
+    if (!indicator) return;
+    const target = kpiDefinitionsCache.find((item) => String(item?.nombre || '').trim().toLowerCase() === indicator);
+    if (target) {
+      showKpiForm(target);
+      setTab('desc');
+    }
   };
 
   const readKpiForm = () => normalizeKpi({
@@ -440,24 +424,12 @@
     semaforo_verde: kpiVerdeEl.value,
   });
 
-  const axisPayload = (axis, nextKpis) => ({
-    nombre: String(axis?.nombre || '').trim(),
-    base_code: String(axis?.base_code || '').trim() || String(axis?.codigo || '').split('-', 1)[0],
-    orden: Number(axis?.orden || 1) || 1,
-    lider_departamento: String(axis?.lider_departamento || '').trim(),
-    responsabilidad_directa: String(axis?.responsabilidad_directa || '').trim(),
-    fecha_inicial: String(axis?.fecha_inicial || '').trim(),
-    fecha_final: String(axis?.fecha_final || '').trim(),
-    descripcion: String(axis?.descripcion || '').trim(),
-    kpis: nextKpis.map((item, index) => ({ ...normalizeKpi(item), orden: index + 1 })),
-  });
-
-  const saveAxisKpis = async (axis, nextKpis) => {
-    const response = await fetch(`/api/strategic-axes/${encodeURIComponent(String(axis.id || ''))}`, {
-      method: 'PUT',
+  const saveIndicatorDefinition = async (data) => {
+    const response = await fetch('/api/brujula/indicadores/definicion', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
-      body: JSON.stringify(axisPayload(axis, nextKpis)),
+      body: JSON.stringify(data),
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || payload?.success === false) {
@@ -467,18 +439,18 @@
   };
 
   const renderKpiList = () => {
-    const rows = flattenKpis();
+    const rows = kpiDefinitionsCache.slice();
     if (!rows.length) {
       kpiListEl.innerHTML = '<div class="text-base-content/60">Sin indicadores registrados.</div>';
       return;
     }
     kpiListEl.innerHTML = rows.map((item) => `
-      <button type="button" class="card border border-base-300 bg-base-100 text-left hover:border-primary/30 hover:bg-base-200 transition" data-kpi-open="${item.axis_id}:${item.index}">
+      <button type="button" class="card border border-base-300 bg-base-100 text-left hover:border-primary/30 hover:bg-base-200 transition" data-kpi-open="${item.id}">
         <div class="card-body p-4 gap-2">
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h3 class="font-semibold text-base-content">${escapeHtml(item.nombre || 'Sin nombre')}</h3>
-              <div class="text-sm text-base-content/60">${escapeHtml(item.axis_codigo || '')} · ${escapeHtml(item.axis_nombre || 'Sin eje')}</div>
+              <div class="text-sm text-base-content/60">Catálogo central de Brújula</div>
             </div>
             <span class="badge badge-outline">${escapeHtml(item.frecuencia || 'Sin frecuencia')}</span>
           </div>
@@ -489,17 +461,16 @@
     `).join('');
     kpiListEl.querySelectorAll('[data-kpi-open]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const raw = String(btn.getAttribute('data-kpi-open') || '');
-        const [axisIdRaw, indexRaw] = raw.split(':');
-        const target = flattenKpis().find((item) => Number(item.axis_id) === Number(axisIdRaw) && Number(item.index) === Number(indexRaw));
+        const targetId = Number(btn.getAttribute('data-kpi-open') || 0);
+        const target = kpiDefinitionsCache.find((item) => Number(item.id || 0) === targetId);
         if (target) showKpiForm(target);
       });
     });
   };
 
-  const loadAxes = async () => {
+  const loadDefinitions = async () => {
     showKpiMsg('Cargando descripciones...');
-    const response = await fetch('/api/strategic-axes', {
+    const response = await fetch('/api/brujula/indicadores/definiciones', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
@@ -508,8 +479,7 @@
     if (!response.ok || payload?.success === false) {
       throw new Error(payload?.error || payload?.detail || 'No se pudo cargar indicadores.');
     }
-    axesCache = Array.isArray(payload?.data) ? payload.data : [];
-    renderAxisOptions(editingAxisId);
+    kpiDefinitionsCache = Array.isArray(payload?.data) ? payload.data.map((item) => normalizeKpi(item)) : [];
     renderKpiList();
     showKpiMsg('');
   };
@@ -531,7 +501,7 @@
         throw new Error(payload?.error || payload?.detail || 'No se pudo importar la plantilla.');
       }
       const summary = payload?.summary || {};
-      await loadAxes();
+      await loadDefinitions();
       await loadMatrix();
       showKpiMsg(`Importacion completada. Creados: ${Number(summary.created || 0)}. Actualizados: ${Number(summary.updated || 0)}. Omitidos: ${Number(summary.skipped || 0)}.`);
     } catch (error) {
@@ -549,43 +519,16 @@
   };
 
   const saveKpi = async () => {
-    const axisId = Number(kpiAxisIdEl.value || 0);
     const data = readKpiForm();
-    if (!axisId) {
-      showKpiMsg('Selecciona un eje estrategico.', true);
-      return;
-    }
     if (!data.nombre) {
       showKpiMsg('El nombre es obligatorio.', true);
-      return;
-    }
-    const targetAxis = axesCache.find((axis) => Number(axis?.id || 0) === axisId);
-    if (!targetAxis) {
-      showKpiMsg('El eje seleccionado no es valido.', true);
       return;
     }
     kpiSaveBtn.disabled = true;
     kpiDeleteBtn.disabled = true;
     try {
-      if (editingAxisId > 0 && editingIndex >= 0) {
-        const previousAxis = axesCache.find((axis) => Number(axis?.id || 0) === editingAxisId);
-        if (previousAxis) {
-          const previousKpis = Array.isArray(previousAxis.kpis) ? previousAxis.kpis.map((item) => normalizeKpi(item)) : [];
-          previousKpis.splice(editingIndex, 1);
-          previousAxis.kpis = previousKpis;
-          if (editingAxisId !== axisId) {
-            await saveAxisKpis(previousAxis, previousKpis);
-          }
-        }
-      }
-      const nextKpis = Array.isArray(targetAxis.kpis) ? targetAxis.kpis.map((item) => normalizeKpi(item)) : [];
-      if (editingAxisId === axisId && editingIndex >= 0) {
-        nextKpis.splice(editingIndex, 0, data);
-      } else {
-        nextKpis.push(data);
-      }
-      await saveAxisKpis(targetAxis, nextKpis);
-      await loadAxes();
+      await saveIndicatorDefinition({ ...data, id: editingIndicatorId > 0 ? editingIndicatorId : undefined });
+      await loadDefinitions();
       clearKpiForm();
       kpiFormEl.classList.add('hidden');
       showKpiMsg('Indicador guardado.');
@@ -599,16 +542,19 @@
   };
 
   const deleteKpi = async () => {
-    if (!(editingAxisId > 0 && editingIndex >= 0)) return;
-    const axis = axesCache.find((item) => Number(item?.id || 0) === editingAxisId);
-    if (!axis) return;
+    if (!(editingIndicatorId > 0)) return;
     if (!window.confirm('¿Eliminar este indicador?')) return;
     kpiDeleteBtn.disabled = true;
     try {
-      const nextKpis = Array.isArray(axis.kpis) ? axis.kpis.map((item) => normalizeKpi(item)) : [];
-      nextKpis.splice(editingIndex, 1);
-      await saveAxisKpis(axis, nextKpis);
-      await loadAxes();
+      const response = await fetch(`/api/brujula/indicadores/definicion/${editingIndicatorId}`, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.detail || 'No se pudo eliminar el indicador.');
+      }
+      await loadDefinitions();
       clearKpiForm();
       kpiFormEl.classList.add('hidden');
       showKpiMsg('Indicador eliminado.');
@@ -652,9 +598,11 @@
   clearKpiForm();
   kpiFormEl.classList.add('hidden');
   setTab('matrix');
-  Promise.all([loadMatrix(), loadAxes()]).catch((error) => {
+  Promise.all([loadMatrix(), loadDefinitions()]).catch((error) => {
     showMatrixMsg(error?.message || 'No se pudo cargar indicadores.', true);
     showKpiMsg(error?.message || 'No se pudo cargar descripciones.', true);
+  }).finally(() => {
+    selectKpiFromQuery();
   });
 })();
 </script>

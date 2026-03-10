@@ -235,7 +235,7 @@
             if (!kpiListEl) return;
             const list = Array.isArray(objective?.kpis) ? objective.kpis : [];
             if (!list.length) {
-              kpiListEl.innerHTML = '<div class="poa-sub-meta">Sin KPIs disponibles en este objetivo.</div>';
+              kpiListEl.innerHTML = '<div class="poa-sub-meta">Los indicadores oficiales se administran en Brújula.</div>';
               return;
             }
             kpiListEl.innerHTML = list.map((item) => {

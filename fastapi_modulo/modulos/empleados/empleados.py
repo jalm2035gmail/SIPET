@@ -1,12 +1,14 @@
 import os
 import uuid
 import json
+import re
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 from fastapi import APIRouter, Request, Body, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 from fastapi_modulo.db import SessionLocal
 
 router = APIRouter()
@@ -146,6 +148,152 @@ def _normalize_poa_access_level(value: Any) -> str:
     return "todas_tareas" if raw == "todas_tareas" else "mis_tareas"
 
 
+def _ensure_poa_activity_kpi_table(db) -> None:
+    db.execute(
+        text(
+            """
+        CREATE TABLE IF NOT EXISTS poa_activity_kpis (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          activity_id INTEGER NOT NULL,
+          objective_kpi_id INTEGER NOT NULL DEFAULT 0,
+          nombre VARCHAR(255) NOT NULL DEFAULT '',
+          proposito TEXT NOT NULL DEFAULT '',
+          formula TEXT NOT NULL DEFAULT '',
+          periodicidad VARCHAR(100) NOT NULL DEFAULT '',
+          estandar VARCHAR(20) NOT NULL DEFAULT '',
+          referencia VARCHAR(120) NOT NULL DEFAULT '',
+          orden INTEGER NOT NULL DEFAULT 0
+        )
+        """
+        )
+    )
+
+
+def _extract_assigned_people(raw_description: Any) -> List[str]:
+    plain = re.sub(r"<[^>]+>", " ", str(raw_description or ""))
+    plain = re.sub(r"\s+", " ", plain).strip()
+    if not plain:
+        return []
+    match = re.search(r"Personas asignadas:\s*(.+)$", plain, flags=re.IGNORECASE)
+    if not match:
+        return []
+    names = [part.strip() for part in re.split(r"[;,]", match.group(1)) if part.strip()]
+    seen = set()
+    result: List[str] = []
+    for name in names:
+        key = name.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(name)
+    return result
+
+
+def _normalize_colaborador_kpis(raw: Any, allowed_ids: Optional[set[int]] = None) -> List[Dict[str, Any]]:
+    rows = raw if isinstance(raw, list) else []
+    seen = set()
+    cleaned: List[Dict[str, Any]] = []
+    for idx, item in enumerate(rows, start=1):
+        if not isinstance(item, dict):
+            continue
+        try:
+            activity_kpi_id = int(item.get("activity_kpi_id") or item.get("id") or 0)
+        except (TypeError, ValueError):
+            activity_kpi_id = 0
+        if activity_kpi_id <= 0 or activity_kpi_id in seen:
+            continue
+        if allowed_ids is not None and activity_kpi_id not in allowed_ids:
+            continue
+        seen.add(activity_kpi_id)
+        cleaned.append(
+            {
+                "activity_kpi_id": activity_kpi_id,
+                "nombre": str(item.get("nombre") or "").strip(),
+                "proposito": str(item.get("proposito") or "").strip(),
+                "formula": str(item.get("formula") or "").strip(),
+                "periodicidad": str(item.get("periodicidad") or "").strip(),
+                "referencia": str(item.get("referencia") or "").strip(),
+                "activity_id": int(item.get("activity_id") or 0) if str(item.get("activity_id") or "").strip() else 0,
+                "activity_nombre": str(item.get("activity_nombre") or "").strip(),
+                "activity_codigo": str(item.get("activity_codigo") or "").strip(),
+                "objective_nombre": str(item.get("objective_nombre") or "").strip(),
+                "objective_codigo": str(item.get("objective_codigo") or "").strip(),
+                "orden": idx,
+            }
+        )
+    return cleaned
+
+
+def _build_colaborador_kpi_maps(db) -> Dict[str, List[Dict[str, Any]]]:
+    from fastapi_modulo.main import POAActivity
+
+    _ensure_poa_activity_kpi_table(db)
+    activities = db.query(POAActivity).order_by(POAActivity.id.asc()).all()
+    activity_map = {int(item.id): item for item in activities if getattr(item, "id", None)}
+    rows = db.execute(
+        text(
+            """
+        SELECT
+          pak.id,
+          pak.activity_id,
+          pak.objective_kpi_id,
+          pak.nombre,
+          pak.proposito,
+          pak.formula,
+          pak.periodicidad,
+          pak.estandar,
+          pak.referencia,
+          pa.codigo,
+          pa.nombre,
+          pa.objective_id,
+          so.codigo,
+          so.nombre
+        FROM poa_activity_kpis pak
+        JOIN poa_activities pa ON pa.id = pak.activity_id
+        LEFT JOIN strategic_objectives_config so ON so.id = pa.objective_id
+        ORDER BY pak.activity_id ASC, pak.orden ASC, pak.id ASC
+        """
+        )
+    ).fetchall()
+    participant_map: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        activity_id = int(row[1] or 0)
+        activity = activity_map.get(activity_id)
+        if not activity:
+            continue
+        participants = set()
+        responsable = str(getattr(activity, "responsable", "") or "").strip()
+        if responsable:
+            participants.add(responsable.lower())
+        for assigned_name in _extract_assigned_people(getattr(activity, "descripcion", "") or ""):
+            participants.add(assigned_name.lower())
+        if not participants:
+            continue
+        payload = {
+            "id": int(row[0] or 0),
+            "activity_kpi_id": int(row[0] or 0),
+            "objective_kpi_id": int(row[2] or 0),
+            "nombre": str(row[3] or ""),
+            "proposito": str(row[4] or ""),
+            "formula": str(row[5] or ""),
+            "periodicidad": str(row[6] or ""),
+            "estandar": str(row[7] or ""),
+            "referencia": str(row[8] or ""),
+            "activity_id": activity_id,
+            "activity_codigo": str(row[9] or ""),
+            "activity_nombre": str(row[10] or ""),
+            "objective_id": int(row[11] or 0),
+            "objective_codigo": str(row[12] or ""),
+            "objective_nombre": str(row[13] or ""),
+        }
+        for participant_key in participants:
+            bucket = participant_map.setdefault(participant_key, [])
+            if any(int(item.get("activity_kpi_id") or 0) == int(payload["activity_kpi_id"]) for item in bucket):
+                continue
+            bucket.append(payload)
+    return participant_map
+
+
 def _normalize_app_access_levels(raw_levels: Any, fallback_app_access: Any = None) -> Dict[str, Dict[str, bool]]:
     normalized: Dict[str, Dict[str, bool]] = {
         app_name: {level_key: False for level_key in ACCESS_LEVEL_KEYS}
@@ -255,47 +403,60 @@ def api_listar_colaboradores(request: Request):
         roles_by_id = {role.id: normalize_role_name(role.nombre) for role in db.query(Rol).all()}
         viewer_role = normalize_role_name((getattr(request.state, "user_role", None) or "").strip().lower())
         assignable_roles = sorted(_allowed_role_assignments(viewer_role))
-        data: List[Dict[str, Any]] = [
-            {
-                **_serialize_access_settings(meta.get(str(u.id), {})),
-                "id": u.id,
-                "nombre": u.nombre or "",
-                "usuario": (_decrypt_sensitive(u.usuario) or "").strip(),
-                "correo": (_decrypt_sensitive(u.correo) or "").strip(),
-                "departamento": u.departamento or "",
-                "imagen": u.imagen or "",
-                "jefe_inmediato_id": getattr(u, "jefe_inmediato_id", None),
-                "jefe": (
-                    names_by_id.get(getattr(u, "jefe_inmediato_id", None))
-                    or u.jefe
-                    or ""
-                ),
-                "puesto": u.puesto or "",
-                "rol": (
-                    roles_by_id.get(u.rol_id)
-                    or normalize_role_name(getattr(u, "role", "") or "usuario")
-                    or "usuario"
-                ),
-                "colaborador": bool(meta.get(str(u.id), {}).get("colaborador", False)),
-                "menu_blocks": meta.get(str(u.id), {}).get("menu_blocks", []),
-                "poa_access_level": _normalize_poa_access_level(meta.get(str(u.id), {}).get("poa_access_level", "mis_tareas")),
-                "web_roles": meta.get(str(u.id), {}).get("web_roles", []),
-                "eficiencia": meta.get(str(u.id), {}).get("eficiencia", None),
-                "cv_contacto": _normalize_cv_contacto(meta.get(str(u.id), {}).get("cv_contacto", {})),
-                "cv_perfil_profesional": meta.get(str(u.id), {}).get("cv_perfil_profesional", ""),
-                "cv_experiencia": meta.get(str(u.id), {}).get("cv_experiencia", []),
-                "cv_educacion": meta.get(str(u.id), {}).get("cv_educacion", []),
-                "cv_habilidades": meta.get(str(u.id), {}).get("cv_habilidades", {"tecnicas": [], "blandas": []}),
-                "cv_idiomas": meta.get(str(u.id), {}).get("cv_idiomas", []),
-                "cv_formacion": meta.get(str(u.id), {}).get("cv_formacion", []),
-                "cv_logros": meta.get(str(u.id), {}).get("cv_logros", []),
-                "cv_publicaciones": meta.get(str(u.id), {}).get("cv_publicaciones", []),
-                "cv_voluntariado": meta.get(str(u.id), {}).get("cv_voluntariado", []),
-                "cv_info_adicional": meta.get(str(u.id), {}).get("cv_info_adicional", {}),
-                "estado": "Activo" if getattr(u, "is_active", True) else "Inactivo",
+        data: List[Dict[str, Any]] = []
+        for u in rows:
+            meta_entry = meta.get(str(u.id), {})
+            aliases = {
+                str(u.nombre or "").strip().lower(),
+                str(_decrypt_sensitive(u.usuario) or "").strip().lower(),
             }
-            for u in rows
-        ]
+            aliases.discard("")
+            allowed_kpis: List[Dict[str, Any]] = []
+            allowed_ids = set()
+            selected_kpis = _normalize_colaborador_kpis(meta_entry.get("kpis", []), allowed_ids)
+            selected_kpis = []
+            data.append(
+                {
+                    **_serialize_access_settings(meta_entry),
+                    "id": u.id,
+                    "nombre": u.nombre or "",
+                    "usuario": (_decrypt_sensitive(u.usuario) or "").strip(),
+                    "correo": (_decrypt_sensitive(u.correo) or "").strip(),
+                    "departamento": u.departamento or "",
+                    "imagen": u.imagen or "",
+                    "jefe_inmediato_id": getattr(u, "jefe_inmediato_id", None),
+                    "jefe": (
+                        names_by_id.get(getattr(u, "jefe_inmediato_id", None))
+                        or u.jefe
+                        or ""
+                    ),
+                    "puesto": u.puesto or "",
+                    "rol": (
+                        roles_by_id.get(u.rol_id)
+                        or normalize_role_name(getattr(u, "role", "") or "usuario")
+                        or "usuario"
+                    ),
+                    "colaborador": bool(meta_entry.get("colaborador", False)),
+                    "menu_blocks": meta_entry.get("menu_blocks", []),
+                    "poa_access_level": _normalize_poa_access_level(meta_entry.get("poa_access_level", "mis_tareas")),
+                    "web_roles": meta_entry.get("web_roles", []),
+                    "eficiencia": meta_entry.get("eficiencia", None),
+                    "cv_contacto": _normalize_cv_contacto(meta_entry.get("cv_contacto", {})),
+                    "cv_perfil_profesional": meta_entry.get("cv_perfil_profesional", ""),
+                    "cv_experiencia": meta_entry.get("cv_experiencia", []),
+                    "cv_educacion": meta_entry.get("cv_educacion", []),
+                    "cv_habilidades": meta_entry.get("cv_habilidades", {"tecnicas": [], "blandas": []}),
+                    "cv_idiomas": meta_entry.get("cv_idiomas", []),
+                    "cv_formacion": meta_entry.get("cv_formacion", []),
+                    "cv_logros": meta_entry.get("cv_logros", []),
+                    "cv_publicaciones": meta_entry.get("cv_publicaciones", []),
+                    "cv_voluntariado": meta_entry.get("cv_voluntariado", []),
+                    "cv_info_adicional": meta_entry.get("cv_info_adicional", {}),
+                    "kpis": selected_kpis,
+                    "kpi_catalog": allowed_kpis,
+                    "estado": "Activo" if getattr(u, "is_active", True) else "Inactivo",
+                }
+            )
         can_view_all = _is_admin_role(viewer_role)
         viewer_username = (getattr(request.state, "user_name", None) or "").strip().lower()
         if viewer_role == "superadministrador":
@@ -542,6 +703,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
             "disponibilidad_traslado": str(raw_cv_info_adicional.get("disponibilidad_traslado") or "").strip(),
             "notas":                   str(raw_cv_info_adicional.get("notas") or "").strip(),
         }
+    raw_kpis = data.get("kpis") or []
 
     identidad_mision: str = str(data.get("identidad_mision") or "").strip()
     identidad_vision: str = str(data.get("identidad_vision") or "").strip()
@@ -565,7 +727,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
     db = SessionLocal()
     try:
         from sqlalchemy import func
-        from fastapi_modulo.main import ensure_default_roles
+        from fastapi_modulo.main import Usuario, ensure_default_roles
         ensure_default_roles()
         target_role = db.query(Rol).filter(Rol.nombre == requested_role).first()
         if not target_role:
@@ -614,6 +776,19 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
                     {"success": False, "error": "Puesto inválido. Seleccione un puesto del listado."},
                     status_code=400,
                 )
+        resolved_nombre = nombre
+        resolved_usuario = usuario_login
+        if incoming_id:
+            candidate = db.query(Usuario).filter(Usuario.id == incoming_id).first()
+            if candidate:
+                resolved_nombre = str(candidate.nombre or nombre).strip() or nombre
+                resolved_usuario = str(_decrypt_sensitive(candidate.usuario) or usuario_login).strip() or usuario_login
+        allowed_aliases = {resolved_nombre.lower(), resolved_usuario.lower()}
+        allowed_aliases.discard("")
+        allowed_kpi_rows: List[Dict[str, Any]] = []
+        allowed_kpi_ids = set()
+        normalized_kpis = _normalize_colaborador_kpis(raw_kpis, allowed_kpi_ids)
+        normalized_kpis = []
         # Duplicate check: for new users check all records; for edits exclude the current user.
         _dup_user_q = db.query(Usuario).filter(Usuario.usuario_hash == user_hash)
         if incoming_id:
@@ -676,6 +851,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
                 "cv_publicaciones": cv_publicaciones,
                 "cv_voluntariado": cv_voluntariado,
                 "cv_info_adicional": cv_info_adicional,
+                "kpis": normalized_kpis,
                 "identidad_mision": identidad_mision,
                 "identidad_vision": identidad_vision,
             }
@@ -713,6 +889,8 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
                     "cv_publicaciones": cv_publicaciones,
                     "cv_voluntariado": cv_voluntariado,
                     "cv_info_adicional": cv_info_adicional,
+                    "kpis": normalized_kpis,
+                    "kpi_catalog": allowed_kpi_rows,
                     "identidad_mision": identidad_mision,
                     "identidad_vision": identidad_vision,
                     "estado": "Activo" if bool(getattr(existing, "is_active", True)) else "Inactivo",
@@ -760,6 +938,7 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
             "cv_publicaciones": cv_publicaciones,
             "cv_voluntariado": cv_voluntariado,
             "cv_info_adicional": cv_info_adicional,
+            "kpis": normalized_kpis,
             "identidad_mision": identidad_mision,
             "identidad_vision": identidad_vision,
         }
@@ -797,6 +976,8 @@ def api_guardar_colaborador(request: Request, data: dict = Body(...)):
                 "cv_publicaciones": cv_publicaciones,
                 "cv_voluntariado": cv_voluntariado,
                 "cv_info_adicional": cv_info_adicional,
+                "kpis": normalized_kpis,
+                "kpi_catalog": allowed_kpi_rows,
                 "identidad_mision": identidad_mision,
                 "identidad_vision": identidad_vision,
                 "estado": "Activo",

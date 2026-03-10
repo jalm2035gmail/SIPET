@@ -116,30 +116,9 @@ def _periods_from_projection_config():
 
 
 def _load_kpi_indicator_names(db):
-    from fastapi_modulo.modulos.planificacion.plan_estrategico_service import _ensure_axis_kpi_table
-
-    _ensure_axis_kpi_table(db)
+    kpis_service._ensure_indicator_definition_table(db)
     db.commit()
-    rows = db.execute(
-        text(
-            """
-            SELECT nombre
-            FROM strategic_axis_kpis
-            WHERE TRIM(COALESCE(nombre, '')) <> ''
-            ORDER BY orden ASC, id ASC
-            """
-        )
-    ).fetchall()
-    names = []
-    seen = set()
-    for row in rows:
-        name = str(row[0] or "").strip()
-        key = name.lower()
-        if not name or key in seen:
-            continue
-        seen.add(key)
-        names.append(name)
-    return names
+    return [str(item.get("nombre") or "").strip() for item in kpis_service.list_indicator_definitions(db) if str(item.get("nombre") or "").strip()]
 
 
 def _normalize_indicator_matrix_rows(raw_rows, periods):
@@ -245,6 +224,47 @@ def save_brujula_indicator_notebook(data: dict = Body(...)):
         db.close()
 
 
+def list_brujula_indicator_definitions():
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        kpis_service._ensure_indicator_definition_table(db)
+        db.commit()
+        rows = kpis_service.list_indicator_definitions(db)
+        return JSONResponse({"success": True, "data": rows})
+    finally:
+        db.close()
+
+
+def save_brujula_indicator_definition(data: dict = Body(...)):
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        indicator_id = int((data or {}).get("id") or 0)
+        saved = kpis_service.save_indicator_definition_record(db, data or {}, indicator_id if indicator_id > 0 else None)
+        db.commit()
+        return JSONResponse({"success": True, "data": saved})
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+    finally:
+        db.close()
+
+
+def delete_brujula_indicator_definition(indicator_id: int):
+    _bind_core_symbols()
+    db = SessionLocal()
+    try:
+        kpis_service.delete_indicator_definition_record(db, indicator_id)
+        db.commit()
+        return JSONResponse({"success": True})
+    except Exception as exc:
+        db.rollback()
+        return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+    finally:
+        db.close()
+
+
 def _build_section_description(section_title: str) -> str:
     if section_title == "Dashboard Ejecutivo":
         return (
@@ -316,4 +336,7 @@ def brujula_section_page(request: Request, section: str):
 
 router.add_api_route("/api/brujula/indicadores/notebook", get_brujula_indicator_notebook, methods=["GET"])
 router.add_api_route("/api/brujula/indicadores/notebook", save_brujula_indicator_notebook, methods=["POST"])
+router.add_api_route("/api/brujula/indicadores/definiciones", list_brujula_indicator_definitions, methods=["GET"])
+router.add_api_route("/api/brujula/indicadores/definicion", save_brujula_indicator_definition, methods=["POST"])
+router.add_api_route("/api/brujula/indicadores/definicion/{indicator_id}", delete_brujula_indicator_definition, methods=["DELETE"])
 router.add_api_route("/api/brujula/indicadores/importar", kpis_service.import_kpis_template, methods=["POST"])

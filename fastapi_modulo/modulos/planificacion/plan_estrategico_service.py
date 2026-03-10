@@ -1248,10 +1248,9 @@ def export_strategic_plan_doc():
             for obj in (axis.get("objetivos") or [])
             if int(obj.get("id") or 0) > 0
         ]
-        kpis_by_objective = _kpis_by_objective_ids(db, sorted(set(objective_ids)))
         for axis in axis_data:
             for obj in axis.get("objetivos", []):
-                obj["kpis"] = kpis_by_objective.get(int(obj.get("id") or 0), [])
+                obj["kpis"] = []
 
         def _lines_html(rows: List[Dict[str, str]]) -> str:
             if not rows:
@@ -1265,20 +1264,10 @@ def export_strategic_plan_doc():
         for axis in axis_data:
             objectives_html: List[str] = []
             for obj in axis.get("objetivos") or []:
-                kpis = obj.get("kpis") or []
-                if kpis:
-                    kpis_html = "<ul>" + "".join(
-                        f"<li>{escape(str(k.get('nombre') or ''))}</li>"
-                        for k in kpis
-                    ) + "</ul>"
-                else:
-                    kpis_html = "<p>Sin KPIs registrados.</p>"
                 objectives_html.append(
                     "<section class='objective'>"
                     f"<h4>{escape(str(obj.get('nombre') or 'Sin nombre'))}</h4>"
                     f"<div class='rich'>{str(obj.get('descripcion') or '') or '<p>Sin descripción.</p>'}</div>"
-                    "<h5>KPIs</h5>"
-                    f"{kpis_html}"
                     "</section>"
                 )
             axes_html_parts.append(
@@ -1382,9 +1371,7 @@ def list_strategic_axes(request: Request):
         if not axes:
             axes = db.query(StrategicAxisConfig).order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc()).all()
         payload_axes = [_serialize_strategic_axis(axis) for axis in axes]
-        axis_kpis_by_axis = _axis_kpis_by_axis_ids(db, [int(axis.get("id") or 0) for axis in payload_axes if int(axis.get("id") or 0) > 0])
         objective_ids = sorted({int(obj.get("id") or 0) for axis in payload_axes for obj in axis.get("objetivos", []) if int(obj.get("id") or 0)})
-        kpis_by_objective = _kpis_by_objective_ids(db, objective_ids)
         milestones_by_objective = _milestones_by_objective_ids(db, objective_ids)
         activities = db.query(POAActivity).filter(POAActivity.objective_id.in_(objective_ids)).all() if objective_ids else []
         activity_ids = [int(item.id) for item in activities if getattr(item, "id", None)]
@@ -1400,11 +1387,11 @@ def list_strategic_axes(request: Request):
             activity_progress_by_objective.setdefault(int(activity.objective_id), []).append(progress)
         mv_agg: Dict[str, List[int]] = {}
         for axis_data in payload_axes:
-            axis_data["kpis"] = axis_kpis_by_axis.get(int(axis_data.get("id") or 0), [])
+            axis_data["kpis"] = []
             objective_progress: List[int] = []
             for obj in axis_data.get("objetivos", []):
                 obj_id = int(obj.get("id") or 0)
-                obj["kpis"] = kpis_by_objective.get(obj_id, [])
+                obj["kpis"] = []
                 obj["hitos"] = milestones_by_objective.get(obj_id, [])
                 if obj["hitos"]:
                     obj["hito"] = str(obj["hitos"][0].get("nombre") or obj.get("hito") or "")
@@ -1504,12 +1491,9 @@ def create_strategic_axis(request: Request, data: dict = Body(...)):
         )
         db.add(axis)
         db.commit()
-        if "kpis" in data:
-            _replace_axis_kpis(db, int(axis.id), data.get("kpis"))
-            db.commit()
         db.refresh(axis)
         payload = _serialize_strategic_axis(axis)
-        payload["kpis"] = _axis_kpis_by_axis_ids(db, [int(axis.id)]).get(int(axis.id), [])
+        payload["kpis"] = []
         return JSONResponse({"success": True, "data": payload})
     except (sqlite3.OperationalError, SQLAlchemyError):
         db.rollback()
@@ -1555,12 +1539,9 @@ def update_strategic_axis(axis_id: int, data: dict = Body(...)):
         axis.orden = axis_order
         db.add(axis)
         db.commit()
-        if "kpis" in data:
-            _replace_axis_kpis(db, int(axis.id), data.get("kpis"))
-            db.commit()
         db.refresh(axis)
         payload = _serialize_strategic_axis(axis)
-        payload["kpis"] = _axis_kpis_by_axis_ids(db, [int(axis.id)]).get(int(axis.id), [])
+        payload["kpis"] = []
         return JSONResponse({"success": True, "data": payload})
     except (sqlite3.OperationalError, SQLAlchemyError):
         db.rollback()
@@ -1576,7 +1557,6 @@ def delete_strategic_axis(axis_id: int):
         axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
         if not axis:
             return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
-        _delete_axis_kpis(db, int(axis.id))
         db.delete(axis)
         db.commit()
         return JSONResponse({"success": True})
@@ -1638,10 +1618,8 @@ def create_strategic_objective(axis_id: int, data: dict = Body(...)):
                 db.add(objective)
                 db.commit()
                 db.refresh(objective)
-        if "kpis" in data:
-            _replace_objective_kpis(db, int(objective.id), data.get("kpis"))
-            db.commit()
         payload = _serialize_strategic_objective(objective)
+        payload["kpis"] = []
         if "hitos" in data:
             payload["hitos"] = milestone_rows
             if milestone_rows:
@@ -1696,11 +1674,10 @@ def update_strategic_objective(objective_id: int, data: dict = Body(...)):
             milestone_rows = _replace_objective_milestones(db, int(objective.id), data.get("hitos"))
             objective.hito = str(milestone_rows[0].get("nombre") or "").strip() if milestone_rows else ""
             db.add(objective)
-        if "kpis" in data:
-            _replace_objective_kpis(db, int(objective.id), data.get("kpis"))
         db.commit()
         db.refresh(objective)
         payload = _serialize_strategic_objective(objective)
+        payload["kpis"] = []
         if "hitos" in data:
             payload["hitos"] = milestone_rows
             if milestone_rows:
@@ -1717,7 +1694,6 @@ def delete_strategic_objective(objective_id: int):
         objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
         if not objective:
             return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
-        _delete_objective_kpis(db, int(objective.id))
         _delete_objective_milestones(db, int(objective.id))
         db.delete(objective)
         db.commit()

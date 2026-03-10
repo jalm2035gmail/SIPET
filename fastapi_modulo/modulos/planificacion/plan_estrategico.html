@@ -322,16 +322,16 @@
                     </div>
                     <details id="planes-axis-kpi-section" class="collapse collapse-arrow border border-base-300 bg-base-100">
                       <summary class="collapse-title flex items-center justify-between gap-2 pr-12">
-                        <span class="font-semibold text-base-content">KPIs del eje</span>
+                        <span class="font-semibold text-base-content">Indicadores del sistema</span>
                         <span class="text-sm font-normal text-base-content/60">Clic en la flecha para mostrar</span>
                       </summary>
                       <div class="collapse-content grid gap-3 pt-1">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                          <div class="text-sm text-base-content/70">Define indicadores, metas, semáforos y responsables del eje.</div>
-                          <button type="button" class="btn btn-outline btn-sm" id="planes-axis-kpi-add-btn">Agregar KPI</button>
+                          <div class="text-sm text-base-content/70">Los indicadores oficiales se administran en Brújula y no se configuran desde el plan estratégico de cada cooperativa.</div>
+                          <button type="button" class="btn btn-outline btn-sm" id="planes-axis-kpi-add-btn" disabled>Abrir Brújula</button>
                         </div>
                         <div id="planes-axis-kpi-list" class="grid gap-3">
-                          <div class="text-base-content/60">Sin KPIs registrados.</div>
+                          <div class="text-base-content/60">Los indicadores se gestionan en Brújula.</div>
                         </div>
                       </div>
                     </details>
@@ -398,16 +398,21 @@
                         </div>
                         <details id="planes-obj-kpi-section" class="collapse collapse-arrow border border-base-300 bg-base-100">
                           <summary class="collapse-title flex items-center justify-between gap-2 pr-12">
-                            <span class="font-semibold text-base-content">KPIs del objetivo</span>
-                            <span class="text-sm font-normal text-base-content/60">Selecciona KPIs definidos en el eje</span>
+                            <span class="font-semibold text-base-content">Indicadores del sistema</span>
+                            <span class="text-sm font-normal text-base-content/60">Referencias oficiales administradas en Brújula</span>
                           </summary>
                           <div class="collapse-content grid gap-3 pt-1">
                             <div class="flex flex-wrap items-center justify-between gap-2">
-                              <div class="text-sm text-base-content/70">Asocia al objetivo los indicadores ya configurados en el eje.</div>
-                              <button type="button" class="btn btn-outline btn-sm" id="planes-obj-kpi-add-btn">Agregar KPI</button>
+                              <div class="text-sm text-base-content/70">Los indicadores oficiales ya no se asignan a objetivos del plan. Se administran de forma central en Brújula.</div>
+                              <div class="flex flex-wrap items-center gap-2">
+                                <select id="planes-obj-kpi-picker" class="select select-bordered select-sm min-w-[220px]" disabled>
+                                  <option value="">Indicadores administrados en Brújula</option>
+                                </select>
+                                <button type="button" class="btn btn-outline btn-sm" id="planes-obj-kpi-add-btn" disabled>Abrir Brújula</button>
+                              </div>
                             </div>
                             <div id="planes-obj-kpi-list" class="grid gap-3">
-                              <div class="text-base-content/60">Sin KPIs seleccionados.</div>
+                              <div class="text-base-content/60">Los indicadores se gestionan en Brújula.</div>
                             </div>
                           </div>
                         </details>

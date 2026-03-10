@@ -174,6 +174,93 @@
       '</ul>';
   }
 
+  function normalizeColaboradorKpi(item) {
+    var source = item && typeof item === 'object' ? item : {};
+    return {
+      activity_kpi_id: Number(source.activity_kpi_id || source.id || 0),
+      objective_kpi_id: Number(source.objective_kpi_id || 0),
+      nombre: String(source.nombre || '').trim(),
+      proposito: String(source.proposito || '').trim(),
+      formula: String(source.formula || '').trim(),
+      periodicidad: String(source.periodicidad || '').trim(),
+      referencia: String(source.referencia || '').trim(),
+      activity_id: Number(source.activity_id || 0),
+      activity_nombre: String(source.activity_nombre || '').trim(),
+      activity_codigo: String(source.activity_codigo || '').trim(),
+      objective_id: Number(source.objective_id || 0),
+      objective_nombre: String(source.objective_nombre || '').trim(),
+      objective_codigo: String(source.objective_codigo || '').trim()
+    };
+  }
+
+  function getColaboradorKpiCatalog(current) {
+    return (Array.isArray(current && current.kpi_catalog) ? current.kpi_catalog : [])
+      .map(normalizeColaboradorKpi)
+      .filter(function (item) { return item.activity_kpi_id > 0; });
+  }
+
+  function getColaboradorSelectedKpis(current) {
+    return (Array.isArray(current && current.kpis) ? current.kpis : [])
+      .map(normalizeColaboradorKpi)
+      .filter(function (item) { return item.activity_kpi_id > 0; });
+  }
+
+  function renderColaboradorKpisPanel(current) {
+    var selected = getColaboradorSelectedKpis(current);
+    var catalog = getColaboradorKpiCatalog(current);
+    var selectedIds = selected.map(function (item) { return String(item.activity_kpi_id); });
+    var availableOptions = catalog
+      .filter(function (item) { return selectedIds.indexOf(String(item.activity_kpi_id)) === -1; })
+      .map(function (item) {
+        var activityLabel = [item.activity_codigo, item.activity_nombre].filter(Boolean).join(' · ');
+        return '<option value="' + esc(String(item.activity_kpi_id)) + '">' +
+          esc(item.nombre || 'KPI') +
+          (activityLabel ? ' | ' + esc(activityLabel) : '') +
+          '</option>';
+      })
+      .join('');
+    var listHtml = selected.length
+      ? selected.map(function (item) {
+        var activityLabel = [item.activity_codigo, item.activity_nombre].filter(Boolean).join(' · ');
+        var objectiveLabel = [item.objective_codigo, item.objective_nombre].filter(Boolean).join(' · ');
+        return '' +
+          '<article class="rounded-box border border-base-300 bg-base-100 p-3 grid gap-2" data-col-kpi-row="' + esc(String(item.activity_kpi_id)) + '">' +
+            '<div class="flex items-start justify-between gap-3">' +
+              '<div class="grid gap-1">' +
+                '<div class="font-semibold text-base-content">' + esc(item.nombre || 'KPI') + '</div>' +
+                (item.proposito ? '<div class="text-sm text-base-content/70">' + esc(item.proposito) + '</div>' : '') +
+                (activityLabel ? '<div class="text-xs text-base-content/60">Actividad: ' + esc(activityLabel) + '</div>' : '') +
+                (objectiveLabel ? '<div class="text-xs text-base-content/50">Objetivo: ' + esc(objectiveLabel) + '</div>' : '') +
+              '</div>' +
+              '<button type="button" class="btn btn-error btn-outline btn-xs" data-col-kpi-del="' + esc(String(item.activity_kpi_id)) + '">Eliminar</button>' +
+            '</div>' +
+          '</article>';
+      }).join('')
+      : '<p class="text-sm text-base-content/60">Los indicadores se administran en Brújula.</p>';
+    return '' +
+      '<div class="grid gap-4">' +
+        '<div class="grid gap-1">' +
+          '<h4 class="font-semibold text-base-content">Indicadores del sistema</h4>' +
+          '<p class="text-sm text-base-content/60">Los indicadores oficiales se calculan en Brújula con los datos cargados por cada cooperativa.</p>' +
+        '</div>' +
+        '<div class="flex flex-col xl:flex-row gap-3 xl:items-end">' +
+          '<label class="form-control flex-1">' +
+            '<div class="label"><span class="label-text font-semibold">Agregar KPI</span></div>' +
+            '<select class="select select-bordered w-full" data-col-kpi-picker disabled>' +
+              '<option value="">Indicadores administrados en Brújula</option>' +
+              availableOptions +
+            '</select>' +
+          '</label>' +
+          '<div class="flex flex-wrap gap-2">' +
+            '<button type="button" class="btn btn-outline btn-sm" data-col-kpi-add disabled>Abrir Brújula</button>' +
+            '<button type="button" class="btn btn-primary btn-sm" data-col-kpi-save disabled>Guardar KPIs</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="text-sm text-base-content/60 min-h-[1.25rem]" data-col-kpi-msg></div>' +
+        '<div class="grid gap-2">' + listHtml + '</div>' +
+      '</div>';
+  }
+
   function renderJefeInmediatoSelect(current) {
     var currentId = current && current.id !== null && current.id !== undefined ? String(current.id).trim() : '';
     var selectedId = current && current.jefe_inmediato_id !== null && current.jefe_inmediato_id !== undefined
@@ -662,6 +749,7 @@
     var puesto = puestoEl && 'value' in puestoEl ? String(puestoEl.value || '').trim() : String(current.puesto || '').trim();
     var area = areaEl && 'value' in areaEl ? String(areaEl.value || '').trim() : String(current.departamento || '').trim();
     var nivel = nivelEl && 'value' in nivelEl ? String(nivelEl.value || '').trim() : String(current.nivel_organizacional || current.coach || '').trim();
+    var selectedKpis = getColaboradorSelectedKpis(current);
     return {
       id: current.id,
       nombre: String(current.nombre || '').trim(),
@@ -698,7 +786,8 @@
       cv_formacion: collectCvRecords('cv_formacion', CV_FORMACION_FIELDS),
       cv_logros: collectCvRecords('cv_logros', CV_LOGROS_FIELDS),
       cv_voluntariado: collectCvRecords('cv_voluntariado', CV_VOLUNTARIADO_FIELDS),
-      cv_info_adicional: cvInfoAdicional
+      cv_info_adicional: cvInfoAdicional,
+      kpis: selectedKpis
     };
   }
 
@@ -760,6 +849,85 @@
           saveBtn.textContent = 'Guardar CV';
         });
     });
+  }
+
+  function bindColaboradorKpis(current) {
+    var picker = mount.querySelector('[data-col-kpi-picker]');
+    var addBtn = mount.querySelector('[data-col-kpi-add]');
+    var saveBtn = mount.querySelector('[data-col-kpi-save]');
+    var msgEl = mount.querySelector('[data-col-kpi-msg]');
+    if (!picker && !addBtn && !saveBtn) return;
+    function showKpiMsg(text, isError) {
+      if (!msgEl) return;
+      msgEl.textContent = text || '';
+      msgEl.classList.toggle('text-error', !!isError);
+    }
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        var rawId = picker && 'value' in picker ? String(picker.value || '').trim() : '';
+        var activityKpiId = rawId ? Number(rawId) : 0;
+        if (!activityKpiId) {
+          showKpiMsg('Selecciona un KPI para agregar.', true);
+          return;
+        }
+        var catalog = getColaboradorKpiCatalog(current);
+        var target = catalog.find(function (item) { return Number(item.activity_kpi_id || 0) === activityKpiId; });
+        if (!target) {
+          showKpiMsg('El KPI seleccionado no está disponible para este colaborador.', true);
+          return;
+        }
+        var selected = getColaboradorSelectedKpis(current);
+        if (selected.some(function (item) { return Number(item.activity_kpi_id || 0) === activityKpiId; })) {
+          showKpiMsg('Ese KPI ya está agregado.', true);
+          return;
+        }
+        current.kpis = selected.concat([target]);
+        upsertColaborador(current);
+        renderForm(current);
+      });
+    }
+    Array.from(mount.querySelectorAll('[data-col-kpi-del]')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var rawId = String(btn.getAttribute('data-col-kpi-del') || '').trim();
+        var activityKpiId = rawId ? Number(rawId) : 0;
+        current.kpis = getColaboradorSelectedKpis(current).filter(function (item) {
+          return Number(item.activity_kpi_id || 0) !== activityKpiId;
+        });
+        upsertColaborador(current);
+        renderForm(current);
+      });
+    });
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Guardando...';
+        showKpiMsg('Guardando KPIs...');
+        fetch('/api/colaboradores', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(buildMainSavePayload(current))
+        })
+          .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+          .then(function (result) {
+            if (!result.ok || !result.json || result.json.success === false) {
+              throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudieron guardar los KPIs');
+            }
+            if (result.json && result.json.data) {
+              upsertColaborador(result.json.data);
+              selectedColaboradorKey = getColaboradorKey(result.json.data);
+            }
+            showKpiMsg('KPIs guardados.');
+            renderForm();
+          })
+          .catch(function (error) {
+            showKpiMsg(error && error.message ? error.message : 'No se pudieron guardar los KPIs.', true);
+          })
+          .finally(function () {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar KPIs';
+          });
+      });
+    }
   }
 
   function bindAccessSave(current) {
@@ -1275,7 +1443,9 @@
       cv_formacion: [],
       cv_logros: [],
       cv_voluntariado: [],
-      cv_info_adicional: {}
+      cv_info_adicional: {},
+      kpis: [],
+      kpi_catalog: []
     };
   }
 
@@ -1432,7 +1602,7 @@
                 '</div>' +
               '</div>' +
               '<div class="' + (isKpis ? '' : 'hidden') + '" data-panel="kpis">' +
-                '<p class="text-sm text-base-content/60">Sin KPIs registrados.</p>' +
+                renderColaboradorKpisPanel(current) +
               '</div>' +
               '<div class="' + (isNotas ? '' : 'hidden') + '" data-panel="notas">' +
                 '<p class="text-sm text-base-content/60">Sin notas registradas.</p>' +
@@ -1459,6 +1629,7 @@
     bindCvSave(current);
     bindAccessSave(current);
     bindPhotoActions(current);
+    bindColaboradorKpis(current);
     bindPasswordToggle();
     bindPuestoAutofill(current);
     bindMainActions(current);

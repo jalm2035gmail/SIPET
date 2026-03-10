@@ -105,39 +105,30 @@
           const renderAxisKpiEditor = () => {
             if (!planesAxisKpiList) return;
             if (!planesAxisKpisState.length) {
-              planesAxisKpiList.innerHTML = '<div class="text-base-content/60">Sin KPIs registrados.</div>';
+              planesAxisKpiList.innerHTML = '<div class="text-base-content/60">Los indicadores se gestionan en Brújula.</div>';
               return;
             }
             planesAxisKpiList.innerHTML = planesAxisKpisState.map((item, idx) => `
               <article class="rounded-box border border-base-300 bg-base-100 p-4 grid gap-3">
-                <div class="flex items-center justify-between gap-2">
-                  <strong>KPI ${idx + 1}</strong>
+                <div class="flex items-start justify-between gap-3">
+                  <button type="button" class="text-left grid gap-1 flex-1 min-w-0" data-planes-axis-kpi-open="${idx}">
+                    <strong class="text-base-content">${escapeHtml(item.nombre || `KPI ${idx + 1}`)}</strong>
+                    <div class="text-sm text-base-content/70">${escapeHtml(item.descripcion || 'Sin descripción.')}</div>
+                  </button>
                   <button type="button" class="btn btn-error btn-xs" data-planes-axis-kpi-remove="${idx}">Eliminar</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Nombre</span></div><input class="input input-bordered w-full" data-kpi-field="nombre" data-kpi-index="${idx}" value="${escapeHtml(item.nombre)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Responsable</span></div><input class="input input-bordered w-full" data-kpi-field="responsable" data-kpi-index="${idx}" value="${escapeHtml(item.responsable)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Categoría</span></div><input class="input input-bordered w-full" data-kpi-field="categoria" data-kpi-index="${idx}" value="${escapeHtml(item.categoria)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Perspectiva</span></div><input class="input input-bordered w-full" data-kpi-field="perspectiva" data-kpi-index="${idx}" value="${escapeHtml(item.perspectiva)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full md:col-span-2 xl:col-span-3"><div class="label"><span class="label-text">Descripción</span></div><textarea class="textarea textarea-bordered w-full" data-kpi-field="descripcion" data-kpi-index="${idx}" ${planesAxisEditMode ? '' : 'disabled'}>${escapeHtml(item.descripcion)}</textarea></label>
-                  <label class="form-control w-full md:col-span-2 xl:col-span-3"><div class="label"><span class="label-text">Objetivo</span></div><textarea class="textarea textarea-bordered w-full" data-kpi-field="objetivo" data-kpi-index="${idx}" ${planesAxisEditMode ? '' : 'disabled'}>${escapeHtml(item.objetivo)}</textarea></label>
-                  <label class="form-control w-full md:col-span-2 xl:col-span-3"><div class="label"><span class="label-text">Fórmula</span></div><textarea class="textarea textarea-bordered w-full" data-kpi-field="formula" data-kpi-index="${idx}" ${planesAxisEditMode ? '' : 'disabled'}>${escapeHtml(item.formula)}</textarea></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Fuente de datos</span></div><input class="input input-bordered w-full" data-kpi-field="fuente_datos" data-kpi-index="${idx}" value="${escapeHtml(item.fuente_datos)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Unidad</span></div><input class="input input-bordered w-full" data-kpi-field="unidad" data-kpi-index="${idx}" value="${escapeHtml(item.unidad)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Frecuencia</span></div><input class="input input-bordered w-full" data-kpi-field="frecuencia" data-kpi-index="${idx}" value="${escapeHtml(item.frecuencia)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Línea base</span></div><input class="input input-bordered w-full" data-kpi-field="linea_base" data-kpi-index="${idx}" value="${escapeHtml(item.linea_base)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Estándar / Meta</span></div><input class="input input-bordered w-full" data-kpi-field="estandar_meta" data-kpi-index="${idx}" value="${escapeHtml(item.estandar_meta)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Semáforo rojo</span></div><input class="input input-bordered w-full" data-kpi-field="semaforo_rojo" data-kpi-index="${idx}" value="${escapeHtml(item.semaforo_rojo)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
-                  <label class="form-control w-full"><div class="label"><span class="label-text">Semáforo verde</span></div><input class="input input-bordered w-full" data-kpi-field="semaforo_verde" data-kpi-index="${idx}" value="${escapeHtml(item.semaforo_verde)}" ${planesAxisEditMode ? '' : 'disabled'}></label>
                 </div>
               </article>
             `).join('');
-            planesAxisKpiList.querySelectorAll('[data-kpi-field]').forEach((field) => {
-              field.addEventListener('input', () => {
-                const idx = Number(field.getAttribute('data-kpi-index') || -1);
-                const key = String(field.getAttribute('data-kpi-field') || '').trim();
-                if (idx < 0 || !key || !planesAxisKpisState[idx]) return;
-                planesAxisKpisState[idx][key] = String(field.value || '');
+            planesAxisKpiList.querySelectorAll('[data-planes-axis-kpi-open]').forEach((btn) => {
+              btn.addEventListener('click', () => {
+                const idx = Number(btn.getAttribute('data-planes-axis-kpi-open') || -1);
+                const item = idx >= 0 ? planesAxisKpisState[idx] : null;
+                const axisId = Number(planesAxisCurrentId || 0);
+                const query = new URLSearchParams();
+                query.set('tab', 'desc');
+                if (item?.nombre) query.set('indicator', String(item.nombre));
+                if (axisId > 0) query.set('axis_id', String(axisId));
+                window.location.href = `/brujula/indicadores?${query.toString()}`;
               });
             });
             planesAxisKpiList.querySelectorAll('[data-planes-axis-kpi-remove]').forEach((btn) => {
@@ -241,6 +232,9 @@
             if (planesAxisEditBtn) planesAxisEditBtn.disabled = !planesAxisCurrentId;
             setAxisEditorDisabled(!planesAxisEditMode);
           };
+          planesAxisKpiAddBtn && planesAxisKpiAddBtn.addEventListener('click', () => {
+            window.location.href = '/brujula/indicadores';
+          });
           const selectAxisForEditing = (axisId, editMode = true) => {
             const target = planesAxesCache.find((axis) => String(axis?.id || '') === String(axisId || '')) || null;
             if (!target) return;
@@ -935,6 +929,7 @@
             const objDeleteBtn = document.getElementById('planes-obj-delete-btn');
             const objKpiSection = document.getElementById('planes-obj-kpi-section');
             const objKpiAddBtn = document.getElementById('planes-obj-kpi-add-btn');
+            const objKpiPicker = document.getElementById('planes-obj-kpi-picker');
             const objKpiList = document.getElementById('planes-obj-kpi-list');
             if (!host || !axesHost) return;
             let objKpisState = Array.isArray(window.__planesObjectiveKpisState) ? window.__planesObjectiveKpisState : [];
@@ -961,62 +956,31 @@
               });
             };
             const getObjectiveAxisEntry = (axisId) => axisList.find((axis) => String(axis?.id || '') === String(axisId || '')) || null;
+            const renderObjKpiPicker = (axisId) => {
+              if (!objKpiPicker) return;
+              objKpiPicker.innerHTML = '<option value="">Indicadores administrados en Brújula</option>';
+              objKpiPicker.disabled = true;
+            };
             const renderObjKpiEditor = (axisId) => {
               if (!objKpiList) return;
-              const axisEntry = getObjectiveAxisEntry(axisId);
-              const axisKpis = Array.isArray(axisEntry?.kpis) ? axisEntry.kpis : [];
+              renderObjKpiPicker(axisId);
               if (!objKpisState.length) {
-                objKpiList.innerHTML = '<div class="text-base-content/60">Sin KPIs seleccionados.</div>';
+                objKpiList.innerHTML = '<div class="text-base-content/60">Los indicadores se gestionan en Brújula.</div>';
                 return;
               }
               objKpiList.innerHTML = objKpisState.map((item, idx) => {
-                const currentId = Number(item?.axis_kpi_id || 0) || 0;
-                const takenIds = new Set(
-                  objKpisState
-                    .filter((entry, entryIdx) => entryIdx !== idx)
-                    .map((entry) => Number(entry?.axis_kpi_id || 0) || 0)
-                    .filter((id) => id > 0)
-                );
-                const options = ['<option value="">Selecciona KPI</option>'].concat(
-                  axisKpis.filter((kpi) => {
-                    const kpiId = Number(kpi?.id || 0) || 0;
-                    return kpiId === currentId || !takenIds.has(kpiId);
-                  }).map((kpi) => {
-                    const kpiId = Number(kpi?.id || 0) || 0;
-                    const selected = currentId > 0 && currentId === kpiId ? ' selected' : '';
-                    return `<option value="${kpiId}"${selected}>${escapeHtml(String(kpi?.nombre || ''))}</option>`;
-                  })
-                ).join('');
                 return `
                   <article class="rounded-box border border-base-300 bg-base-100 p-4 grid gap-3">
-                    <div class="flex items-center justify-between gap-2">
-                      <strong>KPI ${idx + 1}</strong>
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="grid gap-1">
+                        <strong class="text-base-content">${escapeHtml(item.nombre || `KPI ${idx + 1}`)}</strong>
+                        <div class="text-sm text-base-content/70">Referencia histórica ligada al modelo anterior.</div>
+                      </div>
                       <button type="button" class="btn btn-error btn-xs" data-planes-obj-kpi-remove="${idx}">Eliminar</button>
                     </div>
-                    <label class="form-control w-full">
-                      <div class="label"><span class="label-text">KPI del eje</span></div>
-                      <select class="select select-bordered w-full" data-planes-obj-kpi-select="${idx}">
-                        ${options}
-                      </select>
-                    </label>
                   </article>
                 `;
               }).join('');
-              objKpiList.querySelectorAll('[data-planes-obj-kpi-select]').forEach((field) => {
-                field.addEventListener('change', () => {
-                  const idx = Number(field.getAttribute('data-planes-obj-kpi-select') || -1);
-                  const selectedId = Number(field.value || 0) || 0;
-                  if (idx < 0 || !objKpisState[idx]) return;
-                  const selectedKpi = axisKpis.find((item) => Number(item?.id || 0) === selectedId) || null;
-                  objKpisState[idx] = normalizeObjectiveKpiItem({
-                    axis_kpi_id: selectedId,
-                    nombre: selectedKpi?.nombre || '',
-                  });
-                  objKpisState = dedupeObjectiveKpis(objKpisState);
-                  window.__planesObjectiveKpisState = objKpisState;
-                  renderObjKpiEditor(axisId);
-                });
-              });
               objKpiList.querySelectorAll('[data-planes-obj-kpi-remove]').forEach((btn) => {
                 btn.addEventListener('click', () => {
                   const idx = Number(btn.getAttribute('data-planes-obj-kpi-remove') || -1);
@@ -1046,8 +1010,7 @@
               renderObjKpiEditor(axisId);
               setObjKpiSectionOpen(false);
               if (objKpiAddBtn) {
-                const availableCount = Array.isArray(axisEntry?.kpis) ? axisEntry.kpis.length : 0;
-                objKpiAddBtn.disabled = availableCount <= objKpisState.length;
+                objKpiAddBtn.disabled = false;
               }
               if (objMsgEl) objMsgEl.textContent = '';
               if (objDeleteBtn) objDeleteBtn.style.display = isNew ? 'none' : '';
@@ -1128,23 +1091,7 @@
             }
             if (objKpiAddBtn) {
               objKpiAddBtn.onclick = () => {
-                const axisId = window.__planesEditingObjAxisId;
-                const axisEntry = getObjectiveAxisEntry(axisId);
-                const axisKpis = Array.isArray(axisEntry?.kpis) ? axisEntry.kpis : [];
-                const takenIds = new Set(objKpisState.map((item) => Number(item?.axis_kpi_id || 0) || 0).filter((id) => id > 0));
-                const availableKpis = axisKpis.filter((item) => !takenIds.has(Number(item?.id || 0) || 0));
-                if (!availableKpis.length) {
-                  if (objMsgEl) objMsgEl.textContent = 'Este eje no tiene KPIs disponibles.';
-                  return;
-                }
-                const firstKpi = availableKpis[0] || null;
-                objKpisState.push(normalizeObjectiveKpiItem({
-                  axis_kpi_id: Number(firstKpi?.id || 0) || 0,
-                  nombre: String(firstKpi?.nombre || ''),
-                }));
-                window.__planesObjectiveKpisState = objKpisState;
-                setObjKpiSectionOpen(true);
-                renderObjKpiEditor(axisId);
+                window.location.href = '/brujula/indicadores';
               };
             }
 
