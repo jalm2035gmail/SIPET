@@ -9,6 +9,8 @@ from sqlalchemy import func, text
 
 from fastapi_modulo.modulos.empleados.empleados import _load_colab_meta, _normalize_poa_access_level
 from fastapi_modulo.modulos.planificacion.plan_estrategico_service import (
+    _current_tenant_id,
+    _ensure_strategy_scope_tables,
     _ensure_objective_milestone_table,
     _kpis_by_objective_ids,
     _milestones_by_objective_ids,
@@ -49,6 +51,26 @@ def _bind_core_symbols() -> None:
     for name in names:
         globals()[name] = getattr(core, name)
     _CORE_BOUND = True
+
+
+def _tenant_axis_query(db, tenant_id: str):
+    _bind_core_symbols()
+    return db.query(StrategicAxisConfig).filter(StrategicAxisConfig.tenant_id == tenant_id)
+
+
+def _tenant_objective_query(db, tenant_id: str):
+    _bind_core_symbols()
+    return db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.tenant_id == tenant_id)
+
+
+def _tenant_activity_query(db, tenant_id: str):
+    _bind_core_symbols()
+    return db.query(POAActivity).filter(POAActivity.tenant_id == tenant_id)
+
+
+def _tenant_subactivity_query(db, tenant_id: str):
+    _bind_core_symbols()
+    return db.query(POASubactivity).filter(POASubactivity.tenant_id == tenant_id)
 
 def _poa_access_level_for_request(request: Request, db) -> str:
     _bind_core_symbols()
@@ -744,9 +766,11 @@ def _serialize_poa_activity(
 
 def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiveConfig]:
     _bind_core_symbols()
+    _ensure_strategy_scope_tables(db)
+    tenant_id = _current_tenant_id(request)
     def _active_or_any_objectives() -> List[StrategicObjectiveConfig]:
         active_rows = (
-            db.query(StrategicObjectiveConfig)
+            _tenant_objective_query(db, tenant_id)
             .filter(StrategicObjectiveConfig.is_active == True)
             .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
             .all()
@@ -754,7 +778,7 @@ def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiv
         if active_rows:
             return active_rows
         return (
-            db.query(StrategicObjectiveConfig)
+            _tenant_objective_query(db, tenant_id)
             .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
             .all()
         )
@@ -777,7 +801,7 @@ def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiv
 
     objective_ids: Set[int] = set()
     own_activities = (
-        db.query(POAActivity.id, POAActivity.objective_id)
+        _tenant_activity_query(db, tenant_id).with_entities(POAActivity.id, POAActivity.objective_id)
         .filter(func.lower(POAActivity.responsable).in_(alias_set))
         .all()
     )
@@ -788,7 +812,7 @@ def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiv
         except Exception:
             continue
     own_subactivities = (
-        db.query(POASubactivity.id, POAActivity.objective_id)
+        _tenant_subactivity_query(db, tenant_id).with_entities(POASubactivity.id, POAActivity.objective_id)
         .join(POAActivity, POAActivity.id == POASubactivity.activity_id)
         .filter(func.lower(POASubactivity.responsable).in_(alias_set))
         .all()
@@ -803,7 +827,7 @@ def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiv
         # Si el usuario no tiene asignaciones directas, permitir vista global (solo lectura).
         return _active_or_any_objectives()
     rows = (
-        db.query(StrategicObjectiveConfig)
+        _tenant_objective_query(db, tenant_id)
         .filter(
             StrategicObjectiveConfig.is_active == True,
             StrategicObjectiveConfig.id.in_(sorted(objective_ids)),
@@ -814,7 +838,7 @@ def _allowed_objectives_for_user(request: Request, db) -> List[StrategicObjectiv
     if rows:
         return rows
     return (
-        db.query(StrategicObjectiveConfig)
+        _tenant_objective_query(db, tenant_id)
         .filter(StrategicObjectiveConfig.id.in_(sorted(objective_ids)))
         .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
         .all()
@@ -825,6 +849,8 @@ def poa_board_data(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         _ensure_poa_subactivity_recurrence_columns(db)
         admin_like = _is_request_admin_like(request, db)
         objectives = _allowed_objectives_for_user(request, db)
@@ -832,7 +858,7 @@ def poa_board_data(request: Request):
         objective_axis_map = {obj.id: obj.eje_id for obj in objectives}
         axis_ids = sorted(set(objective_axis_map.values()))
         axes = (
-            db.query(StrategicAxisConfig)
+            _tenant_axis_query(db, tenant_id)
             .filter(StrategicAxisConfig.id.in_(axis_ids))
             .all()
             if axis_ids else []
@@ -840,7 +866,7 @@ def poa_board_data(request: Request):
         axis_name_map = {axis.id: axis.nombre for axis in axes}
         milestones_by_objective = _milestones_by_objective_ids(db, objective_ids)
         activities = (
-            db.query(POAActivity)
+            _tenant_activity_query(db, tenant_id)
             .filter(POAActivity.objective_id.in_(objective_ids))
             .order_by(POAActivity.id.asc())
             .all()
@@ -849,7 +875,7 @@ def poa_board_data(request: Request):
         activity_code_map = _activity_code_map_for_objectives(objectives, activities)
         activity_ids = [item.id for item in activities]
         subactivities = (
-            db.query(POASubactivity)
+            _tenant_subactivity_query(db, tenant_id)
             .filter(POASubactivity.activity_id.in_(activity_ids))
             .order_by(POASubactivity.id.asc())
             .all()
@@ -892,10 +918,12 @@ def poa_board_data(request: Request):
                 continue
             activity = next((item for item in activities if item.id == approval.activity_id), None)
             if not activity:
-                activity = db.query(POAActivity).filter(POAActivity.id == approval.activity_id).first()
+                activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == approval.activity_id).first()
             objective = next((item for item in objectives if item.id == approval.objective_id), None)
             if not objective:
-                objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == approval.objective_id).first()
+                objective = _tenant_objective_query(db, tenant_id).filter(StrategicObjectiveConfig.id == approval.objective_id).first()
+            if not activity or not objective:
+                continue
             approvals_for_user.append(
                 {
                     "id": approval.id,
@@ -969,12 +997,14 @@ def poa_activities_without_owner(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         objectives = _allowed_objectives_for_user(request, db)
         objective_ids = [obj.id for obj in objectives]
         if not objective_ids:
             return JSONResponse({"success": True, "total": 0, "data": []})
         activities = (
-            db.query(POAActivity)
+            _tenant_activity_query(db, tenant_id)
             .filter(POAActivity.objective_id.in_(objective_ids))
             .order_by(POAActivity.id.desc())
             .all()
@@ -1046,13 +1076,15 @@ def create_poa_activity(request: Request, data: dict = Body(...)):
 
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
         if not admin_like:
             return JSONResponse({"success": False, "error": "Solo administrador puede crear actividades"}, status_code=403)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
         if objective_id not in allowed_ids and not admin_like:
             return JSONResponse({"success": False, "error": "No autorizado para este objetivo"}, status_code=403)
-        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
+        objective = _tenant_objective_query(db, tenant_id).filter(StrategicObjectiveConfig.id == objective_id).first()
         if not objective:
             return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
@@ -1080,13 +1112,14 @@ def create_poa_activity(request: Request, data: dict = Body(...)):
             return JSONResponse({"success": False, "error": parent_error}, status_code=400)
         created_by = session_username
         sibling_activities = (
-            db.query(POAActivity)
+            _tenant_activity_query(db, tenant_id)
             .filter(POAActivity.objective_id == objective_id)
             .order_by(POAActivity.id.asc())
             .all()
         )
         next_activity_order = len(sibling_activities) + 1
         activity = POAActivity(
+            tenant_id=tenant_id,
             objective_id=objective_id,
             nombre=nombre,
             codigo=(data.get("codigo") or "").strip() or _compose_activity_code(objective.codigo or "", next_activity_order),
@@ -1125,10 +1158,12 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
         if not admin_like:
             return JSONResponse({"success": False, "error": "Solo administrador puede editar actividades"}, status_code=403)
-        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
@@ -1171,7 +1206,7 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
             periodicidad = ""
             cada_xx_dias = 0
         impacted_milestone_ids = _normalize_impacted_milestone_ids(data.get("impacted_milestone_ids"))
-        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
+        objective = _tenant_objective_query(db, tenant_id).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
         if not objective:
             return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
@@ -1200,7 +1235,7 @@ def update_poa_activity(request: Request, activity_id: int, data: dict = Body(..
         activity.nombre = nombre
         if not str(activity.codigo or "").strip():
             sibling_activities = (
-                db.query(POAActivity)
+                _tenant_activity_query(db, tenant_id)
                 .filter(POAActivity.objective_id == int(objective.id))
                 .order_by(POAActivity.id.asc())
                 .all()
@@ -1250,10 +1285,12 @@ def delete_poa_activity(request: Request, activity_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
         if not admin_like:
             return JSONResponse({"success": False, "error": "Solo administrador puede eliminar actividades"}, status_code=403)
-        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
@@ -1275,8 +1312,10 @@ def mark_poa_activity_in_progress(request: Request, activity_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
-        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
@@ -1307,8 +1346,10 @@ def mark_poa_activity_finished(request: Request, activity_id: int, data: dict = 
     send_review = bool(data.get("enviar_revision"))
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
-        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
@@ -1344,10 +1385,10 @@ def mark_poa_activity_finished(request: Request, activity_id: int, data: dict = 
                     status_code=409,
                 )
 
-            objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
+            objective = _tenant_objective_query(db, tenant_id).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
             if not objective:
                 return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
-            axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == objective.eje_id).first()
+            axis = _tenant_axis_query(db, tenant_id).filter(StrategicAxisConfig.id == objective.eje_id).first()
             process_owner = (activity.created_by or "").strip() or _resolve_process_owner_for_objective(objective, axis)
             if not process_owner:
                 return JSONResponse(
@@ -1403,8 +1444,10 @@ def request_poa_activity_completion(request: Request, activity_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
-        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         allowed_ids = {obj.id for obj in _allowed_objectives_for_user(request, db)}
@@ -1435,10 +1478,10 @@ def request_poa_activity_completion(request: Request, activity_id: int):
         if pending:
             return JSONResponse({"success": False, "error": "Ya existe una aprobación pendiente para esta actividad"}, status_code=409)
 
-        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
+        objective = _tenant_objective_query(db, tenant_id).filter(StrategicObjectiveConfig.id == activity.objective_id).first()
         if not objective:
             return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
-        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == objective.eje_id).first()
+        axis = _tenant_axis_query(db, tenant_id).filter(StrategicAxisConfig.id == objective.eje_id).first()
         process_owner = (activity.created_by or "").strip() or _resolve_process_owner_for_objective(objective, axis)
         if not process_owner:
             return JSONResponse(
@@ -1475,6 +1518,8 @@ def decide_poa_deliverable_approval(request: Request, approval_id: int, data: di
 
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         approval = db.query(POADeliverableApproval).filter(POADeliverableApproval.id == approval_id).first()
         if not approval:
             return JSONResponse({"success": False, "error": "Solicitud de aprobación no encontrada"}, status_code=404)
@@ -1483,7 +1528,7 @@ def decide_poa_deliverable_approval(request: Request, approval_id: int, data: di
         if not _is_user_process_owner(request, db, approval.process_owner):
             return JSONResponse({"success": False, "error": "No autorizado para resolver esta aprobación"}, status_code=403)
 
-        activity = db.query(POAActivity).filter(POAActivity.id == approval.activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == approval.activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         resolver_user = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
@@ -1541,11 +1586,13 @@ def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body
 
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
         if not admin_like:
             return JSONResponse({"success": False, "error": "Solo administrador puede crear subtareas"}, status_code=403)
         _ensure_poa_subactivity_recurrence_columns(db)
-        activity = db.query(POAActivity).filter(POAActivity.id == activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
@@ -1564,7 +1611,7 @@ def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body
         sub_level = 1
         if parent_sub_id:
             parent_sub = (
-                db.query(POASubactivity)
+                _tenant_subactivity_query(db, tenant_id)
                 .filter(POASubactivity.id == parent_sub_id, POASubactivity.activity_id == activity.id)
                 .first()
             )
@@ -1588,7 +1635,7 @@ def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body
                 return JSONResponse({"success": False, "error": child_error}, status_code=400)
         assigned_by = session_username
         sibling_subs = (
-            db.query(POASubactivity)
+            _tenant_subactivity_query(db, tenant_id)
             .filter(
                 POASubactivity.activity_id == int(activity.id),
                 POASubactivity.parent_subactivity_id == (parent_sub.id if parent_sub else None),
@@ -1599,6 +1646,7 @@ def create_poa_subactivity(request: Request, activity_id: int, data: dict = Body
         parent_code = str((parent_sub.codigo if parent_sub else activity.codigo) or "").strip()
         next_sub_order = len(sibling_subs) + 1
         sub = POASubactivity(
+            tenant_id=tenant_id,
             activity_id=activity.id,
             parent_subactivity_id=parent_sub.id if parent_sub else None,
             nivel=sub_level,
@@ -1626,14 +1674,16 @@ def update_poa_subactivity(request: Request, subactivity_id: int, data: dict = B
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
         if not admin_like:
             return JSONResponse({"success": False, "error": "Solo administrador puede editar subtareas"}, status_code=403)
         _ensure_poa_subactivity_recurrence_columns(db)
-        sub = db.query(POASubactivity).filter(POASubactivity.id == subactivity_id).first()
+        sub = _tenant_subactivity_query(db, tenant_id).filter(POASubactivity.id == subactivity_id).first()
         if not sub:
             return JSONResponse({"success": False, "error": "Subactividad no encontrada"}, status_code=404)
-        activity = db.query(POAActivity).filter(POAActivity.id == sub.activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == sub.activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         session_username = (getattr(request.state, "user_name", None) or request.cookies.get("user_name") or "").strip()
@@ -1677,7 +1727,7 @@ def update_poa_subactivity(request: Request, subactivity_id: int, data: dict = B
         parent_sub = None
         if sub.parent_subactivity_id:
             parent_sub = (
-                db.query(POASubactivity)
+                _tenant_subactivity_query(db, tenant_id)
                 .filter(POASubactivity.id == sub.parent_subactivity_id, POASubactivity.activity_id == activity.id)
                 .first()
             )
@@ -1695,7 +1745,7 @@ def update_poa_subactivity(request: Request, subactivity_id: int, data: dict = B
         sub.nombre = nombre
         if not str(sub.codigo or "").strip():
             sibling_subs = (
-                db.query(POASubactivity)
+                _tenant_subactivity_query(db, tenant_id)
                 .filter(
                     POASubactivity.activity_id == int(activity.id),
                     POASubactivity.parent_subactivity_id == sub.parent_subactivity_id,
@@ -1730,14 +1780,16 @@ def delete_poa_subactivity(request: Request, subactivity_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         admin_like = _is_request_admin_like(request, db)
         if not admin_like:
             return JSONResponse({"success": False, "error": "Solo administrador puede eliminar subtareas"}, status_code=403)
         _ensure_poa_subactivity_recurrence_columns(db)
-        sub = db.query(POASubactivity).filter(POASubactivity.id == subactivity_id).first()
+        sub = _tenant_subactivity_query(db, tenant_id).filter(POASubactivity.id == subactivity_id).first()
         if not sub:
             return JSONResponse({"success": False, "error": "Subactividad no encontrada"}, status_code=404)
-        activity = db.query(POAActivity).filter(POAActivity.id == sub.activity_id).first()
+        activity = _tenant_activity_query(db, tenant_id).filter(POAActivity.id == sub.activity_id).first()
         if not activity:
             return JSONResponse({"success": False, "error": "Actividad no encontrada"}, status_code=404)
         descendants = _descendant_subactivity_ids(db, activity.id, sub.id)
@@ -1754,13 +1806,15 @@ def poa_subactivities_without_owner(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         _ensure_poa_subactivity_recurrence_columns(db)
         objectives = _allowed_objectives_for_user(request, db)
         objective_ids = [obj.id for obj in objectives]
         if not objective_ids:
             return JSONResponse({"success": True, "total": 0, "data": []})
         activities = (
-            db.query(POAActivity)
+            _tenant_activity_query(db, tenant_id)
             .filter(POAActivity.objective_id.in_(objective_ids))
             .order_by(POAActivity.id.desc())
             .all()
@@ -1771,7 +1825,7 @@ def poa_subactivities_without_owner(request: Request):
         activity_map = {int(item.id): item for item in activities if getattr(item, "id", None)}
         objective_map = {int(obj.id): obj for obj in objectives}
         subs = (
-            db.query(POASubactivity)
+            _tenant_subactivity_query(db, tenant_id)
             .filter(POASubactivity.activity_id.in_(activity_ids))
             .order_by(POASubactivity.id.desc())
             .all()

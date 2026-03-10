@@ -55,10 +55,17 @@ def _bind_core_symbols() -> None:
         return
     from fastapi_modulo import main as core
 
-    names = ["SessionLocal"]
+    names = ["SessionLocal", "_normalize_tenant_id", "get_current_tenant"]
     for name in names:
         globals()[name] = getattr(core, name)
     _CORE_BOUND = True
+
+
+def _current_tenant_id(request: Request | None = None) -> str:
+    _bind_core_symbols()
+    if request is None:
+        return _normalize_tenant_id("default")
+    return _normalize_tenant_id(get_current_tenant(request))
 
 
 def _load_indicadores_template() -> str:
@@ -75,6 +82,7 @@ def _ensure_brujula_indicator_table(db) -> None:
             """
             CREATE TABLE IF NOT EXISTS brujula_indicator_values (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tenant_id VARCHAR(100) NOT NULL DEFAULT 'default',
                 indicador VARCHAR(255) NOT NULL DEFAULT '',
                 valores_json TEXT NOT NULL DEFAULT '{}',
                 orden INTEGER NOT NULL DEFAULT 0,
@@ -85,7 +93,13 @@ def _ensure_brujula_indicator_table(db) -> None:
         )
     )
     try:
-        db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_brujula_indicator_values_indicador ON brujula_indicator_values(indicador)"))
+        cols = db.execute(text("PRAGMA table_info(brujula_indicator_values)")).fetchall()
+        col_names = {str(col[1]).strip().lower() for col in cols if len(col) > 1}
+        if "tenant_id" not in col_names:
+            db.execute(text("ALTER TABLE brujula_indicator_values ADD COLUMN tenant_id VARCHAR(100) NOT NULL DEFAULT 'default'"))
+        db.execute(text("UPDATE brujula_indicator_values SET tenant_id = 'default' WHERE tenant_id IS NULL OR tenant_id = ''"))
+        db.execute(text("DROP INDEX IF EXISTS ux_brujula_indicator_values_indicador"))
+        db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_brujula_indicator_values_tenant_indicador ON brujula_indicator_values(tenant_id, indicador)"))
     except Exception:
         pass
 
@@ -144,10 +158,11 @@ def _normalize_indicator_matrix_rows(raw_rows, periods):
     return clean
 
 
-def get_brujula_indicator_notebook():
+def get_brujula_indicator_notebook(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        tenant_id = _current_tenant_id(request)
         periods = _periods_from_projection_config()
         _ensure_brujula_indicator_table(db)
         db.commit()
@@ -156,9 +171,11 @@ def get_brujula_indicator_notebook():
                 """
                 SELECT indicador, valores_json, orden
                 FROM brujula_indicator_values
+                WHERE tenant_id = :tenant_id
                 ORDER BY orden ASC, id ASC
                 """
-            )
+            ),
+            {"tenant_id": tenant_id},
         ).fetchall()
         stored = []
         seen = set()
@@ -192,24 +209,26 @@ def get_brujula_indicator_notebook():
         db.close()
 
 
-def save_brujula_indicator_notebook(data: dict = Body(...)):
+def save_brujula_indicator_notebook(request: Request, data: dict = Body(...)):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        tenant_id = _current_tenant_id(request)
         periods = _periods_from_projection_config()
         rows = _normalize_indicator_matrix_rows((data or {}).get("rows"), periods)
         _ensure_brujula_indicator_table(db)
-        db.execute(text("DELETE FROM brujula_indicator_values"))
+        db.execute(text("DELETE FROM brujula_indicator_values WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_id})
         json = __import__("json")
         for row in rows:
             db.execute(
                 text(
                     """
-                    INSERT INTO brujula_indicator_values (indicador, valores_json, orden, updated_at)
-                    VALUES (:indicador, :valores_json, :orden, CURRENT_TIMESTAMP)
+                    INSERT INTO brujula_indicator_values (tenant_id, indicador, valores_json, orden, updated_at)
+                    VALUES (:tenant_id, :indicador, :valores_json, :orden, CURRENT_TIMESTAMP)
                     """
                 ),
                 {
+                    "tenant_id": tenant_id,
                     "indicador": row["indicador"],
                     "valores_json": json.dumps(row["values"], ensure_ascii=False),
                     "orden": int(row["orden"]),

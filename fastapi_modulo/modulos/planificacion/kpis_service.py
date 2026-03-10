@@ -377,6 +377,8 @@ def _bind_core_symbols() -> None:
     from fastapi_modulo import main as core
 
     globals()["SessionLocal"] = getattr(core, "SessionLocal")
+    globals()["_normalize_tenant_id"] = getattr(core, "_normalize_tenant_id")
+    globals()["get_current_tenant"] = getattr(core, "get_current_tenant")
     try:
         globals()["_ensure_objective_kpi_table"] = getattr(core, "_ensure_objective_kpi_table")
     except AttributeError:
@@ -386,10 +388,18 @@ def _bind_core_symbols() -> None:
     _CORE_BOUND = True
 
 
+def _current_tenant_id(request: Request | None = None) -> str:
+    _bind_core_symbols()
+    if request is None:
+        return _normalize_tenant_id("default")
+    return _normalize_tenant_id(get_current_tenant(request))
+
+
 def _ensure_kpi_mediciones_table(db) -> None:
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS kpi_mediciones (
             id          INTEGER  PRIMARY KEY AUTOINCREMENT,
+            tenant_id   VARCHAR(100) NOT NULL DEFAULT 'default',
             kpi_id      INTEGER  NOT NULL,
             valor       REAL     NOT NULL,
             periodo     VARCHAR(50)  NOT NULL DEFAULT '',
@@ -398,6 +408,15 @@ def _ensure_kpi_mediciones_table(db) -> None:
             created_by  VARCHAR(100) NOT NULL DEFAULT ''
         )
     """))
+    try:
+        cols = db.execute(text("PRAGMA table_info(kpi_mediciones)")).fetchall()
+        col_names = {str(col[1]).strip().lower() for col in cols if len(col) > 1}
+        if "tenant_id" not in col_names:
+            db.execute(text("ALTER TABLE kpi_mediciones ADD COLUMN tenant_id VARCHAR(100) NOT NULL DEFAULT 'default'"))
+        db.execute(text("UPDATE kpi_mediciones SET tenant_id = 'default' WHERE tenant_id IS NULL OR tenant_id = ''"))
+        db.execute(text("CREATE INDEX IF NOT EXISTS ix_kpi_mediciones_tenant_id ON kpi_mediciones(tenant_id)"))
+    except Exception:
+        pass
     db.commit()
 
 
@@ -448,6 +467,7 @@ def kpis_definiciones(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        tenant_id = _current_tenant_id(request)
         _ensure_indicator_definition_table(db)
         _ensure_kpi_mediciones_table(db)
         rows = db.execute(text("""
@@ -466,9 +486,9 @@ def kpis_definiciones(request: Request):
             meds = db.execute(text(f"""
                 SELECT kpi_id, valor, periodo, created_at
                 FROM kpi_mediciones
-                WHERE kpi_id IN ({placeholders})
+                WHERE tenant_id = :tenant_id AND kpi_id IN ({placeholders})
                 ORDER BY created_at DESC
-            """), params).fetchall()
+            """), {"tenant_id": tenant_id, **params}).fetchall()
             seen = set()
             for m in meds:
                 kid = int(m[0])
@@ -524,19 +544,21 @@ def kpis_mediciones_list(request: Request):
     kpi_id_raw = request.query_params.get("kpi_id", "")
     db = SessionLocal()
     try:
+        tenant_id = _current_tenant_id(request)
         _ensure_kpi_mediciones_table(db)
         if kpi_id_raw:
             rows = db.execute(text("""
                 SELECT id, kpi_id, valor, periodo, notas, created_at, created_by
-                FROM kpi_mediciones WHERE kpi_id = :kid
+                FROM kpi_mediciones WHERE tenant_id = :tenant_id AND kpi_id = :kid
                 ORDER BY created_at DESC LIMIT 200
-            """), {"kid": int(kpi_id_raw)}).fetchall()
+            """), {"tenant_id": tenant_id, "kid": int(kpi_id_raw)}).fetchall()
         else:
             rows = db.execute(text("""
                 SELECT id, kpi_id, valor, periodo, notas, created_at, created_by
                 FROM kpi_mediciones
+                WHERE tenant_id = :tenant_id
                 ORDER BY created_at DESC LIMIT 500
-            """)).fetchall()
+            """), {"tenant_id": tenant_id}).fetchall()
         data = [
             {
                 "id": int(r[0]), "kpi_id": int(r[1]), "valor": float(r[2]),
@@ -554,14 +576,16 @@ def kpis_estadisticas(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        tenant_id = _current_tenant_id(request)
         _ensure_kpi_mediciones_table(db)
         rows = db.execute(text("""
             SELECT m.kpi_id, m.valor, m.periodo, m.created_at,
                    k.nombre AS kpi_nombre, 'mayor' AS estandar, k.estandar_meta AS referencia
             FROM kpi_mediciones m
             LEFT JOIN brujula_indicator_definitions k ON k.id = m.kpi_id
+            WHERE m.tenant_id = :tenant_id
             ORDER BY m.kpi_id, m.created_at ASC
-        """)).fetchall()
+        """), {"tenant_id": tenant_id}).fetchall()
     finally:
         db.close()
 
@@ -621,6 +645,7 @@ def kpi_medicion_save(request: Request, data: dict = Body(default={})):
         return JSONResponse({"success": False, "error": "kpi_id y valor son requeridos"}, status_code=400)
     db = SessionLocal()
     try:
+        tenant_id = _current_tenant_id(request)
         _ensure_kpi_mediciones_table(db)
         created_by = str(
             getattr(request.state, "user_name", None)
@@ -628,9 +653,10 @@ def kpi_medicion_save(request: Request, data: dict = Body(default={})):
             or ""
         ).strip()
         db.execute(text("""
-            INSERT INTO kpi_mediciones (kpi_id, valor, periodo, notas, created_at, created_by)
-            VALUES (:kpi_id, :valor, :periodo, :notas, :now, :by)
+            INSERT INTO kpi_mediciones (tenant_id, kpi_id, valor, periodo, notas, created_at, created_by)
+            VALUES (:tenant_id, :kpi_id, :valor, :periodo, :notas, :now, :by)
         """), {
+            "tenant_id": tenant_id,
             "kpi_id": kpi_id, "valor": valor, "periodo": periodo,
             "notas": notas, "now": datetime.utcnow().isoformat(), "by": created_by,
         })
@@ -647,8 +673,9 @@ def kpi_medicion_delete(medicion_id: int, request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        tenant_id = _current_tenant_id(request)
         _ensure_kpi_mediciones_table(db)
-        db.execute(text("DELETE FROM kpi_mediciones WHERE id = :mid"), {"mid": medicion_id})
+        db.execute(text("DELETE FROM kpi_mediciones WHERE id = :mid AND tenant_id = :tenant_id"), {"mid": medicion_id, "tenant_id": tenant_id})
         db.commit()
         return JSONResponse({"success": True})
     except Exception as exc:

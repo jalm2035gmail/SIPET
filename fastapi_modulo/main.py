@@ -1080,6 +1080,7 @@ class StrategicAxisConfig(Base):
     __tablename__ = "strategic_axes_config"
 
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(String, index=True, default="default")
     nombre = Column(String, nullable=False)
     codigo = Column(String, default="")
     lider_departamento = Column(String, default="")
@@ -1104,6 +1105,7 @@ class StrategicObjectiveConfig(Base):
     __tablename__ = "strategic_objectives_config"
 
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(String, index=True, default="default")
     eje_id = Column(Integer, ForeignKey("strategic_axes_config.id"), nullable=False, index=True)
     codigo = Column(String, default="")
     nombre = Column(String, nullable=False)
@@ -1124,6 +1126,7 @@ class POAActivity(Base):
     __tablename__ = "poa_activities"
 
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(String, index=True, default="default")
     objective_id = Column(Integer, ForeignKey("strategic_objectives_config.id"), nullable=False, index=True)
     nombre = Column(String, nullable=False)
     codigo = Column(String, default="")
@@ -1150,6 +1153,7 @@ class POASubactivity(Base):
     __tablename__ = "poa_subactivities"
 
     id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(String, index=True, default="default")
     activity_id = Column(Integer, ForeignKey("poa_activities.id"), nullable=False, index=True)
     parent_subactivity_id = Column(Integer, ForeignKey("poa_subactivities.id"), index=True)
     nivel = Column(Integer, default=1, index=True)

@@ -30,6 +30,8 @@ def _bind_core_symbols() -> None:
         "POAActivity",
         "POASubactivity",
         "Usuario",
+        "_normalize_tenant_id",
+        "get_current_tenant",
         "_date_to_iso",
         "_activity_status",
         "_parse_date_field",
@@ -110,6 +112,78 @@ def _compose_objective_code(axis_code: str, order_value: int) -> str:
     return f"{axis_prefix}-{safe_order:02d}"
 
 
+def _current_tenant_id(request: Request | None = None) -> str:
+    _bind_core_symbols()
+    if request is None:
+        return _normalize_tenant_id("default")
+    return _normalize_tenant_id(get_current_tenant(request))
+
+
+def _ensure_strategy_scope_tables(db) -> None:
+    stmts = [
+        'ALTER TABLE "strategic_axes_config" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"',
+        'UPDATE "strategic_axes_config" SET tenant_id = "default" WHERE tenant_id IS NULL OR tenant_id = ""',
+        'CREATE INDEX IF NOT EXISTS "ix_strategic_axes_config_tenant_id" ON "strategic_axes_config" ("tenant_id")',
+        'ALTER TABLE "strategic_objectives_config" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"',
+        'UPDATE "strategic_objectives_config" SET tenant_id = COALESCE((SELECT tenant_id FROM strategic_axes_config a WHERE a.id = strategic_objectives_config.eje_id), "default") WHERE tenant_id IS NULL OR tenant_id = ""',
+        'CREATE INDEX IF NOT EXISTS "ix_strategic_objectives_config_tenant_id" ON "strategic_objectives_config" ("tenant_id")',
+        'ALTER TABLE "poa_activities" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"',
+        'UPDATE "poa_activities" SET tenant_id = COALESCE((SELECT tenant_id FROM strategic_objectives_config o WHERE o.id = poa_activities.objective_id), "default") WHERE tenant_id IS NULL OR tenant_id = ""',
+        'CREATE INDEX IF NOT EXISTS "ix_poa_activities_tenant_id" ON "poa_activities" ("tenant_id")',
+        'ALTER TABLE "poa_subactivities" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"',
+        'UPDATE "poa_subactivities" SET tenant_id = COALESCE((SELECT tenant_id FROM poa_activities a WHERE a.id = poa_subactivities.activity_id), "default") WHERE tenant_id IS NULL OR tenant_id = ""',
+        'CREATE INDEX IF NOT EXISTS "ix_poa_subactivities_tenant_id" ON "poa_subactivities" ("tenant_id")',
+    ]
+    for stmt in stmts:
+        try:
+            db.execute(text(stmt))
+        except Exception:
+            pass
+
+
+def _ensure_strategic_identity_table(db) -> None:
+    db.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS strategic_identity_tenant_config (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              tenant_id VARCHAR(100) NOT NULL DEFAULT 'default',
+              bloque VARCHAR(20) NOT NULL,
+              payload TEXT NOT NULL DEFAULT '[]',
+              updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+    )
+    db.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ux_strategic_identity_tenant_block ON strategic_identity_tenant_config(tenant_id, bloque)"))
+    try:
+        legacy_rows = db.execute(text("SELECT bloque, payload, updated_at FROM strategic_identity_config")).fetchall()
+    except Exception:
+        legacy_rows = []
+    for row in legacy_rows:
+        try:
+            db.execute(
+                text(
+                    """
+                    INSERT OR IGNORE INTO strategic_identity_tenant_config (tenant_id, bloque, payload, updated_at)
+                    VALUES ('default', :bloque, :payload, COALESCE(:updated_at, CURRENT_TIMESTAMP))
+                    """
+                ),
+                {"bloque": str(row[0] or ""), "payload": str(row[1] or "[]"), "updated_at": row[2]},
+            )
+        except Exception:
+            continue
+
+
+def _tenant_axis_query(db, tenant_id: str):
+    _bind_core_symbols()
+    return db.query(StrategicAxisConfig).filter(StrategicAxisConfig.tenant_id == tenant_id)
+
+
+def _tenant_objective_query(db, tenant_id: str):
+    _bind_core_symbols()
+    return db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.tenant_id == tenant_id)
+
 def _collaborator_belongs_to_department(db, collaborator_name: str, department: str) -> bool:
     _bind_core_symbols()
     name = (collaborator_name or "").strip()
@@ -122,21 +196,6 @@ def _collaborator_belongs_to_department(db, collaborator_name: str, department: 
         .first()
     )
     return bool(exists)
-
-
-def _ensure_strategic_identity_table(db) -> None:
-    db.execute(
-        text(
-            """
-            CREATE TABLE IF NOT EXISTS strategic_identity_config (
-              bloque VARCHAR(20) PRIMARY KEY,
-              payload TEXT NOT NULL DEFAULT '[]',
-              updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-    )
-
 
 def _normalize_identity_lines(raw: Any, prefix: str) -> List[Dict[str, str]]:
     rows = raw if isinstance(raw, list) else []
@@ -649,11 +708,11 @@ def _strategic_poa_template_rows() -> List[Dict[str, str]]:
     ]
 
 
-def _strategic_poa_export_rows(db) -> List[Dict[str, str]]:
+def _strategic_poa_export_rows(db, tenant_id: str) -> List[Dict[str, str]]:
     _bind_core_symbols()
     rows: List[Dict[str, str]] = []
     axes = (
-        db.query(StrategicAxisConfig)
+        _tenant_axis_query(db, tenant_id)
         .filter(StrategicAxisConfig.is_active == True)
         .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
         .all()
@@ -672,7 +731,7 @@ def _strategic_poa_export_rows(db) -> List[Dict[str, str]]:
             }
         )
         objectives = (
-            db.query(StrategicObjectiveConfig)
+            _tenant_objective_query(db, tenant_id)
             .filter(StrategicObjectiveConfig.is_active == True, StrategicObjectiveConfig.eje_id == axis.id)
             .order_by(StrategicObjectiveConfig.orden.asc(), StrategicObjectiveConfig.id.asc())
             .all()
@@ -695,7 +754,7 @@ def _strategic_poa_export_rows(db) -> List[Dict[str, str]]:
             )
             activities = (
                 db.query(POAActivity)
-                .filter(POAActivity.objective_id == objective.id)
+                .filter(POAActivity.tenant_id == tenant_id, POAActivity.objective_id == objective.id)
                 .order_by(POAActivity.id.asc())
                 .all()
             )
@@ -719,7 +778,7 @@ def _strategic_poa_export_rows(db) -> List[Dict[str, str]]:
                 )
                 subs = (
                     db.query(POASubactivity)
-                    .filter(POASubactivity.activity_id == activity.id)
+                    .filter(POASubactivity.tenant_id == tenant_id, POASubactivity.activity_id == activity.id)
                     .order_by(POASubactivity.nivel.asc(), POASubactivity.id.asc())
                     .all()
                 )
@@ -797,11 +856,12 @@ def download_strategic_poa_template():
     return Response(output.getvalue(), media_type="text/csv; charset=utf-8", headers=headers)
 
 
-def export_strategic_poa_xlsx():
+def export_strategic_poa_xlsx(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
-        export_rows = _strategic_poa_export_rows(db)
+        _ensure_strategy_scope_tables(db)
+        export_rows = _strategic_poa_export_rows(db, _current_tenant_id(request))
     finally:
         db.close()
     records = [{key: _csv_value(row, key) for key in STRATEGIC_POA_CSV_HEADERS} for row in export_rows]
@@ -818,7 +878,7 @@ def export_strategic_poa_xlsx():
     )
 
 
-async def import_strategic_poa_csv(file: UploadFile = File(...)):
+async def import_strategic_poa_csv(request: Request, file: UploadFile = File(...)):
     _bind_core_symbols()
     filename = (file.filename or "").strip().lower()
     if not filename.endswith(".csv"):
@@ -848,12 +908,14 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
     db = SessionLocal()
     summary = {"created": 0, "updated": 0, "skipped": 0, "errors": []}
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         _ensure_poa_subactivity_recurrence_columns(db)
-        axes = db.query(StrategicAxisConfig).all()
+        axes = _tenant_axis_query(db, tenant_id).all()
         axis_by_code = {str((item.codigo or "")).strip().lower(): item for item in axes if (item.codigo or "").strip()}
-        objectives = db.query(StrategicObjectiveConfig).all()
+        objectives = _tenant_objective_query(db, tenant_id).all()
         objective_by_code = {str((item.codigo or "")).strip().lower(): item for item in objectives if (item.codigo or "").strip()}
-        activities = db.query(POAActivity).all()
+        activities = db.query(POAActivity).filter(POAActivity.tenant_id == tenant_id).all()
         activity_by_key: Dict[str, Any] = {}
         activity_by_code_list: Dict[str, List[Any]] = {}
         for item in activities:
@@ -862,7 +924,7 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
                 continue
             activity_by_key[f"{int(item.objective_id)}::{code}"] = item
             activity_by_code_list.setdefault(code, []).append(item)
-        subactivities = db.query(POASubactivity).all()
+        subactivities = db.query(POASubactivity).filter(POASubactivity.tenant_id == tenant_id).all()
         sub_by_activity_code: Dict[str, Dict[str, Any]] = {}
         activity_code_by_id = {int(item.id): str((item.codigo or "")).strip().lower() for item in activities}
         for sub in subactivities:
@@ -870,7 +932,7 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
             sub_code = str((sub.codigo or "")).strip().lower()
             if activity_code and sub_code:
                 sub_by_activity_code.setdefault(activity_code, {})[sub_code] = sub
-        max_axis_order = db.query(func.max(StrategicAxisConfig.orden)).scalar() or 0
+        max_axis_order = _tenant_axis_query(db, tenant_id).with_entities(func.max(StrategicAxisConfig.orden)).scalar() or 0
         objective_order_by_axis: Dict[int, int] = {}
         for item in objectives:
             axis_id = int(item.eje_id or 0)
@@ -904,6 +966,7 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
                     else:
                         max_axis_order += 1
                         axis = StrategicAxisConfig(
+                            tenant_id=tenant_id,
                             nombre=axis_name or "Nuevo eje",
                             codigo=axis_code,
                             lider_departamento=_csv_value(row, "axis_lider_departamento"),
@@ -954,6 +1017,7 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
                             raise ValueError("objective_nombre es obligatorio al crear un objetivo.")
                         next_obj_order = objective_order if objective_order > 0 else (objective_order_by_axis.get(int(axis.id), 0) + 1)
                         objective = StrategicObjectiveConfig(
+                            tenant_id=tenant_id,
                             eje_id=int(axis.id),
                             codigo=objective_code,
                             nombre=objective_name,
@@ -1022,6 +1086,7 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
                         if not activity_name:
                             raise ValueError("activity_nombre es obligatorio al crear una actividad.")
                         activity = POAActivity(
+                            tenant_id=tenant_id,
                             objective_id=int(objective.id),
                             codigo=activity_code,
                             nombre=activity_name,
@@ -1097,6 +1162,7 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
                         summary["updated"] += 1
                     else:
                         sub = POASubactivity(
+                            tenant_id=tenant_id,
                             activity_id=int(activity.id),
                             parent_subactivity_id=int(parent_sub.id) if parent_sub else None,
                             nivel=level,
@@ -1128,14 +1194,23 @@ async def import_strategic_poa_csv(file: UploadFile = File(...)):
         db.close()
 
 
-def get_strategic_identity():
+def get_strategic_identity(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
         _ensure_strategic_identity_table(db)
+        tenant_id = _current_tenant_id(request)
         db.commit()
         rows = db.execute(
-            text("SELECT bloque, payload FROM strategic_identity_config WHERE bloque IN ('mision', 'vision', 'valores')")
+            text(
+                """
+                SELECT bloque, payload
+                FROM strategic_identity_tenant_config
+                WHERE tenant_id = :tenant_id
+                  AND bloque IN ('mision', 'vision', 'valores')
+                """
+            ),
+            {"tenant_id": tenant_id},
         ).fetchall()
         payload_map = {str(row[0] or "").strip().lower(): str(row[1] or "[]") for row in rows}
         try:
@@ -1164,13 +1239,24 @@ def get_strategic_identity():
         db.close()
 
 
-def get_strategic_foundation():
+def get_strategic_foundation(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
         _ensure_strategic_identity_table(db)
+        tenant_id = _current_tenant_id(request)
         db.commit()
-        row = db.execute(text("SELECT payload FROM strategic_identity_config WHERE bloque = 'fundamentacion' LIMIT 1")).fetchone()
+        row = db.execute(
+            text(
+                """
+                SELECT payload
+                FROM strategic_identity_tenant_config
+                WHERE tenant_id = :tenant_id AND bloque = 'fundamentacion'
+                LIMIT 1
+                """
+            ),
+            {"tenant_id": tenant_id},
+        ).fetchone()
         payload_raw = str(row[0] or "{}") if row else "{}"
         try:
             payload_json = json.loads(payload_raw)
@@ -1181,23 +1267,24 @@ def get_strategic_foundation():
         db.close()
 
 
-def save_strategic_foundation(data: dict = Body(...)):
+def save_strategic_foundation(request: Request, data: dict = Body(...)):
     _bind_core_symbols()
     texto = _normalize_foundation_text(data.get("texto"))
     encoded = json.dumps({"texto": texto}, ensure_ascii=False)
     db = SessionLocal()
     try:
         _ensure_strategic_identity_table(db)
+        tenant_id = _current_tenant_id(request)
         db.execute(
             text(
                 """
-                INSERT INTO strategic_identity_config (bloque, payload, updated_at)
-                VALUES ('fundamentacion', :payload, CURRENT_TIMESTAMP)
-                ON CONFLICT (bloque)
+                INSERT INTO strategic_identity_tenant_config (tenant_id, bloque, payload, updated_at)
+                VALUES (:tenant_id, 'fundamentacion', :payload, CURRENT_TIMESTAMP)
+                ON CONFLICT (tenant_id, bloque)
                 DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP
                 """
             ),
-            {"payload": encoded},
+            {"tenant_id": tenant_id, "payload": encoded},
         )
         db.commit()
         return JSONResponse({"success": True, "data": {"texto": texto}})
@@ -1208,14 +1295,24 @@ def save_strategic_foundation(data: dict = Body(...)):
         db.close()
 
 
-def export_strategic_plan_doc():
+def export_strategic_plan_doc(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
         _ensure_strategic_identity_table(db)
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         db.commit()
         identity_rows = db.execute(
-            text("SELECT bloque, payload FROM strategic_identity_config WHERE bloque IN ('mision','vision','valores','fundamentacion')")
+            text(
+                """
+                SELECT bloque, payload
+                FROM strategic_identity_tenant_config
+                WHERE tenant_id = :tenant_id
+                  AND bloque IN ('mision','vision','valores','fundamentacion')
+                """
+            ),
+            {"tenant_id": tenant_id},
         ).fetchall()
         payload_map = {str(row[0] or "").strip().lower(): str(row[1] or "") for row in identity_rows}
 
@@ -1236,7 +1333,7 @@ def export_strategic_plan_doc():
             foundation_payload = {}
         fundamentacion_html = _normalize_foundation_text(foundation_payload.get("texto"))
         axes = (
-            db.query(StrategicAxisConfig)
+            _tenant_axis_query(db, tenant_id)
             .filter(StrategicAxisConfig.is_active == True)
             .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
             .all()
@@ -1296,7 +1393,7 @@ def export_strategic_plan_doc():
         db.close()
 
 
-def save_strategic_identity_block(bloque: str, data: dict = Body(...)):
+def save_strategic_identity_block(request: Request, bloque: str, data: dict = Body(...)):
     _bind_core_symbols()
     block = str(bloque or "").strip().lower()
     if block not in {"mision", "vision", "valores"}:
@@ -1307,16 +1404,17 @@ def save_strategic_identity_block(bloque: str, data: dict = Body(...)):
     db = SessionLocal()
     try:
         _ensure_strategic_identity_table(db)
+        tenant_id = _current_tenant_id(request)
         db.execute(
             text(
                 """
-                INSERT INTO strategic_identity_config (bloque, payload, updated_at)
-                VALUES (:bloque, :payload, CURRENT_TIMESTAMP)
-                ON CONFLICT (bloque)
+                INSERT INTO strategic_identity_tenant_config (tenant_id, bloque, payload, updated_at)
+                VALUES (:tenant_id, :bloque, :payload, CURRENT_TIMESTAMP)
+                ON CONFLICT (tenant_id, bloque)
                 DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP
                 """
             ),
-            {"bloque": block, "payload": encoded},
+            {"tenant_id": tenant_id, "bloque": block, "payload": encoded},
         )
         db.commit()
         return JSONResponse({"success": True, "data": {"bloque": block, "lineas": lines}})
@@ -1327,7 +1425,7 @@ def save_strategic_identity_block(bloque: str, data: dict = Body(...)):
         db.close()
 
 
-def clear_strategic_identity_block(bloque: str):
+def clear_strategic_identity_block(request: Request, bloque: str):
     _bind_core_symbols()
     block = str(bloque or "").strip().lower()
     if block not in {"mision", "vision", "valores"}:
@@ -1338,16 +1436,17 @@ def clear_strategic_identity_block(bloque: str):
     db = SessionLocal()
     try:
         _ensure_strategic_identity_table(db)
+        tenant_id = _current_tenant_id(request)
         db.execute(
             text(
                 """
-                INSERT INTO strategic_identity_config (bloque, payload, updated_at)
-                VALUES (:bloque, :payload, CURRENT_TIMESTAMP)
-                ON CONFLICT (bloque)
+                INSERT INTO strategic_identity_tenant_config (tenant_id, bloque, payload, updated_at)
+                VALUES (:tenant_id, :bloque, :payload, CURRENT_TIMESTAMP)
+                ON CONFLICT (tenant_id, bloque)
                 DO UPDATE SET payload = EXCLUDED.payload, updated_at = CURRENT_TIMESTAMP
                 """
             ),
-            {"bloque": block, "payload": encoded},
+            {"tenant_id": tenant_id, "bloque": block, "payload": encoded},
         )
         db.commit()
         return JSONResponse({"success": True, "data": {"bloque": block, "lineas": lines}})
@@ -1362,20 +1461,32 @@ def list_strategic_axes(request: Request):
     _bind_core_symbols()
     db = SessionLocal()
     try:
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
         axes = (
-            db.query(StrategicAxisConfig)
+            _tenant_axis_query(db, tenant_id)
             .filter(StrategicAxisConfig.is_active == True)
             .order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc())
             .all()
         )
         if not axes:
-            axes = db.query(StrategicAxisConfig).order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc()).all()
+            axes = _tenant_axis_query(db, tenant_id).order_by(StrategicAxisConfig.orden.asc(), StrategicAxisConfig.id.asc()).all()
         payload_axes = [_serialize_strategic_axis(axis) for axis in axes]
         objective_ids = sorted({int(obj.get("id") or 0) for axis in payload_axes for obj in axis.get("objetivos", []) if int(obj.get("id") or 0)})
         milestones_by_objective = _milestones_by_objective_ids(db, objective_ids)
-        activities = db.query(POAActivity).filter(POAActivity.objective_id.in_(objective_ids)).all() if objective_ids else []
+        activities = (
+            db.query(POAActivity)
+            .filter(POAActivity.tenant_id == tenant_id, POAActivity.objective_id.in_(objective_ids))
+            .all()
+            if objective_ids else []
+        )
         activity_ids = [int(item.id) for item in activities if getattr(item, "id", None)]
-        subactivities = db.query(POASubactivity).filter(POASubactivity.activity_id.in_(activity_ids)).all() if activity_ids else []
+        subactivities = (
+            db.query(POASubactivity)
+            .filter(POASubactivity.tenant_id == tenant_id, POASubactivity.activity_id.in_(activity_ids))
+            .all()
+            if activity_ids else []
+        )
         sub_by_activity: Dict[int, List[Any]] = {}
         for sub in subactivities:
             sub_by_activity.setdefault(int(sub.activity_id), []).append(sub)
@@ -1436,11 +1547,12 @@ def list_collaborators_by_department(department: str = Query(default="")):
         db.close()
 
 
-def list_strategic_axis_collaborators(axis_id: int):
+def list_strategic_axis_collaborators(request: Request, axis_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
-        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        _ensure_strategy_scope_tables(db)
+        axis = _tenant_axis_query(db, _current_tenant_id(request)).filter(StrategicAxisConfig.id == axis_id).first()
         if not axis:
             return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
         department = (axis.lider_departamento or "").strip()
@@ -1460,7 +1572,9 @@ def create_strategic_axis(request: Request, data: dict = Body(...)):
         return JSONResponse({"success": False, "error": "El nombre del eje es obligatorio"}, status_code=400)
     db = SessionLocal()
     try:
-        max_order = db.query(func.max(StrategicAxisConfig.orden)).scalar() or 0
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
+        max_order = _tenant_axis_query(db, tenant_id).with_entities(func.max(StrategicAxisConfig.orden)).scalar() or 0
         axis_order = int(data.get("orden") or (max_order + 1))
         start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=False)
         if start_error:
@@ -1479,6 +1593,7 @@ def create_strategic_axis(request: Request, data: dict = Body(...)):
             raw_code = (data.get("codigo") or "").strip().lower()
             base_code = raw_code.split("-", 1)[0] if "-" in raw_code else raw_code
         axis = StrategicAxisConfig(
+            tenant_id=tenant_id,
             nombre=nombre,
             codigo=_compose_axis_code(base_code, axis_order),
             lider_departamento=(data.get("lider_departamento") or "").strip(),
@@ -1502,11 +1617,13 @@ def create_strategic_axis(request: Request, data: dict = Body(...)):
         db.close()
 
 
-def update_strategic_axis(axis_id: int, data: dict = Body(...)):
+def update_strategic_axis(request: Request, axis_id: int, data: dict = Body(...)):
     _bind_core_symbols()
     db = SessionLocal()
     try:
-        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
+        axis = _tenant_axis_query(db, tenant_id).filter(StrategicAxisConfig.id == axis_id).first()
         if not axis:
             return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
         nombre = (data.get("nombre") or "").strip()
@@ -1550,11 +1667,12 @@ def update_strategic_axis(axis_id: int, data: dict = Body(...)):
         db.close()
 
 
-def delete_strategic_axis(axis_id: int):
+def delete_strategic_axis(request: Request, axis_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
-        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        _ensure_strategy_scope_tables(db)
+        axis = _tenant_axis_query(db, _current_tenant_id(request)).filter(StrategicAxisConfig.id == axis_id).first()
         if not axis:
             return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
         db.delete(axis)
@@ -1567,14 +1685,16 @@ def delete_strategic_axis(axis_id: int):
         db.close()
 
 
-def create_strategic_objective(axis_id: int, data: dict = Body(...)):
+def create_strategic_objective(request: Request, axis_id: int, data: dict = Body(...)):
     _bind_core_symbols()
     nombre = (data.get("nombre") or "").strip()
     if not nombre:
         return JSONResponse({"success": False, "error": "El nombre del objetivo es obligatorio"}, status_code=400)
     db = SessionLocal()
     try:
-        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == axis_id).first()
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
+        axis = _tenant_axis_query(db, tenant_id).filter(StrategicAxisConfig.id == axis_id).first()
         if not axis:
             return JSONResponse({"success": False, "error": "Eje no encontrado"}, status_code=404)
         start_date, start_error = _parse_date_field(data.get("fecha_inicial"), "Fecha inicial", required=False)
@@ -1593,9 +1713,16 @@ def create_strategic_objective(axis_id: int, data: dict = Body(...)):
         axis_department = (axis.lider_departamento or "").strip()
         if objective_leader and axis_department and not _collaborator_belongs_to_department(db, objective_leader, axis_department):
             return JSONResponse({"success": False, "error": "El líder debe pertenecer al personal del área/departamento del eje."}, status_code=400)
-        max_order = db.query(func.max(StrategicObjectiveConfig.orden)).filter(StrategicObjectiveConfig.eje_id == axis_id).scalar() or 0
+        max_order = (
+            _tenant_objective_query(db, tenant_id)
+            .with_entities(func.max(StrategicObjectiveConfig.orden))
+            .filter(StrategicObjectiveConfig.eje_id == axis_id)
+            .scalar()
+            or 0
+        )
         objective_order = int(data.get("orden") or (max_order + 1))
         objective = StrategicObjectiveConfig(
+            tenant_id=tenant_id,
             eje_id=axis_id,
             codigo=_compose_objective_code(axis.codigo or "", objective_order),
             nombre=nombre,
@@ -1632,11 +1759,13 @@ def create_strategic_objective(axis_id: int, data: dict = Body(...)):
         db.close()
 
 
-def update_strategic_objective(objective_id: int, data: dict = Body(...)):
+def update_strategic_objective(request: Request, objective_id: int, data: dict = Body(...)):
     _bind_core_symbols()
     db = SessionLocal()
     try:
-        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
+        _ensure_strategy_scope_tables(db)
+        tenant_id = _current_tenant_id(request)
+        objective = _tenant_objective_query(db, tenant_id).filter(StrategicObjectiveConfig.id == objective_id).first()
         if not objective:
             return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
         nombre = (data.get("nombre") or "").strip()
@@ -1654,7 +1783,7 @@ def update_strategic_objective(objective_id: int, data: dict = Body(...)):
             range_error = _validate_date_range(start_date, end_date, "Objetivo")
             if range_error:
                 return JSONResponse({"success": False, "error": range_error}, status_code=400)
-        axis = db.query(StrategicAxisConfig).filter(StrategicAxisConfig.id == objective.eje_id).first()
+        axis = _tenant_axis_query(db, tenant_id).filter(StrategicAxisConfig.id == objective.eje_id).first()
         objective_leader = (data.get("lider") or "").strip()
         axis_department = (axis.lider_departamento or "").strip() if axis else ""
         if objective_leader and axis_department and not _collaborator_belongs_to_department(db, objective_leader, axis_department):
@@ -1687,11 +1816,12 @@ def update_strategic_objective(objective_id: int, data: dict = Body(...)):
         db.close()
 
 
-def delete_strategic_objective(objective_id: int):
+def delete_strategic_objective(request: Request, objective_id: int):
     _bind_core_symbols()
     db = SessionLocal()
     try:
-        objective = db.query(StrategicObjectiveConfig).filter(StrategicObjectiveConfig.id == objective_id).first()
+        _ensure_strategy_scope_tables(db)
+        objective = _tenant_objective_query(db, _current_tenant_id(request)).filter(StrategicObjectiveConfig.id == objective_id).first()
         if not objective:
             return JSONResponse({"success": False, "error": "Objetivo no encontrado"}, status_code=404)
         _delete_objective_milestones(db, int(objective.id))
