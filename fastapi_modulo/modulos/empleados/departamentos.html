@@ -662,7 +662,7 @@
     if (!kanbanGrid) return;
     var data = getVisibleRows();
     if (!data.length) {
-      kanbanGrid.innerHTML = '<div class="kanban-empty">Sin datos para mostrar.</div>';
+      kanbanGrid.innerHTML = '<div class="kanban-empty rounded-box border border-base-300 bg-base-100 text-base-content/70">Sin datos para mostrar.</div>';
       return;
     }
     var color = getKanbanAccentColor();
@@ -670,12 +670,12 @@
     kanbanGrid.innerHTML = data.map(function (r) {
       var initial = esc((r.name || "?").charAt(0).toUpperCase());
       return '' +
-        '<article class="kanban-item">' +
+        '<article class="kanban-item card bg-base-100 border border-base-300 shadow-sm rounded-box">' +
           '<div class="kanban-color" style="background:' + esc(color) + ';color:' + textOnColor + ';">' + initial + '</div>' +
-          '<div class="kanban-content">' +
-            '<p class="kanban-title">' + esc(r.name || "Área") + '</p>' +
-            '<p class="kanban-meta"><strong>Responsable:</strong> ' + esc(r.manager || "Sin responsable") + '</p>' +
-            '<p class="kanban-meta"><strong>Código:</strong> ' + esc(r.code || "—") + '</p>' +
+          '<div class="kanban-content card-body">' +
+            '<p class="kanban-title text-[color:var(--sidebar-bottom)]">' + esc(r.name || "Área") + '</p>' +
+            '<p class="kanban-meta text-base-content/70"><strong>Responsable:</strong> ' + esc(r.manager || "Sin responsable") + '</p>' +
+            '<p class="kanban-meta text-base-content/70"><strong>Código:</strong> ' + esc(r.code || "—") + '</p>' +
           '</div>' +
         '</article>';
     }).join("");

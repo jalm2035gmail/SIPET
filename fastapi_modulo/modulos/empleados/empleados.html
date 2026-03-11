@@ -60,9 +60,11 @@
   var selectedColaboradorKey = '';
   var currentFormTab = 'cv';
   var isMainEditMode = false;
+  var mainFormFeedback = { text: '', error: false };
   var orgLibPromise = null;
   var colabOrgChart = null;
   var orgExpandedColaboradorId = '';
+  var DEFAULT_COLAB_AVATAR = '/icon/usuario.png';
   var CV_CONTACT_FIELDS = [
     { key: 'nombre_completo', label: 'Nombre completo', placeholder: 'Ej. Juan Pérez García' },
     { key: 'telefono', label: 'Teléfono', placeholder: '+52 555 000 0000' },
@@ -793,17 +795,20 @@
 
   function buildMainSavePayload(current) {
     var payload = buildCvSavePayload(current);
-    var nombreEl = mount.querySelector('[data-col-identidad-nombre]');
-    var usuarioEl = mount.querySelector('[data-col-identidad-usuario]');
-    var correoEl = mount.querySelector('[data-col-identidad-correo]');
+    var nombreEl = mount.querySelector('[data-col-main-nombre]') || mount.querySelector('[data-col-identidad-nombre]');
+    var usuarioEl = mount.querySelector('[data-col-main-usuario]') || mount.querySelector('[data-col-identidad-usuario]');
+    var correoEl = mount.querySelector('[data-col-main-correo]') || mount.querySelector('[data-col-identidad-correo]');
     var passwordEl = mount.querySelector('[data-col-identidad-password]');
     var puestoEl = mount.querySelector('[data-col-puesto]');
     var celularEl = mount.querySelector('[data-col-main-celular]');
     var colaboradorEl = mount.querySelector('[data-col-main-colaborador]');
     var jefeEl = mount.querySelector('[data-col-main-jefe-inmediato]');
     if (nombreEl && 'value' in nombreEl) payload.nombre = String(nombreEl.value || '').trim();
+    else payload.nombre = String((current && current.nombre) || '').trim();
     if (usuarioEl && 'value' in usuarioEl) payload.usuario = String(usuarioEl.value || '').trim();
+    else payload.usuario = String((current && current.usuario) || '').trim();
     if (correoEl && 'value' in correoEl) payload.correo = String(correoEl.value || '').trim();
+    else payload.correo = String((current && current.correo) || '').trim();
     if (passwordEl && 'value' in passwordEl) payload.contrasena = String(passwordEl.value || '');
     if (puestoEl && 'value' in puestoEl) payload.puesto = String(puestoEl.value || '').trim();
     if (celularEl && 'value' in celularEl) payload.celular = String(celularEl.value || '').trim();
@@ -822,8 +827,7 @@
     var saveBtn = mount.querySelector('[data-cv-save]');
     if (!saveBtn) return;
     saveBtn.addEventListener('click', function () {
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Guardando...';
+      setActionButtonBusy(saveBtn, 'Guardando', true);
       fetch('/api/colaboradores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -1072,7 +1076,23 @@
     var editBtn = mount.querySelector('[data-col-main-edit]');
     var saveBtn = mount.querySelector('[data-col-main-save]');
     var delBtn = mount.querySelector('[data-col-main-del]');
+    var msgEl = mount.querySelector('[data-col-main-msg]');
     if (!(saveBtn instanceof HTMLButtonElement)) return;
+    function setActionButtonBusy(btn, label, busy) {
+      if (!(btn instanceof HTMLButtonElement)) return;
+      btn.disabled = !!busy;
+      btn.setAttribute('aria-label', label);
+      btn.setAttribute('title', label);
+      btn.setAttribute('data-tooltip', label);
+    }
+    function setMainMsg(text, isError) {
+      mainFormFeedback = { text: String(text || ''), error: !!isError };
+      if (!(msgEl instanceof HTMLElement)) return;
+      msgEl.textContent = text || '';
+      msgEl.classList.toggle('text-error', !!isError);
+      msgEl.classList.toggle('text-success', !isError && !!text);
+      msgEl.classList.toggle('text-base-content/70', !text);
+    }
 
     if (editBtn instanceof HTMLButtonElement) {
       editBtn.addEventListener('click', function () {
@@ -1084,27 +1104,27 @@
 
     saveBtn.addEventListener('click', function () {
       if (!isMainEditMode) return;
+      setMainMsg('', false);
       var payload = buildMainSavePayload(current);
       if (!payload.nombre) {
-        window.alert('El nombre es obligatorio.');
+        setMainMsg('El nombre es obligatorio.', true);
         return;
       }
       if (!payload.usuario) {
-        window.alert('El usuario es obligatorio.');
+        setMainMsg('El usuario es obligatorio.', true);
         return;
       }
       if (!current || !current.id) {
         if (!payload.contrasena) {
-          window.alert('La contraseña es obligatoria para crear colaborador.');
+          setMainMsg('La contraseña es obligatoria para crear colaborador.', true);
           return;
         }
         if (String(payload.contrasena).length < 8) {
-          window.alert('La contraseña debe tener al menos 8 caracteres.');
+          setMainMsg('La contraseña debe tener al menos 8 caracteres.', true);
           return;
         }
       }
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Guardando...';
+      setActionButtonBusy(saveBtn, 'Guardando', true);
       fetch('/api/colaboradores', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -1120,14 +1140,14 @@
             selectedColaboradorKey = getColaboradorKey(current);
           }
           isMainEditMode = false;
+          setMainMsg((result.json && result.json.message) || 'Guardado correctamente.', false);
           renderForm(current);
         })
         .catch(function (error) {
-          window.alert(error && error.message ? error.message : 'No se pudo guardar');
+          setMainMsg(error && error.message ? error.message : 'No se guardó.', true);
         })
         .finally(function () {
-          saveBtn.disabled = false;
-          saveBtn.textContent = current && current.id ? 'Guardar' : 'Crear';
+          setActionButtonBusy(saveBtn, 'Guardar', false);
         });
     });
 
@@ -1136,8 +1156,7 @@
         var id = current && current.id;
         if (!id) return;
         if (!window.confirm('¿Eliminar este colaborador?')) return;
-        delBtn.disabled = true;
-        delBtn.textContent = 'Eliminando...';
+        setActionButtonBusy(delBtn, 'Eliminando', true);
         fetch('/api/colaboradores/' + encodeURIComponent(String(id)), {
           method: 'DELETE',
           headers: { Accept: 'application/json' }
@@ -1157,8 +1176,7 @@
             window.alert(error && error.message ? error.message : 'No se pudo eliminar');
           })
           .finally(function () {
-            delBtn.disabled = false;
-            delBtn.textContent = 'Eliminar';
+            setActionButtonBusy(delBtn, 'Eliminar', false);
           });
       });
     }
@@ -1392,6 +1410,24 @@
     return String(emp.nombre || '').trim().toLowerCase();
   }
 
+  function resolveColaboradorImage(value) {
+    var src = String(value || '').trim();
+    return src || DEFAULT_COLAB_AVATAR;
+  }
+
+  function buildOfficialActionButton(action, label, disabled, extraAttr) {
+    var iconMap = {
+      editar: '/icon/boton/editar.svg',
+      guardar: '/icon/boton/guardar.svg',
+      eliminar: '/icon/boton/eliminar.svg'
+    };
+    var iconUrl = iconMap[action] || '/icon/boton/guardar.svg';
+    return '<button type="button" class="view-pill boton_vista" data-tooltip="' + esc(label) + '" aria-label="' + esc(label) + '" title="' + esc(label) + '" ' + (extraAttr || '') + ' ' + (disabled ? 'disabled' : '') + '>' +
+      '<span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url(\'' + iconUrl + '\')"></span>' +
+      '<span class="boton_vista-label">' + esc(label) + '</span>' +
+    '</button>';
+  }
+
   function findColaboradorByKey(key) {
     var target = String(key || '').trim().toLowerCase();
     if (!target) return null;
@@ -1525,21 +1561,22 @@
         '<div class="card-body gap-4">' +
           '<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">' +
             '<h3 class="card-title">Formulario de colaboradores</h3>' +
-            '<div class="flex items-center gap-2">' +
-              (isNewRecord ? '' : '<button type="button" class="btn btn-outline btn-sm" data-col-main-edit>Editar</button>') +
-              '<button type="button" class="btn btn-primary btn-sm" data-col-main-save ' + (isMainEditMode ? '' : 'disabled') + '>' + (isNewRecord ? 'Crear' : 'Guardar') + '</button>' +
-              (isNewRecord ? '' : '<button type="button" class="btn btn-error btn-sm" data-col-main-del>Eliminar</button>') +
+            '<div class="botones_accion">' +
+              (isNewRecord ? '' : buildOfficialActionButton('editar', 'Editar', false, 'data-col-main-edit')) +
+              buildOfficialActionButton('guardar', 'Guardar', !isMainEditMode, 'data-col-main-save') +
+              (isNewRecord ? '' : buildOfficialActionButton('eliminar', 'Eliminar', false, 'data-col-main-del')) +
             '</div>' +
           '</div>' +
+          '<p class="text-sm min-h-[1.25rem] ' + (mainFormFeedback.text ? (mainFormFeedback.error ? 'text-error' : 'text-success') : 'text-base-content/70') + '" data-col-main-msg>' + esc(mainFormFeedback.text || '') + '</p>' +
           '<section class="rounded-box border border-base-300 bg-base-100 p-4 grid gap-4">' +
             '<div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">' +
               '<div class="grid gap-3">' +
-                '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.nombre || '') + '" autocomplete="off" data-col-identidad-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+                '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.nombre || '') + '" autocomplete="off" data-col-identidad-nombre data-col-main-nombre ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
                 '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Puesto</span></div><select class="select select-bordered w-full" data-col-puesto>' + renderPuestoSelect(current.puesto || '') + '</select></label>' +
                 '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Eficiencia</span></div><div class="flex items-center gap-2"><input class="input input-bordered w-28" type="text" value="' + esc(eficienciaValue) + '" readonly><span class="font-semibold text-base-content/80">%</span></div></label>' +
               '</div>' +
               '<div class="rounded-box border border-base-300 bg-base-200 min-h-[240px] flex items-center justify-center overflow-hidden relative">' +
-                (current.imagen ? '<img src="' + esc(current.imagen) + '" alt="Foto colaborador" class="w-full h-full object-cover">' : '<img src="/templates/icon/usuario.svg" alt="Usuario" class="w-36 h-36 opacity-70">') +
+                '<img src="' + esc(resolveColaboradorImage(current.imagen)) + '" alt="Foto colaborador" class="w-full h-full object-cover">' +
                 '<button type="button" style="position:absolute;left:10px;bottom:10px;z-index:10;background:transparent;border:0;padding:0;line-height:1;cursor:pointer;" data-col-photo-edit title="Editar foto" aria-label="Editar foto"><img src="/icon/boton/editar.svg" alt="" style="width:24px;height:24px;display:block;"></button>' +
                 '<button type="button" style="position:absolute;right:10px;bottom:10px;z-index:10;background:transparent;border:0;padding:0;line-height:1;cursor:pointer;" data-col-photo-del title="Eliminar foto" aria-label="Eliminar foto"><img src="/icon/boton/eliminar.svg" alt="" style="width:24px;height:24px;display:block;"></button>' +
                 '<input type="file" class="hidden" accept="image/*" data-col-photo-input>' +
@@ -1548,8 +1585,8 @@
             '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Celular</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.celular || '') + '" autocomplete="off" data-col-main-celular ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Contraseña</span></div><div class="relative"><input class="input input-bordered w-full pr-12" type="password" placeholder="' + (isNewRecord ? 'Mínimo 8 caracteres' : 'Dejar vacía para conservar la actual') + '" value="" autocomplete="new-password" data-col-identidad-password ' + (isMainEditMode ? '' : 'readonly') + '><button type="button" class="absolute inset-y-0 right-3 my-auto flex h-8 w-8 items-center justify-center rounded-full border border-transparent bg-transparent p-0" data-col-password-toggle title="Mostrar contraseña" aria-label="Mostrar contraseña"><img src="/templates/icon/boton/ojo.svg" alt="" class="h-5 w-5" data-col-password-icon></button></div></label>' +
-              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.usuario || '') + '" autocomplete="off" data-col-identidad-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
-              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo electrónico</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.correo || '') + '" autocomplete="off" data-col-identidad-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.usuario || '') + '" autocomplete="off" data-col-identidad-usuario data-col-main-usuario ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
+              '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Correo electrónico</span></div><input class="input input-bordered w-full" type="text" value="' + esc(current.correo || '') + '" autocomplete="off" data-col-identidad-correo data-col-main-correo ' + (isMainEditMode ? '' : 'readonly') + '></label>' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Área organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.area || '') + '" data-col-area readonly></label>' +
               '<label class="form-control w-full"><div class="label"><span class="label-text font-semibold">Nivel organizacional</span></div><input class="input input-bordered w-full" type="text" value="' + esc(puestoDerived.nivel || '') + '" data-col-nivel readonly></label>' +
               '<label class="form-control w-full md:col-span-2"><div class="label"><span class="label-text font-semibold">Jefe inmediato</span></div><select class="select select-bordered w-full" data-col-main-jefe-inmediato ' + (isMainEditMode ? '' : 'disabled') + '>' + renderJefeInmediatoSelect(current) + '</select></label>' +
@@ -1677,18 +1714,28 @@
       else groups.Otro.push(emp);
     });
     var lanes = Object.keys(groups).map(function (key) {
+      var laneColor = getKanbanAccentColor();
+      var laneText = getReadableTextColor(laneColor);
       var cards = groups[key].length
         ? groups[key].map(function (emp) {
-            return '<article class="rounded-box border border-base-300 bg-base-100 p-3 grid gap-1">' +
-              '<strong class="text-base-content">' + esc(emp.nombre || '') + '</strong>' +
-              '<p class="text-sm text-base-content/80">' + esc(emp.usuario || '') + '</p>' +
-              '<p class="text-sm text-base-content/80">' + esc(emp.departamento || '') + '</p>' +
+            var initial = esc((emp.nombre || '?').charAt(0).toUpperCase());
+            return '<article class="kanban-item card bg-base-100 border border-base-300 shadow-sm rounded-box">' +
+              '<div class="kanban-color" style="background:' + esc(laneColor) + ';color:' + laneText + ';">' + initial + '</div>' +
+              '<div class="kanban-content card-body">' +
+                '<div class="flex items-center gap-3">' +
+                  '<img src="' + esc(resolveColaboradorImage(emp.imagen)) + '" alt="' + esc(emp.nombre || 'Colaborador') + '" class="w-12 h-12 rounded-full object-cover border border-base-300 bg-base-100 shrink-0">' +
+                  '<p class="kanban-title text-[color:var(--sidebar-bottom)]">' + esc(emp.nombre || '') + '</p>' +
+                '</div>' +
+                '<p class="kanban-meta text-base-content/70"><strong>Usuario:</strong> ' + esc(emp.usuario || '—') + '</p>' +
+                '<p class="kanban-meta text-base-content/70"><strong>Área:</strong> ' + esc(emp.departamento || '—') + '</p>' +
+                '<p class="kanban-meta text-base-content/70"><strong>Estado:</strong> ' + esc(emp.estado || '—') + '</p>' +
+              '</div>' +
             '</article>';
           }).join('')
         : '<p class="text-sm text-base-content/60">Sin registros.</p>';
-      return '<div class="rounded-box border border-base-300 bg-base-200 p-3 grid gap-2">' +
-        '<h4 class="font-semibold text-base-content">' + esc(key) + '</h4>' +
-        cards +
+      return '<div class="rounded-box border border-base-300 bg-base-200/60 p-3 grid gap-3">' +
+        '<h4 class="font-semibold text-[color:var(--sidebar-bottom)]">' + esc(key) + '</h4>' +
+        '<div class="kanban">' + cards + '</div>' +
       '</div>';
     }).join('');
     mount.innerHTML = '' +
@@ -1764,7 +1811,7 @@
           department: String(row.departamento || 'Sin departamento'),
           position: String(row.puesto || 'Sin puesto'),
           manager: String(row.jefe || 'Sin jefe inmediato'),
-          image: String(row.imagen || '').trim(),
+          image: resolveColaboradorImage(row.imagen),
           status: String(row.estado || 'Activo')
         };
       });
@@ -1780,7 +1827,7 @@
           department: '',
           position: '',
           manager: '',
-          image: '',
+          image: DEFAULT_COLAB_AVATAR,
           status: 'Activo'
         });
         nodes = nodes.map(function (n) {
@@ -1822,12 +1869,10 @@
         })
         .nodeContent(function (d) {
           var item = d && d.data ? d.data : {};
-          var imageHtml = item.image
-            ? '<img src="' + esc(item.image) + '" alt="' + esc(item.name || 'Colaborador') + '" style="width:100%;height:100%;object-fit:cover;display:block;">'
-            : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:800;color:#ffffff;">' + esc((item.name || '?').charAt(0).toUpperCase()) + '</div>';
+          var imageHtml = '<img src="' + esc(resolveColaboradorImage(item.image)) + '" alt="' + esc(item.name || 'Colaborador') + '" style="width:100%;height:100%;object-fit:cover;display:block;">';
           return ''
             + '<div style="display:grid;grid-template-columns:92px 1fr;height:158px;border:1px solid #dbe2ea;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 14px rgba(15,23,42,.12);font-family:inherit;">'
-            +   '<div style="background:#0f172a;display:flex;align-items:center;justify-content:center;overflow:hidden;">' + imageHtml + '</div>'
+            +   '<div style="background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">' + imageHtml + '</div>'
             +   '<div style="padding:12px;display:grid;gap:5px;align-content:start;">'
             +     '<div style="font-size:22px;font-weight:800;color:#0f172a;line-height:1.08;">' + esc(item.name || 'Colaborador') + '</div>'
             +     '<div style="font-size:14px;color:#334155;"><strong>Puesto:</strong> ' + esc(item.position || 'Sin puesto') + '</div>'
