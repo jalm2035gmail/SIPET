@@ -87,11 +87,7 @@ def _resolve_default_database_url() -> str:
 
 
 def _load_host_database_map() -> Dict[str, str]:
-    mapping: Dict[str, str] = {
-        "avancoop.org": "avandbcoop.db",
-        "www.avancoop.org": "avandbcoop.db",
-        "cajapolotitlan.circulocooperativo.com": "strategic_planning_development.db",
-    }
+    mapping: Dict[str, str] = {}
     raw_json = (os.environ.get("HOST_DATABASE_MAP_JSON") or "").strip()
     if raw_json:
         try:

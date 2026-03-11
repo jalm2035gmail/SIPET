@@ -73,6 +73,7 @@
   var modal = document.getElementById('usuarios-access-modal');
   var modalBackdrop = document.getElementById('usuarios-access-backdrop');
   var modalCloseBtn = document.getElementById('usuarios-modal-close');
+  var initialPayloadNode = document.getElementById('usuarios-initial-data');
   if (!viewHost || !formHost) return;
 
   var usuarios = [];
@@ -754,20 +755,42 @@
     });
   });
 
-  fetch('/api/colaboradores', { headers: { Accept: 'application/json' } })
-    .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
+  function applyUsuariosPayload(payload) {
+    if (!payload || payload.success === false) {
+      throw new Error((payload && payload.error) || 'No se pudieron cargar usuarios');
+    }
+    usuarios = Array.isArray(payload.data) ? payload.data : [];
+    assignableRoles = Array.isArray(payload.assignable_roles) ? payload.assignable_roles : [];
+    renderCurrentView();
+    renderForm();
+  }
+
+  function showUsuariosError(error) {
+    viewHost.innerHTML = '<article class="card bg-base-100 border border-base-300 shadow-sm"><div class="card-body"><p class="text-sm text-error">' + esc(error && error.message ? error.message : 'No se pudieron cargar usuarios.') + '</p></div></article>';
+    formHost.innerHTML = '<p class="text-sm text-error">No se pudieron cargar los usuarios.</p>';
+  }
+
+  try {
+    var initialPayload = initialPayloadNode ? JSON.parse(initialPayloadNode.textContent || '{}') : null;
+    if (initialPayload && initialPayload.success) {
+      applyUsuariosPayload(initialPayload);
+      return;
+    }
+  } catch (error) {}
+
+  fetch('/api/colaboradores', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    .then(async function (res) {
+      const raw = await res.text();
+      let json = null;
+      try { json = raw ? JSON.parse(raw) : {}; } catch (err) {}
+      return { ok: res.ok, json: json, raw: raw };
+    })
     .then(function (result) {
       if (!result.ok || !result.json || result.json.success === false) {
-        throw new Error('No se pudieron cargar usuarios');
+        throw new Error((result.json && result.json.error) || 'No se pudieron cargar usuarios');
       }
-      usuarios = Array.isArray(result.json.data) ? result.json.data : [];
-      assignableRoles = Array.isArray(result.json.assignable_roles) ? result.json.assignable_roles : [];
-      renderCurrentView();
-      renderForm();
+      applyUsuariosPayload(result.json);
     })
-    .catch(function (error) {
-      viewHost.innerHTML = '<article class="card bg-base-100 border border-base-300 shadow-sm"><div class="card-body"><p class="text-sm text-error">' + esc(error && error.message ? error.message : 'No se pudieron cargar usuarios.') + '</p></div></article>';
-      formHost.innerHTML = '<p class="text-sm text-error">No se pudieron cargar los usuarios.</p>';
-    });
+    .catch(showUsuariosError);
 })();
 </script>

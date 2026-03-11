@@ -2,6 +2,7 @@ import os
 import uuid
 import json
 import re
+import traceback
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -359,6 +360,16 @@ def _is_admin_role(role_name: str) -> bool:
     return role in {"superadministrador", "administrador"}
 
 
+def _safe_sensitive_text(value: Any, decrypt_fn) -> str:
+    try:
+        return str(decrypt_fn(value) or "").strip()
+    except Exception:
+        raw = str(value or "").strip()
+        if raw.startswith("enc$"):
+            return ""
+        return raw
+
+
 def _allowed_role_assignments(viewer_role: str) -> set[str]:
     role = (viewer_role or "").strip().lower()
     if role == "admin":
@@ -390,8 +401,7 @@ EMPRESA_USUARIOS_TEMPLATE_PATH = os.path.join(
 )
 
 
-@router.get("/api/colaboradores", response_class=JSONResponse)
-def api_listar_colaboradores(request: Request):
+def _build_colaboradores_payload(request: Request) -> Dict[str, Any]:
     # Import diferido para evitar importación circular con fastapi_modulo.main.
     from fastapi_modulo.main import Usuario, Rol, _decrypt_sensitive, normalize_role_name
 
@@ -405,58 +415,56 @@ def api_listar_colaboradores(request: Request):
         assignable_roles = sorted(_allowed_role_assignments(viewer_role))
         data: List[Dict[str, Any]] = []
         for u in rows:
-            meta_entry = meta.get(str(u.id), {})
-            aliases = {
-                str(u.nombre or "").strip().lower(),
-                str(_decrypt_sensitive(u.usuario) or "").strip().lower(),
-            }
-            aliases.discard("")
-            allowed_kpis: List[Dict[str, Any]] = []
-            allowed_ids = set()
-            selected_kpis = _normalize_colaborador_kpis(meta_entry.get("kpis", []), allowed_ids)
-            selected_kpis = []
-            data.append(
-                {
-                    **_serialize_access_settings(meta_entry),
-                    "id": u.id,
-                    "nombre": u.nombre or "",
-                    "usuario": (_decrypt_sensitive(u.usuario) or "").strip(),
-                    "correo": (_decrypt_sensitive(u.correo) or "").strip(),
-                    "departamento": u.departamento or "",
-                    "imagen": u.imagen or "",
-                    "jefe_inmediato_id": getattr(u, "jefe_inmediato_id", None),
-                    "jefe": (
-                        names_by_id.get(getattr(u, "jefe_inmediato_id", None))
-                        or u.jefe
-                        or ""
-                    ),
-                    "puesto": u.puesto or "",
-                    "rol": (
-                        roles_by_id.get(u.rol_id)
-                        or normalize_role_name(getattr(u, "role", "") or "usuario")
-                        or "usuario"
-                    ),
-                    "colaborador": bool(meta_entry.get("colaborador", False)),
-                    "menu_blocks": meta_entry.get("menu_blocks", []),
-                    "poa_access_level": _normalize_poa_access_level(meta_entry.get("poa_access_level", "mis_tareas")),
-                    "web_roles": meta_entry.get("web_roles", []),
-                    "eficiencia": meta_entry.get("eficiencia", None),
-                    "cv_contacto": _normalize_cv_contacto(meta_entry.get("cv_contacto", {})),
-                    "cv_perfil_profesional": meta_entry.get("cv_perfil_profesional", ""),
-                    "cv_experiencia": meta_entry.get("cv_experiencia", []),
-                    "cv_educacion": meta_entry.get("cv_educacion", []),
-                    "cv_habilidades": meta_entry.get("cv_habilidades", {"tecnicas": [], "blandas": []}),
-                    "cv_idiomas": meta_entry.get("cv_idiomas", []),
-                    "cv_formacion": meta_entry.get("cv_formacion", []),
-                    "cv_logros": meta_entry.get("cv_logros", []),
-                    "cv_publicaciones": meta_entry.get("cv_publicaciones", []),
-                    "cv_voluntariado": meta_entry.get("cv_voluntariado", []),
-                    "cv_info_adicional": meta_entry.get("cv_info_adicional", {}),
-                    "kpis": selected_kpis,
-                    "kpi_catalog": allowed_kpis,
-                    "estado": "Activo" if getattr(u, "is_active", True) else "Inactivo",
-                }
-            )
+            try:
+                meta_entry = meta.get(str(u.id), {})
+                allowed_kpis: List[Dict[str, Any]] = []
+                allowed_ids = set()
+                selected_kpis = _normalize_colaborador_kpis(meta_entry.get("kpis", []), allowed_ids)
+                selected_kpis = []
+                data.append(
+                    {
+                        **_serialize_access_settings(meta_entry),
+                        "id": u.id,
+                        "nombre": u.nombre or "",
+                        "usuario": _safe_sensitive_text(u.usuario, _decrypt_sensitive),
+                        "correo": _safe_sensitive_text(u.correo, _decrypt_sensitive),
+                        "departamento": u.departamento or "",
+                        "imagen": u.imagen or "",
+                        "jefe_inmediato_id": getattr(u, "jefe_inmediato_id", None),
+                        "jefe": (
+                            names_by_id.get(getattr(u, "jefe_inmediato_id", None))
+                            or u.jefe
+                            or ""
+                        ),
+                        "puesto": u.puesto or "",
+                        "rol": (
+                            roles_by_id.get(u.rol_id)
+                            or normalize_role_name(getattr(u, "role", "") or "usuario")
+                            or "usuario"
+                        ),
+                        "colaborador": bool(meta_entry.get("colaborador", False)),
+                        "menu_blocks": meta_entry.get("menu_blocks", []),
+                        "poa_access_level": _normalize_poa_access_level(meta_entry.get("poa_access_level", "mis_tareas")),
+                        "web_roles": meta_entry.get("web_roles", []),
+                        "eficiencia": meta_entry.get("eficiencia", None),
+                        "cv_contacto": _normalize_cv_contacto(meta_entry.get("cv_contacto", {})),
+                        "cv_perfil_profesional": meta_entry.get("cv_perfil_profesional", ""),
+                        "cv_experiencia": meta_entry.get("cv_experiencia", []),
+                        "cv_educacion": meta_entry.get("cv_educacion", []),
+                        "cv_habilidades": meta_entry.get("cv_habilidades", {"tecnicas": [], "blandas": []}),
+                        "cv_idiomas": meta_entry.get("cv_idiomas", []),
+                        "cv_formacion": meta_entry.get("cv_formacion", []),
+                        "cv_logros": meta_entry.get("cv_logros", []),
+                        "cv_publicaciones": meta_entry.get("cv_publicaciones", []),
+                        "cv_voluntariado": meta_entry.get("cv_voluntariado", []),
+                        "cv_info_adicional": meta_entry.get("cv_info_adicional", {}),
+                        "kpis": selected_kpis,
+                        "kpi_catalog": allowed_kpis,
+                        "estado": "Activo" if getattr(u, "is_active", True) else "Inactivo",
+                    }
+                )
+            except Exception as row_exc:
+                print(f"[api_colaboradores] Omitiendo usuario {getattr(u, 'id', 's/id')}: {row_exc}")
         can_view_all = _is_admin_role(viewer_role)
         viewer_username = (getattr(request.state, "user_name", None) or "").strip().lower()
         if viewer_role == "superadministrador":
@@ -479,6 +487,21 @@ def api_listar_colaboradores(request: Request):
         }
     finally:
         db.close()
+
+
+@router.get("/api/colaboradores", response_class=JSONResponse)
+def api_listar_colaboradores(request: Request):
+    try:
+        return _build_colaboradores_payload(request)
+    except Exception as exc:
+        print(f"[api_colaboradores] Error listando colaboradores: {exc}\n{traceback.format_exc()}")
+        return JSONResponse(
+            {
+                "success": False,
+                "error": "No se pudieron cargar los usuarios.",
+            },
+            status_code=500,
+        )
 
 
 @router.get("/api/colaboradores/organigrama", response_class=JSONResponse)
@@ -1168,11 +1191,19 @@ def _render_empresa_usuarios_page(request: Request) -> HTMLResponse:
             show_page_header=False,
             floating_actions_screen="none",
         )
+    initial_payload = {"success": False, "data": [], "assignable_roles": [], "error": "No se pudieron cargar los usuarios."}
+    try:
+        initial_payload = _build_colaboradores_payload(request)
+    except Exception as exc:
+        print(f"[empresa_usuarios_page] Error preparando payload inicial: {exc}\n{traceback.format_exc()}")
     return render_backend_page(
         request,
         title="Usuarios",
         description="Administración de accesos de usuarios",
-        content=_load_empresa_usuarios_template(),
+        content=(
+            f'<script id="usuarios-initial-data" type="application/json">{json.dumps(initial_payload, ensure_ascii=False)}</script>'
+            + _load_empresa_usuarios_template()
+        ),
         hide_floating_actions=True,
         show_page_header=False,
         floating_actions_screen="none",

@@ -1525,6 +1525,7 @@ def ensure_demo_admin_user_seed() -> None:
 
 
 def ensure_default_strategic_axes_data() -> None:
+    ensure_strategic_axes_schema()
     default_axes = [
         (
             "Gobernanza y cumplimiento",
@@ -1654,6 +1655,12 @@ def ensure_strategic_axes_schema() -> None:
         if not table_exists:
             return
         cols = {row[1] for row in conn.execute('PRAGMA table_info("strategic_axes_config")').fetchall()}
+        if "tenant_id" not in cols:
+            conn.execute('ALTER TABLE "strategic_axes_config" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"')
+            conn.execute('UPDATE "strategic_axes_config" SET tenant_id = "default" WHERE tenant_id IS NULL OR tenant_id = ""')
+        conn.execute(
+            'CREATE INDEX IF NOT EXISTS "ix_strategic_axes_config_tenant_id" ON "strategic_axes_config" ("tenant_id")'
+        )
         if "codigo" not in cols:
             conn.execute('ALTER TABLE "strategic_axes_config" ADD COLUMN "codigo" VARCHAR DEFAULT ""')
         if "lider_departamento" not in cols:
@@ -1669,6 +1676,14 @@ def ensure_strategic_axes_schema() -> None:
         ).fetchone()
         if objectives_table_exists:
             obj_cols = {row[1] for row in conn.execute('PRAGMA table_info("strategic_objectives_config")').fetchall()}
+            if "tenant_id" not in obj_cols:
+                conn.execute('ALTER TABLE "strategic_objectives_config" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"')
+                conn.execute(
+                    'UPDATE "strategic_objectives_config" SET tenant_id = COALESCE((SELECT tenant_id FROM strategic_axes_config a WHERE a.id = strategic_objectives_config.eje_id), "default") WHERE tenant_id IS NULL OR tenant_id = ""'
+                )
+            conn.execute(
+                'CREATE INDEX IF NOT EXISTS "ix_strategic_objectives_config_tenant_id" ON "strategic_objectives_config" ("tenant_id")'
+            )
             if "hito" not in obj_cols:
                 conn.execute('ALTER TABLE "strategic_objectives_config" ADD COLUMN "hito" VARCHAR DEFAULT ""')
             if "lider" not in obj_cols:
@@ -1682,6 +1697,14 @@ def ensure_strategic_axes_schema() -> None:
         ).fetchone()
         if poa_activities_exists:
             poa_cols = {row[1] for row in conn.execute('PRAGMA table_info("poa_activities")').fetchall()}
+            if "tenant_id" not in poa_cols:
+                conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"')
+                conn.execute(
+                    'UPDATE "poa_activities" SET tenant_id = COALESCE((SELECT tenant_id FROM strategic_objectives_config o WHERE o.id = poa_activities.objective_id), "default") WHERE tenant_id IS NULL OR tenant_id = ""'
+                )
+            conn.execute(
+                'CREATE INDEX IF NOT EXISTS "ix_poa_activities_tenant_id" ON "poa_activities" ("tenant_id")'
+            )
             if "fecha_inicial" not in poa_cols:
                 conn.execute('ALTER TABLE "poa_activities" ADD COLUMN "fecha_inicial" DATE')
             if "fecha_final" not in poa_cols:
@@ -1709,6 +1732,14 @@ def ensure_strategic_axes_schema() -> None:
         ).fetchone()
         if poa_subactivities_exists:
             poa_sub_cols = {row[1] for row in conn.execute('PRAGMA table_info("poa_subactivities")').fetchall()}
+            if "tenant_id" not in poa_sub_cols:
+                conn.execute('ALTER TABLE "poa_subactivities" ADD COLUMN "tenant_id" VARCHAR DEFAULT "default"')
+                conn.execute(
+                    'UPDATE "poa_subactivities" SET tenant_id = COALESCE((SELECT tenant_id FROM poa_activities a WHERE a.id = poa_subactivities.activity_id), "default") WHERE tenant_id IS NULL OR tenant_id = ""'
+                )
+            conn.execute(
+                'CREATE INDEX IF NOT EXISTS "ix_poa_subactivities_tenant_id" ON "poa_subactivities" ("tenant_id")'
+            )
             if "fecha_inicial" not in poa_sub_cols:
                 conn.execute('ALTER TABLE "poa_subactivities" ADD COLUMN "fecha_inicial" DATE')
             if "fecha_final" not in poa_sub_cols:
@@ -6692,8 +6723,13 @@ def _format_bytes(size: int) -> str:
 
 def _ensure_update_runtime_dir() -> Path:
     path = Path(UPDATE_LOG_DIR)
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+    except OSError:
+        fallback = Path("/tmp") / "sipet_updates" / APP_ENV
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
 
 
 def _get_update_files(host: str) -> Dict[str, Path]:

@@ -115,7 +115,7 @@ python -m pytest fastapi_modulo/modulos/crm/test_crm_phase6.py -v
 
 ## Deploy
 
-El módulo se incluye automáticamente en el `rsync` de `deploy-sipet.sh` — no requiere pasos adicionales.
+El módulo se incluye automáticamente en el `rsync` de `deploy-polo.sh` — no requiere pasos adicionales.
 
 Las 6 tablas CRM se crean en el primer request que llega al módulo (`ensure_crm_schema()` en `crm_store._db()`), por lo que no hay migración Alembic requerida.
 
