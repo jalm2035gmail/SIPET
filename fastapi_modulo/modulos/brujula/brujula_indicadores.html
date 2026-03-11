@@ -42,83 +42,25 @@
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="card-title">Descripcion de indicadores</h2>
-          <p class="text-base-content/70">Selecciona un indicador de la lista para consultar su definicion fija.</p>
+          <p class="text-base-content/70">Catalogo fijo del sistema con nombre, meta y semaforos de referencia.</p>
         </div>
       </div>
 
       <div id="brujula-kpi-msg" class="text-sm text-base-content/70 min-h-[1.25rem]" aria-live="polite"></div>
-
-      <section id="brujula-kpi-list" class="grid gap-3"></section>
-
-      <section id="brujula-kpi-form" class="hidden">
-        <div class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h3 class="text-lg font-semibold" id="brujula-kpi-form-title">Detalle del indicador</h3>
-            <div class="flex flex-wrap gap-2">
-              <button type="button" class="btn btn-ghost btn-sm" id="brujula-kpi-cancel">Cerrar</button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Nombre</span></div>
-              <input id="brujula-kpi-nombre" class="input input-bordered w-full" type="text" placeholder="Ingresos por venta" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Responsable</span></div>
-              <input id="brujula-kpi-responsable" class="input input-bordered w-full" type="text" placeholder="Director Comercial" readonly>
-            </label>
-            <label class="form-control w-full md:col-span-2 xl:col-span-3">
-              <div class="label"><span class="label-text font-semibold">Descripcion</span></div>
-              <textarea id="brujula-kpi-descripcion" class="textarea textarea-bordered w-full" rows="3" readonly></textarea>
-            </label>
-            <label class="form-control w-full md:col-span-2 xl:col-span-3">
-              <div class="label"><span class="label-text font-semibold">Objetivo</span></div>
-              <textarea id="brujula-kpi-objetivo" class="textarea textarea-bordered w-full" rows="3" readonly></textarea>
-            </label>
-            <label class="form-control w-full md:col-span-2 xl:col-span-3">
-              <div class="label"><span class="label-text font-semibold">Formula</span></div>
-              <textarea id="brujula-kpi-formula" class="textarea textarea-bordered w-full" rows="3" readonly></textarea>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Fuente de datos</span></div>
-              <input id="brujula-kpi-fuente" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Unidad</span></div>
-              <input id="brujula-kpi-unidad" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Frecuencia</span></div>
-              <input id="brujula-kpi-frecuencia" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Linea base</span></div>
-              <input id="brujula-kpi-linea-base" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Estandar / Meta</span></div>
-              <input id="brujula-kpi-meta" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Categoria</span></div>
-              <input id="brujula-kpi-categoria" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Perspectiva</span></div>
-              <input id="brujula-kpi-perspectiva" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Semaforo rojo</span></div>
-              <input id="brujula-kpi-rojo" class="input input-bordered w-full" type="text" readonly>
-            </label>
-            <label class="form-control w-full">
-              <div class="label"><span class="label-text font-semibold">Semaforo verde</span></div>
-              <input id="brujula-kpi-verde" class="input input-bordered w-full" type="text" readonly>
-            </label>
-          </div>
-        </div>
-      </section>
+      <div class="overflow-x-auto rounded-box border border-base-300">
+        <table class="table table-zebra w-full text-sm">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th class="text-right">Meta</th>
+              <th class="text-right">Srojo</th>
+              <th class="text-right">Sverde</th>
+              <th class="w-32">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="brujula-kpi-list"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 </section>
@@ -137,29 +79,11 @@
 
   const kpiMsgEl = document.getElementById('brujula-kpi-msg');
   const kpiListEl = document.getElementById('brujula-kpi-list');
-  const kpiFormEl = document.getElementById('brujula-kpi-form');
-  const kpiFormTitleEl = document.getElementById('brujula-kpi-form-title');
-  const kpiNombreEl = document.getElementById('brujula-kpi-nombre');
-  const kpiResponsableEl = document.getElementById('brujula-kpi-responsable');
-  const kpiDescripcionEl = document.getElementById('brujula-kpi-descripcion');
-  const kpiObjetivoEl = document.getElementById('brujula-kpi-objetivo');
-  const kpiFormulaEl = document.getElementById('brujula-kpi-formula');
-  const kpiFuenteEl = document.getElementById('brujula-kpi-fuente');
-  const kpiUnidadEl = document.getElementById('brujula-kpi-unidad');
-  const kpiFrecuenciaEl = document.getElementById('brujula-kpi-frecuencia');
-  const kpiLineaBaseEl = document.getElementById('brujula-kpi-linea-base');
-  const kpiMetaEl = document.getElementById('brujula-kpi-meta');
-  const kpiCategoriaEl = document.getElementById('brujula-kpi-categoria');
-  const kpiPerspectivaEl = document.getElementById('brujula-kpi-perspectiva');
-  const kpiRojoEl = document.getElementById('brujula-kpi-rojo');
-  const kpiVerdeEl = document.getElementById('brujula-kpi-verde');
-  const kpiCancelBtn = document.getElementById('brujula-kpi-cancel');
 
   let matrixPeriods = [];
   let matrixRows = [];
   let kpiDefinitionsCache = [];
-  let editingIndicatorId = 0;
-  const pageQuery = new URLSearchParams(window.location.search || '');
+  const kpiSaveTimers = {};
 
   const escapeHtml = (value) => String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -167,6 +91,41 @@
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+  const parseComparableNumber = (value) => {
+    const raw = String(value ?? '').replace(/,/g, '').replace(/%/g, '').trim();
+    if (!raw) return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const parseMetaRule = (meta) => {
+    const raw = String(meta ?? '').trim();
+    if (!raw || /^n\/a$/i.test(raw)) return null;
+    const match = raw.match(/^(>=|<=|>|<|=)?\s*(-?\d+(?:\.\d+)?)\s*%?$/);
+    if (!match) return null;
+    return {
+      operator: match[1] || '>=',
+      target: Number(match[2]),
+    };
+  };
+
+  const evaluateMetaRule = (value, meta) => {
+    const numericValue = parseComparableNumber(value);
+    const rule = parseMetaRule(meta);
+    if (numericValue === null || !rule) return null;
+    if (rule.operator === '>=') return numericValue >= rule.target;
+    if (rule.operator === '<=') return numericValue <= rule.target;
+    if (rule.operator === '>') return numericValue > rule.target;
+    if (rule.operator === '<') return numericValue < rule.target;
+    if (rule.operator === '=') return numericValue === rule.target;
+    return null;
+  };
+
+  const getMetaByIndicator = (name) => {
+    const item = kpiDefinitionsCache.find((current) => String(current?.nombre || '').trim().toLowerCase() === String(name || '').trim().toLowerCase());
+    return String(item?.estandar_meta || '').trim();
+  };
 
   const showMatrixMsg = (text, isError = false) => {
     if (!matrixMsgEl) return;
@@ -225,7 +184,20 @@
         <td><div class="font-medium text-base-content">${escapeHtml(row.indicador)}</div></td>
         ${matrixPeriods.map((period) => `
           <td class="text-right">
-            <input class="input input-bordered input-sm w-full text-right" value="${escapeHtml(row.values[period.key] || '')}" readonly tabindex="-1">
+            <input
+              class="input input-bordered input-sm w-full text-right"
+              style="${(() => {
+                const currentValue = String(row.values[period.key] || '').trim();
+                if (!currentValue) return 'text-align:right';
+                const meetsMeta = evaluateMetaRule(currentValue, getMetaByIndicator(row.indicador));
+                if (meetsMeta === true) return 'text-align:right;color:#166534';
+                if (meetsMeta === false) return 'text-align:right;color:#b91c1c';
+                return 'text-align:right';
+              })()}"
+              value="${escapeHtml(row.values[period.key] || '')}"
+              readonly
+              tabindex="-1"
+            >
           </td>
         `).join('')}
       </tr>
@@ -252,107 +224,102 @@
   const normalizeKpi = (item) => ({
     id: Number(item?.id || 0) || 0,
     nombre: String(item?.nombre || '').trim(),
-    descripcion: String(item?.descripcion || '').trim(),
-    objetivo: String(item?.objetivo || '').trim(),
-    formula: String(item?.formula || '').trim(),
-    responsable: String(item?.responsable || '').trim(),
-    fuente_datos: String(item?.fuente_datos || '').trim(),
-    unidad: String(item?.unidad || '').trim(),
-    frecuencia: String(item?.frecuencia || '').trim(),
-    linea_base: String(item?.linea_base || '').trim(),
     estandar_meta: String(item?.estandar_meta || '').trim(),
     semaforo_rojo: String(item?.semaforo_rojo || '').trim(),
     semaforo_verde: String(item?.semaforo_verde || '').trim(),
-    categoria: String(item?.categoria || '').trim(),
-    perspectiva: String(item?.perspectiva || '').trim(),
   });
-
-  const clearKpiForm = () => {
-    editingIndicatorId = 0;
-    kpiNombreEl.value = '';
-    kpiResponsableEl.value = '';
-    kpiDescripcionEl.value = '';
-    kpiObjetivoEl.value = '';
-    kpiFormulaEl.value = '';
-    kpiFuenteEl.value = '';
-    kpiUnidadEl.value = '';
-    kpiFrecuenciaEl.value = '';
-    kpiLineaBaseEl.value = '';
-    kpiMetaEl.value = '';
-    kpiCategoriaEl.value = '';
-    kpiPerspectivaEl.value = '';
-    kpiRojoEl.value = '';
-    kpiVerdeEl.value = '';
-    kpiFormTitleEl.textContent = 'Detalle del indicador';
-  };
-
-  const showKpiForm = (item = null) => {
-    if (!kpiFormEl) return;
-    kpiFormEl.classList.remove('hidden');
-    if (!item) {
-      clearKpiForm();
-      return;
-    }
-    editingIndicatorId = Number(item.id || 0);
-    kpiNombreEl.value = item.nombre || '';
-    kpiResponsableEl.value = item.responsable || '';
-    kpiDescripcionEl.value = item.descripcion || '';
-    kpiObjetivoEl.value = item.objetivo || '';
-    kpiFormulaEl.value = item.formula || '';
-    kpiFuenteEl.value = item.fuente_datos || '';
-    kpiUnidadEl.value = item.unidad || '';
-    kpiFrecuenciaEl.value = item.frecuencia || '';
-    kpiLineaBaseEl.value = item.linea_base || '';
-    kpiMetaEl.value = item.estandar_meta || '';
-    kpiCategoriaEl.value = item.categoria || '';
-    kpiPerspectivaEl.value = item.perspectiva || '';
-    kpiRojoEl.value = item.semaforo_rojo || '';
-    kpiVerdeEl.value = item.semaforo_verde || '';
-    kpiFormTitleEl.textContent = `Indicador: ${item.nombre || 'Sin nombre'}`;
-  };
-
-  const selectKpiFromQuery = () => {
-    const tab = String(pageQuery.get('tab') || '').trim();
-    const indicator = String(pageQuery.get('indicator') || '').trim().toLowerCase();
-    if (tab === 'desc') {
-      setTab('desc');
-    }
-    if (!indicator) return;
-    const target = kpiDefinitionsCache.find((item) => String(item?.nombre || '').trim().toLowerCase() === indicator);
-    if (target) {
-      showKpiForm(target);
-      setTab('desc');
-    }
-  };
 
   const renderKpiList = () => {
     const rows = kpiDefinitionsCache.slice();
     if (!rows.length) {
-      kpiListEl.innerHTML = '<div class="text-base-content/60">Sin indicadores registrados.</div>';
+      kpiListEl.innerHTML = '<tr><td colspan="5" class="text-base-content/60">Sin indicadores registrados.</td></tr>';
       return;
     }
     kpiListEl.innerHTML = rows.map((item) => `
-      <button type="button" class="card border border-base-300 bg-base-100 text-left hover:border-primary/30 hover:bg-base-200 transition" data-kpi-open="${item.id}">
-        <div class="card-body p-4 gap-2">
-          <div class="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h3 class="font-semibold text-base-content">${escapeHtml(item.nombre || 'Sin nombre')}</h3>
-              <div class="text-sm text-base-content/60">Catalogo fijo de BRUJULA</div>
-            </div>
-            <span class="badge badge-outline">${escapeHtml(item.frecuencia || 'Sin frecuencia')}</span>
-          </div>
-          <div class="text-sm text-base-content/70">${escapeHtml(item.perspectiva || 'Sin perspectiva')}</div>
-          <div class="text-sm text-base-content/70">Meta: ${escapeHtml(item.estandar_meta || 'Sin meta')}</div>
-        </div>
-      </button>
+      <tr data-kpi-row="${escapeHtml(item.nombre || '')}">
+        <td class="font-medium text-base-content">${escapeHtml(item.nombre || 'Sin nombre')}</td>
+        <td class="text-right">
+          <input class="input input-bordered input-sm w-full text-right" style="text-align:right" data-kpi-field="estandar_meta" data-kpi-name="${escapeHtml(item.nombre || '')}" value="${escapeHtml(item.estandar_meta || '')}">
+        </td>
+        <td class="text-right">
+          <input class="input input-bordered input-sm w-full text-right" style="text-align:right" data-kpi-field="semaforo_rojo" data-kpi-name="${escapeHtml(item.nombre || '')}" value="${escapeHtml(item.semaforo_rojo || '')}">
+        </td>
+        <td class="text-right">
+          <input class="input input-bordered input-sm w-full text-right" style="text-align:right" data-kpi-field="semaforo_verde" data-kpi-name="${escapeHtml(item.nombre || '')}" value="${escapeHtml(item.semaforo_verde || '')}">
+        </td>
+        <td>
+          <span class="text-xs text-base-content/60" data-kpi-status="${escapeHtml(item.nombre || '')}">Listo</span>
+        </td>
+      </tr>
     `).join('');
-    kpiListEl.querySelectorAll('[data-kpi-open]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const targetId = Number(btn.getAttribute('data-kpi-open') || 0);
-        const target = kpiDefinitionsCache.find((item) => Number(item.id || 0) === targetId);
-        if (target) showKpiForm(target);
-      });
+    kpiListEl.querySelectorAll('[data-kpi-field]').forEach((input) => {
+      const triggerSave = () => scheduleKpiSave(String(input.getAttribute('data-kpi-name') || '').trim());
+      input.addEventListener('change', triggerSave);
+      input.addEventListener('blur', triggerSave);
     });
+  };
+
+  const findKpiByName = (name) => kpiDefinitionsCache.find((item) => String(item?.nombre || '').trim() === String(name || '').trim());
+
+  const findKpiElementsByName = (name) => Array.from(kpiListEl.querySelectorAll('[data-kpi-name], [data-kpi-status]')).filter((element) => {
+    const currentName = element.getAttribute('data-kpi-name') || element.getAttribute('data-kpi-status') || '';
+    return String(currentName).trim() === String(name || '').trim();
+  });
+
+  const setKpiStatus = (name, text, isError = false) => {
+    const statusEl = findKpiElementsByName(name).find((element) => element.hasAttribute('data-kpi-status'));
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+  };
+
+  const collectKpiPayload = (name) => {
+    const row = findKpiByName(name);
+    if (!row) return null;
+    const rowInputs = findKpiElementsByName(name).filter((element) => element.hasAttribute('data-kpi-field'));
+    const pick = (field) => String(rowInputs.find((element) => element.getAttribute('data-kpi-field') === field)?.value || '').trim();
+    return {
+      nombre: row.nombre,
+      estandar_meta: pick('estandar_meta'),
+      semaforo_rojo: pick('semaforo_rojo'),
+      semaforo_verde: pick('semaforo_verde'),
+    };
+  };
+
+  const saveKpiRow = async (name) => {
+    const payload = collectKpiPayload(name);
+    if (!payload) return;
+    setKpiStatus(name, 'Guardando...');
+    const response = await fetch('/api/brujula/indicadores/definicion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.success === false) {
+      throw new Error(result?.error || result?.detail || 'No se pudo guardar la configuracion.');
+    }
+    const updated = normalizeKpi(result?.data || payload);
+    kpiDefinitionsCache = kpiDefinitionsCache.map((item) => (
+      String(item?.nombre || '').trim() === updated.nombre ? { ...item, ...updated } : item
+    ));
+    renderMatrixTable();
+    setKpiStatus(name, 'Guardado');
+  };
+
+  const scheduleKpiSave = (name) => {
+    if (!name) return;
+    if (kpiSaveTimers[name]) {
+      window.clearTimeout(kpiSaveTimers[name]);
+    }
+    setKpiStatus(name, 'Pendiente...');
+    kpiSaveTimers[name] = window.setTimeout(() => {
+      saveKpiRow(name).catch((error) => {
+        setKpiStatus(name, error?.message || 'Error al guardar', true);
+        showKpiMsg(error?.message || 'No se pudo guardar la configuracion.', true);
+      });
+    }, 250);
   };
 
   const loadDefinitions = async () => {
@@ -368,26 +335,18 @@
     }
     kpiDefinitionsCache = Array.isArray(payload?.data) ? payload.data.map((item) => normalizeKpi(item)) : [];
     renderKpiList();
+    renderMatrixTable();
     showKpiMsg('');
   };
 
   tabButtons.forEach((btn) => {
     btn.addEventListener('click', () => setTab(btn.getAttribute('data-brujula-ind-tab') || 'matrix'));
   });
-  kpiCancelBtn.addEventListener('click', () => {
-    clearKpiForm();
-    kpiFormEl.classList.add('hidden');
-    showKpiMsg('');
-  });
 
-  clearKpiForm();
-  kpiFormEl.classList.add('hidden');
   setTab('matrix');
   Promise.all([loadMatrix(), loadDefinitions()]).catch((error) => {
     showMatrixMsg(error?.message || 'No se pudo cargar indicadores.', true);
     showKpiMsg(error?.message || 'No se pudo cargar descripciones.', true);
-  }).finally(() => {
-    selectKpiFromQuery();
   });
 })();
 </script>
