@@ -18,19 +18,19 @@
         </div>
         <div class="view-buttons page-view-buttons" id="planes-view-switch">
           <button class="view-pill boton_vista" type="button" data-planes-view="form" data-tooltip="Formulario" aria-label="Formulario">
-            <i class="boton_vista-icono fa-solid fa-window-maximize" aria-hidden="true"></i>
+            <i class="boton_vista-icono view-pill-fa fa-solid fa-window-maximize" aria-hidden="true"></i>
             <span class="view-pill-label boton_vista-label">Form</span>
           </button>
           <button class="view-pill boton_vista active" type="button" data-planes-view="list" data-tooltip="Lista" aria-label="Lista">
-            <i class="boton_vista-icono fa-solid fa-table-cells" aria-hidden="true"></i>
+            <i class="boton_vista-icono view-pill-fa fa-solid fa-table-cells" aria-hidden="true"></i>
             <span class="view-pill-label boton_vista-label">List</span>
           </button>
           <button class="view-pill boton_vista" type="button" data-planes-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
-            <i class="boton_vista-icono fa-solid fa-table-columns" aria-hidden="true"></i>
+            <i class="boton_vista-icono view-pill-fa fa-solid fa-table-columns" aria-hidden="true"></i>
             <span class="view-pill-label boton_vista-label">Kanban</span>
           </button>
           <button class="view-pill boton_vista" type="button" data-planes-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
-            <i class="boton_vista-icono fa-solid fa-sitemap" aria-hidden="true"></i>
+            <i class="boton_vista-icono view-pill-fa fa-solid fa-sitemap" aria-hidden="true"></i>
             <span class="view-pill-label boton_vista-label">Organigrama</span>
           </button>
         </div>
@@ -358,7 +358,7 @@
                       <div class="planes-obj-head">
                         <h4 id="planes-objetivos-selected-axis-title" class="planes-obj-title">Objetivos: sin eje seleccionado</h4>
                         <div class="view-buttons" style="margin:0;">
-                          <button type="button" id="planes-add-objective-btn" class="boton_vista boton_vista-eliptico active">Agregar objetivo</button>
+                          <button type="button" id="planes-add-objective-btn" class="boton_vista boton_vista-eliptico active">+</button>
                         </div>
                       </div>
                       <!-- Formulario inline de objetivo -->
@@ -428,13 +428,18 @@
             </section>
           </div>
           <div class="card-body hidden" id="planes-view-kanban">
-            <h2 class="card-title">Vista Kanban</h2>
-            <p class="text-base-content/70">Módulo en transición DaisyUI. Esta vista confirma estructura Kanban para Plan estratégico.</p>
+            <div class="grid gap-4">
+              <div>
+                <h2 class="card-title">Vista Kanban</h2>
+                <p class="text-base-content/70">Seguimiento visual de ejes estratégicos por nivel de definición y avance.</p>
+              </div>
+              <div id="planes-kanban-board" class="grid gap-4 xl:grid-cols-4 md:grid-cols-2"></div>
+            </div>
           </div>
           <div class="card-body hidden" id="planes-view-organigrama">
             <h2 class="card-title">Vista Organigrama</h2>
             <p class="text-base-content/70">Visualiza la relación entre misión, visión, líneas, ejes y objetivos.</p>
-            <div id="planes-organigrama-host" class="departamentos-page w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3"></div>
+            <div id="planes-organigrama-host" class="departamentos-page org-chart-wrap w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3"></div>
           </div>
         </article>
       </section>

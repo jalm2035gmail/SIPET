@@ -95,6 +95,25 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 HIDDEN_SYSTEM_USERS = {"0konomiyaki"}
 PROCESS_STARTED_AT = time.time()
 SIPET_VERSION = "1.00.00"
+SYSTEM_APP_ACCESS_OPTIONS = (
+    "Mi tablero",
+    "Conversaciones",
+    "BSC",
+    "Organización",
+    "Estrategia y táctica",
+    "Datos financieros",
+    "Control y seguimiento",
+    "KPIs",
+    "Reportes",
+    "Empresa",
+    "Intelicoop",
+    "Brújula",
+    "CRM",
+    "Auditoria",
+    "ActivoFijo",
+    "Multiempresa",
+    "Capacitacion",
+)
 APP_ENV_DEFAULT = (os.environ.get("APP_ENV") or os.environ.get("ENVIRONMENT") or "development").strip().lower()
 DEFAULT_SIPET_DATA_DIR = (os.environ.get("SIPET_DATA_DIR") or os.path.expanduser("~/.sipet/data")).strip()
 RUNTIME_STORE_DIR = (os.environ.get("RUNTIME_STORE_DIR") or f"fastapi_modulo/runtime_store/{APP_ENV_DEFAULT}").strip()
@@ -416,6 +435,8 @@ def is_superadmin(request: Request) -> bool:
 def _get_user_app_access(request: Request) -> list:
     """Return the app_access list for the current session user (from colab meta JSON)."""
     try:
+        if is_superadmin(request):
+            return list(SYSTEM_APP_ACCESS_OPTIONS)
         username = getattr(request.state, "user_name", None) or ""
         if not username:
             return []
@@ -981,6 +1002,7 @@ def _render_backend_base(
         "login_logo_url": login_identity.get("login_logo_url"),
         "sidebar_logo_url": sidebar_logo_url,
         "user_app_access": _get_user_app_access(request),
+        "app_env": APP_ENV,
         "is_superadmin_user": is_superadmin(request),
         "is_admin_or_superadmin_user": is_admin_or_superadmin(request),
     }
@@ -2108,7 +2130,7 @@ def healthcheck_liveness():
     return {"status": "ok", "service": "avancoop"}
 
 
-def _not_found_context(request: Request, title: str = "Pagina no encontrada") -> Dict[str, str]:
+def _not_found_context(request: Request, title: str = "Pagina no existe") -> Dict[str, str]:
     login_identity = _get_login_identity_context()
     colores = get_colores_context()
     sidebar_top_color = (colores.get("sidebar-top") or "#1f2a3d").strip()

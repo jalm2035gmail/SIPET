@@ -1,4 +1,4 @@
-<section id="departamentos-module" class="w-full space-y-6">
+<section id="departamentos-module" class="departamentos-page w-full space-y-6">
   <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
     <div class="w-full flex flex-col md:flex-row items-center gap-10">
       <img
@@ -212,7 +212,7 @@
       <div id="dep-org-card" class="hidden card bg-base-100 border border-base-300 shadow-sm">
         <div class="card-body">
           <h3 class="card-title">Organigrama de áreas</h3>
-          <div id="dep-org-chart" class="w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3"></div>
+          <div id="dep-org-chart" class="org-chart-wrap w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3"></div>
         </div>
       </div>
     </div>
@@ -295,6 +295,109 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/\"/g, "&quot;");
+  }
+
+  function clampColorChannel(value) {
+    return Math.max(0, Math.min(255, Math.round(Number(value) || 0)));
+  }
+
+  function parseCssColorToRgb(raw) {
+    var value = String(raw || "").trim();
+    if (!value) return null;
+    if (value.charAt(0) === "#") {
+      var hex = value.slice(1).trim();
+      if (hex.length === 3) {
+        hex = hex.split("").map(function (char) { return char + char; }).join("");
+      }
+      if (hex.length !== 6) return null;
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16)
+      };
+    }
+    var rgbMatch = value.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+    if (rgbMatch) {
+      return {
+        r: clampColorChannel(rgbMatch[1]),
+        g: clampColorChannel(rgbMatch[2]),
+        b: clampColorChannel(rgbMatch[3])
+      };
+    }
+    return null;
+  }
+
+  function rgbToHex(rgb) {
+    function toHex(channel) {
+      return clampColorChannel(channel).toString(16).padStart(2, "0");
+    }
+    return "#" + toHex(rgb.r) + toHex(rgb.g) + toHex(rgb.b);
+  }
+
+  function rgbToHsl(rgb) {
+    var r = clampColorChannel(rgb.r) / 255;
+    var g = clampColorChannel(rgb.g) / 255;
+    var b = clampColorChannel(rgb.b) / 255;
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var delta = max - min;
+    var h = 0;
+    var l = (max + min) / 2;
+    var s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+    if (delta !== 0) {
+      if (max === r) h = ((g - b) / delta) % 6;
+      else if (max === g) h = (b - r) / delta + 2;
+      else h = (r - g) / delta + 4;
+      h = Math.round(h * 60);
+      if (h < 0) h += 360;
+    }
+    return { h: h, s: s, l: l };
+  }
+
+  function hslToRgb(hsl) {
+    var h = ((Number(hsl.h) || 0) % 360 + 360) % 360;
+    var s = Math.max(0, Math.min(1, Number(hsl.s) || 0));
+    var l = Math.max(0, Math.min(1, Number(hsl.l) || 0));
+    var c = (1 - Math.abs(2 * l - 1)) * s;
+    var x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    var m = l - c / 2;
+    var rPrime = 0;
+    var gPrime = 0;
+    var bPrime = 0;
+    if (h < 60) { rPrime = c; gPrime = x; }
+    else if (h < 120) { rPrime = x; gPrime = c; }
+    else if (h < 180) { gPrime = c; bPrime = x; }
+    else if (h < 240) { gPrime = x; bPrime = c; }
+    else if (h < 300) { rPrime = x; bPrime = c; }
+    else { rPrime = c; bPrime = x; }
+    return {
+      r: clampColorChannel((rPrime + m) * 255),
+      g: clampColorChannel((gPrime + m) * 255),
+      b: clampColorChannel((bPrime + m) * 255)
+    };
+  }
+
+  function getComplementaryColor(rawColor) {
+    var rgb = parseCssColorToRgb(rawColor);
+    if (!rgb) return "#2563eb";
+    var hsl = rgbToHsl(rgb);
+    return rgbToHex(hslToRgb({ h: hsl.h + 180, s: hsl.s, l: hsl.l }));
+  }
+
+  function getReadableTextColor(rawColor) {
+    var rgb = parseCssColorToRgb(rawColor);
+    if (!rgb) return "#ffffff";
+    var luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+    return luminance > 0.58 ? "#0f172a" : "#ffffff";
+  }
+
+  function getKanbanAccentColor() {
+    try {
+      var rootStyles = window.getComputedStyle(document.documentElement);
+      return getComplementaryColor(rootStyles.getPropertyValue("--sidebar-bottom") || "#0f172a");
+    } catch (_err) {
+      return "#2563eb";
+    }
   }
 
   function setMsg(text, tone) {
@@ -562,10 +665,9 @@
       kanbanGrid.innerHTML = '<div class="kanban-empty">Sin datos para mostrar.</div>';
       return;
     }
+    var color = getKanbanAccentColor();
+    var textOnColor = getReadableTextColor(color);
     kanbanGrid.innerHTML = data.map(function (r) {
-      var color = String(r.color || "").trim() || "#ffffff";
-      var colorLower = color.toLowerCase();
-      var textOnColor = (colorLower === "#fff" || colorLower === "#ffffff" || colorLower === "white") ? "#0f172a" : "#ffffff";
       var initial = esc((r.name || "?").charAt(0).toUpperCase());
       return '' +
         '<article class="kanban-item">' +
@@ -697,16 +799,13 @@
       })
       .nodeContent(function (d) {
         var item = d && d.data ? d.data : {};
-        var color = String(item.color || "#ffffff");
-        var colorLower = color.toLowerCase();
-        var textColor = (colorLower === "#fff" || colorLower === "#ffffff" || colorLower === "white") ? "#0f172a" : "#ffffff";
         return ''
-          + '<div style="display:grid;grid-template-columns:90px 1fr;height:146px;border:1px solid #dbe2ea;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 6px 14px rgba(15,23,42,.12);font-family:inherit;">'
-          +   '<div style="background:' + color + ';color:' + textColor + ';display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:800;">' + esc((item.name || "?").charAt(0).toUpperCase()) + '</div>'
-          +   '<div style="padding:12px;display:grid;gap:6px;align-content:start;">'
-          +     '<div style="font-size:24px;font-weight:800;color:#0f172a;line-height:1.1;">' + esc(item.name || "Área") + '</div>'
-          +     '<div style="font-size:14px;color:#334155;"><strong>Responsable:</strong> ' + esc(item.manager || "Sin responsable") + '</div>'
-          +     '<div style="font-size:14px;color:#334155;"><strong>Código:</strong> ' + esc(item.code || "—") + '</div>'
+          + '<div class="org-card-two-col">'
+          +   '<div class="org-card-band">' + esc((item.name || "?").charAt(0).toUpperCase()) + '</div>'
+          +   '<div class="org-card-content">'
+          +     '<div class="org-card-title">' + esc(item.name || "Área") + '</div>'
+          +     '<div class="org-card-meta"><strong>Responsable:</strong> ' + esc(item.manager || "Sin responsable") + '</div>'
+          +     '<div class="org-card-meta"><strong>Código:</strong> ' + esc(item.code || "—") + '</div>'
           +   '</div>'
           + '</div>';
       })

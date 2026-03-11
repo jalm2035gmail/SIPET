@@ -107,8 +107,8 @@
     }
     .departamentos-page .kanban {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
     }
     .departamentos-page .kanban-col {
       border: 1px dashed #cbd5e1;

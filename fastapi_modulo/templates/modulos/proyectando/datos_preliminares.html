@@ -247,9 +247,15 @@
     </section>
   </div>
 
-  <div class="mt-3 flex flex-wrap items-center gap-2">
-    <button type="button" id="dp-save-btn" class="btn btn-primary">Guardar</button>
-    <button type="button" id="dp-clear-btn" class="btn btn-outline">Limpiar</button>
+  <div class="botones_accion mt-3 flex flex-wrap items-center gap-2">
+    <button type="button" id="dp-save-btn" class="boton_vista boton_vista-eliptico active">
+      <i class="boton_vista-icono view-pill-fa fa-solid fa-floppy-disk" aria-hidden="true"></i>
+      <span class="boton_vista-label">Guardar</span>
+    </button>
+    <button type="button" id="dp-clear-btn" class="boton_vista boton_vista-eliptico">
+      <i class="boton_vista-icono view-pill-fa fa-solid fa-eraser" aria-hidden="true"></i>
+      <span class="boton_vista-label">Limpiar</span>
+    </button>
     <span id="dp-msg" class="text-sm text-base-content/70"></span>
   </div>
 </section>

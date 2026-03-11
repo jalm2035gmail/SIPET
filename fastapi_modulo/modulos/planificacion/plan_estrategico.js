@@ -64,6 +64,7 @@
           const planesImportBtn = document.getElementById('planes-import-csv-btn');
           const planesImportFile = document.getElementById('planes-import-csv-file');
           const planesImportMsg = document.getElementById('planes-import-csv-msg');
+          const planesKanbanBoard = document.getElementById('planes-kanban-board');
           let planesAxesCache = [];
           let planesAxisCurrentId = '';
           let planesAxisEditMode = false;
@@ -77,6 +78,96 @@
             if (!planesAxisMsg) return;
             planesAxisMsg.textContent = text || '';
             planesAxisMsg.style.color = isError ? '#b91c1c' : '#0f3d2e';
+          };
+          const clampColorChannel = (value) => Math.max(0, Math.min(255, Math.round(Number(value) || 0)));
+          const parseCssColorToRgb = (raw) => {
+            const value = String(raw || '').trim();
+            if (!value) return null;
+            if (value.startsWith('#')) {
+              let hex = value.slice(1).trim();
+              if (hex.length === 3) hex = hex.split('').map((char) => char + char).join('');
+              if (hex.length !== 6) return null;
+              return {
+                r: parseInt(hex.slice(0, 2), 16),
+                g: parseInt(hex.slice(2, 4), 16),
+                b: parseInt(hex.slice(4, 6), 16),
+              };
+            }
+            const rgbMatch = value.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+            if (rgbMatch) {
+              return {
+                r: clampColorChannel(rgbMatch[1]),
+                g: clampColorChannel(rgbMatch[2]),
+                b: clampColorChannel(rgbMatch[3]),
+              };
+            }
+            return null;
+          };
+          const rgbToHex = (rgb) => {
+            const toHex = (channel) => clampColorChannel(channel).toString(16).padStart(2, '0');
+            return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
+          };
+          const rgbToHsl = (rgb) => {
+            const r = clampColorChannel(rgb.r) / 255;
+            const g = clampColorChannel(rgb.g) / 255;
+            const b = clampColorChannel(rgb.b) / 255;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const delta = max - min;
+            let h = 0;
+            const l = (max + min) / 2;
+            const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+            if (delta !== 0) {
+              if (max === r) h = ((g - b) / delta) % 6;
+              else if (max === g) h = (b - r) / delta + 2;
+              else h = (r - g) / delta + 4;
+              h = Math.round(h * 60);
+              if (h < 0) h += 360;
+            }
+            return { h, s, l };
+          };
+          const hslToRgb = (hsl) => {
+            const h = ((Number(hsl.h) || 0) % 360 + 360) % 360;
+            const s = Math.max(0, Math.min(1, Number(hsl.s) || 0));
+            const l = Math.max(0, Math.min(1, Number(hsl.l) || 0));
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+            const m = l - c / 2;
+            let rPrime = 0;
+            let gPrime = 0;
+            let bPrime = 0;
+            if (h < 60) { rPrime = c; gPrime = x; }
+            else if (h < 120) { rPrime = x; gPrime = c; }
+            else if (h < 180) { gPrime = c; bPrime = x; }
+            else if (h < 240) { gPrime = x; bPrime = c; }
+            else if (h < 300) { rPrime = x; bPrime = c; }
+            else { rPrime = c; bPrime = x; }
+            return {
+              r: clampColorChannel((rPrime + m) * 255),
+              g: clampColorChannel((gPrime + m) * 255),
+              b: clampColorChannel((bPrime + m) * 255),
+            };
+          };
+          const getComplementaryColor = (rawColor) => {
+            const rgb = parseCssColorToRgb(rawColor);
+            if (!rgb) return '#2563eb';
+            const hsl = rgbToHsl(rgb);
+            const complement = hslToRgb({ h: hsl.h + 180, s: hsl.s, l: hsl.l });
+            return rgbToHex(complement);
+          };
+          const getReadableTextColor = (rawColor) => {
+            const rgb = parseCssColorToRgb(rawColor);
+            if (!rgb) return '#ffffff';
+            const luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+            return luminance > 0.58 ? '#0f172a' : '#ffffff';
+          };
+          const getKanbanAccentColor = () => {
+            try {
+              const rootStyles = window.getComputedStyle(document.documentElement);
+              return getComplementaryColor(rootStyles.getPropertyValue('--sidebar-bottom') || '#0f172a');
+            } catch (_err) {
+              return '#2563eb';
+            }
           };
           const setAxisKpiSectionOpen = (open) => {
             if (!planesAxisKpiSection) return;
@@ -401,6 +492,136 @@
             objetivos: document.getElementById('planes-tab-panel-objetivos'),
           };
           const planesOrganigramaHostEl = document.getElementById('planes-organigrama-host');
+          let planesOrgLibPromise = null;
+          let planesOrgExpandedNodeId = '';
+          let planesOrgChart = null;
+          const loadScript = (src) => new Promise((resolve, reject) => {
+            if (document.querySelector(`script[src="${src}"]`)) {
+              resolve();
+              return;
+            }
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+            document.head.appendChild(script);
+          });
+          const ensureOrgLibrary = async () => {
+            if (window.d3 && window.d3.OrgChart) return true;
+            if (!planesOrgLibPromise) {
+              planesOrgLibPromise = (async () => {
+                await loadScript('/static/vendor/d3.min.js');
+                await loadScript('/static/vendor/d3-flextree.min.js');
+                await loadScript('/static/vendor/d3-org-chart.min.js');
+              })().catch(() => false);
+            }
+            const result = await planesOrgLibPromise;
+            return result !== false && !!(window.d3 && window.d3.OrgChart);
+          };
+          const getTreePathToRoot = (id, mapById) => {
+            const path = [];
+            let current = mapById[id];
+            let guard = 0;
+            while (current && guard < 500) {
+              path.push(current.id);
+              if (!current.parentId) break;
+              current = mapById[current.parentId];
+              guard += 1;
+            }
+            return path;
+          };
+          const renderStrategicTree = async (host, options = {}) => {
+            if (!(host instanceof HTMLElement)) return;
+            const axes = Array.isArray(planesAxesCache) ? planesAxesCache : [];
+            if (!axes.length) {
+              host.innerHTML = '<p class="text-sm text-base-content/70">Sin datos para organigrama.</p>';
+              return;
+            }
+            const libOk = await ensureOrgLibrary();
+            if (!libOk) {
+              host.innerHTML = '<p class="text-sm text-base-content/70">No se pudo cargar la librería de organigrama.</p>';
+              return;
+            }
+
+            let nodes = [{
+              id: '__ROOT__',
+              parentId: '',
+              name: 'Plan estratégico',
+              role: 'Marco general',
+              code: 'PLAN',
+            }];
+            axes.forEach((axis) => {
+              const axisId = `axis-${String(axis?.id || Math.random().toString(36).slice(2))}`;
+              nodes.push({
+                id: axisId,
+                parentId: '__ROOT__',
+                name: String(axis?.nombre || 'Eje estratégico'),
+                role: String(axis?.responsabilidad_directa || 'Sin responsable'),
+                code: String(axis?.codigo || 'Sin código'),
+              });
+              const objectives = Array.isArray(axis?.objetivos) ? axis.objetivos : [];
+              objectives.forEach((objective) => {
+                nodes.push({
+                  id: `obj-${String(objective?.id || Math.random().toString(36).slice(2))}`,
+                  parentId: axisId,
+                  name: String(objective?.nombre || 'Objetivo estratégico'),
+                  role: String(objective?.lider || 'Sin responsable'),
+                  code: String(objective?.codigo || 'Sin código'),
+                });
+              });
+            });
+
+            const nodeMap = {};
+            nodes.forEach((node) => { nodeMap[node.id] = node; });
+            if (!planesOrgExpandedNodeId) planesOrgExpandedNodeId = '__ROOT__';
+            const expandedPath = new Set(getTreePathToRoot(planesOrgExpandedNodeId, nodeMap));
+            nodes = nodes.map((node) => {
+              node._expanded = expandedPath.has(node.id);
+              return node;
+            });
+
+            host.innerHTML = '';
+            planesOrgChart = new window.d3.OrgChart()
+              .container(host)
+              .data(nodes)
+              .nodeWidth(() => 320)
+              .nodeHeight(() => 150)
+              .childrenMargin(() => 48)
+              .compact(true)
+              .initialExpandLevel(0)
+              .setActiveNodeCentered(true)
+              .nodeButtonWidth(() => 36)
+              .nodeButtonHeight(() => 36)
+              .nodeButtonX(() => -18)
+              .nodeButtonY(() => -18)
+              .buttonContent((ctx) => {
+                const node = ctx && ctx.node ? ctx.node : null;
+                const expanded = !!(node && node.children);
+                const sign = expanded ? '−' : '+';
+                const count = Number(node && node.data ? node.data._directSubordinates || 0 : 0);
+                return '<div style="width:36px;height:36px;border-radius:9999px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;border:2px solid #fff;box-shadow:0 4px 10px rgba(15,23,42,.22);">' + sign + (count > 0 ? '<span style="font-size:10px;margin-left:2px;">' + count + '</span>' : '') + '</div>';
+              })
+              .nodeContent((d) => {
+                const item = d && d.data ? d.data : {};
+                return ''
+                  + '<div class="org-card-two-col">'
+                  +   '<div class="org-card-band">' + escapeHtml((item.name || '?').charAt(0).toUpperCase()) + '</div>'
+                  +   '<div class="org-card-content">'
+                  +     '<div class="org-card-title">' + escapeHtml(item.name || 'Nodo') + '</div>'
+                  +     '<div class="org-card-meta"><strong>Responsable:</strong> ' + escapeHtml(item.role || 'Sin responsable') + '</div>'
+                  +     '<div class="org-card-meta"><strong>Código:</strong> ' + escapeHtml(item.code || '—') + '</div>'
+                  +   '</div>'
+                  + '</div>';
+              })
+              .onNodeClick((d) => {
+                const clickedId = d && d.data ? d.data.id : '';
+                if (!clickedId) return;
+                planesOrgExpandedNodeId = planesOrgExpandedNodeId === clickedId ? '__ROOT__' : clickedId;
+                renderStrategicTree(host, options);
+              })
+              .render();
+          };
           const setStrategicTab = (tab, shouldScroll = false) => {
             const target = ['fundamentacion', 'identidad', 'ejes', 'objetivos'].includes(tab) ? tab : 'ejes';
             Object.keys(strategicTabPanels).forEach((key) => {
@@ -911,6 +1132,96 @@
             });
           };
 
+          const renderStrategicKanban = (axes) => {
+            if (!planesKanbanBoard) return;
+            const axisList = Array.isArray(axes) ? axes : [];
+            const kanbanAccentColor = getKanbanAccentColor();
+            const kanbanAccentTextColor = getReadableTextColor(kanbanAccentColor);
+            const columns = [
+              {
+                key: 'pending',
+                title: 'Sin responsable',
+                tone: 'border-error/40 bg-error/5',
+                items: axisList.filter((axis) => !String(axis?.responsabilidad_directa || '').trim()),
+              },
+              {
+                key: 'draft',
+                title: 'En definición',
+                tone: 'border-warning/40 bg-warning/10',
+                items: axisList.filter((axis) => {
+                  const hasOwner = !!String(axis?.responsabilidad_directa || '').trim();
+                  const objectivesCount = Number(axis?.objetivos_count || (Array.isArray(axis?.objetivos) ? axis.objetivos.length : 0)) || 0;
+                  const progress = Math.max(0, Math.min(100, Number(axis?.avance || 0)));
+                  return hasOwner && (objectivesCount === 0 || progress <= 25);
+                }),
+              },
+              {
+                key: 'progress',
+                title: 'En progreso',
+                tone: 'border-info/40 bg-info/10',
+                items: axisList.filter((axis) => {
+                  const hasOwner = !!String(axis?.responsabilidad_directa || '').trim();
+                  const objectivesCount = Number(axis?.objetivos_count || (Array.isArray(axis?.objetivos) ? axis.objetivos.length : 0)) || 0;
+                  const progress = Math.max(0, Math.min(100, Number(axis?.avance || 0)));
+                  return hasOwner && objectivesCount > 0 && progress > 25 && progress < 100;
+                }),
+              },
+              {
+                key: 'done',
+                title: 'Consolidado',
+                tone: 'border-success/40 bg-success/10',
+                items: axisList.filter((axis) => {
+                  const hasOwner = !!String(axis?.responsabilidad_directa || '').trim();
+                  const objectivesCount = Number(axis?.objetivos_count || (Array.isArray(axis?.objetivos) ? axis.objetivos.length : 0)) || 0;
+                  const progress = Math.max(0, Math.min(100, Number(axis?.avance || 0)));
+                  return hasOwner && objectivesCount > 0 && progress >= 100;
+                }),
+              },
+            ];
+
+            planesKanbanBoard.innerHTML = columns.map((column) => `
+              <section class="rounded-[1.5rem] border ${column.tone} p-4 grid gap-3">
+                <header class="flex items-center justify-between gap-3">
+                  <div class="font-semibold text-base-content">${column.title}</div>
+                  <span class="badge badge-outline">${column.items.length}</span>
+                </header>
+                <div class="grid gap-3">
+                  ${column.items.length ? column.items.map((axis) => {
+                    const axisId = String(axis?.id || '').trim();
+                    const code = escapeHtml(axis?.codigo || 'Sin código');
+                    const name = escapeHtml(axis?.nombre || 'Sin nombre');
+                    const owner = escapeHtml(String(axis?.responsabilidad_directa || '').trim() || 'Sin responsable');
+                    const progress = Math.max(0, Math.min(100, Number(axis?.avance || 0)));
+                    const objectivesCount = Number(axis?.objetivos_count || (Array.isArray(axis?.objetivos) ? axis.objetivos.length : 0)) || 0;
+                    const initial = escapeHtml((String(axis?.nombre || '?').trim().charAt(0) || '?').toUpperCase());
+                    return `
+                      <button type="button" class="block w-full text-left transition hover:opacity-95" data-planes-kanban-axis="${axisId}">
+                        <article class="kanban-item">
+                          <div class="kanban-color" style="background:${kanbanAccentColor}; color:${kanbanAccentTextColor};">${initial}</div>
+                          <div class="kanban-content">
+                            <p class="kanban-title">${name}</p>
+                            <p class="kanban-meta"><strong>Responsable:</strong> ${owner}</p>
+                            <p class="kanban-meta"><strong>Código:</strong> ${code}</p>
+                            <p class="kanban-meta"><strong>Objetivos:</strong> ${objectivesCount} · <strong>Avance:</strong> ${progress}%</p>
+                          </div>
+                        </article>
+                      </button>
+                    `;
+                  }).join('') : '<div class="rounded-xl border border-dashed border-base-300 bg-base-100/70 px-4 py-6 text-sm text-base-content/60">Sin ejes en esta columna.</div>'}
+                </div>
+              </section>
+            `).join('');
+
+            planesKanbanBoard.querySelectorAll('[data-planes-kanban-axis]').forEach((button) => {
+              button.addEventListener('click', () => {
+                const axisId = String(button.getAttribute('data-planes-kanban-axis') || '').trim();
+                if (!axisId) return;
+                selectAxisForEditing(axisId, true);
+                renderStrategicKanban(planesAxesCache);
+              });
+            });
+          };
+
           const renderStrategicObjectivesPanel = (axes) => {
             const axesHost = document.getElementById('planes-objetivos-axes-list');
             const host = document.getElementById('planes-objetivos-list');
@@ -1187,6 +1498,7 @@
               const axes = (payload && payload.success && Array.isArray(payload.data)) ? payload.data : [];
               planesAxesCache = axes;
               renderPlanesTrackingBoard(axes);
+              renderStrategicKanban(axes);
               renderStrategicAxesPanel(axes);
               renderStrategicObjectivesPanel(axes);
               const openMode = String(planesQuery.get('open') || '').trim().toLowerCase();
@@ -1196,6 +1508,7 @@
             } catch (_err) {
               planesAxesCache = [];
               renderPlanesTrackingBoard([]);
+              renderStrategicKanban([]);
               renderStrategicAxesPanel([]);
               renderStrategicObjectivesPanel([]);
               setView('list');
