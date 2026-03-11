@@ -13,8 +13,17 @@ depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
+
+
+def _table_exists(table_name):
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    return table_name in inspector.get_table_names()
 
 def upgrade():
+    if _table_exists('ia_feature_flags'):
+        return
     op.create_table(
         'ia_feature_flags',
         sa.Column('id', sa.Integer, primary_key=True, index=True),
@@ -26,4 +35,5 @@ def upgrade():
     )
 
 def downgrade():
-    op.drop_table('ia_feature_flags')
+    if _table_exists('ia_feature_flags'):
+        op.drop_table('ia_feature_flags')
