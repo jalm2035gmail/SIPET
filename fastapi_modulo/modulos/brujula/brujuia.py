@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, Body, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
-from fastapi_modulo.modulos.planificacion import kpis_service
+from fastapi_modulo.modulos.brujula.brujula_fixed_indicators import get_brujula_fixed_indicators
 
 router = APIRouter()
 
@@ -129,10 +129,12 @@ def _periods_from_projection_config():
     return periods
 
 
-def _load_kpi_indicator_names(db):
-    kpis_service._ensure_indicator_definition_table(db)
-    db.commit()
-    return [str(item.get("nombre") or "").strip() for item in kpis_service.list_indicator_definitions(db) if str(item.get("nombre") or "").strip()]
+def _fixed_indicator_definitions() -> list[dict]:
+    return get_brujula_fixed_indicators()
+
+
+def _fixed_indicator_names() -> list[str]:
+    return [str(item.get("nombre") or "").strip() for item in _fixed_indicator_definitions() if str(item.get("nombre") or "").strip()]
 
 
 def _normalize_indicator_matrix_rows(raw_rows, periods):
@@ -193,18 +195,17 @@ def get_brujula_indicator_notebook(request: Request):
             seen.add(key)
             stored.append({"indicador": indicador, "values": values, "orden": int(row[2] or 0)})
         stored = _normalize_indicator_matrix_rows(stored, periods)
-        existing = {str(item["indicador"]).strip().lower() for item in stored}
-        for name in _load_kpi_indicator_names(db):
-            if name.lower() in existing:
-                continue
-            stored.append(
+        values_by_name = {str(item["indicador"]).strip().lower(): item.get("values") or {} for item in stored}
+        fixed_rows = []
+        for order, name in enumerate(_fixed_indicator_names(), start=1):
+            fixed_rows.append(
                 {
                     "indicador": name,
-                    "values": {str(period["key"]): "" for period in periods},
-                    "orden": len(stored) + 1,
+                    "values": {str(period["key"]): str((values_by_name.get(name.lower()) or {}).get(str(period["key"]), "")).strip() for period in periods},
+                    "orden": order,
                 }
             )
-        return JSONResponse({"success": True, "data": {"periods": periods, "rows": stored}})
+        return JSONResponse({"success": True, "data": {"periods": periods, "rows": fixed_rows}})
     finally:
         db.close()
 
@@ -216,10 +217,27 @@ def save_brujula_indicator_notebook(request: Request, data: dict = Body(...)):
         tenant_id = _current_tenant_id(request)
         periods = _periods_from_projection_config()
         rows = _normalize_indicator_matrix_rows((data or {}).get("rows"), periods)
+        allowed_names = {name.lower(): name for name in _fixed_indicator_names()}
+        fixed_rows = []
+        values_by_name = {}
+        for row in rows:
+            indicator_name = str(row.get("indicador") or "").strip()
+            if indicator_name.lower() not in allowed_names:
+                continue
+            canonical_name = allowed_names[indicator_name.lower()]
+            values_by_name[canonical_name] = row.get("values") or {}
+        for order, canonical_name in enumerate(_fixed_indicator_names(), start=1):
+            fixed_rows.append(
+                {
+                    "indicador": canonical_name,
+                    "values": {str(period["key"]): str((values_by_name.get(canonical_name) or {}).get(str(period["key"]), "")).strip() for period in periods},
+                    "orden": order,
+                }
+            )
         _ensure_brujula_indicator_table(db)
         db.execute(text("DELETE FROM brujula_indicator_values WHERE tenant_id = :tenant_id"), {"tenant_id": tenant_id})
         json = __import__("json")
-        for row in rows:
+        for row in fixed_rows:
             db.execute(
                 text(
                     """
@@ -235,7 +253,7 @@ def save_brujula_indicator_notebook(request: Request, data: dict = Body(...)):
                 },
             )
         db.commit()
-        return JSONResponse({"success": True, "data": {"rows": rows}})
+        return JSONResponse({"success": True, "data": {"rows": fixed_rows}})
     except Exception as exc:
         db.rollback()
         return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
@@ -244,44 +262,28 @@ def save_brujula_indicator_notebook(request: Request, data: dict = Body(...)):
 
 
 def list_brujula_indicator_definitions():
-    _bind_core_symbols()
-    db = SessionLocal()
-    try:
-        kpis_service._ensure_indicator_definition_table(db)
-        db.commit()
-        rows = kpis_service.list_indicator_definitions(db)
-        return JSONResponse({"success": True, "data": rows})
-    finally:
-        db.close()
+    return JSONResponse({"success": True, "data": _fixed_indicator_definitions()})
 
 
 def save_brujula_indicator_definition(data: dict = Body(...)):
-    _bind_core_symbols()
-    db = SessionLocal()
-    try:
-        indicator_id = int((data or {}).get("id") or 0)
-        saved = kpis_service.save_indicator_definition_record(db, data or {}, indicator_id if indicator_id > 0 else None)
-        db.commit()
-        return JSONResponse({"success": True, "data": saved})
-    except Exception as exc:
-        db.rollback()
-        return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
-    finally:
-        db.close()
+    return JSONResponse(
+        {"success": False, "error": "Los indicadores de BRUJULA estan fijos en la aplicacion."},
+        status_code=405,
+    )
 
 
 def delete_brujula_indicator_definition(indicator_id: int):
-    _bind_core_symbols()
-    db = SessionLocal()
-    try:
-        kpis_service.delete_indicator_definition_record(db, indicator_id)
-        db.commit()
-        return JSONResponse({"success": True})
-    except Exception as exc:
-        db.rollback()
-        return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
-    finally:
-        db.close()
+    return JSONResponse(
+        {"success": False, "error": "Los indicadores de BRUJULA estan fijos en la aplicacion."},
+        status_code=405,
+    )
+
+
+def import_brujula_indicator_definitions():
+    return JSONResponse(
+        {"success": False, "error": "La importacion esta deshabilitada porque los indicadores de BRUJULA son fijos."},
+        status_code=405,
+    )
 
 
 def _build_section_description(section_title: str) -> str:
@@ -358,4 +360,4 @@ router.add_api_route("/api/brujula/indicadores/notebook", save_brujula_indicator
 router.add_api_route("/api/brujula/indicadores/definiciones", list_brujula_indicator_definitions, methods=["GET"])
 router.add_api_route("/api/brujula/indicadores/definicion", save_brujula_indicator_definition, methods=["POST"])
 router.add_api_route("/api/brujula/indicadores/definicion/{indicator_id}", delete_brujula_indicator_definition, methods=["DELETE"])
-router.add_api_route("/api/brujula/indicadores/importar", kpis_service.import_kpis_template, methods=["POST"])
+router.add_api_route("/api/brujula/indicadores/importar", import_brujula_indicator_definitions, methods=["POST"])

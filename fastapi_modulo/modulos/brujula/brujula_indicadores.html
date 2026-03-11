@@ -10,7 +10,7 @@
       />
       <div class="w-full grid gap-2 content-center">
         <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Indicadores</div>
-        <div class="block w-full text-base sm:text-lg text-base-content/70">Tablero de indicadores históricos y proyectados con gestión de definiciones.</div>
+        <div class="block w-full text-base sm:text-lg text-base-content/70">Tablero de indicadores historicos y proyectados con catalogo fijo en la aplicacion.</div>
       </div>
     </div>
   </div>
@@ -22,15 +22,9 @@
 
   <section class="card rounded-box border border-base-300 bg-base-100 shadow-sm" data-brujula-ind-panel="matrix">
     <div class="card-body gap-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="card-title">Matriz de indicadores</h2>
-          <p class="text-base-content/70">Cada fila representa un indicador y cada columna un ano historico o proyectado.</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button type="button" class="btn btn-outline" id="brujula-ind-add-row">Agregar indicador</button>
-          <button type="button" class="btn btn-primary" id="brujula-ind-save">Guardar</button>
-        </div>
+      <div>
+        <h2 class="card-title">Matriz de indicadores</h2>
+        <p class="text-base-content/70">Cada fila representa un indicador fijo y cada columna un ano historico o proyectado.</p>
       </div>
       <div id="brujula-ind-msg" class="text-sm text-base-content/70 min-h-[1.25rem]" aria-live="polite"></div>
       <div class="overflow-x-auto rounded-box border border-base-300">
@@ -48,13 +42,7 @@
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 class="card-title">Descripcion de indicadores</h2>
-          <p class="text-base-content/70">Selecciona un indicador de la lista para abrir el formulario de descripcion.</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <a href="/api/kpis/plantilla.csv" class="btn btn-outline">Descargar plantilla</a>
-          <button type="button" class="btn btn-outline" id="brujula-kpi-import-btn">Importar plantilla</button>
-          <input id="brujula-kpi-import-file" type="file" accept=".csv,text/csv" class="hidden">
-          <button type="button" class="btn btn-primary" id="brujula-kpi-new-btn">Nuevo indicador</button>
+          <p class="text-base-content/70">Selecciona un indicador de la lista para consultar su definicion fija.</p>
         </div>
       </div>
 
@@ -65,70 +53,68 @@
       <section id="brujula-kpi-form" class="hidden">
         <div class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <h3 class="text-lg font-semibold" id="brujula-kpi-form-title">Nuevo indicador</h3>
+            <h3 class="text-lg font-semibold" id="brujula-kpi-form-title">Detalle del indicador</h3>
             <div class="flex flex-wrap gap-2">
-              <button type="button" class="btn btn-ghost btn-sm" id="brujula-kpi-cancel">Cancelar</button>
-              <button type="button" class="btn btn-error btn-sm" id="brujula-kpi-delete">Eliminar</button>
-              <button type="button" class="btn btn-primary btn-sm" id="brujula-kpi-save">Guardar</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="brujula-kpi-cancel">Cerrar</button>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Nombre</span></div>
-              <input id="brujula-kpi-nombre" class="input input-bordered w-full" type="text" placeholder="Ingresos por venta">
+              <input id="brujula-kpi-nombre" class="input input-bordered w-full" type="text" placeholder="Ingresos por venta" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Responsable</span></div>
-              <input id="brujula-kpi-responsable" class="input input-bordered w-full" type="text" placeholder="Director Comercial">
+              <input id="brujula-kpi-responsable" class="input input-bordered w-full" type="text" placeholder="Director Comercial" readonly>
             </label>
             <label class="form-control w-full md:col-span-2 xl:col-span-3">
               <div class="label"><span class="label-text font-semibold">Descripcion</span></div>
-              <textarea id="brujula-kpi-descripcion" class="textarea textarea-bordered w-full" rows="3"></textarea>
+              <textarea id="brujula-kpi-descripcion" class="textarea textarea-bordered w-full" rows="3" readonly></textarea>
             </label>
             <label class="form-control w-full md:col-span-2 xl:col-span-3">
               <div class="label"><span class="label-text font-semibold">Objetivo</span></div>
-              <textarea id="brujula-kpi-objetivo" class="textarea textarea-bordered w-full" rows="3"></textarea>
+              <textarea id="brujula-kpi-objetivo" class="textarea textarea-bordered w-full" rows="3" readonly></textarea>
             </label>
             <label class="form-control w-full md:col-span-2 xl:col-span-3">
               <div class="label"><span class="label-text font-semibold">Formula</span></div>
-              <textarea id="brujula-kpi-formula" class="textarea textarea-bordered w-full" rows="3"></textarea>
+              <textarea id="brujula-kpi-formula" class="textarea textarea-bordered w-full" rows="3" readonly></textarea>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Fuente de datos</span></div>
-              <input id="brujula-kpi-fuente" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-fuente" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Unidad</span></div>
-              <input id="brujula-kpi-unidad" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-unidad" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Frecuencia</span></div>
-              <input id="brujula-kpi-frecuencia" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-frecuencia" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Linea base</span></div>
-              <input id="brujula-kpi-linea-base" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-linea-base" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Estandar / Meta</span></div>
-              <input id="brujula-kpi-meta" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-meta" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Categoria</span></div>
-              <input id="brujula-kpi-categoria" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-categoria" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Perspectiva</span></div>
-              <input id="brujula-kpi-perspectiva" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-perspectiva" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Semaforo rojo</span></div>
-              <input id="brujula-kpi-rojo" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-rojo" class="input input-bordered w-full" type="text" readonly>
             </label>
             <label class="form-control w-full">
               <div class="label"><span class="label-text font-semibold">Semaforo verde</span></div>
-              <input id="brujula-kpi-verde" class="input input-bordered w-full" type="text">
+              <input id="brujula-kpi-verde" class="input input-bordered w-full" type="text" readonly>
             </label>
           </div>
         </div>
@@ -145,8 +131,6 @@
   const tabButtons = Array.from(app.querySelectorAll('[data-brujula-ind-tab]'));
   const tabPanels = Array.from(app.querySelectorAll('[data-brujula-ind-panel]'));
   const matrixMsgEl = document.getElementById('brujula-ind-msg');
-  const addRowBtn = document.getElementById('brujula-ind-add-row');
-  const saveMatrixBtn = document.getElementById('brujula-ind-save');
   const colgroupEl = document.getElementById('brujula-ind-colgroup');
   const theadEl = document.getElementById('brujula-ind-thead');
   const tbodyEl = document.getElementById('brujula-ind-tbody');
@@ -169,12 +153,7 @@
   const kpiPerspectivaEl = document.getElementById('brujula-kpi-perspectiva');
   const kpiRojoEl = document.getElementById('brujula-kpi-rojo');
   const kpiVerdeEl = document.getElementById('brujula-kpi-verde');
-  const kpiImportBtn = document.getElementById('brujula-kpi-import-btn');
-  const kpiImportFileEl = document.getElementById('brujula-kpi-import-file');
-  const kpiNewBtn = document.getElementById('brujula-kpi-new-btn');
   const kpiCancelBtn = document.getElementById('brujula-kpi-cancel');
-  const kpiDeleteBtn = document.getElementById('brujula-kpi-delete');
-  const kpiSaveBtn = document.getElementById('brujula-kpi-save');
 
   let matrixPeriods = [];
   let matrixRows = [];
@@ -243,42 +222,14 @@
     }
     tbodyEl.innerHTML = matrixRows.map((row, rowIndex) => `
       <tr>
-        <td>
-          <div class="flex items-center gap-2">
-            <input class="input input-bordered input-sm w-full" data-matrix-row="${rowIndex}" data-matrix-field="indicador" value="${escapeHtml(row.indicador)}" placeholder="Nombre del indicador">
-            <button type="button" class="btn btn-ghost btn-xs text-error" data-matrix-remove="${rowIndex}">Eliminar</button>
-          </div>
-        </td>
+        <td><div class="font-medium text-base-content">${escapeHtml(row.indicador)}</div></td>
         ${matrixPeriods.map((period) => `
           <td class="text-right">
-            <input class="input input-bordered input-sm w-full text-right" data-matrix-row="${rowIndex}" data-matrix-key="${escapeHtml(period.key)}" value="${escapeHtml(row.values[period.key] || '')}">
+            <input class="input input-bordered input-sm w-full text-right" value="${escapeHtml(row.values[period.key] || '')}" readonly tabindex="-1">
           </td>
         `).join('')}
       </tr>
     `).join('');
-    tbodyEl.querySelectorAll('[data-matrix-field="indicador"]').forEach((input) => {
-      input.addEventListener('input', () => {
-        const rowIndex = Number(input.getAttribute('data-matrix-row') || -1);
-        if (rowIndex < 0 || !matrixRows[rowIndex]) return;
-        matrixRows[rowIndex].indicador = String(input.value || '');
-      });
-    });
-    tbodyEl.querySelectorAll('[data-matrix-key]').forEach((input) => {
-      input.addEventListener('input', () => {
-        const rowIndex = Number(input.getAttribute('data-matrix-row') || -1);
-        const key = String(input.getAttribute('data-matrix-key') || '');
-        if (rowIndex < 0 || !key || !matrixRows[rowIndex]) return;
-        matrixRows[rowIndex].values[key] = String(input.value || '');
-      });
-    });
-    tbodyEl.querySelectorAll('[data-matrix-remove]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const rowIndex = Number(btn.getAttribute('data-matrix-remove') || -1);
-        if (rowIndex < 0) return;
-        matrixRows.splice(rowIndex, 1);
-        renderMatrixTable();
-      });
-    });
   };
 
   const loadMatrix = async () => {
@@ -296,31 +247,6 @@
     matrixRows = Array.isArray(payload?.data?.rows) ? payload.data.rows.map((row) => normalizeMatrixRow(row)) : [];
     renderMatrixTable();
     showMatrixMsg('');
-  };
-
-  const saveMatrix = async () => {
-    saveMatrixBtn.disabled = true;
-    showMatrixMsg('Guardando indicadores...');
-    try {
-      const rows = matrixRows.map((row) => normalizeMatrixRow(row)).filter((row) => row.indicador);
-      const response = await fetch('/api/brujula/indicadores/notebook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ rows }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.error || payload?.detail || 'No se pudo guardar indicadores.');
-      }
-      matrixRows = Array.isArray(payload?.data?.rows) ? payload.data.rows.map((row) => normalizeMatrixRow(row)) : rows;
-      renderMatrixTable();
-      showMatrixMsg('Indicadores guardados.');
-    } catch (error) {
-      showMatrixMsg(error?.message || 'No se pudo guardar indicadores.', true);
-    } finally {
-      saveMatrixBtn.disabled = false;
-    }
   };
 
   const normalizeKpi = (item) => ({
@@ -357,8 +283,7 @@
     kpiPerspectivaEl.value = '';
     kpiRojoEl.value = '';
     kpiVerdeEl.value = '';
-    kpiFormTitleEl.textContent = 'Nuevo indicador';
-    kpiDeleteBtn.disabled = true;
+    kpiFormTitleEl.textContent = 'Detalle del indicador';
   };
 
   const showKpiForm = (item = null) => {
@@ -383,21 +308,14 @@
     kpiPerspectivaEl.value = item.perspectiva || '';
     kpiRojoEl.value = item.semaforo_rojo || '';
     kpiVerdeEl.value = item.semaforo_verde || '';
-    kpiFormTitleEl.textContent = `Editar indicador: ${item.nombre || 'Sin nombre'}`;
-    kpiDeleteBtn.disabled = false;
+    kpiFormTitleEl.textContent = `Indicador: ${item.nombre || 'Sin nombre'}`;
   };
 
   const selectKpiFromQuery = () => {
     const tab = String(pageQuery.get('tab') || '').trim();
     const indicator = String(pageQuery.get('indicator') || '').trim().toLowerCase();
-    const mode = String(pageQuery.get('mode') || '').trim().toLowerCase();
     if (tab === 'desc') {
       setTab('desc');
-    }
-    if (mode === 'new') {
-      clearKpiForm();
-      showKpiForm(null);
-      return;
     }
     if (!indicator) return;
     const target = kpiDefinitionsCache.find((item) => String(item?.nombre || '').trim().toLowerCase() === indicator);
@@ -405,37 +323,6 @@
       showKpiForm(target);
       setTab('desc');
     }
-  };
-
-  const readKpiForm = () => normalizeKpi({
-    nombre: kpiNombreEl.value,
-    responsable: kpiResponsableEl.value,
-    descripcion: kpiDescripcionEl.value,
-    objetivo: kpiObjetivoEl.value,
-    formula: kpiFormulaEl.value,
-    fuente_datos: kpiFuenteEl.value,
-    unidad: kpiUnidadEl.value,
-    frecuencia: kpiFrecuenciaEl.value,
-    linea_base: kpiLineaBaseEl.value,
-    estandar_meta: kpiMetaEl.value,
-    categoria: kpiCategoriaEl.value,
-    perspectiva: kpiPerspectivaEl.value,
-    semaforo_rojo: kpiRojoEl.value,
-    semaforo_verde: kpiVerdeEl.value,
-  });
-
-  const saveIndicatorDefinition = async (data) => {
-    const response = await fetch('/api/brujula/indicadores/definicion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify(data),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload?.success === false) {
-      throw new Error(payload?.error || payload?.detail || 'No se pudo guardar el indicador.');
-    }
-    return payload?.data || null;
   };
 
   const renderKpiList = () => {
@@ -450,7 +337,7 @@
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h3 class="font-semibold text-base-content">${escapeHtml(item.nombre || 'Sin nombre')}</h3>
-              <div class="text-sm text-base-content/60">Catálogo central de Brújula</div>
+              <div class="text-sm text-base-content/60">Catalogo fijo de BRUJULA</div>
             </div>
             <span class="badge badge-outline">${escapeHtml(item.frecuencia || 'Sin frecuencia')}</span>
           </div>
@@ -484,116 +371,14 @@
     showKpiMsg('');
   };
 
-  const importKpisTemplate = async (file) => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    showKpiMsg('Importando plantilla de indicadores...');
-    if (kpiImportBtn) kpiImportBtn.disabled = true;
-    try {
-      const response = await fetch('/api/brujula/indicadores/importar', {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin',
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.error || payload?.detail || 'No se pudo importar la plantilla.');
-      }
-      const summary = payload?.summary || {};
-      await loadDefinitions();
-      await loadMatrix();
-      showKpiMsg(`Importacion completada. Creados: ${Number(summary.created || 0)}. Actualizados: ${Number(summary.updated || 0)}. Omitidos: ${Number(summary.skipped || 0)}.`);
-    } catch (error) {
-      const isNetworkError = error instanceof TypeError && String(error.message || '').toLowerCase().includes('fetch');
-      showKpiMsg(
-        isNetworkError
-          ? 'No se pudo conectar con el servidor para importar la plantilla. Recarga la pagina e intenta de nuevo.'
-          : (error?.message || 'No se pudo importar la plantilla.'),
-        true
-      );
-    } finally {
-      if (kpiImportBtn) kpiImportBtn.disabled = false;
-      if (kpiImportFileEl) kpiImportFileEl.value = '';
-    }
-  };
-
-  const saveKpi = async () => {
-    const data = readKpiForm();
-    if (!data.nombre) {
-      showKpiMsg('El nombre es obligatorio.', true);
-      return;
-    }
-    kpiSaveBtn.disabled = true;
-    kpiDeleteBtn.disabled = true;
-    try {
-      await saveIndicatorDefinition({ ...data, id: editingIndicatorId > 0 ? editingIndicatorId : undefined });
-      await loadDefinitions();
-      clearKpiForm();
-      kpiFormEl.classList.add('hidden');
-      showKpiMsg('Indicador guardado.');
-      await loadMatrix();
-    } catch (error) {
-      showKpiMsg(error?.message || 'No se pudo guardar el indicador.', true);
-    } finally {
-      kpiSaveBtn.disabled = false;
-      kpiDeleteBtn.disabled = false;
-    }
-  };
-
-  const deleteKpi = async () => {
-    if (!(editingIndicatorId > 0)) return;
-    if (!window.confirm('¿Eliminar este indicador?')) return;
-    kpiDeleteBtn.disabled = true;
-    try {
-      const response = await fetch(`/api/brujula/indicadores/definicion/${editingIndicatorId}`, {
-        method: 'DELETE',
-        credentials: 'same-origin',
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.error || payload?.detail || 'No se pudo eliminar el indicador.');
-      }
-      await loadDefinitions();
-      clearKpiForm();
-      kpiFormEl.classList.add('hidden');
-      showKpiMsg('Indicador eliminado.');
-      await loadMatrix();
-    } catch (error) {
-      showKpiMsg(error?.message || 'No se pudo eliminar el indicador.', true);
-    } finally {
-      kpiDeleteBtn.disabled = false;
-    }
-  };
-
   tabButtons.forEach((btn) => {
     btn.addEventListener('click', () => setTab(btn.getAttribute('data-brujula-ind-tab') || 'matrix'));
-  });
-  addRowBtn.addEventListener('click', () => {
-    const values = {};
-    matrixPeriods.forEach((period) => { values[String(period.key || '')] = ''; });
-    matrixRows.push({ indicador: '', values });
-    renderMatrixTable();
-  });
-  saveMatrixBtn.addEventListener('click', saveMatrix);
-  if (kpiImportBtn && kpiImportFileEl) {
-    kpiImportBtn.addEventListener('click', () => kpiImportFileEl.click());
-    kpiImportFileEl.addEventListener('change', () => {
-      const file = kpiImportFileEl.files && kpiImportFileEl.files[0];
-      importKpisTemplate(file);
-    });
-  }
-  kpiNewBtn.addEventListener('click', () => {
-    clearKpiForm();
-    showKpiForm(null);
   });
   kpiCancelBtn.addEventListener('click', () => {
     clearKpiForm();
     kpiFormEl.classList.add('hidden');
     showKpiMsg('');
   });
-  kpiSaveBtn.addEventListener('click', saveKpi);
-  kpiDeleteBtn.addEventListener('click', deleteKpi);
 
   clearKpiForm();
   kpiFormEl.classList.add('hidden');

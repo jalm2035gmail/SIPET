@@ -1,5 +1,6 @@
 #!/bin/bash
-# Script para reiniciar el sistema, cargar módulos y base de datos
+# Script de reinicio local del workspace.
+# No es el reinicio remoto usado por AVANCOOP en produccion.
 
 # Activar entorno virtual .venv si existe
 if [ -f ".venv/bin/activate" ]; then
@@ -14,14 +15,14 @@ if [ -f ".env" ]; then
     set +a
 fi
 
-# Configurar ruta persistente para SQLite (producción web)
+# Configurar ruta SQLite para esta instancia local
 # Prioridad:
 # 1) SQLITE_DB_PATH ya definida en entorno/.env
-# 2) Ruta persistente por defecto /var/lib/sipet/data/strategic_planning.db
-# 3) Fallback local ./strategic_planning.db si no hay permisos
+# 2) Ruta persistente por defecto /var/lib/sipet/data/avandbcoop.db
+# 3) Fallback local ./avandbcoop.db si no hay permisos
 DEFAULT_DB_DIR="/var/lib/sipet/data"
-DEFAULT_DB_PATH="${DEFAULT_DB_DIR}/strategic_planning.db"
-LEGACY_DB_PATH="/opt/sipet/strategic_planning.db"
+DEFAULT_DB_PATH="${DEFAULT_DB_DIR}/avandbcoop.db"
+LEGACY_DB_PATH="/opt/sipet/avandbcoop.db"
 
 if [ -z "${SQLITE_DB_PATH:-}" ]; then
     SQLITE_DB_PATH="$DEFAULT_DB_PATH"
@@ -30,7 +31,7 @@ fi
 DB_DIR="$(dirname "$SQLITE_DB_PATH")"
 if ! mkdir -p "$DB_DIR" 2>/dev/null; then
     echo "Aviso: No se pudo crear ${DB_DIR}. Se usará fallback local."
-    SQLITE_DB_PATH="${PWD}/strategic_planning.db"
+    SQLITE_DB_PATH="${PWD}/avandbcoop.db"
     DB_DIR="$(dirname "$SQLITE_DB_PATH")"
     mkdir -p "$DB_DIR"
 fi
@@ -56,7 +57,7 @@ fi
 echo "Usando SQLITE_DB_PATH=${SQLITE_DB_PATH}"
 
 # En producción, forzar DATABASE_URL hacia ruta persistente para evitar
-# que quede apuntando a sqlite:///./strategic_planning.db dentro de /opt/sipet.
+# que quede apuntando a sqlite:///./avandbcoop.db dentro de /opt/sipet.
 APP_ENV_EFFECTIVE="${APP_ENV:-development}"
 if [ "$APP_ENV_EFFECTIVE" = "production" ] || [ "$APP_ENV_EFFECTIVE" = "prod" ]; then
     DATABASE_URL="sqlite:///${SQLITE_DB_PATH}"
@@ -97,8 +98,20 @@ if [ -f "requirements.txt" ]; then
 fi
 
 # Migrar base de datos (Alembic — usa 'heads' para soportar múltiples cabezas)
+# En desarrollo local lo omitimos por defecto porque hay bases con tablas ya existentes
+# fuera del historial de Alembic. Se puede forzar con RUN_ALEMBIC_ON_RESTART=1.
+RUN_ALEMBIC_ON_RESTART="${RUN_ALEMBIC_ON_RESTART:-}"
 if [ -f "alembic.ini" ]; then
-    alembic upgrade heads
+    if [ "$APP_ENV_EFFECTIVE" = "production" ] || [ "$APP_ENV_EFFECTIVE" = "prod" ] || [ "$RUN_ALEMBIC_ON_RESTART" = "1" ]; then
+        if ! alembic upgrade heads; then
+            echo "Aviso: Alembic fallo durante el reinicio."
+            if [ "$APP_ENV_EFFECTIVE" = "production" ] || [ "$APP_ENV_EFFECTIVE" = "prod" ]; then
+                exit 1
+            fi
+        fi
+    else
+        echo "Omitiendo Alembic en desarrollo local. Usa RUN_ALEMBIC_ON_RESTART=1 para forzarlo."
+    fi
 fi
 
 # Cargar módulos personalizados (placeholder)

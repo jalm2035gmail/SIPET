@@ -3,13 +3,16 @@ set -euo pipefail
 
 # =========================
 # Configuracion AVANCOOP (exclusiva)
+# Nota: este deploy NO usa ./reiniciar.sh.
+# Reinicia el servicio remoto configurado en RESTART_CMD.
 # =========================
 SERVER="${SERVER:-administrator@38.247.130.84}"
 REMOTE_DIR="${REMOTE_DIR:-/opt/avancoop/}"
 LOCAL_DIR="${LOCAL_DIR:-/Users/jalm/Dropbox/Apps/SIPET/}"
 PERSISTENT_DB_DIR="${PERSISTENT_DB_DIR:-/var/lib/avancoop/data}"
-PERSISTENT_DB_PATH="${PERSISTENT_DB_PATH:-${PERSISTENT_DB_DIR}/strategic_planning.db}"
+PERSISTENT_DB_PATH="${PERSISTENT_DB_PATH:-${PERSISTENT_DB_DIR}/avandbcoop.db}"
 LEGACY_DB_PATH="${LEGACY_DB_PATH:-/opt/avancoop/strategic_planning.db}"
+PREVIOUS_PERSISTENT_DB_PATH="${PREVIOUS_PERSISTENT_DB_PATH:-${PERSISTENT_DB_DIR}/strategic_planning.db}"
 RESTART_CMD="${RESTART_CMD:-/usr/local/bin/avancoop-restart}"
 DATABASE_URL_VALUE="sqlite:////${PERSISTENT_DB_PATH#/}"
 
@@ -25,6 +28,9 @@ ssh "$SERVER" "test -d '${PERSISTENT_DB_DIR}' || { echo 'ERROR: ${PERSISTENT_DB_
 
 echo "Migrando BD legacy si aplica..."
 ssh "$SERVER" "if [ -f '${LEGACY_DB_PATH}' ] && [ ! -f '${PERSISTENT_DB_PATH}' ]; then cp '${LEGACY_DB_PATH}' '${PERSISTENT_DB_PATH}'; fi"
+
+echo "Migrando BD persistente previa si aplica..."
+ssh "$SERVER" "if [ -f '${PREVIOUS_PERSISTENT_DB_PATH}' ] && [ ! -f '${PERSISTENT_DB_PATH}' ]; then cp '${PREVIOUS_PERSISTENT_DB_PATH}' '${PERSISTENT_DB_PATH}'; fi"
 
 echo "Fijando configuracion de produccion en ${REMOTE_DIR}.env..."
 ssh "$SERVER" "touch '${REMOTE_DIR}.env' && \

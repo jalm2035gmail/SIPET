@@ -2204,6 +2204,7 @@ async def enforce_backend_login(request: Request, call_next):
     )
     path = request.url.path
     public_paths = {
+        "/",
         "/web",
         "/web/descripcion",
         "/web/funcionalidades",
@@ -6676,7 +6677,12 @@ def mi_tablero_page(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 def root():
-    return RedirectResponse(url="/web/inicio", status_code=307)
+    return RedirectResponse(url="/web/inicio", status_code=308)
+
+
+@app.head("/", response_class=HTMLResponse)
+def root_head():
+    return RedirectResponse(url="/web/inicio", status_code=308)
 
 # Área de configuración de imagen (menú)
 @app.get("/configura-imagen", response_class=HTMLResponse)
@@ -6942,6 +6948,8 @@ def _start_update_job(context: Dict[str, Any], manifest_info: Dict[str, Any]) ->
     env["RUN_ALEMBIC_ON_RESTART"] = "1"
     if db_path:
         env["SQLITE_DB_PATH"] = db_path
+    # Este flujo ejecuta la actualizacion del workspace actual.
+    # El deploy de AVANCOOP a produccion usa deploy-avancoop.sh y el servicio remoto.
     script = (
         f"cd {shlex.quote(PROJECT_ROOT)} && "
         "if [ -f .venv/bin/activate ]; then . .venv/bin/activate; fi && "
