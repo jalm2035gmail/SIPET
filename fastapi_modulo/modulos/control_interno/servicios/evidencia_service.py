@@ -31,6 +31,7 @@ from fastapi_modulo.modulos.control_interno.repositorios.evidencia_repository im
     list_evidencias,
     list_resultados,
 )
+from fastapi_modulo.modulos.control_interno.repositorios.programa_repository import get_actividad
 from fastapi_modulo.modulos.control_interno.servicios._common import contains_text, iso_date, parse_date
 
 UPLOAD_DIR = "fastapi_modulo/uploads/control_interno/evidencias"
@@ -106,6 +107,16 @@ def _validate_result_transition(db, item, payload: dict[str, Any]) -> None:
         raise HTTPException(status_code=422, detail="No se puede regresar a 'Por evaluar' una evidencia con hallazgos asociados.")
 
 
+def _autolink_relations(db, payload: dict[str, Any]) -> dict[str, Any]:
+    actividad_id = payload.get("actividad_id")
+    control_id = payload.get("control_id")
+    if actividad_id and not control_id:
+        actividad = get_actividad(db, actividad_id)
+        if actividad and actividad.control_id:
+            payload["control_id"] = actividad.control_id
+    return payload
+
+
 def listar_service(
     *,
     actividad_id: int | None = None,
@@ -128,7 +139,7 @@ def obtener_service(evidencia_id: int) -> dict[str, Any] | None:
 def obtener_ruta_archivo_service(evidencia_id: int) -> str | None:
     with session_scope() as db:
         item = get_evidencia(db, evidencia_id)
-        return item.archivo_ruta if item else None
+        return _safe_file_path(item.archivo_ruta) if item else None
 
 
 def crear_service(data: dict[str, Any], **archivo_meta) -> dict[str, Any]:
@@ -136,6 +147,7 @@ def crear_service(data: dict[str, Any], **archivo_meta) -> dict[str, Any]:
     _validate_archivo_meta(archivo_meta)
     now = datetime.utcnow()
     with session_scope() as db:
+        payload = _autolink_relations(db, payload)
         return _serialize(create_evidencia(db, tenant_id=get_current_tenant(), creado_en=now, actualizado_en=now, **payload, **archivo_meta))
 
 
@@ -147,6 +159,7 @@ def actualizar_service(evidencia_id: int, data: dict[str, Any], **archivo_meta) 
         if not item:
             return None
         _validate_result_transition(db, item, payload)
+        payload = _autolink_relations(db, payload)
         old_ruta = item.archivo_ruta
         for key, value in payload.items():
             setattr(item, key, value)
@@ -189,12 +202,17 @@ def all_evidencias() -> list:
 
 
 def _delete_file(path: str | None) -> None:
+    target = _safe_file_path(path)
+    if target and os.path.exists(target):
+        os.remove(target)
+
+
+def _safe_file_path(path: str | None) -> str | None:
     if not path:
-        return
+        return None
     safe_root = os.path.abspath(UPLOAD_DIR)
     target = os.path.abspath(path)
-    if target.startswith(safe_root) and os.path.exists(target):
-        os.remove(target)
+    return target if target.startswith(safe_root) else None
 
 
 __all__ = [

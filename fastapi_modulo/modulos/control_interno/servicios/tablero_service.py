@@ -18,6 +18,8 @@ from fastapi_modulo.modulos.control_interno.servicios.hallazgo_service import al
 from fastapi_modulo.modulos.control_interno.servicios.programa_service import all_actividades, listar_programas_service
 
 RECENT_EVIDENCE_DAYS = 90
+CRITICAL_ALERT_LIMIT = 5
+OVERDUE_ALERT_LIMIT = 8
 
 
 def _conteo(items: list[Any], campo: str) -> dict[str, int]:
@@ -39,10 +41,10 @@ def _avg(values: list[int]) -> float:
 def _to_date(value) -> date | None:
     if not value:
         return None
-    if isinstance(value, date):
-        return value
     if isinstance(value, datetime):
         return value.date()
+    if isinstance(value, date):
+        return value
     try:
         return date.fromisoformat(str(value)[:10])
     except ValueError:
@@ -58,9 +60,35 @@ def _entity_from_dict(item: dict[str, Any]):
     return type("Entity", (), item)
 
 
-def kpi_controles_service() -> dict[str, Any]:
-    controles = listar_controles()
-    evidencias = all_evidencias()
+def _in_period(value, fecha_desde: str | None = None, fecha_hasta: str | None = None) -> bool:
+    current = _to_date(value)
+    if fecha_desde and (not current or current < date.fromisoformat(fecha_desde)):
+        return False
+    if fecha_hasta and (not current or current > date.fromisoformat(fecha_hasta)):
+        return False
+    return True
+
+
+def _matches_area(item, area: str | None) -> bool:
+    if not area:
+        return True
+    if isinstance(item, dict):
+        return (item.get("area") or "").casefold() == area.casefold()
+    control = getattr(item, "control", None)
+    return ((getattr(control, "area", "") if control else "") or "").casefold() == area.casefold()
+
+
+def _semaforo(porcentaje: float) -> str:
+    if porcentaje >= 85:
+        return "verde"
+    if porcentaje >= 60:
+        return "amarillo"
+    return "rojo"
+
+
+def kpi_controles_service(*, area: str | None = None, fecha_desde: str | None = None, fecha_hasta: str | None = None) -> dict[str, Any]:
+    controles = [item for item in listar_controles() if _matches_area(item, area)]
+    evidencias = [item for item in all_evidencias() if _matches_area(item, area) and _in_period(item.fecha_evidencia or item.creado_en, fecha_desde, fecha_hasta)]
     total = len(controles)
     activos = sum(1 for item in controles if item["estado"] == EstadoControl.ACTIVO.value)
     cutoff = date.today() - timedelta(days=RECENT_EVIDENCE_DAYS)
@@ -91,6 +119,7 @@ def kpi_controles_service() -> dict[str, Any]:
             bucket["sin_evidencia_reciente"] += 1
     for bucket in cumplimiento_por_componente.values():
         bucket["porcentaje"] = _pct(bucket["con_evidencia_reciente"], bucket["total"])
+        bucket["semaforo"] = _semaforo(bucket["porcentaje"])
 
     return {
         "total": total,
@@ -104,9 +133,12 @@ def kpi_controles_service() -> dict[str, Any]:
     }
 
 
-def kpi_programa_service() -> dict[str, Any]:
+def kpi_programa_service(*, area: str | None = None, fecha_desde: str | None = None, fecha_hasta: str | None = None) -> dict[str, Any]:
     programas = listar_programas_service()
-    actividades = all_actividades()
+    actividades = [
+        item for item in all_actividades()
+        if _matches_area(item, area) and _in_period(item.fecha_fin_programada or item.fecha_inicio_programada or item.creado_en, fecha_desde, fecha_hasta)
+    ]
     total = len(actividades)
     today = date.today()
     completadas = sum(1 for item in actividades if item.estado == EstadoActividad.COMPLETADO.value)
@@ -155,11 +187,29 @@ def kpi_programa_service() -> dict[str, Any]:
         "cumplimiento_por_area": dict(sorted(cumplimiento_por_area.items())),
         "cumplimiento_por_componente": dict(sorted(cumplimiento_por_componente.items())),
         "tendencia_mensual": dict(sorted(tendencia_mensual.items())),
+        "alertas_vencidas": [
+            {
+                "id": item.id,
+                "descripcion": item.descripcion or "Actividad sin descripcion",
+                "responsable": item.responsable or "",
+                "area": (item.control.area if item.control else "") or "Sin area",
+                "fecha_fin_programada": _to_date(item.fecha_fin_programada).isoformat() if _to_date(item.fecha_fin_programada) else "",
+            }
+            for item in sorted(
+                (
+                    row for row in actividades
+                    if row.estado not in {EstadoActividad.COMPLETADO.value, EstadoActividad.CANCELADO.value}
+                    and _to_date(row.fecha_fin_programada)
+                    and _to_date(row.fecha_fin_programada) < today
+                ),
+                key=lambda row: _to_date(row.fecha_fin_programada) or today,
+            )[:OVERDUE_ALERT_LIMIT]
+        ],
     }
 
 
-def kpi_evidencias_service() -> dict[str, Any]:
-    evidencias = all_evidencias()
+def kpi_evidencias_service(*, area: str | None = None, fecha_desde: str | None = None, fecha_hasta: str | None = None) -> dict[str, Any]:
+    evidencias = [item for item in all_evidencias() if _matches_area(item, area) and _in_period(item.fecha_evidencia or item.creado_en, fecha_desde, fecha_hasta)]
     total = len(evidencias)
     cumple = sum(1 for item in evidencias if item.resultado_evaluacion == ResultadoEvaluacion.CUMPLE.value)
     parcial = sum(1 for item in evidencias if item.resultado_evaluacion == ResultadoEvaluacion.CUMPLE_PARCIALMENTE.value)
@@ -190,9 +240,10 @@ def kpi_evidencias_service() -> dict[str, Any]:
     }
 
 
-def kpi_hallazgos_service() -> dict[str, Any]:
-    hallazgos = all_hallazgos()
-    acciones = all_acciones()
+def kpi_hallazgos_service(*, area: str | None = None, fecha_desde: str | None = None, fecha_hasta: str | None = None) -> dict[str, Any]:
+    hallazgos = [item for item in all_hallazgos() if _matches_area(item, area) and _in_period(item.fecha_deteccion or item.creado_en, fecha_desde, fecha_hasta)]
+    hallazgo_ids = {item.id for item in hallazgos}
+    acciones = [item for item in all_acciones() if item.hallazgo_id in hallazgo_ids and _in_period(item.fecha_compromiso or item.actualizado_en, fecha_desde, fecha_hasta)]
     total = len(hallazgos)
     today = date.today()
     ejecutadas = sum(1 for item in acciones if item.estado in (EstadoAccionCorrectiva.EJECUTADA.value, EstadoAccionCorrectiva.VERIFICADA.value))
@@ -249,15 +300,49 @@ def kpi_hallazgos_service() -> dict[str, Any]:
         "tiempo_promedio_atencion_dias": _avg(tiempos_atencion),
         "tiempo_promedio_cierre_dias": _avg(tiempos_cierre),
         "tendencia_mensual": dict(sorted(tendencia_mensual.items())),
+        "alertas_criticas": [
+            {
+                "id": item.id,
+                "codigo": item.codigo or "",
+                "titulo": item.titulo,
+                "responsable": item.responsable or "",
+                "area": (item.control.area if item.control else "") or "Sin area",
+                "fecha_limite": _to_date(item.fecha_limite).isoformat() if _to_date(item.fecha_limite) else "",
+            }
+            for item in sorted(
+                (
+                    row for row in hallazgos
+                    if row.nivel_riesgo == NivelRiesgoHallazgo.CRITICO.value
+                    and row.estado not in {EstadoHallazgo.SUBSANADO.value, EstadoHallazgo.CERRADO.value}
+                ),
+                key=lambda row: _to_date(row.fecha_limite) or today,
+            )[:CRITICAL_ALERT_LIMIT]
+        ],
     }
 
 
-def resumen_global_service() -> dict[str, Any]:
+def resumen_global_service(*, area: str | None = None, fecha_desde: str | None = None, fecha_hasta: str | None = None) -> dict[str, Any]:
+    controles = kpi_controles_service(area=area, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta)
+    programa = kpi_programa_service(area=area, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta)
+    evidencias = kpi_evidencias_service(area=area, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta)
+    hallazgos = kpi_hallazgos_service(area=area, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta)
     return {
-        "controles": kpi_controles_service(),
-        "programa": kpi_programa_service(),
-        "evidencias": kpi_evidencias_service(),
-        "hallazgos": kpi_hallazgos_service(),
+        "controles": controles,
+        "programa": programa,
+        "evidencias": evidencias,
+        "hallazgos": hallazgos,
+        "alertas": {
+            "actividades_vencidas": programa["alertas_vencidas"],
+            "hallazgos_criticos": hallazgos["alertas_criticas"],
+        },
+        "meta": {
+            "filtros": {
+                "area": area or "",
+                "fecha_desde": fecha_desde or "",
+                "fecha_hasta": fecha_hasta or "",
+            },
+            "areas": sorted({item["area"] for item in listar_controles() if item.get("area")}),
+        },
     }
 
 

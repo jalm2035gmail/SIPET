@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from contextvars import ContextVar
+from sqlalchemy import text
 
 from fastapi_modulo.db import SessionLocal
 
@@ -19,7 +20,11 @@ def get_current_tenant() -> str:
 @contextmanager
 def session_scope():
     db = SessionLocal()
+    db.expire_on_commit = False
     try:
+        bind = db.get_bind()
+        if bind is not None and bind.dialect.name == "sqlite":
+            db.execute(text("PRAGMA foreign_keys=ON"))
         yield db
         db.commit()
     except Exception:

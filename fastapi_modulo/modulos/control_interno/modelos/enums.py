@@ -2,9 +2,24 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Iterable
+import unicodedata
 
 
 class BaseCatalogEnum(str, Enum):
+    @staticmethod
+    def normalize(value: object) -> str:
+        raw = str(value or "").strip()
+        folded = unicodedata.normalize("NFKD", raw)
+        return "".join(char for char in folded if not unicodedata.combining(char)).casefold()
+
+    @classmethod
+    def _missing_(cls, value):
+        normalized = cls.normalize(value)
+        for item in cls:
+            if cls.normalize(item.value) == normalized:
+                return item
+        return None
+
     @classmethod
     def values(cls) -> tuple[str, ...]:
         return tuple(item.value for item in cls)
@@ -102,9 +117,9 @@ def coerce_choice(value: object, allowed: Iterable[str], default: str) -> str:
     raw = clean_text(value)
     if not raw:
         return default
-    normalized = raw.casefold()
+    normalized = BaseCatalogEnum.normalize(raw)
     for option in allowed:
-        if option.casefold() == normalized:
+        if BaseCatalogEnum.normalize(option) == normalized:
             return option
     return default
 

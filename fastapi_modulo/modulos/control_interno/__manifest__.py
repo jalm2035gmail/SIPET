@@ -41,6 +41,9 @@ MANIFEST = {
         ],
     },
     "structure": {
+        "menu": [
+            "control_interno_menu.py",
+        ],
         "router": [
             "controladores/pages.py",
             "controladores/dependencies.py",

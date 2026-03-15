@@ -221,17 +221,17 @@ def eliminar_actividad_service(actividad_id: int) -> bool:
 def resumen_programa_service(programa_id: int) -> dict[str, Any]:
     with session_scope() as db:
         items = list_actividades(db, programa_id=programa_id)
-    total = len(items)
-    conteo: dict[str, int] = {}
-    for item in items:
-        conteo[item.estado] = conteo.get(item.estado, 0) + 1
-    completado = conteo.get(EstadoActividad.COMPLETADO.value, 0)
-    return {
-        "total": total,
-        "conteo": conteo,
-        "completado": completado,
-        "porcentaje": round(completado * 100 / total) if total else 0,
-    }
+        total = len(items)
+        conteo: dict[str, int] = {}
+        for item in items:
+            conteo[item.estado] = conteo.get(item.estado, 0) + 1
+        completado = conteo.get(EstadoActividad.COMPLETADO.value, 0)
+        return {
+            "total": total,
+            "conteo": conteo,
+            "completado": completado,
+            "porcentaje": round(completado * 100 / total) if total else 0,
+        }
 
 
 def all_actividades() -> list:

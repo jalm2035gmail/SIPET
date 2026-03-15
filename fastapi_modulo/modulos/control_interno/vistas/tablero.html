@@ -33,6 +33,50 @@
     </div>
   </div>
 
+  <article class="card ci-section-card ci-panel bg-MAIN-100 border border-MAIN-300 shadow-sm">
+    <div class="card-body p-4">
+      <div class="ci-toolbar flex flex-wrap gap-3 items-end">
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Area</span></div>
+          <select id="tb-filtro-area" class="select select-bordered select-sm w-full">
+            <option value="">Todas</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Desde</span></div>
+          <input type="date" id="tb-filtro-desde" class="input input-bordered input-sm w-full">
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Hasta</span></div>
+          <input type="date" id="tb-filtro-hasta" class="input input-bordered input-sm w-full">
+        </label>
+        <button type="button" id="tb-btn-filtrar" class="btn btn-sm btn-primary self-end">Aplicar</button>
+        <button type="button" id="tb-btn-limpiar" class="btn btn-sm btn-ghost self-end">Limpiar</button>
+      </div>
+    </div>
+  </article>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <article class="card bg-warning/10 border border-warning/30 shadow-sm">
+      <div class="card-body p-5 gap-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-warning">Actividades vencidas</h3>
+          <span class="badge badge-warning badge-outline" id="tb-alerta-act-count">0</span>
+        </div>
+        <div id="tb-alerta-actividades" class="grid gap-2 text-sm"></div>
+      </div>
+    </article>
+    <article class="card bg-error/10 border border-error/30 shadow-sm">
+      <div class="card-body p-5 gap-3">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-error">Hallazgos criticos</h3>
+          <span class="badge badge-error badge-outline" id="tb-alerta-hz-count">0</span>
+        </div>
+        <div id="tb-alerta-hallazgos" class="grid gap-2 text-sm"></div>
+      </div>
+    </article>
+  </div>
+
   <!-- Resumen ejecutivo (4 tarjetas grandes) -->
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="tb-resumen">
     <div class="stat card bg-MAIN-100 border border-MAIN-300 shadow-sm py-4 px-5">
@@ -122,6 +166,8 @@
     <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
       <div class="card-body p-5 gap-4">
         <h3 class="font-bold text-MAIN">Controles por componente COSO</h3>
+        <div id="tb-coso-semaforos" class="grid gap-2 text-sm"></div>
+        <div class="divider my-0"></div>
         <div class="grid gap-2 text-sm" id="tb-coso-controles"></div>
         <div class="divider my-0"></div>
         <h4 class="font-semibold text-sm">Acciones correctivas</h4>
@@ -185,6 +231,24 @@ function _item(label, valor, badgeClass = "badge-neutral") {
   </div>`;
 }
 
+function _alerta(item, strong, extra = "") {
+  return `<div class="rounded-box border border-current/10 bg-MAIN-100 px-3 py-2">
+    <div class="font-semibold">${strong}</div>
+    <div class="text-xs text-MAIN-content/65">${extra}</div>
+  </div>`;
+}
+
+function _params() {
+  const params = new URLSearchParams();
+  const area = _qs("tb-filtro-area").value;
+  const desde = _qs("tb-filtro-desde").value;
+  const hasta = _qs("tb-filtro-hasta").value;
+  if (area) params.set("area", area);
+  if (desde) params.set("fecha_desde", desde);
+  if (hasta) params.set("fecha_hasta", hasta);
+  return params.toString();
+}
+
 /* ── renderizado ────────────────────────────────────────────────────────── */
 
 function _renderControles(c) {
@@ -198,6 +262,19 @@ function _renderControles(c) {
     .sort((a, b) => b[1] - a[1])
     .map(([k, v]) => _barra(k, v, totalC, "progress-primary"))
     .join("") || "<p class='text-MAIN-content/40 text-xs'>Sin datos.</p>";
+
+  const semaforos = c.cumplimiento_por_componente || {};
+  _qs("tb-coso-semaforos").innerHTML = Object.entries(semaforos)
+    .sort((a, b) => (b[1].porcentaje || 0) - (a[1].porcentaje || 0))
+    .map(([k, v]) => {
+      const badge = v.semaforo === "verde"
+        ? "badge-success"
+        : v.semaforo === "amarillo"
+        ? "badge-warning"
+        : "badge-error";
+      return _item(`${k} (${v.con_evidencia_reciente}/${v.total})`, `${v.porcentaje}%`, badge);
+    })
+    .join("") || "<p class='text-MAIN-content/40 text-xs'>Sin semaforos.</p>";
 
   // Periodicidad
   const per = c.por_periodicidad || {};
@@ -315,19 +392,47 @@ function _renderHallazgos(h) {
     <progress class="progress progress-success w-full h-2 mt-1" value="${pctAC}" max="100"></progress>`;
 }
 
+function _renderAlertas(data) {
+  const actividades = data.alertas?.actividades_vencidas || [];
+  const hallazgos = data.alertas?.hallazgos_criticos || [];
+  _qs("tb-alerta-act-count").textContent = actividades.length;
+  _qs("tb-alerta-hz-count").textContent = hallazgos.length;
+  _qs("tb-alerta-actividades").innerHTML = actividades.map((item) =>
+    _alerta(item, item.descripcion, [item.area, item.responsable, item.fecha_fin_programada].filter(Boolean).join(" | "))
+  ).join("") || "<p class='text-MAIN-content/40 text-xs'>Sin actividades vencidas.</p>";
+  _qs("tb-alerta-hallazgos").innerHTML = hallazgos.map((item) =>
+    _alerta(item, `${item.codigo || "Sin codigo"} - ${item.titulo}`, [item.area, item.responsable, item.fecha_limite].filter(Boolean).join(" | "))
+  ).join("") || "<p class='text-MAIN-content/40 text-xs'>Sin hallazgos criticos abiertos.</p>";
+}
+
+function _renderFiltros(meta) {
+  const areas = meta?.areas || [];
+  const actual = meta?.filtros?.area || "";
+  const select = _qs("tb-filtro-area");
+  const options = ['<option value="">Todas</option>'].concat(
+    areas.map((area) => `<option value="${area}" ${area === actual ? "selected" : ""}>${area}</option>`)
+  );
+  select.innerHTML = options.join("");
+  _qs("tb-filtro-desde").value = meta?.filtros?.fecha_desde || _qs("tb-filtro-desde").value;
+  _qs("tb-filtro-hasta").value = meta?.filtros?.fecha_hasta || _qs("tb-filtro-hasta").value;
+}
+
 /* ── carga de datos ─────────────────────────────────────────────────────── */
 
 async function cargar() {
   const spinner = _qs("tb-spinner");
   spinner.classList.remove("hidden");
   try {
-    const r = await fetch(API);
+    const query = _params();
+    const r = await fetch(query ? `${API}?${query}` : API);
     if (!r.ok) throw new Error("Error al cargar indicadores.");
     const d = await r.json();
+    _renderFiltros(d.meta);
     _renderControles(d.controles);
     _renderPrograma(d.programa);
     _renderEvidencias(d.evidencias);
     _renderHallazgos(d.hallazgos);
+    _renderAlertas(d);
   } catch (e) {
     console.error(e);
   } finally {
@@ -336,6 +441,13 @@ async function cargar() {
 }
 
 _qs("tb-btn-refrescar").addEventListener("click", cargar);
+_qs("tb-btn-filtrar").addEventListener("click", cargar);
+_qs("tb-btn-limpiar").addEventListener("click", () => {
+  _qs("tb-filtro-area").value = "";
+  _qs("tb-filtro-desde").value = "";
+  _qs("tb-filtro-hasta").value = "";
+  cargar();
+});
 cargar();
 
 })();

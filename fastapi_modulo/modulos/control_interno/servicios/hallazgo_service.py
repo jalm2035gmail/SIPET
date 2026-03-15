@@ -38,6 +38,7 @@ from fastapi_modulo.modulos.control_interno.repositorios.hallazgo_repository imp
     list_all_hallazgos,
     list_hallazgos,
 )
+from fastapi_modulo.modulos.control_interno.repositorios.programa_repository import get_actividad
 from fastapi_modulo.modulos.control_interno.servicios._common import contains_text, iso_date, parse_date
 
 
@@ -60,8 +61,8 @@ def _validate_hallazgo_payload(db, payload: dict[str, Any], *, hallazgo_id: int 
     if estado == EstadoHallazgo.CERRADO.value:
         item = current_item if current_item and current_item.id == hallazgo_id else get_hallazgo(db, hallazgo_id) if hallazgo_id else None
         acciones = list(item.acciones or []) if item else []
-        if not any(acc.estado in (EstadoAccionCorrectiva.EJECUTADA.value, EstadoAccionCorrectiva.VERIFICADA.value) for acc in acciones):
-            raise HTTPException(status_code=422, detail="No se puede cerrar un hallazgo sin al menos una accion ejecutada o verificada.")
+        if not any(acc.estado == EstadoAccionCorrectiva.VERIFICADA.value for acc in acciones):
+            raise HTTPException(status_code=422, detail="No se puede cerrar un hallazgo sin al menos una accion verificada.")
 
 
 def _validate_accion_payload(payload: dict[str, Any], *, current_item=None) -> None:
@@ -162,6 +163,28 @@ def _accion_payload(data: dict[str, Any], *, partial: bool = False) -> dict[str,
     return result
 
 
+def _autolink_hallazgo_relations(db, payload: dict[str, Any]) -> dict[str, Any]:
+    evidencia_id = payload.get("evidencia_id")
+    actividad_id = payload.get("actividad_id")
+    control_id = payload.get("control_id")
+
+    if evidencia_id:
+        evidencia = get_evidencia(db, evidencia_id)
+        if evidencia:
+            if not actividad_id and evidencia.actividad_id:
+                payload["actividad_id"] = evidencia.actividad_id
+                actividad_id = evidencia.actividad_id
+            if not control_id and evidencia.control_id:
+                payload["control_id"] = evidencia.control_id
+                control_id = evidencia.control_id
+
+    if actividad_id and not control_id:
+        actividad = get_actividad(db, actividad_id)
+        if actividad and actividad.control_id:
+            payload["control_id"] = actividad.control_id
+    return payload
+
+
 def listar_service(
     *,
     nivel_riesgo: str | None = None,
@@ -185,6 +208,7 @@ def crear_service(data: dict[str, Any]) -> dict[str, Any]:
     payload = _hallazgo_payload(data)
     now = datetime.utcnow()
     with session_scope() as db:
+        payload = _autolink_hallazgo_relations(db, payload)
         _validate_hallazgo_payload(db, payload)
         return _hallazgo_dict(create_hallazgo(db, tenant_id=get_current_tenant(), creado_en=now, actualizado_en=now, **payload), include_acciones=True)
 
@@ -195,6 +219,7 @@ def actualizar_service(hallazgo_id: int, data: dict[str, Any]) -> dict[str, Any]
         item = get_hallazgo(db, hallazgo_id)
         if not item:
             return None
+        payload = _autolink_hallazgo_relations(db, payload)
         _validate_hallazgo_payload(db, payload, hallazgo_id=hallazgo_id, current_item=item)
         for key, value in payload.items():
             setattr(item, key, value)
