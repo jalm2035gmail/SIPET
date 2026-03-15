@@ -2,11 +2,11 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from strategic_planning.backend.app.templates.base_template import render_base
+from strategic_planning.backend.app.templates.MAIN_template import render_MAIN
 from strategic_planning.backend.app.models.permission import Role
 from strategic_planning.backend.app.models.user import User, UserRole
 from strategic_planning.backend.app.core.permissions import PermissionManager
-from strategic_planning.backend.app.database import get_db
+from strategic_planning.backend.app.dataMAIN import get_db
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -27,7 +27,7 @@ async def roles_permisos(request: Request):
     with open("strategic_planning/backend/app/templates/permissions/roles_permissions.html", encoding="utf-8") as f:
         template = Template(f.read())
     content = template.render(roles=roles, permissions=permissions)
-    return render_base(request, title="Roles y Permisos", content=content)
+    return render_MAIN(request, title="Roles y Permisos", content=content)
 
 
 @router.get("/superadmin-status")

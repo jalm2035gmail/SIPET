@@ -82,7 +82,7 @@ def _check_ollama_connected(generate_url: str, timeout_seconds: int) -> tuple[bo
 def _ia_form_content(
     ai_provider: str = "",
     ai_api_key: str = "",
-    ai_base_url: str = "",
+    ai_MAIN_url: str = "",
     ai_model: str = "",
     ai_timeout: int = 30,
     ai_temperature: float = 0.7,
@@ -125,7 +125,7 @@ def _ia_form_content(
         for value, label in chain_options
     )
     api_key = escape(str(ai_api_key or ""))
-    base_url = escape(str(ai_base_url or ""))
+    MAIN_url = escape(str(ai_MAIN_url or ""))
     model = escape(str(ai_model or ""))
     timeout = int(ai_timeout or 30)
     temperature = float(ai_temperature if ai_temperature is not None else 0.7)
@@ -323,8 +323,8 @@ def _ia_form_content(
           <input type="password" id="ai_api_key" name="ai_api_key" value="{api_key}">
         </div>
         <div class="ia-field full">
-          <label for="ai_base_url">Base URL</label>
-          <input type="text" id="ai_base_url" name="ai_base_url" value="{base_url}">
+          <label for="ai_MAIN_url">MAIN URL</label>
+          <input type="text" id="ai_MAIN_url" name="ai_MAIN_url" value="{MAIN_url}">
         </div>
         <div class="ia-field">
           <label for="ai_timeout">Timeout (segundos)</label>
@@ -803,7 +803,7 @@ def ajustes_ia_get(request: Request):
     content = _ia_form_content(
         ai_provider=getattr(config, "ai_provider", ""),
         ai_api_key=getattr(config, "ai_api_key", ""),
-        ai_base_url=getattr(config, "ai_base_url", ""),
+        ai_MAIN_url=getattr(config, "ai_MAIN_url", ""),
         ai_model=getattr(config, "ai_model", ""),
         ai_timeout=getattr(config, "ai_timeout", 30),
         ai_temperature=getattr(config, "ai_temperature", 0.7),
@@ -825,7 +825,7 @@ async def ajustes_ia_post(request: Request):
     form = await request.form()
     ai_provider = str(form.get("ai_provider") or "").strip()
     ai_api_key = str(form.get("ai_api_key") or "").strip()
-    ai_base_url = str(form.get("ai_base_url") or "").strip()
+    ai_MAIN_url = str(form.get("ai_MAIN_url") or "").strip()
     ai_model = str(form.get("ai_model") or "").strip()
     ai_primary_provider = _normalize_provider_name(str(form.get("ai_primary_provider") or "").strip())
     ai_fallback_provider = _normalize_provider_name(str(form.get("ai_fallback_provider") or "").strip())
@@ -862,9 +862,9 @@ async def ajustes_ia_post(request: Request):
             fallback = "deepseek" if primary != "deepseek" else "openai"
         ai_provider = f"{primary},{fallback}"
         if primary == "ollama":
-            ai_base_url = _normalize_ollama_generate_url(ai_base_url)
+            ai_MAIN_url = _normalize_ollama_generate_url(ai_MAIN_url)
     elif provider_norm == "ollama":
-        ai_base_url = _normalize_ollama_generate_url(ai_base_url)
+        ai_MAIN_url = _normalize_ollama_generate_url(ai_MAIN_url)
 
     db = SessionLocal()
     try:
@@ -874,14 +874,14 @@ async def ajustes_ia_post(request: Request):
             ai_provider = str(getattr(prev, "ai_provider", "") or "")
         if not ai_api_key and prev:
             ai_api_key = str(getattr(prev, "ai_api_key", "") or "")
-        if not ai_base_url and prev:
-            ai_base_url = str(getattr(prev, "ai_base_url", "") or "")
+        if not ai_MAIN_url and prev:
+            ai_MAIN_url = str(getattr(prev, "ai_MAIN_url", "") or "")
         if not ai_model and prev:
             ai_model = str(getattr(prev, "ai_model", "") or "")
         config = IAConfig(
             ai_provider=ai_provider,
             ai_api_key=ai_api_key,
-            ai_base_url=ai_base_url,
+            ai_MAIN_url=ai_MAIN_url,
             ai_model=ai_model,
             ai_timeout=timeout_value,
             ai_temperature=temperature_value,
@@ -910,14 +910,14 @@ def ia_status_api(request: Request):
     provider = "hybrid" if len(provider_chain) >= 2 else primary_provider
     fallback_provider = provider_chain[1] if len(provider_chain) >= 2 else ""
     api_key = str(getattr(config, "ai_api_key", "") or "").strip()
-    base_url = str(getattr(config, "ai_base_url", "") or "").strip()
+    MAIN_url = str(getattr(config, "ai_MAIN_url", "") or "").strip()
     model = str(getattr(config, "ai_model", "") or "").strip()
     timeout = int(getattr(config, "ai_timeout", 30) or 30) if config else 30
     health_detail = ""
     primary_connected = False
     if primary_provider == "ollama":
-        primary_connected, health_detail = _check_ollama_connected(base_url, timeout)
-        base_url = _normalize_ollama_generate_url(base_url)
+        primary_connected, health_detail = _check_ollama_connected(MAIN_url, timeout)
+        MAIN_url = _normalize_ollama_generate_url(MAIN_url)
     else:
         primary_connected = bool(primary_provider and api_key)
     fallback_ready = bool(fallback_provider and api_key)
@@ -932,7 +932,7 @@ def ia_status_api(request: Request):
         "connected": connected,
         "provider": provider,
         "model": model,
-        "base_url": base_url,
+        "MAIN_url": MAIN_url,
         "health_detail": health_detail,
         "agent_name": "AVAN",
         "agent_avatar": "/templates/imagenes/lobo.jpg",

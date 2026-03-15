@@ -1,11 +1,11 @@
 from typing import List, Dict, Any
 from sqlalchemy import Column, Integer, ForeignKey, JSON, Text, DateTime
 from sqlalchemy.orm import relationship
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 from datetime import datetime
 
 
-class SWOTAnalysis(BaseModel):
+class SWOTAnalysis(MAINModel):
     __tablename__ = "swot_analysis"
 
     strategic_plan_id = Column(Integer, ForeignKey("strategic_plans.id"), nullable=False, unique=True)

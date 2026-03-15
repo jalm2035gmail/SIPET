@@ -169,33 +169,33 @@ def _provider_settings(provider_name, config, is_primary=False):
     provider_key = _normalize_provider_name(provider_name)
     upper = provider_key.upper()
 
-    # Base de configuración (DB)
-    base_api_key = str(getattr(config, "ai_api_key", "") or "")
-    base_url = str(getattr(config, "ai_base_url", "") or "")
-    base_model = str(getattr(config, "ai_model", "") or "")
-    base_timeout = _to_int(getattr(config, "ai_timeout", 30), 30)
-    base_temperature = _to_float(getattr(config, "ai_temperature", 0.7), 0.7)
-    base_top_p = _to_float(getattr(config, "ai_top_p", 0.9), 0.9)
-    base_num_predict = _to_int(getattr(config, "ai_num_predict", 700), 700)
+    # MAIN de configuración (DB)
+    MAIN_api_key = str(getattr(config, "ai_api_key", "") or "")
+    MAIN_url = str(getattr(config, "ai_MAIN_url", "") or "")
+    MAIN_model = str(getattr(config, "ai_model", "") or "")
+    MAIN_timeout = _to_int(getattr(config, "ai_timeout", 30), 30)
+    MAIN_temperature = _to_float(getattr(config, "ai_temperature", 0.7), 0.7)
+    MAIN_top_p = _to_float(getattr(config, "ai_top_p", 0.9), 0.9)
+    MAIN_num_predict = _to_int(getattr(config, "ai_num_predict", 700), 700)
 
     # Override por proveedor desde env
-    # base_url de la DB pertenece al proveedor primario; proveedores secundarios
-    # solo deben usarla si se especifica via env var propio (AI_{UPPER}_BASE_URL).
-    api_key = str(os.environ.get(f"AI_{upper}_API_KEY", "") or base_api_key)
-    endpoint = str(os.environ.get(f"AI_{upper}_BASE_URL", "") or (base_url if is_primary else ""))
-    model = str(os.environ.get(f"AI_{upper}_MODEL", "") or (base_model if is_primary else ""))
-    timeout = _to_int(os.environ.get(f"AI_{upper}_TIMEOUT", ""), base_timeout)
+    # MAIN_url de la DB pertenece al proveedor primario; proveedores secundarios
+    # solo deben usarla si se especifica via env var propio (AI_{UPPER}_MAIN_URL).
+    api_key = str(os.environ.get(f"AI_{upper}_API_KEY", "") or MAIN_api_key)
+    endpoint = str(os.environ.get(f"AI_{upper}_MAIN_URL", "") or (MAIN_url if is_primary else ""))
+    model = str(os.environ.get(f"AI_{upper}_MODEL", "") or (MAIN_model if is_primary else ""))
+    timeout = _to_int(os.environ.get(f"AI_{upper}_TIMEOUT", ""), MAIN_timeout)
 
     # Primario respeta DB como primer valor (si existe)
     if is_primary:
-        api_key = base_api_key or api_key
-        # Solo aplicar base_url de DB al proveedor correcto:
+        api_key = MAIN_api_key or api_key
+        # Solo aplicar MAIN_url de DB al proveedor correcto:
         # no asignar una URL de Ollama a deepseek/openai ni viceversa
-        _ollama_url_pattern = "11434" in base_url or "/api/generate" in base_url or "/api/tags" in base_url
+        _ollama_url_pattern = "11434" in MAIN_url or "/api/generate" in MAIN_url or "/api/tags" in MAIN_url
         if provider_key == "ollama" or not _ollama_url_pattern:
-            endpoint = base_url or endpoint
-        model = base_model or model
-        timeout = _to_int(base_timeout, timeout)
+            endpoint = MAIN_url or endpoint
+        model = MAIN_model or model
+        timeout = _to_int(MAIN_timeout, timeout)
 
     # Defaults por proveedor
     if provider_key == "openai":
@@ -205,31 +205,31 @@ def _provider_settings(provider_name, config, is_primary=False):
         endpoint = endpoint or "https://api.deepseek.com/v1/chat/completions"
         model = model or os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
     elif provider_key == "ollama":
-        endpoint = endpoint or os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434/api/generate")
+        endpoint = endpoint or os.environ.get("OLLAMA_MAIN_URL", "http://127.0.0.1:11434/api/generate")
         endpoint = _normalize_ollama_generate_url(endpoint)
         model = model or os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
 
     retries = _to_int(os.environ.get(f"AI_{upper}_RETRIES", os.environ.get("AI_PROVIDER_RETRIES", "1")), 1)
     if retries > 6:
         retries = 6
-    base_backoff_ms = _to_int(os.environ.get("AI_RETRY_BASE_MS", "350"), 350)
+    MAIN_backoff_ms = _to_int(os.environ.get("AI_RETRY_MAIN_MS", "350"), 350)
     max_backoff_ms = _to_int(os.environ.get("AI_RETRY_MAX_MS", "4000"), 4000)
 
     # Costos por 1k tokens (opcional)
     cost_in = _to_float(os.environ.get(f"AI_{upper}_COST_INPUT_PER_1K", "0"), 0.0)
     cost_out = _to_float(os.environ.get(f"AI_{upper}_COST_OUTPUT_PER_1K", "0"), 0.0)
 
-    temperature = _to_float(os.environ.get(f"AI_{upper}_TEMPERATURE", ""), base_temperature) if os.environ.get(f"AI_{upper}_TEMPERATURE") else base_temperature
-    top_p = _to_float(os.environ.get(f"AI_{upper}_TOP_P", ""), base_top_p) if os.environ.get(f"AI_{upper}_TOP_P") else base_top_p
-    num_predict = _to_int(os.environ.get(f"AI_{upper}_NUM_PREDICT", ""), base_num_predict) if os.environ.get(f"AI_{upper}_NUM_PREDICT") else base_num_predict
+    temperature = _to_float(os.environ.get(f"AI_{upper}_TEMPERATURE", ""), MAIN_temperature) if os.environ.get(f"AI_{upper}_TEMPERATURE") else MAIN_temperature
+    top_p = _to_float(os.environ.get(f"AI_{upper}_TOP_P", ""), MAIN_top_p) if os.environ.get(f"AI_{upper}_TOP_P") else MAIN_top_p
+    num_predict = _to_int(os.environ.get(f"AI_{upper}_NUM_PREDICT", ""), MAIN_num_predict) if os.environ.get(f"AI_{upper}_NUM_PREDICT") else MAIN_num_predict
 
     return {
         "api_key": api_key,
-        "base_url": endpoint,
+        "MAIN_url": endpoint,
         "model": model,
         "timeout": timeout,
         "retries": retries,
-        "base_backoff_ms": base_backoff_ms,
+        "MAIN_backoff_ms": MAIN_backoff_ms,
         "max_backoff_ms": max_backoff_ms,
         "cost_input_per_1k": cost_in,
         "cost_output_per_1k": cost_out,
@@ -248,7 +248,7 @@ def get_provider_instance(provider_name=None, config=None, is_primary=False):
     settings = _provider_settings(target_provider, cfg, is_primary=is_primary)
     return provider_cls(
         api_key=settings["api_key"],
-        base_url=settings["base_url"],
+        MAIN_url=settings["MAIN_url"],
         model=settings["model"],
         timeout=settings["timeout"],
     ), settings
@@ -342,7 +342,7 @@ def complete_with_fallback(prompt, **kwargs):
                 errors.append(err)
                 logger.warning("IA provider error: %s", err)
                 if attempt < max_attempts and exc.retryable:
-                    delay_ms = min(int(settings.get("base_backoff_ms", 350)) * (2 ** (attempt - 1)), int(settings.get("max_backoff_ms", 4000)))
+                    delay_ms = min(int(settings.get("MAIN_backoff_ms", 350)) * (2 ** (attempt - 1)), int(settings.get("max_backoff_ms", 4000)))
                     time.sleep(delay_ms / 1000.0)
                     continue
                 break

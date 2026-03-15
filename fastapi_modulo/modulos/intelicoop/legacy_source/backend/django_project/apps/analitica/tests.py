@@ -1597,8 +1597,8 @@ class AnaliticaApiTests(APITestCase):
             self.assertTrue(csv_path.exists())
             self.assertTrue(md_path.exists())
             self.assertTrue((Path(tmpdir) / "04_controles_identificadores.csv").exists())
-            self.assertTrue((Path(tmpdir) / "04_catalogo_sucursales_base.csv").exists())
-            self.assertTrue((Path(tmpdir) / "04_catalogo_productos_base.csv").exists())
+            self.assertTrue((Path(tmpdir) / "04_catalogo_sucursales_MAIN.csv").exists())
+            self.assertTrue((Path(tmpdir) / "04_catalogo_productos_MAIN.csv").exists())
             self.assertIn("socio_id", csv_path.read_text(encoding="utf-8"))
             self.assertIn("Elemento 4 de 4 completado tecnicamente", md_path.read_text(encoding="utf-8"))
 

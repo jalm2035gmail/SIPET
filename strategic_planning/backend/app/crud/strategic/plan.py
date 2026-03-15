@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import asc, desc, func, or_, Float
 from sqlalchemy.orm import Session
 
-from app.crud.base import CRUDBase
+from app.crud.MAIN import CRUDMAIN
 from app.models.strategic.plan import PlanStatus, StrategicPlan
 from app.schemas.strategic.plan import (
     StrategicPlanCreate,
@@ -13,7 +13,7 @@ from app.schemas.strategic.plan import (
 )
 
 
-class CRUDStrategicPlan(CRUDBase[StrategicPlan, StrategicPlanCreate, StrategicPlanUpdate]):
+class CRUDStrategicPlan(CRUDMAIN[StrategicPlan, StrategicPlanCreate, StrategicPlanUpdate]):
     """Operaciones CRUD avanzadas sobre StrategicPlan."""
 
     def __init__(self, model: type[StrategicPlan]):

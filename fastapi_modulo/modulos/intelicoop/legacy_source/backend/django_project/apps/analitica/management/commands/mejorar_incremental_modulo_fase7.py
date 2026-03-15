@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.utils import timezone as dj_timezone
 
 from apps.ahorros.models import Transaccion
@@ -23,8 +23,8 @@ def _recomendacion(score: float) -> str:
     return "rechazar"
 
 
-class Command(BaseCommand):
-    help = "Implementa mejora incremental del modulo con features nuevas, fuente externa y variantes vs baseline (Fase 7)."
+class Command(MAINCommand):
+    help = "Implementa mejora incremental del modulo con features nuevas, fuente externa y variantes vs MAINline (Fase 7)."
 
     def add_arguments(self, parser):
         parser.add_argument("--report-csv", default="docs/mineria/fase7/03_mejora_incremental_modulo.csv")
@@ -63,7 +63,7 @@ class Command(BaseCommand):
         external_json.write_text(json.dumps(external_context, ensure_ascii=True, indent=2), encoding="utf-8")
         stress = float(external_context["economic_stress_index"])
 
-        variant_scores = {"baseline": [], "incremental_interno": [], "incremental_hibrido": []}
+        variant_scores = {"MAINline": [], "incremental_interno": [], "incremental_hibrido": []}
         tx_feature_available = 0
         for credito in creditos:
             ingreso = float(credito.ingreso_mensual or 0.0)
@@ -81,11 +81,11 @@ class Command(BaseCommand):
             if tx_count_90d > 0:
                 tx_feature_available += 1
 
-            baseline = _clamp(0.72 - (0.55 * debt_to_income) + (0.20 * antig_norm))
-            incremental_interno = _clamp(baseline + (0.08 * recurrencia) + (0.06 * actividad_digital))
+            MAINline = _clamp(0.72 - (0.55 * debt_to_income) + (0.20 * antig_norm))
+            incremental_interno = _clamp(MAINline + (0.08 * recurrencia) + (0.06 * actividad_digital))
             incremental_hibrido = _clamp(incremental_interno - (0.10 * stress))
 
-            variant_scores["baseline"].append(baseline)
+            variant_scores["MAINline"].append(MAINline)
             variant_scores["incremental_interno"].append(incremental_interno)
             variant_scores["incremental_hibrido"].append(incremental_hibrido)
 
@@ -117,7 +117,7 @@ class Command(BaseCommand):
             }
 
         summaries = [
-            summarize("baseline_vigente", variant_scores["baseline"]),
+            summarize("MAINline_vigente", variant_scores["MAINline"]),
             summarize("variante_feature_interna", variant_scores["incremental_interno"]),
             summarize("variante_hibrida_fuente_externa", variant_scores["incremental_hibrido"]),
         ]
@@ -188,7 +188,7 @@ class Command(BaseCommand):
             "## Alcance",
             "- Features internas incorporadas: recurrencia y actividad transaccional.",
             "- Fuente externa integrada: indice sintetico de estres economico.",
-            "- Variantes comparadas contra baseline vigente.",
+            "- Variantes comparadas contra MAINline vigente.",
             "",
             "## Comparativo de variantes",
             "| Variante | Muestras | Avg score | Approval % | High risk % | Business proxy |",

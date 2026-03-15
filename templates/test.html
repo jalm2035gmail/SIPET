@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "MAIN.html" %}
 
 {% block title %}Test SIPET{% endblock %}
 
@@ -6,7 +6,7 @@
 <h1 class="text-3xl font-bold text-primary">¡FastAPI + Tailwind + DaisyUI funcionando!</h1>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-    <div class="card bg-base-100 shadow-xl">
+    <div class="card bg-MAIN-100 shadow-xl">
         <div class="card-body">
             <h2 class="card-title">Tarjeta 1</h2>
             <p>Si ves este estilo, DaisyUI está funcionando</p>
@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="/static/dist/output.css?v={{ asset_version | default('dev', true) }}">
 </head>
 <body>
-    <div class="navbar bg-base-100 shadow-lg">
+    <div class="navbar bg-MAIN-100 shadow-lg">
         <div class="flex-1">
             <a class="btn btn-ghost text-xl">SIPET</a>
         </div>
@@ -38,7 +38,7 @@
         <h1 class="text-3xl font-bold text-primary">¡FastAPI + Tailwind + DaisyUI funcionando!</h1>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-            <div class="card bg-base-100 shadow-xl">
+            <div class="card bg-MAIN-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title">Tarjeta 1</h2>
                     <p>Si ves este estilo, DaisyUI está funcionando</p>
@@ -48,7 +48,7 @@
                 </div>
             </div>
             
-            <div class="card bg-base-100 shadow-xl">
+            <div class="card bg-MAIN-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title">Tarjeta 2</h2>
                     <p>Tailwind procesó todas las clases correctamente</p>
@@ -58,7 +58,7 @@
                 </div>
             </div>
             
-            <div class="card bg-base-100 shadow-xl">
+            <div class="card bg-MAIN-100 shadow-xl">
                 <div class="card-body">
                     <h2 class="card-title">Tarjeta 3</h2>
                     <p>Todo listo para construir tu app</p>

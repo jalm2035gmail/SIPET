@@ -2,13 +2,13 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Count
 
 from apps.analitica.models import ResultadoMoraTemprana, ResultadoScoring
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Define adopcion organizacional: entrenamiento, rutinas operativas y retroalimentacion priorizada (Fase 7)."
 
     def add_arguments(self, parser):
@@ -22,7 +22,7 @@ class Command(BaseCommand):
         report_csv = report_csv_opt if report_csv_opt.is_absolute() else (root / report_csv_opt)
         report_md = report_md_opt if report_md_opt.is_absolute() else (root / report_md_opt)
 
-        # Base operativa para disenar adopcion
+        # MAIN operativa para disenar adopcion
         total_scoring = ResultadoScoring.objects.count()
         total_mora = ResultadoMoraTemprana.objects.count()
         alertas_altas = ResultadoMoraTemprana.objects.filter(alerta=ResultadoMoraTemprana.ALERTA_ALTA).count()
@@ -158,7 +158,7 @@ class Command(BaseCommand):
             "",
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             "",
-            "## Base operativa observada",
+            "## MAIN operativa observada",
             f"- Registros de scoring historicos: {total_scoring}",
             f"- Alertas de mora historicas: {total_mora}",
             f"- Alertas altas: {alertas_altas}",

@@ -20,8 +20,8 @@
     body {
         display: flex;
         min-height: 100dvh;
-        background: var(--color-base-100);
-        color: var(--color-base-content);
+        background: var(--color-MAIN-100);
+        color: var(--color-MAIN-content);
     }
 
     /* ── Left panel — logo + company name ───────────────────── */
@@ -47,8 +47,8 @@
         background: linear-gradient(
             to bottom,
             transparent,
-            var(--color-base-300) 30%,
-            var(--color-base-300) 70%,
+            var(--color-MAIN-300) 30%,
+            var(--color-MAIN-300) 70%,
             transparent
         );
         opacity: .35;
@@ -98,7 +98,7 @@
         font-size: clamp(1.5rem, 3vw, 2.4rem);
         font-weight: 800;
         line-height: 1.2;
-        color: var(--color-base-content);
+        color: var(--color-MAIN-content);
         max-width: 520px;
     }
     .actions {
@@ -135,12 +135,12 @@
     }
     .btn-secondary {
         background: transparent;
-        color: var(--color-base-content);
-        border-color: var(--color-base-300);
+        color: var(--color-MAIN-content);
+        border-color: var(--color-MAIN-300);
     }
     .btn-secondary:hover {
-        background: var(--color-base-200);
-        border-color: var(--color-base-content);
+        background: var(--color-MAIN-200);
+        border-color: var(--color-MAIN-content);
     }
 
     /* ── Footer credit ───────────────────────────────────────── */
@@ -149,7 +149,7 @@
         bottom: 18px;
         right: 24px;
         font-size: .72rem;
-        color: var(--color-base-content);
+        color: var(--color-MAIN-content);
         opacity: .35;
         letter-spacing: .04em;
     }
@@ -209,17 +209,17 @@
         <p class="brand">SIPET</p>
         <h1 class="title">Sistema de Plan Estratégico y Táctico</h1>
         <div class="actions">
-            <a class="btn btn-primary" href="/web/login">Ingresar</a>
-            <a class="btn btn-secondary" href="/web/descripcion">Conocer más</a>
+            <a class="btn btn-primary" href="/backend/login">Ingresar</a>
+            <a class="btn btn-secondary" href="/backend/descripcion">Conocer más</a>
         </div>
     </section>
     <p class="footer-credit">Desarrollado por AVANCOOP</p>
     {% if menu_position == 'abajo' %}
     <nav class="sipet-mobile-bottom-nav" aria-label="Menú móvil inferior">
-      <a href="/web/inicio" class="is-active"><span class="sipet-mobile-bottom-nav__icon">🏠</span><span class="sipet-mobile-bottom-nav__label">Inicio</span></a>
-      <a href="/web/funcionalidades"><span class="sipet-mobile-bottom-nav__icon">💳</span><span class="sipet-mobile-bottom-nav__label">Servicios</span></a>
-      <a href="/web/descripcion"><span class="sipet-mobile-bottom-nav__icon">🔍</span><span class="sipet-mobile-bottom-nav__label">Buscar</span></a>
-      <a href="/web/login"><span class="sipet-mobile-bottom-nav__icon">👤</span><span class="sipet-mobile-bottom-nav__label">Perfil</span></a>
+      <a href="/backend/inicio" class="is-active"><span class="sipet-mobile-bottom-nav__icon">🏠</span><span class="sipet-mobile-bottom-nav__label">Inicio</span></a>
+      <a href="/backend/funcionalidades"><span class="sipet-mobile-bottom-nav__icon">💳</span><span class="sipet-mobile-bottom-nav__label">Servicios</span></a>
+      <a href="/backend/descripcion"><span class="sipet-mobile-bottom-nav__icon">🔍</span><span class="sipet-mobile-bottom-nav__label">Buscar</span></a>
+      <a href="/backend/login"><span class="sipet-mobile-bottom-nav__icon">👤</span><span class="sipet-mobile-bottom-nav__label">Perfil</span></a>
     </nav>
     {% endif %}
 
@@ -231,7 +231,7 @@
     </div>
     <script>
     (function(){
-      fetch('/api/web/me',{credentials:'include'})
+      fetch('/api/backend/me',{credentials:'include'})
         .then(function(r){return r.ok?r.json():null;})
         .then(function(d){
           if(!d||!d.authenticated) return;
@@ -240,7 +240,7 @@
           bar.style.background=d.bar_color||'#0f172a';
           bar.style.display='flex';
           var rl=document.getElementById('sab-role');
-          if(rl) rl.textContent=d.is_superadmin?'Superadministrador':(d.web_roles||[]).join(' · ');
+          if(rl) rl.textContent=d.is_superadmin?'Superadministrador':(d.backend_roles||[]).join(' · ');
           document.body.style.paddingTop='44px';
         })
         .catch(function(){});

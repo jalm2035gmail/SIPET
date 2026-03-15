@@ -1,0 +1,119 @@
+<link rel="stylesheet" href="/modulos/proyectando/proyectando.css">
+<section class="proy-shell grid gap-4 w-full max-w-6xl">
+  <div class="titulo proy-title-card">
+    <div class="proy-title-layout">
+      <img
+        src="/icon/proyectando.svg"
+        alt="Icono datos financieros"
+        width="96"
+        height="96"
+        class="proy-title-icon"
+      />
+      <div class="proy-title-copy">
+        <div class="proy-title-heading">Proyectando</div>
+        <div class="proy-title-description">Herramienta de proyección financiera.</div>
+      </div>
+    </div>
+  </div>
+  <header class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+    <div class="card-body flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <div class="badge badge-outline badge-lg">▶</div>
+        <div>
+          <h2 class="card-title text-MAIN-content">Proyección Financiera (12 meses)</h2>
+          <p class="text-sm text-MAIN-content/70">Ajusta parámetros y observa el recalculo en tiempo real.</p>
+        </div>
+      </div>
+      <div class="botones_accion flex items-center gap-2 flex-wrap">
+        <button type="button" class="boton_vista boton_vista-eliptico">
+          <i class="boton_vista-icono view-pill-fa fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          <span class="boton_vista-label">Guardar</span>
+        </button>
+        <button type="button" class="boton_vista boton_vista-eliptico active">
+          <i class="boton_vista-icono view-pill-fa fa-solid fa-file-export" aria-hidden="true"></i>
+          <span class="boton_vista-label">Exportar</span>
+        </button>
+        <span class="badge badge-outline">3</span>
+        <span class="badge badge-outline">🎚</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+      <div class="card-body gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-MAIN-content/70">Ingresos proyectados</span>
+          <span class="badge badge-success badge-outline">↑ 2.5% / mes</span>
+        </div>
+        <div class="text-3xl font-bold text-MAIN-content">1,172,622</div>
+        <p class="text-sm text-MAIN-content/70">Total acumulado en 12 meses</p>
+      </div>
+    </article>
+    <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+      <div class="card-body gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-MAIN-content/70">Costos proyectados</span>
+          <span class="badge badge-outline">Inflación +4.0%</span>
+        </div>
+        <div class="text-3xl font-bold text-MAIN-content">757,543</div>
+        <p class="text-sm text-MAIN-content/70">Total acumulado en 12 meses</p>
+      </div>
+    </article>
+    <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+      <div class="card-body gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-MAIN-content/70">Flujo neto estimado</span>
+          <span class="badge badge-info badge-outline">MAIN</span>
+        </div>
+        <div class="text-3xl font-bold text-MAIN-content">415,079</div>
+        <p class="text-sm text-MAIN-content/70">Ingresos - costos (12m)</p>
+      </div>
+    </article>
+    <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+      <div class="card-body gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-MAIN-content/70">Margen estimado</span>
+          <span class="badge badge-success badge-outline">En meta</span>
+        </div>
+        <div class="text-3xl font-bold text-MAIN-content">35.4%</div>
+        <p class="text-sm text-MAIN-content/70">Flujo / ingresos</p>
+      </div>
+    </article>
+  </div>
+
+  <section class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <h3 class="text-lg font-semibold text-MAIN-content">Parámetros de proyección</h3>
+          <p class="text-sm text-MAIN-content/70">Modifica supuestos y recalcula automáticamente.</p>
+        </div>
+        <span class="badge badge-outline">Horizonte 12m</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <label class="form-control w-full">
+          <div class="label"><span class="label-text font-semibold">Horizonte</span></div>
+          <select id="pc-horizonte" class="select select-bordered w-full">
+            <option>12 meses</option>
+            <option>24 meses</option>
+            <option>36 meses</option>
+          </select>
+        </label>
+        <label class="form-control w-full">
+          <div class="label"><span class="label-text font-semibold">Crecimiento mensual</span></div>
+          <input id="pc-crecimiento" class="range range-primary" type="range" min="0" max="10" step="0.1" value="2.5">
+          <span class="text-sm text-MAIN-content/70 mt-2">2.5%</span>
+        </label>
+        <label class="form-control w-full">
+          <div class="label"><span class="label-text font-semibold">Inflación anual</span></div>
+          <input id="pc-inflacion" class="input input-bordered w-full" type="text" value="4.0%">
+        </label>
+        <label class="form-control w-full">
+          <div class="label"><span class="label-text font-semibold">Tasa de descuento anual</span></div>
+          <input id="pc-tasa" class="input input-bordered w-full" type="text" value="12.5%">
+        </label>
+      </div>
+    </div>
+  </section>
+</section>

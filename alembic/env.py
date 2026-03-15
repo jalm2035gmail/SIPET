@@ -1,6 +1,7 @@
 from logging.config import fileConfig
 import os
 import sys
+from dotenv import load_dotenv
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -11,11 +12,21 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
-database_url_from_env = (os.environ.get("DATABASE_URL") or "").strip()
-if database_url_from_env.startswith("postgres://"):
-    database_url_from_env = database_url_from_env.replace("postgres://", "postgresql://", 1)
-if database_url_from_env:
-    config.set_main_option("sqlalchemy.url", database_url_from_env)
+PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+load_dotenv(os.path.join(PROJECT_DIR, ".env"))
+
+dataMAIN_url_from_env = (os.environ.get("DATAMAIN_URL") or "").strip()
+if dataMAIN_url_from_env.startswith("postgres://"):
+    dataMAIN_url_from_env = dataMAIN_url_from_env.replace("postgres://", "postgresql://", 1)
+if not dataMAIN_url_from_env:
+    sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or "").strip()
+    if sqlite_db_path:
+        if os.path.isabs(sqlite_db_path):
+            dataMAIN_url_from_env = f"sqlite:///{sqlite_db_path}"
+        else:
+            dataMAIN_url_from_env = f"sqlite:///./{sqlite_db_path}"
+if dataMAIN_url_from_env:
+    config.set_main_option("sqlalchemy.url", dataMAIN_url_from_env)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -23,23 +34,22 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # append the backend app package to sys.path so alembic can import it
-PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # add your model's MetaData object here
 # for 'autogenerate' support
 BACKEND_DIR = os.path.join(PROJECT_DIR, "strategic_planning", "backend")
 sys.path.insert(0, BACKEND_DIR)
 
 import app.models  # noqa: F401
-from app.models.base import Base
+from app.models.MAIN import MAIN
 
 # Registrar modelos del módulo de capacitación para soporte de autogenerate
 sys.path.insert(0, PROJECT_DIR)
 try:
-    import fastapi_modulo.modulos.capacitacion.cap_db_models  # noqa: F401
+    import fastapi_modulo.modulos.capacitacion.modelos.cap_db_models  # noqa: F401
 except Exception:
     pass
 
-target_metadata = Base.metadata
+target_metadata = MAIN.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

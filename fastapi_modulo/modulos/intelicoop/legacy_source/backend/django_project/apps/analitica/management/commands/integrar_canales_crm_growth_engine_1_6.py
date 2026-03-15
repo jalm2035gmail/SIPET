@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Count, Sum
 from django.utils import timezone as dj_timezone
 
@@ -30,7 +30,7 @@ def _load_config(path: Path):
     return DEFAULT_CONFIG
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.6 Punto 3/3: integra canales/CRM y retroalimenta conversiones automaticamente."
 
     def add_arguments(self, parser):

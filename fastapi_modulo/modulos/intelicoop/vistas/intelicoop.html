@@ -1,0 +1,423 @@
+<style>
+  .intelicoop-shell {
+    display: grid;
+    gap: 18px;
+  }
+  .intelicoop-hero {
+    display: grid;
+    gap: 14px;
+    padding: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f7fcfb, #eef6ff);
+  }
+  .intelicoop-hero-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .intelicoop-hero-logo {
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    object-fit: contain;
+    flex: 0 0 60px;
+  }
+  .intelicoop-hero-copy h1 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+  }
+  .intelicoop-hero-copy p {
+    margin: 8px 0 0 0;
+    color: #334155;
+    line-height: 1.6;
+  }
+  .intelicoop-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .intelicoop-card {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .intelicoop-kpi-label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+  .intelicoop-kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .intelicoop-layout {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .intelicoop-nav {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+  .intelicoop-nav button {
+    width: 100%;
+    text-align: left;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: #fff;
+    color: #0f172a;
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+  }
+  .intelicoop-nav button.is-active {
+    background: #0f766e;
+    color: #fff;
+    border-color: #0f766e;
+  }
+  .intelicoop-panel {
+    display: none;
+  }
+  .intelicoop-panel.is-active {
+    display: block;
+  }
+  .intelicoop-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .intelicoop-table th,
+  .intelicoop-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    text-align: left;
+    vertical-align: top;
+  }
+  .intelicoop-table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #475569;
+  }
+  .intelicoop-status {
+    color: #475569;
+    font-size: 14px;
+  }
+  .intelicoop-form {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .intelicoop-form-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .intelicoop-form input,
+  .intelicoop-form select {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fff;
+  }
+  .intelicoop-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .intelicoop-actions button {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #0f172a;
+    color: #fff;
+    cursor: pointer;
+  }
+  @media (max-width: 960px) {
+    .intelicoop-layout {
+      grid-template-columns: 1fr;
+    }
+    .intelicoop-hero-head {
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<div class="intelicoop-shell" id="intelicoop-root" data-js-url="/api/intelicoop/assets/intelicoop.js">
+  <section class="intelicoop-hero">
+    <div class="intelicoop-hero-head">
+      <img class="intelicoop-hero-logo" src="/icon/boton/inteligencia.svg" alt="Intelicoop" />
+      <div class="intelicoop-hero-copy">
+        <h1>Intelicoop</h1>
+        <p>
+        sistema de inteligencia financiera
+        </p>
+      </div>
+    </div>
+    <div class="intelicoop-grid" id="intelicoop-kpis">
+      <article class="intelicoop-card"><span class="intelicoop-kpi-label">Socios</span><strong class="intelicoop-kpi-value">0</strong></article>
+      <article class="intelicoop-card"><span class="intelicoop-kpi-label">Creditos</span><strong class="intelicoop-kpi-value">0</strong></article>
+      <article class="intelicoop-card"><span class="intelicoop-kpi-label">Campanas</span><strong class="intelicoop-kpi-value">0</strong></article>
+      <article class="intelicoop-card"><span class="intelicoop-kpi-label">Scoring</span><strong class="intelicoop-kpi-value">0</strong></article>
+    </div>
+  </section>
+
+  <section class="intelicoop-layout">
+    <nav class="intelicoop-nav" id="intelicoop-nav">
+      <button class="is-active" data-panel="resumen" type="button">Resumen</button>
+      <button data-panel="socios" type="button">Socios</button>
+      <button data-panel="creditos" type="button">Creditos</button>
+      <button data-panel="ahorros" type="button">Ahorros</button>
+      <button data-panel="campanas" type="button">Campanas</button>
+      <button data-panel="prospectos" type="button">Prospectos</button>
+      <button data-panel="scoring" type="button">Scoring</button>
+    </nav>
+
+    <div>
+      <section class="intelicoop-panel is-active intelicoop-card" data-panel-id="resumen">
+        <h2 style="margin-top:0;">Resumen MVP</h2>
+        <p class="intelicoop-status" id="intelicoop-dashboard-status">Cargando resumen del modulo...</p>
+        <div id="intelicoop-dashboard-content"></div>
+      </section>
+
+      <section class="intelicoop-panel intelicoop-card" data-panel-id="socios">
+        <h2 style="margin-top:0;">Socios</h2>
+        <p class="intelicoop-status" id="intelicoop-socios-status">Cargando socios...</p>
+        <form class="intelicoop-form" id="intelicoop-socios-form">
+          <div class="intelicoop-form-grid">
+            <input name="nombre" placeholder="Nombre" required />
+            <input name="email" placeholder="Email" type="email" required />
+            <input name="telefono" placeholder="Telefono" />
+            <input name="direccion" placeholder="Direccion" />
+            <select name="segmento">
+              <option value="inactivo">Inactivo</option>
+              <option value="hormiga">Ahorrador Hormiga</option>
+              <option value="gran_ahorrador">Gran Ahorrador</option>
+            </select>
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Agregar socio</button>
+          </div>
+        </form>
+        <div id="intelicoop-socios-form-result" style="margin:12px 0;"></div>
+        <div id="intelicoop-socios-table"></div>
+      </section>
+
+      <section class="intelicoop-panel intelicoop-card" data-panel-id="creditos">
+        <h2 style="margin-top:0;">Creditos</h2>
+        <p class="intelicoop-status" id="intelicoop-creditos-status">Cargando creditos...</p>
+        <form class="intelicoop-form" id="intelicoop-creditos-form">
+          <div class="intelicoop-form-grid">
+            <select name="socio_id" id="intelicoop-credito-socio" required>
+              <option value="">Selecciona un socio</option>
+            </select>
+            <input name="monto" placeholder="Monto" inputmode="decimal" required />
+            <input name="plazo" placeholder="Plazo en meses" inputmode="numeric" required />
+            <input name="ingreso_mensual" placeholder="Ingreso mensual" inputmode="decimal" value="0" />
+            <input name="deuda_actual" placeholder="Deuda actual" inputmode="decimal" value="0" />
+            <input name="antiguedad_meses" placeholder="Antiguedad" inputmode="numeric" value="0" />
+            <select name="estado">
+              <option value="solicitado">Solicitado</option>
+              <option value="aprobado">Aprobado</option>
+              <option value="rechazado">Rechazado</option>
+            </select>
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Registrar credito</button>
+          </div>
+        </form>
+        <div id="intelicoop-creditos-form-result" style="margin:12px 0;"></div>
+        <div id="intelicoop-creditos-table"></div>
+        <div style="margin-top:16px;">
+          <h3>Detalle del credito</h3>
+          <div class="intelicoop-status" id="intelicoop-credito-detail-status">Selecciona un credito en la tabla.</div>
+          <div id="intelicoop-credito-detail"></div>
+        </div>
+        <form class="intelicoop-form" id="intelicoop-pagos-form">
+          <div class="intelicoop-form-grid">
+            <select name="credito_id" id="intelicoop-pago-credito" required>
+              <option value="">Selecciona un credito</option>
+            </select>
+            <input name="monto" placeholder="Monto del pago" inputmode="decimal" required />
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Registrar pago</button>
+          </div>
+        </form>
+        <div id="intelicoop-pagos-form-result" style="margin:12px 0;"></div>
+      </section>
+
+      <section class="intelicoop-panel intelicoop-card" data-panel-id="ahorros">
+        <h2 style="margin-top:0;">Ahorros</h2>
+        <p class="intelicoop-status" id="intelicoop-ahorros-status">Cargando resumen de ahorros...</p>
+        <form class="intelicoop-form" id="intelicoop-cuentas-form">
+          <div class="intelicoop-form-grid">
+            <select name="socio_id" id="intelicoop-cuenta-socio" required>
+              <option value="">Selecciona un socio</option>
+            </select>
+            <select name="tipo">
+              <option value="ahorro">Ahorro</option>
+              <option value="aportacion">Aportacion</option>
+            </select>
+            <input name="saldo" placeholder="Saldo inicial" inputmode="decimal" value="0" />
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Abrir cuenta</button>
+          </div>
+        </form>
+        <div id="intelicoop-cuentas-form-result" style="margin:12px 0;"></div>
+        <form class="intelicoop-form" id="intelicoop-transacciones-form">
+          <div class="intelicoop-form-grid">
+            <select name="cuenta_id" id="intelicoop-transaccion-cuenta" required>
+              <option value="">Selecciona una cuenta</option>
+            </select>
+            <select name="tipo">
+              <option value="deposito">Deposito</option>
+              <option value="retiro">Retiro</option>
+            </select>
+            <input name="monto" placeholder="Monto" inputmode="decimal" required />
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Registrar movimiento</button>
+          </div>
+        </form>
+        <div id="intelicoop-transacciones-form-result" style="margin:12px 0;"></div>
+        <div id="intelicoop-ahorros-content"></div>
+        <div style="margin-top:16px;">
+          <h3>Cuentas</h3>
+          <div id="intelicoop-cuentas-table"></div>
+        </div>
+        <div style="margin-top:16px;">
+          <h3>Movimientos</h3>
+          <div id="intelicoop-transacciones-table"></div>
+        </div>
+      </section>
+
+      <section class="intelicoop-panel intelicoop-card" data-panel-id="campanas">
+        <h2 style="margin-top:0;">Campanas</h2>
+        <p class="intelicoop-status" id="intelicoop-campanas-status">Cargando campanas...</p>
+        <form class="intelicoop-form" id="intelicoop-campanas-form">
+          <div class="intelicoop-form-grid">
+            <input name="nombre" placeholder="Nombre de campana" required />
+            <input name="tipo" placeholder="Tipo" required />
+            <input name="fecha_inicio" placeholder="Fecha inicio" type="date" />
+            <input name="fecha_fin" placeholder="Fecha fin" type="date" />
+            <select name="estado">
+              <option value="borrador">Borrador</option>
+              <option value="activa">Activa</option>
+              <option value="finalizada">Finalizada</option>
+            </select>
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Crear campana</button>
+          </div>
+        </form>
+        <div id="intelicoop-campanas-form-result" style="margin:12px 0;"></div>
+        <div id="intelicoop-campanas-table"></div>
+        <div style="margin-top:16px;">
+          <h3>Contacto comercial</h3>
+          <form class="intelicoop-form" id="intelicoop-contactos-form">
+            <div class="intelicoop-form-grid">
+              <select name="campania_id" id="intelicoop-contacto-campania" required>
+                <option value="">Selecciona una campana</option>
+              </select>
+              <select name="socio_id" id="intelicoop-contacto-socio" required>
+                <option value="">Selecciona un socio</option>
+              </select>
+              <input name="ejecutivo_id" placeholder="Ejecutivo" value="ejecutivo_general" />
+              <select name="canal">
+                <option value="telefono">Telefono</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="email">Email</option>
+              </select>
+              <select name="estado_contacto">
+                <option value="pendiente">Pendiente</option>
+                <option value="contactado">Contactado</option>
+                <option value="no_localizado">No localizado</option>
+              </select>
+            </div>
+            <div class="intelicoop-actions">
+              <button type="submit">Registrar contacto</button>
+            </div>
+          </form>
+          <div id="intelicoop-contactos-form-result" style="margin:12px 0;"></div>
+          <div id="intelicoop-contactos-table"></div>
+        </div>
+        <div style="margin-top:16px;">
+          <h3>Seguimiento y conversion</h3>
+          <form class="intelicoop-form" id="intelicoop-seguimientos-form">
+            <div class="intelicoop-form-grid">
+              <select name="campania_id" id="intelicoop-seguimiento-campania" required>
+                <option value="">Selecciona una campana</option>
+              </select>
+              <select name="socio_id" id="intelicoop-seguimiento-socio" required>
+                <option value="">Selecciona un socio</option>
+              </select>
+              <input name="lista" placeholder="Lista" value="general" />
+              <input name="etapa" placeholder="Etapa" value="contactado" />
+              <select name="conversion">
+                <option value="0">Sin conversion</option>
+                <option value="1">Conversion</option>
+              </select>
+              <input name="monto_colocado" placeholder="Monto colocado" inputmode="decimal" value="0" />
+            </div>
+            <div class="intelicoop-actions">
+              <button type="submit">Registrar seguimiento</button>
+            </div>
+          </form>
+          <div id="intelicoop-seguimientos-form-result" style="margin:12px 0;"></div>
+          <div id="intelicoop-seguimientos-table"></div>
+        </div>
+      </section>
+
+      <section class="intelicoop-panel intelicoop-card" data-panel-id="prospectos">
+        <h2 style="margin-top:0;">Prospectos</h2>
+        <p class="intelicoop-status" id="intelicoop-prospectos-status">Cargando prospectos...</p>
+        <form class="intelicoop-form" id="intelicoop-prospectos-form">
+          <div class="intelicoop-form-grid">
+            <input name="nombre" placeholder="Nombre" required />
+            <input name="telefono" placeholder="Telefono" />
+            <input name="direccion" placeholder="Direccion" />
+            <input name="fuente" placeholder="Fuente" />
+            <input name="score_propension" placeholder="Score propension" inputmode="decimal" value="0" />
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Crear prospecto</button>
+          </div>
+        </form>
+        <div id="intelicoop-prospectos-form-result" style="margin:12px 0;"></div>
+        <div id="intelicoop-prospectos-table"></div>
+      </section>
+
+      <section class="intelicoop-panel intelicoop-card" data-panel-id="scoring">
+        <h2 style="margin-top:0;">Scoring</h2>
+        <p class="intelicoop-status" id="intelicoop-scoring-status">Cargando resumen de scoring...</p>
+        <div id="intelicoop-scoring-content"></div>
+        <form class="intelicoop-form" id="intelicoop-scoring-form">
+          <div class="intelicoop-form-grid">
+            <input name="solicitud_id" placeholder="Solicitud ID" />
+            <input name="socio_id" placeholder="Socio ID" inputmode="numeric" />
+            <input name="ingreso_mensual" placeholder="Ingreso mensual" inputmode="decimal" required />
+            <input name="deuda_actual" placeholder="Deuda actual" inputmode="decimal" value="0" />
+            <input name="antiguedad_meses" placeholder="Antiguedad meses" inputmode="numeric" value="0" />
+          </div>
+          <div class="intelicoop-actions">
+            <button type="submit">Evaluar scoring</button>
+          </div>
+        </form>
+        <div id="intelicoop-scoring-result" style="margin-top:12px;"></div>
+      </section>
+    </div>
+  </section>
+</div>

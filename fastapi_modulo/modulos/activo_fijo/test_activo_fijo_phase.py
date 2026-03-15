@@ -41,15 +41,15 @@ sys.modules["fastapi_modulo.main"] = fake_main
 
 # ── Imports del módulo ────────────────────────────────────────────────────────
 
-from fastapi_modulo.db import Base, engine  # noqa: E402
-from fastapi_modulo.modulos.activo_fijo.activo_fijo import router  # noqa: E402
-from fastapi_modulo.modulos.activo_fijo.af_db_models import (  # noqa: E402
+from fastapi_modulo.db import MAIN, engine  # noqa: E402
+from fastapi_modulo.modulos.activo_fijo.models import (  # noqa: E402
     AfActivo,
     AfAsignacion,
     AfBaja,
     AfDepreciacion,
     AfMantenimiento,
 )
+from fastapi_modulo.modulos.activo_fijo.router import router  # noqa: E402
 
 _AF_TABLES = [
     AfActivo.__table__,
@@ -83,8 +83,8 @@ def _auth(role: str = "usuario", *access: str) -> dict:
 
 
 def setup_function() -> None:
-    Base.metadata.drop_all(bind=engine, tables=_AF_TABLES, checkfirst=True)
-    Base.metadata.create_all(bind=engine, tables=_AF_TABLES, checkfirst=True)
+    MAIN.metadata.drop_all(bind=engine, tables=_AF_TABLES, checkfirst=True)
+    MAIN.metadata.create_all(bind=engine, tables=_AF_TABLES, checkfirst=True)
 
 
 # ── Permisos ──────────────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ def test_acceso_permitido_con_app_access():
 # ── Activos CRUD ──────────────────────────────────────────────────────────────
 
 def _activo_payload(**overrides):
-    base = {
+    MAIN = {
         "codigo": "AF-001",
         "nombre": "Computadora Dell",
         "categoria": "Equipo de cómputo",
@@ -126,8 +126,8 @@ def _activo_payload(**overrides):
         "ubicacion": "Oficina principal",
         "responsable": "Juan García",
     }
-    base.update(overrides)
-    return base
+    MAIN.update(overrides)
+    return MAIN
 
 
 def test_crear_activo():

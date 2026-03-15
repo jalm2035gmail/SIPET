@@ -1,0 +1,411 @@
+<link rel="stylesheet" href="/modulos/planificacion/poa.css?v=20260310c">
+    <section class="poa-board-wrap">
+      
+      <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+          <img
+            src="/templates/icon/plan.svg"
+            alt="Icono POA"
+            width="96"
+            height="96"
+            class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+          />
+          <div class="w-full grid gap-2 content-center">
+            <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
+            <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">El Plan Operativo Anual organiza actividades, responsables y tiempos de ejecución.</div>
+          </div>
+        </div>
+      </div>
+      <div class="view-buttons page-view-buttons" id="poa-view-switch">
+        <button class="view-pill boton_vista" type="button" data-view="arbol" data-tooltip="Arbol" aria-label="Arbol de avance">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/boton/arbol.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Arbol</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-view="gantt" data-tooltip="Gantt" aria-label="Vista Gantt">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/boton/kanban.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Gantt</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-view="calendar" data-tooltip="Calendario" aria-label="Vista calendario">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/templates/icon/calendario.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Calendario</span>
+        </button>
+      </div>
+
+      <div class="poa-board-head">
+        <div class="poa-board-head-row">
+          <div>
+            <h2>Tablero POA por eje</h2>
+            <p>Cada columna corresponde a un eje y contiene las tarjetas de sus objetivos.</p>
+          </div>
+          <div class="view-buttons planes-action-row poa-board-head-actions">
+            <button type="button" class="boton_vista boton_vista-eliptico" id="poa-download-template">Descargar plantilla CSV</button>
+            <button type="button" class="boton_vista boton_vista-eliptico" id="poa-export-xls">Exportar plan + POA XLS</button>
+            <button type="button" class="boton_vista boton_vista-eliptico" id="poa-import-csv">Importar CSV estratégico + POA</button>
+            <input id="poa-import-csv-file" type="file" accept=".csv,text/csv">
+          </div>
+        </div>
+      </div>
+      <section class="card border shadow-sm rounded-[2rem]" style="margin:0 0 20px;background:var(--surface-soft, #f6fbf9);border-color:var(--field-border, #cfd7df);">
+        <div class="card-body p-5">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h3 class="page-title" style="margin:0;">Ejercicio operativo</h3>
+              <p class="page-description" style="margin:6px 0 0;">Cada año encapsula su propio POA y Presupuesto.</p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <label class="form-control">
+                <span class="label-text">Año activo</span>
+                <select id="annual-cycle-select" class="select">
+                  <option value="">Cargando...</option>
+                </select>
+              </label>
+              <button type="button" id="annual-cycle-start-btn" class="boton_vista boton_vista-eliptico">Iniciar nuevo año</button>
+              <a id="annual-cycle-archive-link" class="boton_vista boton_vista-eliptico" href="#" hidden>Descargar ZIP anterior</a>
+            </div>
+          </div>
+          <div id="annual-cycle-status" class="text-sm text-MAIN-content/70" style="margin-top:10px;"></div>
+        </div>
+      </section>
+      <div class="poa-board-msg" id="poa-board-msg" aria-live="polite"></div>
+      <div class="cards-2">
+        <div class="axm-track-missing" id="poa-no-owner-msg" aria-live="polite"></div>
+        <div class="axm-track-missing" id="poa-no-subowner-msg" aria-live="polite"></div>
+      </div>
+      <section class="poa-owner-chart collapsed" id="poa-owner-chart">
+        <div class="poa-owner-chart-head">
+          <button type="button" class="poa-owner-chart-toggle" id="poa-owner-chart-toggle" aria-label="Mostrar concentración por usuario" aria-expanded="false">
+            <span class="poa-owner-chart-toggle-icon" aria-hidden="true">▾</span>
+          </button>
+          <div class="poa-owner-chart-heading">
+            <h3 class="poa-owner-chart-title">Concentración de actividades por usuario</h3>
+            <p class="poa-owner-chart-sub">Distribución de actividades POA asignadas por responsable.</p>
+          </div>
+          <span class="poa-owner-chart-total" id="poa-owner-chart-total">Total: 0</span>
+        </div>
+        <div class="poa-owner-chart-body" id="poa-owner-chart-body">
+          <div class="poa-owner-chart-empty" id="poa-owner-chart-empty">Sin actividades con responsable.</div>
+          <div class="poa-owner-chart-list" id="poa-owner-chart-list"></div>
+        </div>
+      </section>
+      <div class="poa-board-grid" id="poa-board-grid"></div>
+      <div class="poa-modal" id="poa-activity-modal" role="dialog" aria-modal="true" aria-labelledby="poa-activity-title">
+        <section class="poa-modal-dialog">
+          <div class="poa-modal-head">
+            <div>
+              <h3 id="poa-activity-title">Nueva actividad</h3>
+              <p id="poa-activity-subtitle"></p>
+            </div>
+            <button class="poa-modal-close" id="poa-activity-close" type="button" aria-label="Cerrar">×</button>
+          </div>
+          <p class="poa-branch-path" id="poa-activity-branch"></p>
+          <div class="poa-summary">
+            <div class="poa-summary-item">
+              <div class="poa-summary-label">Estatus</div>
+              <div class="poa-summary-value" id="poa-status-value"><span class="poa-semaforo gray"></span>No iniciado</div>
+            </div>
+            <div class="poa-summary-item">
+              <div class="poa-summary-label">Avance</div>
+              <div class="poa-summary-value" id="poa-progress-value">0%</div>
+            </div>
+          </div>
+          <div class="poa-state-strip" id="poa-state-strip">
+            <button type="button" class="poa-state-btn" id="poa-state-no-iniciado" disabled>No iniciado</button>
+            <button type="button" class="poa-state-btn" id="poa-state-en-proceso">En proceso</button>
+            <button type="button" class="poa-state-btn" id="poa-state-terminado">Terminado</button>
+            <button type="button" class="poa-state-btn" id="poa-state-en-revision" disabled>En revisión</button>
+          </div>
+          <div class="poa-state-actions" id="poa-state-actions">
+            <button type="button" class="poa-btn" id="poa-approval-approve">Aprobar entregable</button>
+            <button type="button" class="poa-btn" id="poa-approval-reject">Rechazar entregable</button>
+          </div>
+          <section class="poa-act-list-panel">
+            <div class="poa-act-list-head">
+              <h4 class="poa-act-list-title">Actividades del objetivo</h4>
+              <div class="poa-act-actions">
+                <button type="button" class="action-button" id="poa-act-new" data-hover-label="Nuevo" aria-label="Nuevo" title="Nuevo">
+                  <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                  <span class="action-label">Nuevo</span>
+                </button>
+                <button type="button" class="action-button" id="poa-act-edit" data-hover-label="Editar" aria-label="Editar" title="Editar">
+                  <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                  <span class="action-label">Editar</span>
+                </button>
+                <button type="button" class="action-button" id="poa-act-save-top" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+                  <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                  <span class="action-label">Guardar</span>
+                </button>
+                <button type="button" class="action-button" id="poa-act-delete" data-hover-label="Eliminar" aria-label="Eliminar" title="Eliminar">
+                  <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                  <span class="action-label">Eliminar</span>
+                </button>
+              </div>
+            </div>
+            <div class="poa-act-list" id="poa-act-list"></div>
+            <div class="poa-act-list-msg" id="poa-act-list-msg"></div>
+          </section>
+
+          <div class="poa-form-grid">
+            <p class="poa-assigned-by" id="poa-assigned-by">Asignado por: N/D</p>
+            <div class="poa-field">
+              <label for="poa-act-name">Nombre</label>
+              <input id="poa-act-name" class="poa-input" type="text" placeholder="Nombre de la actividad">
+            </div>
+            <div class="poa-row">
+              <div class="poa-field">
+                <label for="poa-act-owner">Responsable</label>
+                <select id="poa-act-owner" class="poa-select">
+                  <option value="">Selecciona responsable</option>
+                </select>
+              </div>
+              <div class="poa-field">
+                <label for="poa-act-assigned">Personas asignadas</label>
+                <select id="poa-act-assigned" class="poa-select" multiple></select>
+              </div>
+            </div>
+            <div class="poa-row">
+              <div class="poa-field">
+                <label for="poa-act-start">Fecha inicial</label>
+                <input id="poa-act-start" class="poa-input" type="date">
+              </div>
+              <div class="poa-field">
+                <label for="poa-act-end">Fecha final</label>
+                <input id="poa-act-end" class="poa-input" type="date">
+              </div>
+            </div>
+            <div class="poa-field">
+              <label for="poa-act-impact-hitos">Hitos que impacta</label>
+              <select id="poa-act-impact-hitos" class="poa-select" multiple></select>
+            </div>
+            <div class="poa-row">
+              <div class="poa-field">
+                <label for="poa-act-recurrente">Recurrente</label>
+                <label class="poa-check-label">
+                  <input id="poa-act-recurrente" type="checkbox">
+                  Habilitar recurrencia
+                </label>
+              </div>
+              <div class="poa-field">
+                <label for="poa-act-periodicidad">Periodicidad</label>
+                <select id="poa-act-periodicidad" class="poa-select" disabled>
+                  <option value="">Selecciona periodicidad</option>
+                  <option value="diaria">diaria</option>
+                  <option value="semanal">semanal</option>
+                  <option value="quincenal">quincenal</option>
+                  <option value="mensual">mensual</option>
+                  <option value="bimensual">bimensual</option>
+                  <option value="cada_xx_dias">Cada xx dias</option>
+                </select>
+              </div>
+            </div>
+            <div class="poa-field" id="poa-act-every-days-wrap">
+              <label for="poa-act-every-days">Cada xx dias</label>
+              <input id="poa-act-every-days" class="poa-input" type="number" min="1" step="1" placeholder="Ej. 3">
+            </div>
+          </div>
+
+          <div class="tabs tabs-lifted w-full flex-wrap poa-tabs" id="poa-tabs" role="tablist" aria-label="POA">
+            <button type="button" class="tab rounded-t-lg tab-active active poa-tab" data-poa-tab="desc">Descripción</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="sub">Subtareas</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="kpi">Kpis</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="deliverables">Entregables</button>
+            <button type="button" class="tab rounded-t-lg poa-tab" data-poa-tab="budget">Presupuesto</button>
+          </div>
+          <section class="poa-tab-panel active" data-poa-panel="desc">
+            <div class="poa-field">
+              <label for="poa-act-desc">Descripción</label>
+              <textarea id="poa-act-desc" class="poa-textarea" placeholder="Descripción de la actividad"></textarea>
+            </div>
+            <div class="poa-actions">
+              <button type="button" class="poa-btn" id="poa-act-suggest-ia">Sugerir con IA</button>
+            </div>
+          </section>
+          <section class="poa-tab-panel" data-poa-panel="sub">
+            <div class="poa-sub-header">
+              <p id="poa-sub-hint">Guarda primero la actividad para habilitar subtareas.</p>
+              <button type="button" class="poa-btn" id="poa-sub-add">Agregar subtarea</button>
+            </div>
+            <div class="poa-sub-list" id="poa-sub-list"></div>
+          </section>
+          <section class="poa-tab-panel" data-poa-panel="kpi">
+            <div class="poa-kpi-panel">
+              <div class="poa-kpi-head">
+                <h4>Indicadores</h4>
+                <p>Los indicadores oficiales se administran en Brújula y ya no forman parte de la configuración del POA de cada cooperativa.</p>
+              </div>
+              <div class="poa-kpi-list" id="poa-kpi-list">
+                <div class="poa-sub-meta">Los indicadores se gestionan en Brújula.</div>
+              </div>
+            </div>
+          </section>
+          <section class="poa-tab-panel" data-poa-panel="deliverables">
+            <div class="poa-deliv-form">
+              <div class="poa-deliv-row">
+                <div class="poa-field">
+                  <label for="poa-deliv-name">Entregable</label>
+                  <input id="poa-deliv-name" class="poa-input" type="text" placeholder="Nombre del entregable">
+                </div>
+                <button type="button" class="poa-btn" id="poa-deliv-add">Agregar</button>
+              </div>
+              <div class="poa-deliv-list" id="poa-deliv-list">
+                <div class="poa-sub-meta">Sin entregables registrados.</div>
+              </div>
+              <div class="poa-deliv-msg" id="poa-deliv-msg" aria-live="polite"></div>
+            </div>
+          </section>
+          <section class="poa-tab-panel" data-poa-panel="budget">
+            <div class="poa-budget-form">
+              <div class="poa-row">
+                <div class="poa-field">
+                  <label for="poa-budget-type">Tipo</label>
+                  <select id="poa-budget-type" class="poa-select">
+                    <option value="">Selecciona tipo</option>
+                    <option value="Sueldos y similares">Sueldos y similares</option>
+                    <option value="Honorarios">Honorarios</option>
+                    <option value="Gastos de promoción y publicidad">Gastos de promoción y publicidad</option>
+                    <option value="Gastos no deducibles">Gastos no deducibles</option>
+                    <option value="Gastos en tecnologia">Gastos en tecnologia</option>
+                    <option value="Otros gastos de administración y promoción">Otros gastos de administración y promoción</option>
+                  </select>
+                </div>
+                <div class="poa-field">
+                  <label for="poa-budget-rubro">Rubro</label>
+                  <input id="poa-budget-rubro" class="poa-input" type="text" placeholder="Rubro presupuestal">
+                </div>
+              </div>
+              <div class="poa-row">
+                <div class="poa-field">
+                  <label for="poa-budget-monthly">Mensual</label>
+                  <input id="poa-budget-monthly" class="poa-input num" type="number" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="poa-field">
+                  <label for="poa-budget-annual">Anual</label>
+                  <input id="poa-budget-annual" class="poa-input num" type="number" min="0" step="0.01" placeholder="Mensual x 12 o monto único">
+                </div>
+              </div>
+              <div class="poa-row">
+                <div class="poa-field">
+                  <label class="poa-check-label">
+                    <input id="poa-budget-approved" type="checkbox">
+                    Autorizado
+                  </label>
+                </div>
+                <div class="poa-field">
+                  <div class="poa-actions">
+                    <button type="button" class="poa-btn primary" id="poa-budget-add">Agregar rubro</button>
+                    <button type="button" class="poa-btn" id="poa-budget-cancel">Cancelar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="poa-budget-table-wrap">
+              <table class="poa-budget-table">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Rubro</th>
+                    <th class="num">Mensual</th>
+                    <th class="num">Anual</th>
+                    <th>Autorizado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="poa-budget-list">
+                  <tr><td colspan="6">Sin rubros registrados.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="poa-budget-total">
+              <span>Mensual total: <b id="poa-budget-monthly-total">0.00</b></span>
+              <span>Anual total: <b id="poa-budget-annual-total">0.00</b></span>
+            </div>
+            <div class="poa-modal-msg" id="poa-budget-msg" aria-live="polite"></div>
+          </section>
+
+          <div class="poa-actions">
+            <button type="button" class="action-button" id="poa-act-edit-bottom" data-hover-label="Editar" aria-label="Editar" title="Editar">
+              <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+              <span class="action-label">Editar</span>
+            </button>
+            <button type="button" class="action-button" id="poa-act-save" data-hover-label="Guardar" aria-label="Guardar" title="Guardar">
+              <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+              <span class="action-label">Guardar</span>
+            </button>
+            <button type="button" class="poa-btn" id="poa-act-cancel">Cancelar</button>
+          </div>
+          <div class="poa-modal-msg" id="poa-act-msg" aria-live="polite"></div>
+        </section>
+      </div>
+      <div class="poa-modal" id="poa-sub-modal" role="dialog" aria-modal="true" aria-labelledby="poa-sub-title">
+        <section class="poa-modal-dialog">
+          <div class="poa-modal-head">
+            <h3 id="poa-sub-title">Subtarea</h3>
+            <button class="poa-modal-close" id="poa-sub-close" type="button" aria-label="Cerrar">×</button>
+          </div>
+          <p class="poa-branch-path" id="poa-sub-branch"></p>
+          <div class="poa-form-grid">
+            <div class="poa-field">
+              <label for="poa-sub-name">Nombre</label>
+              <input id="poa-sub-name" class="poa-input" type="text" placeholder="Nombre de la subtarea">
+            </div>
+            <div class="poa-row">
+              <div class="poa-field">
+                <label for="poa-sub-owner">Responsable</label>
+                <select id="poa-sub-owner" class="poa-select">
+                  <option value="">Selecciona responsable</option>
+                </select>
+              </div>
+              <div class="poa-field">
+                <label for="poa-sub-assigned">Personas asignadas</label>
+                <select id="poa-sub-assigned" class="poa-select" multiple></select>
+              </div>
+            </div>
+            <div class="poa-row">
+              <div class="poa-field">
+                <label for="poa-sub-start">Fecha inicial</label>
+                <input id="poa-sub-start" class="poa-input" type="date">
+              </div>
+              <div class="poa-field">
+                <label for="poa-sub-end">Fecha final</label>
+                <input id="poa-sub-end" class="poa-input" type="date">
+              </div>
+            </div>
+            <div class="poa-row">
+              <div class="poa-field">
+                <label for="poa-sub-recurrente">Recurrente</label>
+                <label class="poa-check-label">
+                  <input id="poa-sub-recurrente" type="checkbox">
+                  Habilitar recurrencia
+                </label>
+              </div>
+              <div class="poa-field">
+                <label for="poa-sub-periodicidad">Periodicidad</label>
+                <select id="poa-sub-periodicidad" class="poa-select" disabled>
+                  <option value="">Selecciona periodicidad</option>
+                  <option value="diaria">diaria</option>
+                  <option value="semanal">semanal</option>
+                  <option value="quincenal">quincenal</option>
+                  <option value="mensual">mensual</option>
+                  <option value="bimensual">bimensual</option>
+                  <option value="cada_xx_dias">Cada xx dias</option>
+                </select>
+              </div>
+            </div>
+            <div class="poa-field" id="poa-sub-every-days-wrap">
+              <label for="poa-sub-every-days">Cada xx dias</label>
+              <input id="poa-sub-every-days" class="poa-input" type="number" min="1" step="1" placeholder="Ej. 3">
+            </div>
+            <div class="poa-field">
+              <label for="poa-sub-desc">Descripción</label>
+              <textarea id="poa-sub-desc" class="poa-textarea" placeholder="Descripción de la subtarea"></textarea>
+            </div>
+          </div>
+          <div class="poa-actions">
+            <button type="button" class="poa-btn primary" id="poa-sub-save">Guardar subtarea</button>
+            <button type="button" class="poa-btn" id="poa-sub-cancel">Cancelar</button>
+          </div>
+          <div class="poa-modal-msg" id="poa-sub-msg" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <script src="/modulos/planificacion/poa.js?v=20260310c"></script>
+    </section>

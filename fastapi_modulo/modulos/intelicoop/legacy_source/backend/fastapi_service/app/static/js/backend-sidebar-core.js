@@ -18,8 +18,8 @@
     const token = tokenValue.startsWith("Bearer ") ? tokenValue.slice(7) : tokenValue;
     const parts = token.split(".");
     if (parts.length < 2) return null;
-    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+    const MAIN64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = MAIN64 + "=".repeat((4 - (MAIN64.length % 4)) % 4);
     return JSON.parse(window.atob(padded));
   }
 

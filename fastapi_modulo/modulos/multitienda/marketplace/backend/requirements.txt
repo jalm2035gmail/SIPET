@@ -1,0 +1,9 @@
+Django>=4.2
+psycopg2-binary
+celery
+stripe
+Pillow
+python-dotenv
+stripe
+Pillow
+python-dotenv

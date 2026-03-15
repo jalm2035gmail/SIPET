@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "multitienda-backend"
+version = "0.1.0"
+description = "Backend FastAPI MultiTiendApp"
+authors = ["Tu Nombre <tu@email.com>"]
+
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.110.0"
+uvicorn = "^0.29.0"
+sqlalchemy = "^2.0.0"
+psycopg2-binary = "^2.9.0"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+

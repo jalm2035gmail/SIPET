@@ -1,0 +1,579 @@
+<section class="contraloria-shell">
+  <style>
+    .contraloria-shell{
+      --ct-bg:#f4f7fb;
+      --ct-panel:#ffffff;
+      --ct-panel-2:#f9fbff;
+      --ct-line:var(--field-border, #e2eaf4);
+      --ct-line-soft:#edf2f8;
+      --ct-text:var(--sidebar-bottom, #1f2940);
+      --ct-text-soft:var(--text-muted, #667792);
+      --ct-text-faint:#96a3b8;
+      --ct-primary:var(--institutional-accent, #22b8cf);
+      --ct-primary-2:var(--institutional-accent-contrast, #3b82f6);
+      --ct-success:#25b27f;
+      --ct-warning:#f2b035;
+      --ct-danger:#ef6b67;
+      --ct-purple:#8b5cf6;
+      --ct-teal:#1db6a8;
+      --ct-shadow-sm:0 4px 14px rgba(31,41,64,.05);
+      --ct-shadow-md:0 12px 30px rgba(31,41,64,.08);
+      --ct-shadow-lg:0 18px 48px rgba(31,41,64,.12);
+      display:grid;
+      gap:18px;
+      color:var(--ct-text);
+    }
+
+    .contraloria-hero{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:20px;
+      padding:22px 24px;
+      border:1px solid var(--ct-line);
+      border-radius:28px;
+      background:linear-gradient(180deg,#fcfdff 0%,#f7faff 100%);
+      box-shadow:var(--ct-shadow-sm);
+    }
+    .contraloria-hero h1{
+      margin:0;
+      font-size:28px;
+      line-height:1.05;
+      letter-spacing:-.03em;
+    }
+    .contraloria-hero p{
+      margin:10px 0 0;
+      max-width:760px;
+      font-size:16px;
+      line-height:1.6;
+      color:var(--ct-text-soft);
+    }
+    .contraloria-user{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:240px;
+      justify-content:flex-end;
+    }
+    .contraloria-avatar{
+      width:54px;
+      height:54px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      color:#fff;
+      font-weight:800;
+      background:linear-gradient(135deg,var(--ct-primary-2),var(--ct-primary));
+      box-shadow:var(--ct-shadow-sm);
+      flex:0 0 auto;
+    }
+    .contraloria-user-name{
+      font-weight:700;
+    }
+    .contraloria-user-role{
+      font-size:12px;
+      color:var(--ct-text-soft);
+      margin-top:2px;
+    }
+
+    .contraloria-kpis{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+    }
+    .contraloria-kpi{
+      min-height:148px;
+      border-radius:24px;
+      padding:18px;
+      color:#fff;
+      position:relative;
+      overflow:hidden;
+      box-shadow:var(--ct-shadow-md);
+    }
+    .contraloria-kpi::before{
+      content:"";
+      position:absolute;
+      inset:auto -40px -40px auto;
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      background:rgba(255,255,255,.10);
+    }
+    .contraloria-kpi.green{background:linear-gradient(135deg,#6bcf9b,#25b27f);}
+    .contraloria-kpi.blue{background:linear-gradient(135deg,#63a5ff,#3b82f6);}
+    .contraloria-kpi.gold{background:linear-gradient(135deg,#ffd56a,#f2b035);}
+    .contraloria-kpi.teal{background:linear-gradient(135deg,#63d8cf,#22b8cf);}
+    .contraloria-kpi-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:18px;
+    }
+    .contraloria-kpi-icon{
+      width:46px;
+      height:46px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.20);
+      backdrop-filter:blur(8px);
+      font-size:20px;
+    }
+    .contraloria-kpi-title{
+      font-size:15px;
+      font-weight:700;
+      opacity:.96;
+    }
+    .contraloria-kpi-value{
+      margin-top:6px;
+      font-size:22px;
+      font-weight:800;
+      letter-spacing:-.03em;
+    }
+    .contraloria-kpi-meta{
+      margin-top:10px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-size:13px;
+      font-weight:600;
+      opacity:.95;
+    }
+
+    .contraloria-grid{
+      display:grid;
+      grid-template-columns:1.05fr 1.2fr 1.35fr;
+      gap:16px;
+    }
+    .contraloria-stack{
+      display:grid;
+      gap:16px;
+    }
+    .contraloria-card{
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      border:1px solid var(--ct-line);
+      border-radius:24px;
+      box-shadow:var(--ct-shadow-sm);
+      padding:18px;
+    }
+    .contraloria-card-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .contraloria-card-title{
+      margin:0;
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+    .contraloria-muted{ color:var(--ct-text-soft); }
+    .contraloria-tiny{
+      font-size:12px;
+      color:var(--ct-text-faint);
+    }
+    .contraloria-metric-big{
+      font-size:46px;
+      font-weight:800;
+      letter-spacing:-.05em;
+      line-height:1;
+      margin:6px 0 4px;
+    }
+    .contraloria-subline{
+      font-size:14px;
+      color:var(--ct-text-soft);
+    }
+    .contraloria-progress{
+      height:10px;
+      border-radius:999px;
+      background:#e9eef6;
+      overflow:hidden;
+      margin-top:12px;
+    }
+    .contraloria-progress > span{
+      display:block;
+      height:100%;
+      border-radius:inherit;
+      background:linear-gradient(90deg,var(--ct-primary),var(--ct-primary-2));
+    }
+
+    .contraloria-list,
+    .contraloria-action-list,
+    .contraloria-op-list{
+      display:grid;
+      gap:14px;
+    }
+    .contraloria-item{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .contraloria-icon{
+      width:42px;
+      height:42px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      color:#fff;
+      font-weight:800;
+      flex:0 0 auto;
+    }
+    .ct-bg-red{background:linear-gradient(135deg,#ff8e8e,#ef6b67);}
+    .ct-bg-gold{background:linear-gradient(135deg,#ffd56a,#f2b035);}
+    .ct-bg-teal{background:linear-gradient(135deg,#4dd6c8,#1db6a8);}
+    .ct-bg-blue{background:linear-gradient(135deg,#63a5ff,#3b82f6);}
+    .ct-bg-purple{background:linear-gradient(135deg,#a78bfa,#8b5cf6);}
+    .ct-bg-green{background:linear-gradient(135deg,#56d79b,#25b27f);}
+    .contraloria-item-main{
+      flex:1;
+      min-width:0;
+    }
+    .contraloria-row-between{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .contraloria-item-title{
+      font-size:15px;
+      font-weight:700;
+      line-height:1.35;
+    }
+    .contraloria-tag{
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .contraloria-tag.red{background:#fff1f1;color:#db5e5e;}
+    .contraloria-tag.gold{background:#fff6dd;color:#cb9224;}
+    .contraloria-tag.green{background:#ebfbf3;color:#25a36c;}
+    .contraloria-tag.blue{background:#edf5ff;color:#3b82f6;}
+
+    .contraloria-plan-list{
+      display:grid;
+      gap:12px;
+    }
+    .contraloria-plan-item{
+      display:grid;
+      grid-template-columns:58px 1fr auto;
+      align-items:center;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:18px;
+      background:linear-gradient(180deg,#fbfdff,#f8fbff);
+      border:1px solid var(--ct-line-soft);
+    }
+    .contraloria-phase{
+      height:38px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      color:#fff;
+    }
+    .contraloria-phase.q1{background:linear-gradient(135deg,#1db6a8,#25b27f);}
+    .contraloria-phase.q2{background:linear-gradient(135deg,#22b8cf,#3b82f6);}
+    .contraloria-phase.q3{background:linear-gradient(135deg,#f2b035,#f59e0b);}
+    .contraloria-phase.q4{background:linear-gradient(135deg,#8b5cf6,#6366f1);}
+    .contraloria-plan-name{
+      font-weight:700;
+      font-size:15px;
+    }
+    .contraloria-plan-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .contraloria-btn-lite{
+      height:38px;
+      padding:0 14px;
+      border-radius:12px;
+      border:1px solid var(--ct-line);
+      background:linear-gradient(180deg,#fff,#f7faff);
+      color:var(--ct-text-soft);
+      font-weight:700;
+      cursor:pointer;
+    }
+    .contraloria-op-card{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:12px;
+    }
+    .contraloria-op-item{
+      min-height:92px;
+      border:1px solid var(--ct-line);
+      border-radius:18px;
+      background:linear-gradient(180deg,#fff,#f9fbff);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .contraloria-op-top{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .contraloria-op-ico{
+      width:36px;
+      height:36px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      color:#fff;
+      font-weight:800;
+      flex:0 0 auto;
+    }
+    .contraloria-op-name{
+      font-size:14px;
+      font-weight:700;
+      line-height:1.25;
+    }
+    .contraloria-op-val{
+      font-size:15px;
+      font-weight:800;
+      color:#16a34a;
+      margin-top:10px;
+    }
+
+    @media (max-width: 1400px){
+      .contraloria-kpis{ grid-template-columns:repeat(2,1fr); }
+      .contraloria-grid{ grid-template-columns:1fr 1fr; }
+      .contraloria-grid > :last-child{ grid-column:1 / -1; }
+      .contraloria-op-card{ grid-template-columns:repeat(3,1fr); }
+    }
+    @media (max-width: 1024px){
+      .contraloria-kpis,
+      .contraloria-grid{ grid-template-columns:1fr; }
+      .contraloria-op-card{ grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width: 640px){
+      .contraloria-hero{ flex-direction:column; }
+      .contraloria-user{ justify-content:flex-start; }
+      .contraloria-op-card{ grid-template-columns:1fr; }
+      .contraloria-plan-item{ grid-template-columns:1fr; align-items:flex-start; }
+    }
+  </style>
+
+  <section class="contraloria-hero">
+    <div>
+      <h1>Contraloria</h1>
+      <p>Panel ejecutivo para consultoría, control institucional, seguimiento de diagnósticos, planes de acción, clientes activos y oportunidades prioritarias.</p>
+    </div>
+    <div class="contraloria-user">
+      <div>
+        <div class="contraloria-user-name">Usuario responsable</div>
+        <div class="contraloria-user-role">Contraloría estratégica</div>
+      </div>
+      <div class="contraloria-avatar">CT</div>
+    </div>
+  </section>
+
+  <section class="contraloria-kpis">
+    <article class="contraloria-kpi green">
+      <div class="contraloria-kpi-top"><div class="contraloria-kpi-icon">👥</div></div>
+      <div class="contraloria-kpi-title">Clientes con seguimiento</div>
+      <div class="contraloria-kpi-value">17</div>
+      <div class="contraloria-kpi-meta"><span>+2</span><span>activos</span></div>
+    </article>
+    <article class="contraloria-kpi blue">
+      <div class="contraloria-kpi-top"><div class="contraloria-kpi-icon">📊</div></div>
+      <div class="contraloria-kpi-title">Diagnósticos abiertos</div>
+      <div class="contraloria-kpi-value">8</div>
+      <div class="contraloria-kpi-meta"><span>3</span><span>críticos</span></div>
+    </article>
+    <article class="contraloria-kpi gold">
+      <div class="contraloria-kpi-top"><div class="contraloria-kpi-icon">🗂</div></div>
+      <div class="contraloria-kpi-title">Planes en curso</div>
+      <div class="contraloria-kpi-value">12</div>
+      <div class="contraloria-kpi-meta"><span>Q2</span><span>vigente</span></div>
+    </article>
+    <article class="contraloria-kpi teal">
+      <div class="contraloria-kpi-top"><div class="contraloria-kpi-icon">✓</div></div>
+      <div class="contraloria-kpi-title">Cumplimiento global</div>
+      <div class="contraloria-kpi-value">89.6%</div>
+      <div class="contraloria-kpi-meta"><span>alto</span><span>seguimiento</span></div>
+    </article>
+  </section>
+
+  <section class="contraloria-grid">
+    <div class="contraloria-stack">
+      <article class="contraloria-card">
+        <div class="contraloria-card-header">
+          <h3 class="contraloria-card-title">Clientes activos</h3>
+          <span class="contraloria-tiny">•••</span>
+        </div>
+        <div class="contraloria-metric-big">17</div>
+        <div class="contraloria-subline">clientes activos <span class="contraloria-muted">(1 nuevo)</span></div>
+        <div class="contraloria-tiny" style="margin-top:8px;">IMF’s / IFI’s / Financiera XYZ</div>
+      </article>
+
+      <article class="contraloria-card">
+        <div class="contraloria-card-header">
+          <h3 class="contraloria-card-title">Diagnóstico prioritario</h3>
+        </div>
+        <div class="contraloria-item">
+          <div class="contraloria-avatar" style="width:44px;height:44px;">DG</div>
+          <div class="contraloria-item-main">
+            <div class="contraloria-row-between">
+              <div class="contraloria-item-title">Diagnóstico institucional cooperativo</div>
+              <div class="contraloria-tiny">8.0/10</div>
+            </div>
+            <div class="contraloria-tiny">Modelo de madurez y control</div>
+            <div class="contraloria-progress"><span style="width:62%"></span></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="contraloria-card">
+        <div class="contraloria-card-header">
+          <h3 class="contraloria-card-title">Próximas acciones</h3>
+        </div>
+        <div class="contraloria-action-list">
+          <div class="contraloria-item">
+            <div class="contraloria-icon ct-bg-green">✓</div>
+            <div class="contraloria-item-main">
+              <div class="contraloria-item-title">Presentación de hallazgos</div>
+              <div class="contraloria-tiny">Diagnóstico</div>
+            </div>
+          </div>
+          <div class="contraloria-item">
+            <div class="contraloria-icon ct-bg-gold">↗</div>
+            <div class="contraloria-item-main">
+              <div class="contraloria-item-title">Emisión de plan correctivo</div>
+              <div class="contraloria-tiny">Seguimiento</div>
+            </div>
+          </div>
+          <div class="contraloria-item">
+            <div class="contraloria-icon ct-bg-blue">👥</div>
+            <div class="contraloria-item-main">
+              <div class="contraloria-item-title">Reunión con directivos</div>
+              <div class="contraloria-tiny">Gobernanza</div>
+            </div>
+          </div>
+          <div class="contraloria-item">
+            <div class="contraloria-icon ct-bg-purple">A</div>
+            <div class="contraloria-item-main">
+              <div class="contraloria-item-title">Evaluación de avance trimestral</div>
+              <div class="contraloria-tiny">Control</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <button class="contraloria-btn-lite" style="width:100%;">Ver todas</button>
+        </div>
+      </article>
+    </div>
+
+    <article class="contraloria-card">
+      <div class="contraloria-card-header">
+        <h3 class="contraloria-card-title">Diagnósticos recientes</h3>
+        <span class="contraloria-tiny">•••</span>
+      </div>
+      <div class="contraloria-list">
+        <div class="contraloria-item">
+          <div class="contraloria-icon ct-bg-red">📊</div>
+          <div class="contraloria-item-main">
+            <div class="contraloria-row-between">
+              <div class="contraloria-item-title">Cooperativa A</div>
+              <span class="contraloria-tag red">Alerta</span>
+            </div>
+            <div class="contraloria-subline">40% avance</div>
+            <div class="contraloria-progress"><span style="width:40%;background:linear-gradient(90deg,#ff8e8e,#ef6b67)"></span></div>
+            <div class="contraloria-tiny" style="margin-top:6px;">Evaluado abril 2026</div>
+          </div>
+        </div>
+        <div class="contraloria-item">
+          <div class="contraloria-icon ct-bg-gold">🏦</div>
+          <div class="contraloria-item-main">
+            <div class="contraloria-row-between">
+              <div class="contraloria-item-title">Financiera XYZ</div>
+              <span class="contraloria-tag gold">Evolución</span>
+            </div>
+            <div class="contraloria-subline">68% avance</div>
+            <div class="contraloria-progress"><span style="width:68%;background:linear-gradient(90deg,#ffd56a,#f2b035)"></span></div>
+            <div class="contraloria-tiny" style="margin-top:6px;">Evaluado abril 2026</div>
+          </div>
+        </div>
+        <div class="contraloria-item">
+          <div class="contraloria-icon ct-bg-teal">🗂</div>
+          <div class="contraloria-item-main">
+            <div class="contraloria-row-between">
+              <div class="contraloria-item-title">Banco Popular</div>
+              <span class="contraloria-tag green">Estable</span>
+            </div>
+            <div class="contraloria-subline">79% avance</div>
+            <div class="contraloria-progress"><span style="width:79%;background:linear-gradient(90deg,#4dd6c8,#1db6a8)"></span></div>
+            <div class="contraloria-tiny" style="margin-top:6px;">Evaluado abril 2026</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="contraloria-card">
+      <div class="contraloria-card-header">
+        <h3 class="contraloria-card-title">Plan de trabajo 2026</h3>
+        <span class="contraloria-tiny">•••</span>
+      </div>
+      <div class="contraloria-plan-list">
+        <div class="contraloria-plan-item">
+          <div class="contraloria-phase q1">Q1</div>
+          <div><div class="contraloria-plan-name">Diagnóstico institucional</div></div>
+          <div class="contraloria-plan-right"><span class="contraloria-tag green">Completado</span><span class="contraloria-tiny">(60%)</span></div>
+        </div>
+        <div class="contraloria-plan-item">
+          <div class="contraloria-phase q2">Q2</div>
+          <div><div class="contraloria-plan-name">Plan de acción correctiva</div></div>
+          <div class="contraloria-plan-right"><span class="contraloria-tag gold">En proceso</span></div>
+        </div>
+        <div class="contraloria-plan-item">
+          <div class="contraloria-phase q3">Q3</div>
+          <div><div class="contraloria-plan-name">Seguimiento de implementación</div></div>
+          <div class="contraloria-plan-right"><span class="contraloria-tag blue">Por iniciar</span></div>
+        </div>
+        <div class="contraloria-plan-item">
+          <div class="contraloria-phase q4">Q4</div>
+          <div><div class="contraloria-plan-name">Evaluación final y reporte</div></div>
+          <div class="contraloria-plan-right"><button class="contraloria-btn-lite">Ver plan</button></div>
+        </div>
+      </div>
+      <div style="margin-top:16px; text-align:right;">
+        <button class="contraloria-btn-lite">Ver calendario</button>
+      </div>
+    </article>
+  </section>
+
+  <section class="contraloria-card">
+    <div class="contraloria-card-header">
+      <h3 class="contraloria-card-title">Oportunidades y recomendaciones</h3>
+      <a href="#" class="contraloria-muted" style="text-decoration:none;font-weight:700;">Ver todas</a>
+    </div>
+    <div class="contraloria-op-card">
+      <div class="contraloria-op-item">
+        <div class="contraloria-op-top"><div class="contraloria-op-ico ct-bg-green">✓</div><div class="contraloria-op-name">Gobernanza</div></div>
+        <div class="contraloria-op-val">+17%</div>
+      </div>
+      <div class="contraloria-op-item">
+        <div class="contraloria-op-top"><div class="contraloria-op-ico ct-bg-teal">📱</div><div class="contraloria-op-name">Control digital</div></div>
+        <div class="contraloria-op-val">+42%</div>
+      </div>
+      <div class="contraloria-op-item">
+        <div class="contraloria-op-top"><div class="contraloria-op-ico ct-bg-green">🌱</div><div class="contraloria-op-name">Riesgo verde</div></div>
+        <div class="contraloria-op-val">+28%</div>
+      </div>
+      <div class="contraloria-op-item">
+        <div class="contraloria-op-top"><div class="contraloria-op-ico ct-bg-gold">🏠</div><div class="contraloria-op-name">Cumplimiento</div></div>
+        <div class="contraloria-op-val">+12%</div>
+      </div>
+      <div class="contraloria-op-item">
+        <div class="contraloria-op-top"><div class="contraloria-op-ico ct-bg-teal">🤝</div><div class="contraloria-op-name">Fidelización</div></div>
+        <div class="contraloria-op-val">+81%</div>
+      </div>
+    </div>
+  </section>
+</section>

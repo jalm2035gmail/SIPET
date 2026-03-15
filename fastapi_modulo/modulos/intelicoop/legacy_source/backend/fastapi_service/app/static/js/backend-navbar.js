@@ -45,8 +45,8 @@
       const token = tokenValue.startsWith("Bearer ") ? tokenValue.slice(7) : tokenValue;
       const parts = token.split(".");
       if (parts.length < 2) return null;
-      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+      const MAIN64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = MAIN64 + "=".repeat((4 - (MAIN64.length % 4)) % 4);
       return JSON.parse(window.atob(padded));
     } catch (_error) {
       return null;
@@ -118,7 +118,7 @@
       height: 14px;
       flex: 0 0 14px;
       background-color: var(--backend-navbar-svg);
-      -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
       mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
     }
 
@@ -173,22 +173,22 @@
     }
 
     .backend-tool-btn[data-icon="guardar"] .backend-tool-icon {
-      -webkit-mask: url('/static/icons/guardar.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/guardar.svg') no-repeat center / contain;
       mask: url('/static/icons/guardar.svg') no-repeat center / contain;
     }
 
     .backend-tool-btn[data-icon="editar"] .backend-tool-icon {
-      -webkit-mask: url('/static/icons/editar.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/editar.svg') no-repeat center / contain;
       mask: url('/static/icons/editar.svg') no-repeat center / contain;
     }
 
     .backend-tool-btn[data-icon="eliminar"] .backend-tool-icon {
-      -webkit-mask: url('/static/icons/eliminar.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/eliminar.svg') no-repeat center / contain;
       mask: url('/static/icons/eliminar.svg') no-repeat center / contain;
     }
 
     .backend-tool-btn[data-icon="nuevo"] .backend-tool-icon {
-      -webkit-mask: url('/static/icons/nuevo.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/nuevo.svg') no-repeat center / contain;
       mask: url('/static/icons/nuevo.svg') no-repeat center / contain;
     }
 
@@ -234,7 +234,7 @@
       height: 18px;
       flex: 0 0 18px;
       background-color: currentColor;
-      -webkit-mask: url('/static/icons/notificaciones.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/notificaciones.svg') no-repeat center / contain;
       mask: url('/static/icons/notificaciones.svg') no-repeat center / contain;
       transition: transform 0.2s ease;
     }
@@ -452,17 +452,17 @@
     }
 
     .backend-view-btn[data-view="form"] .backend-view-btn-icon {
-      -webkit-mask: url('/static/icons/form.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/form.svg') no-repeat center / contain;
       mask: url('/static/icons/form.svg') no-repeat center / contain;
     }
 
     .backend-view-btn[data-view="list"] .backend-view-btn-icon {
-      -webkit-mask: url('/static/icons/lista.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/lista.svg') no-repeat center / contain;
       mask: url('/static/icons/lista.svg') no-repeat center / contain;
     }
 
     .backend-view-btn[data-view="kanban"] .backend-view-btn-icon {
-      -webkit-mask: url('/static/icons/kanban.svg') no-repeat center / contain;
+      -backendkit-mask: url('/static/icons/kanban.svg') no-repeat center / contain;
       mask: url('/static/icons/kanban.svg') no-repeat center / contain;
     }
 
@@ -1466,7 +1466,7 @@
         localStorage.removeItem(key);
         sessionStorage.removeItem(key);
       });
-      window.location.href = `${prefix}/web/login`;
+      window.location.href = `${prefix}/backend/login`;
     }
   });
 

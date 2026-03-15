@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from statistics import pstdev
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count, Sum
 from django.utils import timezone as dj_timezone
 
@@ -32,7 +32,7 @@ def _semaforo(value: float, threshold: float, invert: bool = False) -> str:
     return "Amarillo" if borderline else "Rojo"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.8 Dashboards ejecutivos y operativos: genera tableros para cartera, colocacion, captacion, riesgo, sucursales y cobranza."
 
     def add_arguments(self, parser):

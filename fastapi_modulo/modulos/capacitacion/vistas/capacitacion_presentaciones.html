@@ -1,0 +1,607 @@
+<style>
+  .pres-shell {
+    --pres-bg: #f4f1eb;
+    --pres-panel: rgba(10, 14, 20, 0.96);
+    --pres-panel-soft: rgba(255, 255, 255, 0.06);
+    --pres-surface: rgba(255, 255, 255, 0.82);
+    --pres-card: #ffffff;
+    --pres-line: rgba(15, 23, 42, 0.08);
+    --pres-line-strong: rgba(15, 23, 42, 0.16);
+    --pres-ink: #121826;
+    --pres-muted: #627084;
+    --pres-accent: #3f63ff;
+    --pres-accent-soft: #dfe6ff;
+    --pres-green: #5ecf7a;
+    --pres-orange: #ffb35c;
+    min-height: calc(100vh - 60px);
+    padding: 28px;
+    box-sizing: border-box;
+    background:
+      radial-gradient(circle at top left, rgba(255, 211, 143, 0.35), transparent 32%),
+      radial-gradient(circle at right center, rgba(96, 165, 250, 0.14), transparent 26%),
+      linear-gradient(180deg, #f6f3ee 0%, #f1efeb 100%);
+    font-family: 'Avenir Next', 'Montserrat', 'Segoe UI', sans-serif;
+    color: var(--pres-ink);
+  }
+  .pres-dashboard {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+  .pres-sidebar {
+    position: sticky;
+    top: 24px;
+    padding: 28px 18px;
+    border-radius: 30px;
+    background: var(--pres-panel);
+    color: #fff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+    min-height: calc(100vh - 116px);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .pres-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pres-brand-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #eef2ff 0%, #c7d2fe 100%);
+    color: #312e81;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+  }
+  .pres-brand-copy strong {
+    display: block;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+  }
+  .pres-brand-copy span {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.64);
+    margin-top: 3px;
+  }
+  .pres-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .pres-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 14px;
+    border-radius: 18px;
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: transform .16s ease, background .16s ease, border-color .16s ease;
+  }
+  .pres-nav-link:hover {
+    transform: translateX(2px);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .pres-nav-link.is-active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .pres-nav-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 18px;
+  }
+  .pres-sidebar-note {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .pres-sidebar-note strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  .pres-sidebar-note p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.72);
+  }
+  .pres-main {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-width: 0;
+  }
+  .pres-hero {
+    padding: 30px 34px;
+    border-radius: 34px;
+    background:
+      radial-gradient(circle at top right, rgba(255, 255, 255, 0.38), transparent 28%),
+      linear-gradient(135deg, #f7efe3 0%, #fdfdfd 54%, #ecf3ff 100%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.08);
+  }
+  .pres-hero-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .pres-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    color: #3355d7;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .pres-filter-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.74);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    font-size: 13px;
+    color: var(--pres-muted);
+  }
+  .pres-filter-select {
+    border: none;
+    background: transparent;
+    color: var(--pres-ink);
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+  }
+  .pres-title {
+    margin: 0;
+    font-size: clamp(36px, 5vw, 60px);
+    line-height: 0.98;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    max-width: 15ch;
+  }
+  .pres-subtitle {
+    margin: 14px 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--pres-muted);
+    max-width: 64ch;
+  }
+  .pres-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .pres-cta {
+    border: none;
+    border-radius: 999px;
+    padding: 16px 22px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+  }
+  .pres-cta:hover { transform: translateY(-1px); }
+  .pres-cta.is-primary {
+    background: var(--pres-accent);
+    color: #fff;
+    box-shadow: 0 16px 34px rgba(63, 99, 255, 0.24);
+  }
+  .pres-cta.is-secondary {
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--pres-ink);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+  }
+  .pres-cta-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex: 0 0 auto;
+  }
+  .pres-cta.is-primary .pres-cta-icon {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
+  .pres-cta.is-secondary .pres-cta-icon {
+    background: var(--pres-accent-soft);
+    color: #2f49b9;
+  }
+  .pres-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .pres-section-title {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+  }
+  .pres-section-copy {
+    margin: 6px 0 0;
+    color: var(--pres-muted);
+    font-size: 14px;
+  }
+  .pres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .pres-card {
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 28px;
+    border: 1px solid var(--pres-line);
+    overflow: hidden;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .pres-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 54px rgba(15, 23, 42, 0.12);
+  }
+  .pres-card-thumb {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background:
+      radial-gradient(circle at top left, rgba(255,255,255,0.32), transparent 28%),
+      linear-gradient(135deg, #0f4c81 0%, #1f6a9d 36%, #d9eef7 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 18px;
+    overflow: hidden;
+  }
+  .pres-card-thumb::before {
+    content: "";
+    position: absolute;
+    inset: auto -28px -46px auto;
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .pres-card-thumb::after {
+    content: "";
+    position: absolute;
+    right: 18px;
+    top: 18px;
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.34);
+  }
+  .pres-card-thumb img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .pres-card-label {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    color: #12324a;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .pres-card-body {
+    padding: 18px 18px 12px;
+  }
+  .pres-card-name {
+    margin: 0 0 8px;
+    font-size: 22px;
+    line-height: 1.06;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .pres-card-meta {
+    margin: 0;
+    font-size: 13px;
+    color: var(--pres-muted);
+    line-height: 1.55;
+  }
+  .pres-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 18px 18px;
+    flex-wrap: wrap;
+  }
+  .pres-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 11px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .pres-badge.borrador {
+    background: rgba(255, 179, 92, 0.18);
+    color: #95550d;
+  }
+  .pres-badge.publicado {
+    background: rgba(94, 207, 122, 0.18);
+    color: #1f7e35;
+  }
+  .pres-badge.archivado {
+    background: rgba(98, 112, 132, 0.14);
+    color: #516071;
+  }
+  .pres-card-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .pres-action-btn {
+    border: 1px solid var(--pres-line-strong);
+    background: #fff;
+    color: var(--pres-ink);
+    border-radius: 999px;
+    padding: 8px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .pres-action-btn.danger {
+    color: #b42318;
+    border-color: rgba(180, 35, 24, 0.16);
+  }
+  .pres-empty {
+    grid-column: 1 / -1;
+    padding: 42px 26px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px dashed rgba(15, 23, 42, 0.12);
+    text-align: center;
+  }
+  .pres-empty-icon {
+    font-size: 42px;
+    margin-bottom: 10px;
+  }
+  .pres-empty-msg {
+    font-size: 15px;
+    color: var(--pres-muted);
+  }
+  .pres-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+  }
+  .pres-modal-overlay.hidden { display: none; }
+  .pres-modal {
+    width: min(440px, 94vw);
+    padding: 30px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #ffffff 0%, #f7f9fd 100%);
+    box-shadow: 0 28px 64px rgba(15, 23, 42, 0.22);
+  }
+  .pres-modal h3 {
+    margin: 0 0 18px;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .pres-modal label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+  }
+  .pres-modal input,
+  .pres-modal textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 14px;
+    margin-bottom: 14px;
+    font-family: inherit;
+  }
+  .pres-modal textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+  .pres-modal-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .pres-modal-btns button {
+    border: none;
+    border-radius: 999px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-cancel {
+    background: #edf2f7;
+    color: #334155;
+  }
+  .btn-create {
+    background: var(--pres-accent);
+    color: #111827;
+  }
+  .btn-create:disabled {
+    background: var(--pres-accent);
+    color: #111827;
+    opacity: 0.92;
+    cursor: wait;
+  }
+  #pres-toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    padding: 12px 18px;
+    background: #111827;
+    color: #fff;
+    border-radius: 14px;
+    font-size: 14px;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  #pres-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (max-width: 1080px) {
+    .pres-dashboard {
+      grid-template-columns: 1fr;
+    }
+    .pres-sidebar {
+      position: relative;
+      top: 0;
+      min-height: auto;
+      padding: 18px;
+      gap: 18px;
+    }
+    .pres-nav {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .pres-sidebar-note {
+      margin-top: 0;
+    }
+  }
+  @media (max-width: 720px) {
+    .pres-shell {
+      padding: 16px;
+    }
+    .pres-hero {
+      padding: 22px 20px;
+      border-radius: 24px;
+    }
+    .pres-title {
+      font-size: 38px;
+      max-width: none;
+    }
+    .pres-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .pres-cta {
+      justify-content: center;
+    }
+    .pres-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div id="pres-root" class="pres-shell"
+     data-js-url="/capacitacion/assets/js/capacitacion_presentaciones.js?v=20260313a">
+  <div class="pres-dashboard">
+    {{> partials/presentaciones_sidebar.html }}
+
+    <main class="pres-main">
+      {{> partials/presentaciones_hero.html }}
+
+      <section class="pres-section">
+        <div>
+          <h2 class="pres-section-title">Tus plantillas</h2>
+          <p class="pres-section-copy">Miniaturas de las presentaciones que ya has creado para retomarlas, visualizarlas o editarlas.</p>
+        </div>
+      </section>
+
+      <div id="pres-grid" class="pres-grid">
+        <div class="pres-empty">
+          <div class="pres-empty-icon">⏳</div>
+          <div class="pres-empty-msg">Cargando...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="pres-modal" class="pres-modal-overlay hidden">
+  <div class="pres-modal">
+    <h3>Nueva presentación</h3>
+    <label for="pres-new-titulo">Título</label>
+    <input id="pres-new-titulo" type="text" placeholder="Ej. Inducción corporativa" />
+    <label for="pres-new-desc">Descripción (opcional)</label>
+    <textarea id="pres-new-desc" placeholder="Breve descripción..."></textarea>
+    <div class="pres-modal-btns">
+      <button class="btn-cancel" id="pres-modal-cancel" type="button">Cancelar</button>
+      <button class="btn-create" id="pres-modal-create" type="button">Crear</button>
+    </div>
+  </div>
+</div>
+
+<div id="pres-toast"></div>
+
+<script>
+(function () {
+  var root = document.getElementById('pres-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

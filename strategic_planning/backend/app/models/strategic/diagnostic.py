@@ -1,10 +1,10 @@
 from sqlalchemy import Column, ForeignKey, Integer, JSON, Text
 from sqlalchemy.orm import relationship
 
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
-class DiagnosticAnalysis(BaseModel):
+class DiagnosticAnalysis(MAINModel):
     """Modelo para Análisis de Diagnóstico (FODA, PESTEL, Porter)"""
     __tablename__ = "diagnostic_analysis"
 

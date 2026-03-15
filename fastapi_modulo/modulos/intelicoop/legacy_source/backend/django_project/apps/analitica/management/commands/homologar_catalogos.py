@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db import transaction
 
 from apps.ahorros.models import Cuenta, Transaccion
@@ -96,14 +96,14 @@ def _map_value(raw: str, spec: CatalogSpec) -> tuple[str, bool]:
     return normalized, False
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Homologa catálogos de dominio y genera reporte (dry-run por defecto)."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--apply",
             action="store_true",
-            help="Aplica cambios en base de datos. Por defecto solo analiza.",
+            help="Aplica cambios en MAIN de datos. Por defecto solo analiza.",
         )
         parser.add_argument(
             "--output-csv",

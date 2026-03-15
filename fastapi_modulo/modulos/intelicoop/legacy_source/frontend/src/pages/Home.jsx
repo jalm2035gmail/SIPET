@@ -38,7 +38,7 @@ export default function Home() {
   return (
     <section className="home-page">
       <h1>Home</h1>
-      <p>Base inicial del frontend en entorno local.</p>
+      <p>MAIN inicial del frontend en entorno local.</p>
       <div className="kpi-grid">
         {kpis.map((kpi) => (
           <Card key={kpi.id} title={kpi.label}>

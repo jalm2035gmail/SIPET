@@ -6,7 +6,7 @@ Visión General de la Arquitectura
 text
 ┌─────────────────┐      ┌─────────────────────────────────────┐      ┌─────────────────┐
 │                 │      │            BACKEND                   │      │                 │
-│    FRONTEND     │────▶│  ┌──────────────┐  ┌──────────────┐  │────▶│   BASE DE       │
+│    FRONTEND     │────▶│  ┌──────────────┐  ┌──────────────┐  │────▶│   MAIN DE       │
 │   (React/Vue)   │      │  │   Django     │  │   FastAPI    │  │      │    DATOS        │
 │                 │◀────│  │   (Admin +   │  │  (ML APIs)   │  │◀────│   PostgreSQL    │
 └─────────────────┘      │  │   REST API)  │  └──────────────┘  │      └─────────────────┘
@@ -67,12 +67,12 @@ text
 🚀 Etapas de Desarrollo Detalladas
 FASE 0: Fundación y Setup Inicial
 
-Objetivo: Establecer la estructura base de backend y frontend por separado.
+Objetivo: Establecer la estructura MAIN de backend y frontend por separado.
 
 Backend (Django)
 ✅ Crear proyecto Django config
 
-✅ Configurar PostgreSQL como base de datos
+✅ Configurar PostgreSQL como MAIN de datos
 
 ✅ Crear apps: socios, creditos, ahorros, analitica
 
@@ -126,7 +126,7 @@ FASE 1: Templates UI y Autenticación
 
 Objetivo: Construir la interfaz de usuario con los templates/componentes visuales.
 
-Frontend - Componentes Base
+Frontend - Componentes MAIN
 Assets finales:
 
 ✅ 1/23 - Agregar imágenes institucionales a /assets/images (placeholders temporales)
@@ -171,7 +171,7 @@ Componentes reutilizables:
 
 ✅ 7/23 - Modal.jsx - Ventanas modales
 
-✅ 8/23 - Chart.jsx - Gráficos (implementación base local)
+✅ 8/23 - Chart.jsx - Gráficos (implementación MAIN local)
 
 Páginas de autenticación:
 
@@ -229,7 +229,7 @@ Objetivo: Implementar el modelo de scoring y su interfaz.
 
 ✅ 3/25 - Crear serializer Credito para CRUD y scoring
 
-✅ 4/25 - Crear vistas/API de Créditos (CRUD base)
+✅ 4/25 - Crear vistas/API de Créditos (CRUD MAIN)
 
 ✅ 5/25 - Exponer y validar GET /api/creditos/ (listar solicitudes)
 
@@ -452,7 +452,7 @@ Avance fase 5: 100.00% (5/5)
 
 ✅ 2/5 - Dockerización completa y orquestación con postgres/redis/django/fastapi/frontend/nginx
 
-✅ 3/5 - Backend productivo base (cache Redis, Celery worker/beat, logging estructurado)
+✅ 3/5 - Backend productivo MAIN (cache Redis, Celery worker/beat, logging estructurado)
 
 ✅ 4/5 - Frontend productivo (lazy loading de rutas + estado global con Context API)
 
@@ -472,7 +472,7 @@ Lazy loading de rutas
 
 Estado global con Context API o Redux
 
-PWA (Progressive Web App) - opcional
+PWA (Progressive backend App) - opcional
 
 Modo oscuro/claro con variables CSS
 
@@ -508,7 +508,7 @@ Entregable: Aplicación completa en producción.
 
 📊 Resumen de Etapas
 Fase	Nombre	Duración	Entregable Principal
-0	Fundación	2-3 sem	Backend y frontend base conectados
+0	Fundación	2-3 sem	Backend y frontend MAIN conectados
 1	Templates UI	3-4 sem	Sistema de autenticación + layout visual
 2	Scoring	4-5 sem	Solicitud de créditos con IA
 3	Segmentación	4-5 sem	Dashboard de ahorros segmentados

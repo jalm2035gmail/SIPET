@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import MAINModel, Field
 
 import enum
 
@@ -13,8 +13,8 @@ class TokenType(str, enum.Enum):
     ACCESS = "access"
 
 
-class TokenBase(BaseModel):
-    """Schema base para tokens."""
+class TokenMAIN(MAINModel):
+    """Schema MAIN para tokens."""
 
     token_type: TokenType
     expires_at: datetime
@@ -23,7 +23,7 @@ class TokenBase(BaseModel):
         from_attributes = True
 
 
-class TokenCreate(BaseModel):
+class TokenCreate(MAINModel):
     """Schema para crear token."""
 
     user_id: int
@@ -33,7 +33,7 @@ class TokenCreate(BaseModel):
     ip_address: Optional[str] = None
 
 
-class TokenResponse(TokenBase):
+class TokenResponse(TokenMAIN):
     """Schema para respuesta de token."""
 
     id: int
@@ -45,7 +45,7 @@ class TokenResponse(TokenBase):
     use_count: int
 
 
-class TokenPairResponse(BaseModel):
+class TokenPairResponse(MAINModel):
     """Schema para par de tokens (access + refresh)."""
 
     access_token: str
@@ -64,7 +64,7 @@ class TokenPairResponse(BaseModel):
         }
 
 
-class TokenRefreshRequest(BaseModel):
+class TokenRefreshRequest(MAINModel):
     """Schema para refrescar token."""
 
     refresh_token: str = Field(..., description="Refresh token válido")
@@ -77,7 +77,7 @@ class TokenRefreshRequest(BaseModel):
         }
 
 
-class TokenVerifyRequest(BaseModel):
+class TokenVerifyRequest(MAINModel):
     """Schema para verificar token."""
 
     token: str = Field(..., description="Token a verificar")
@@ -90,7 +90,7 @@ class TokenVerifyRequest(BaseModel):
         }
 
 
-class TokenVerifyResponse(BaseModel):
+class TokenVerifyResponse(MAINModel):
     """Schema para respuesta de verificación."""
 
     valid: bool

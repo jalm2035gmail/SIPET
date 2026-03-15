@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from django.apps import apps
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import NOT_PROVIDED
 
 
@@ -67,7 +67,7 @@ def _collect_rows() -> list[dict[str, str]]:
     return rows
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Genera diccionario de datos tecnico desde modelos ORM (CSV/JSON)."
 
     def add_arguments(self, parser):

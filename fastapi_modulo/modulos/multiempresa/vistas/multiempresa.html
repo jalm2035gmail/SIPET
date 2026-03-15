@@ -1,0 +1,246 @@
+<style>
+  .me-shell { padding: 20px; font-family: 'Inter', system-ui, sans-serif; color: #0f172a; }
+  .me-hero { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 18px; margin-bottom: 24px; }
+  .me-hero-head { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+  .me-hero-logo {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+    flex: 0 0 auto;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .me-hero-copy h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+  }
+  .me-hero-copy p {
+    margin: 6px 0 0;
+    font-size: 13.5px;
+    color: #64748b;
+  }
+  .me-kpi-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+  .me-kpi-card { background: #fff; border: 1px solid rgba(15,23,42,.1); border-radius: 14px; padding: 14px 20px; min-width: 130px; text-align: center; }
+  .me-kpi-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin-bottom: 6px; }
+  .me-kpi-value { font-size: 28px; font-weight: 700; color: #0f172a; }
+  .me-kpi-value.is-green { color: #16a34a; }
+  .me-kpi-value.is-red   { color: #dc2626; }
+  .me-layout { display: grid; gap: 18px; grid-template-columns: 200px minmax(0,1fr); }
+  .me-nav { display: grid; gap: 8px; align-content: start; }
+  .me-nav-btn { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; text-align: left; font-size: 13.5px; cursor: pointer; color: #334155; transition: background .15s, border-color .15s; }
+  .me-nav-btn:hover  { background: #f1f5f9; }
+  .me-nav-btn.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+  .me-panel { display: none; }
+  .me-panel.active { display: block; }
+  .me-section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+  .me-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .me-panel-title { font-size: 17px; font-weight: 700; }
+  .me-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; }
+  .me-btn-primary   { background: #0f172a; color: #fff; }
+  .me-btn-secondary { background: #f1f5f9; color: #334155; border: 1.5px solid #e2e8f0; }
+  .me-btn-danger    { background: #fee2e2; color: #b91c1c; }
+  .me-btn-sm { padding: 5px 10px; font-size: 12px; }
+  .me-btn:hover { opacity: .88; }
+  .me-table-wrap { overflow-x: auto; }
+  .me-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .me-table th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+  .me-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  .me-table tr:hover td { background: #fafafa; }
+  .me-badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+  .badge-activa   { background: #dcfce7; color: #15803d; }
+  .badge-inactiva { background: #fee2e2; color: #b91c1c; }
+  .me-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .me-form-group { display: grid; gap: 5px; }
+  .me-form-group label { font-size: 12px; font-weight: 600; color: #475569; }
+  .me-input { width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; background: #fff; }
+  .me-input:focus { outline: none; border-color: #0f172a; }
+  .me-form-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .me-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 900; display: none; align-items: center; justify-content: center; }
+  .me-modal-backdrop.open { display: flex; }
+  .me-modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 680px; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  .me-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .me-modal-title { font-size: 16px; font-weight: 700; }
+  .me-modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #94a3b8; }
+  .me-filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .me-filter-row select, .me-filter-row input { padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
+  .me-empty { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
+  /* Consolidado cards */
+  .me-empresa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .me-empresa-card { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 10px; transition: box-shadow .15s; }
+  .me-empresa-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+  .me-empresa-card-top { display: flex; align-items: center; gap: 14px; }
+  .me-empresa-logo { width: 56px; height: 56px; border-radius: 10px; object-fit: contain; border: 1px solid #e2e8f0; background: #f8fafc; padding: 4px; }
+  .me-empresa-logo-placeholder { width: 56px; height: 56px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #94a3b8; }
+  .me-empresa-card-name { font-size: 15px; font-weight: 700; line-height: 1.2; }
+  .me-empresa-card-code { font-size: 12px; color: #64748b; font-family: monospace; }
+  .me-empresa-card-meta { font-size: 12.5px; color: #475569; display: grid; gap: 3px; }
+  .me-accent-bar { height: 3px; border-radius: 2px; margin-top: 4px; }
+  /* Logo upload preview */
+  .me-logo-preview { width: 80px; height: 80px; border-radius: 10px; object-fit: contain; border: 1.5px solid #e2e8f0; background: #f8fafc; padding: 4px; }
+  .me-logo-placeholder { width: 80px; height: 80px; border-radius: 10px; border: 1.5px dashed #cbd5e1; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #cbd5e1; cursor: pointer; }
+</style>
+
+<div class="me-shell" id="me-root" data-js-url="/api/multiempresa/assets/multiempresa.js">
+
+  <!-- KPIs -->
+  <div class="me-hero">
+    <div class="me-hero-head">
+      <div class="me-hero-copy">
+        <h1>Multiempresa</h1>
+        <p>Gestión centralizada de todas las empresas del sistema SIPET</p>
+      </div>
+      <img class="me-hero-logo" src="/icon/boton/multiempresa.svg" alt="Multiempresa" />
+    </div>
+    <div class="me-kpi-grid">
+      <div class="me-kpi-card"><span class="me-kpi-label">Total empresas</span><span class="me-kpi-value" id="kpi-total">—</span></div>
+      <div class="me-kpi-card"><span class="me-kpi-label">Activas</span><span class="me-kpi-value is-green" id="kpi-activas">—</span></div>
+      <div class="me-kpi-card"><span class="me-kpi-label">Inactivas</span><span class="me-kpi-value is-red" id="kpi-inactivas">—</span></div>
+      <div class="me-kpi-card"><span class="me-kpi-label">Con logo</span><span class="me-kpi-value" id="kpi-logo">—</span></div>
+    </div>
+  </div>
+
+  <div class="me-layout">
+    <!-- Nav -->
+    <nav class="me-nav">
+      <button class="me-nav-btn active" data-panel="empresas">🏢 Empresas</button>
+      <button class="me-nav-btn" data-panel="consolidado">📊 Consolidado</button>
+    </nav>
+
+    <div style="min-width:0">
+
+      <!-- ═══ PANEL: EMPRESAS ═══ -->
+      <div class="me-panel active" id="panel-empresas">
+        <div class="me-section-card">
+          <div class="me-panel-header">
+            <span class="me-panel-title">Empresas registradas</span>
+            <button class="me-btn me-btn-primary" id="btn-nueva-empresa">+ Nueva empresa</button>
+          </div>
+          <div class="me-filter-row">
+            <select id="filter-estado-empresa">
+              <option value="">Todos los estados</option>
+              <option value="activa">Activa</option>
+              <option value="inactiva">Inactiva</option>
+            </select>
+            <input type="text" id="filter-nombre-empresa" placeholder="Buscar por nombre o código…" style="min-width:200px">
+          </div>
+          <div class="me-table-wrap">
+            <table class="me-table">
+              <thead>
+                <tr>
+                  <th>Logo</th><th>Código</th><th>Nombre</th><th>Tenant ID</th>
+                  <th>RFC</th><th>Email</th><th>Estado</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody-empresas"><tr><td colspan="8" class="me-empty">Cargando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PANEL: CONSOLIDADO ═══ -->
+      <div class="me-panel" id="panel-consolidado">
+        <div class="me-section-card">
+          <div class="me-panel-header">
+            <span class="me-panel-title">Vista consolidada</span>
+            <button class="me-btn me-btn-secondary" id="btn-refresh-consolidado">↻ Actualizar</button>
+          </div>
+          <div class="me-empresa-grid" id="consolidado-grid">
+            <p class="me-empty">Cargando consolidado…</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end main col -->
+  </div><!-- end me-layout -->
+</div><!-- end me-shell -->
+
+<!-- ════ MODAL: EMPRESA ════ -->
+<div class="me-modal-backdrop" id="modal-empresa">
+  <div class="me-modal">
+    <div class="me-modal-header">
+      <span class="me-modal-title" id="modal-empresa-title">Nueva empresa</span>
+      <button class="me-modal-close" id="modal-empresa-close">×</button>
+    </div>
+    <form id="form-empresa">
+      <input type="hidden" id="empresa-id">
+      <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:18px">
+        <div>
+          <div class="me-logo-placeholder" id="logo-preview-wrap" title="Haz clic para subir logo">
+            <span id="logo-preview-icon">🏢</span>
+            <img id="logo-preview-img" class="me-logo-preview" style="display:none" alt="Logo">
+          </div>
+          <p style="font-size:11px;color:#94a3b8;margin:4px 0 0;text-align:center">Logo (clic)</p>
+          <input type="file" id="logo-file-input" accept="image/png,image/jpeg,image/gif,image/backendp,image/svg+xml" style="display:none">
+        </div>
+        <div style="flex:1">
+          <div class="me-form-grid" style="grid-template-columns:1fr 1fr">
+            <div class="me-form-group">
+              <label>Código * <small style="font-weight:normal;color:#94a3b8">(único, sin espacios)</small></label>
+              <input class="me-input" id="empresa-codigo" required placeholder="Ej. AVANCOOP" style="text-transform:uppercase">
+            </div>
+            <div class="me-form-group">
+              <label>Tenant ID * <small style="font-weight:normal;color:#94a3b8">(slug de sesión)</small></label>
+              <input class="me-input" id="empresa-tenant" required placeholder="Ej. avancoop" style="text-transform:lowercase">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="me-form-grid">
+        <div class="me-form-group" style="grid-column:1/-1">
+          <label>Nombre / Razón social *</label>
+          <input class="me-input" id="empresa-nombre" required placeholder="Nombre completo de la empresa">
+        </div>
+        <div class="me-form-group">
+          <label>RFC</label>
+          <input class="me-input" id="empresa-rfc" placeholder="Ej. XAXX010101000">
+        </div>
+        <div class="me-form-group">
+          <label>Email de contacto</label>
+          <input class="me-input" id="empresa-email" type="email" placeholder="contacto@empresa.mx">
+        </div>
+        <div class="me-form-group">
+          <label>Teléfono</label>
+          <input class="me-input" id="empresa-telefono" placeholder="+52 55 0000 0000">
+        </div>
+        <div class="me-form-group">
+          <label>Color de marca</label>
+          <input class="me-input" id="empresa-color" type="color" value="#0f172a" style="height:38px;padding:4px">
+        </div>
+        <div class="me-form-group">
+          <label>Estado</label>
+          <select class="me-input" id="empresa-estado">
+            <option value="activa">Activa</option>
+            <option value="inactiva">Inactiva</option>
+          </select>
+        </div>
+        <div class="me-form-group" style="grid-column:1/-1">
+          <label>Dirección</label>
+          <input class="me-input" id="empresa-direccion" placeholder="Domicilio fiscal">
+        </div>
+        <div class="me-form-group" style="grid-column:1/-1">
+          <label>Descripción</label>
+          <input class="me-input" id="empresa-descripcion" placeholder="Breve descripción de la empresa">
+        </div>
+      </div>
+      <div class="me-form-actions">
+        <button type="submit" class="me-btn me-btn-primary">Guardar</button>
+        <button type="button" class="me-btn me-btn-secondary" id="btn-empresa-cancel">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  const root = document.getElementById('me-root');
+  const jsUrl = root ? root.dataset.jsUrl : null;
+  if (!jsUrl) return;
+  const s = document.createElement('script');
+  s.src = jsUrl;
+  document.body.appendChild(s);
+})();
+</script>

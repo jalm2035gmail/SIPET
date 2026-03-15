@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
 DEFAULT_THRESHOLDS = {
@@ -35,7 +35,7 @@ DEFAULT_THRESHOLDS = {
 }
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Define y versiona umbrales oficiales de segmentacion inteligente 1.4."
 
     def add_arguments(self, parser):

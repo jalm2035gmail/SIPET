@@ -2,12 +2,12 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.socios.models import Socio
 
 
-SUCURSALES_BASE = [
+SUCURSALES_MAIN = [
     {"sucursal_id": "SUC-YUR", "nombre_sucursal": "Yuriria", "municipio": "Yuriria", "region": "sur"},
     {"sucursal_id": "SUC-CUI", "nombre_sucursal": "Cuitzeo", "municipio": "Cuitzeo", "region": "norte"},
     {"sucursal_id": "SUC-SAM", "nombre_sucursal": "Santa Ana Maya", "municipio": "Santa Ana Maya", "region": "este"},
@@ -21,16 +21,16 @@ def _normalizar_texto(value: str) -> str:
 def _asignar_sucursal(direccion: str) -> dict:
     text = _normalizar_texto(direccion)
     if "yuriria" in text:
-        return SUCURSALES_BASE[0]
+        return SUCURSALES_MAIN[0]
     if "cuitzeo" in text:
-        return SUCURSALES_BASE[1]
+        return SUCURSALES_MAIN[1]
     if "santa ana maya" in text or "santa_ana_maya" in text:
-        return SUCURSALES_BASE[2]
+        return SUCURSALES_MAIN[2]
     # Default operativo cuando no hay georreferencia.
-    return SUCURSALES_BASE[0]
+    return SUCURSALES_MAIN[0]
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 2/4 de 1.2: catalogo de sucursales/territorio y mapeo de socios."
 
     def add_arguments(self, parser):
@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 ],
             )
             writer.writeheader()
-            for suc in SUCURSALES_BASE:
+            for suc in SUCURSALES_MAIN:
                 writer.writerow(
                     {
                         "tipo": "catalogo_sucursal",
@@ -107,13 +107,13 @@ class Command(BaseCommand):
             "",
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             "",
-            "## Catalogo base",
+            "## Catalogo MAIN",
             "- Yuriria",
             "- Cuitzeo",
             "- Santa Ana Maya",
             "",
             "## Resumen",
-            f"- Sucursales catalogadas: {len(SUCURSALES_BASE)}",
+            f"- Sucursales catalogadas: {len(SUCURSALES_MAIN)}",
             f"- Socios mapeados a territorio: {len(socios_rows)}",
             "",
             "## Estado",
@@ -128,6 +128,6 @@ class Command(BaseCommand):
         report_md.write_text("\n".join(lines), encoding="utf-8")
 
         self.stdout.write(self.style.SUCCESS("[catalogo_territorio_sucursales_1_2] catalogo generado"))
-        self.stdout.write(f"sucursales={len(SUCURSALES_BASE)} socios_mapeados={len(socios_rows)}")
+        self.stdout.write(f"sucursales={len(SUCURSALES_MAIN)} socios_mapeados={len(socios_rows)}")
         self.stdout.write(f"report_csv={report_csv}")
         self.stdout.write(f"report_md={report_md}")

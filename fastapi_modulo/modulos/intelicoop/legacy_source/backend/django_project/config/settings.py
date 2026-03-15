@@ -3,14 +3,14 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-PROJECT_ROOT = BASE_DIR.parent.parent
-DJANGO_TEMPLATE_DIR = BASE_DIR / 'templates'
+MAIN_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = MAIN_DIR.parent.parent
+DJANGO_TEMPLATE_DIR = MAIN_DIR / 'templates'
 FASTAPI_TEMPLATE_DIR = PROJECT_ROOT / 'backend' / 'fastapi_service' / 'app' / 'templates'
 FASTAPI_STATIC_DIR = PROJECT_ROOT / 'backend' / 'fastapi_service' / 'app' / 'static'
 
 load_dotenv(PROJECT_ROOT / '.env')
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(MAIN_DIR / '.env')
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-me')
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in {'1', 'true', 'yes', 'on'}
@@ -70,7 +70,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
 if os.getenv('POSTGRES_DB'):
-    DATABASES = {
+    DATAMAINS = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.getenv('POSTGRES_DB', 'intellicoop'),
@@ -81,10 +81,10 @@ if os.getenv('POSTGRES_DB'):
         }
     }
 else:
-    DATABASES = {
+    DATAMAINS = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': MAIN_DIR / 'db.sqlite3',
         }
     }
 

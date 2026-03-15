@@ -4,12 +4,12 @@ from typing import List, Optional, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.crud.base import CRUDBase
+from app.crud.MAIN import CRUDMAIN
 from app.models.operational import POA
 from app.schemas.operational.poa import POACreate, POAUpdate
 
 
-class CRUDPOA(CRUDBase[POA, POACreate, POAUpdate]):
+class CRUDPOA(CRUDMAIN[POA, POACreate, POAUpdate]):
     """CRUD de POA con soporte para generación desde planes estratégicos."""
 
     def get_by_plan_year(self, db: Session, plan_id: int, year: int) -> Optional[POA]:

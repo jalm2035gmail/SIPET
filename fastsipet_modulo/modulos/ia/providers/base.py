@@ -1,5 +1,5 @@
 """
-Base robusta para proveedores IA.
+MAIN robusta para proveedores IA.
 Contrato único:
 - complete(prompt, **kwargs) -> dict con "response", "usage", "provider", "model", etc.
 """
@@ -32,12 +32,12 @@ class IAProviderError(Exception):
         }
 
 
-class IAProviderBase:
+class IAProviderMAIN:
     provider_name = "generic"
 
-    def __init__(self, api_key, base_url=None, model=None, timeout=30):
+    def __init__(self, api_key, MAIN_url=None, model=None, timeout=30):
         self.api_key = str(api_key or "")
-        self.base_url = str(base_url or "")
+        self.MAIN_url = str(MAIN_url or "")
         self.model = str(model or "")
         try:
             timeout_num = int(timeout)

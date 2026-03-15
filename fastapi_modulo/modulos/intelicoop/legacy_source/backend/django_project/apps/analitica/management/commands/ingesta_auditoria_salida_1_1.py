@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
 SOURCES = ["socios", "creditos", "captacion", "cobranza", "contabilidad"]
@@ -28,7 +28,7 @@ def _normalize_record(source: str, data: dict) -> dict:
     return out
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Etapa 4/4 de Data Intake: auditoria de cargas y salida estandarizada (raw -> standardized)."
 
     def add_arguments(self, parser):

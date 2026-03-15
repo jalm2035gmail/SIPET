@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.utils import timezone as django_timezone
 
 from apps.creditos.models import Credito
@@ -143,8 +143,8 @@ def _split(samples: list[Sample], seed: int) -> tuple[list[Sample], list[Sample]
     return rows[:cut], rows[cut:] or rows[:1]
 
 
-class Command(BaseCommand):
-    help = "Entrena baseline/candidato del scoring MVP y actualiza artefacto de modelo."
+class Command(MAINCommand):
+    help = "Entrena MAINline/candidato del scoring MVP y actualiza artefacto de modelo."
 
     def add_arguments(self, parser):
         parser.add_argument("--window-days", type=int, default=3650)

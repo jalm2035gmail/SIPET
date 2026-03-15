@@ -4,7 +4,7 @@ import enum
 from sqlalchemy import Column, Date, Enum, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import relationship
 
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
 class PlanStatus(str, enum.Enum):
@@ -18,7 +18,7 @@ class PlanStatus(str, enum.Enum):
     CANCELLED = "cancelled"   # Cancelado
 
 
-class StrategicPlan(BaseModel):
+class StrategicPlan(MAINModel):
     """Modelo para Plan Estratégico"""
     __tablename__ = "strategic_plans"
 

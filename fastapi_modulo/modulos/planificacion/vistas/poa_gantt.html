@@ -1,0 +1,1546 @@
+      <section class="grid gap-4 w-full max-w-[1600px]">
+        <style>
+          .poa-gantt-shell{
+            --pg-bg: #f5f7fb;
+            --pg-surface: #ffffff;
+            --pg-surface-2: #f8fafc;
+            --pg-line: rgba(148, 163, 184, 0.25);
+            --pg-line-soft: rgba(148, 163, 184, 0.15);
+            --pg-text: #1f2a44;
+            --pg-text-soft: #5f6f8f;
+            --pg-text-faint: #8b98b3;
+            --pg-primary: var(--sidebar-bottom, #0f172a);
+            --pg-primary-2: #2563eb;
+            --pg-complement: #2563eb;
+            --pg-navbar: var(--navbar-bg, #ffffff);
+            --pg-navbar-text: var(--navbar-text, #0f172a);
+            --pg-success: #2f8f83;
+            --pg-danger: #df5b57;
+            --pg-warning: #df8f2f;
+            --pg-shadow-sm: 0 2px 8px rgba(31, 42, 68, 0.06);
+            --pg-shadow-md: 0 12px 28px rgba(31, 42, 68, 0.10);
+            --pg-shadow-lg: 0 20px 50px rgba(31, 42, 68, 0.14);
+            --pg-sidebar-w: 278px;
+            --pg-left-w: 470px;
+            --pg-col-w: 108px;
+            --pg-row-h: 110px;
+            background:
+              radial-gradient(circle at top left, color-mix(in srgb, var(--pg-complement) 12%, transparent), transparent 24%),
+              radial-gradient(circle at top right, color-mix(in srgb, var(--pg-primary) 10%, transparent), transparent 22%),
+              var(--pg-bg);
+            border: 1px solid var(--pg-line);
+            border-radius: 28px;
+            box-shadow: var(--pg-shadow-lg);
+            overflow: hidden;
+          }
+
+          .poa-gantt-topbar{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:18px;
+            padding:18px 24px;
+            border-bottom:1px solid var(--pg-line);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--pg-navbar) 92%, white), color-mix(in srgb, var(--pg-navbar) 84%, white));
+            color: var(--pg-navbar-text);
+          }
+
+          .poa-gantt-topbar__left,
+          .poa-gantt-topbar__right{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            min-width:0;
+          }
+
+          .poa-gantt-brand{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            min-width:0;
+          }
+
+          .poa-gantt-brand__logo{
+            width:48px;
+            height:48px;
+            border-radius:999px;
+            display:grid;
+            place-items:center;
+            background: linear-gradient(135deg, var(--pg-primary), var(--pg-complement));
+            color:#ffffff;
+            font-size:20px;
+            font-weight:800;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.24);
+          }
+
+          .poa-gantt-brand__name{
+            font-size:20px;
+            font-weight:800;
+            letter-spacing:-0.02em;
+          }
+
+          .poa-gantt-title{
+            font-size:18px;
+            font-weight:800;
+            color:var(--pg-text);
+            white-space:nowrap;
+          }
+
+          .poa-gantt-title span{
+            color:var(--pg-text-soft);
+            font-weight:500;
+          }
+
+          .poa-gantt-pill,
+          .poa-gantt-select{
+            display:inline-flex;
+            align-items:center;
+            gap:10px;
+            min-height:44px;
+            padding:0 16px;
+            border-radius:16px;
+            border:1px solid var(--pg-line);
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+            color:var(--pg-text);
+            box-shadow: var(--pg-shadow-sm);
+          }
+
+          .poa-gantt-close{
+            width:44px;
+            height:44px;
+            border-radius:14px;
+            border:1px solid var(--pg-line);
+            display:grid;
+            place-items:center;
+            text-decoration:none;
+            color:var(--pg-text);
+            background:#ffffff;
+            box-shadow:var(--pg-shadow-sm);
+          }
+
+          .poa-gantt-layout{
+            display:grid;
+            grid-template-columns: var(--pg-sidebar-w) 1fr;
+            min-height: 760px;
+          }
+
+          .poa-gantt-sidebar{
+            padding:20px 18px 24px;
+            border-right:1px solid var(--pg-line);
+            background: linear-gradient(180deg, #fbfcff, #f7f9fd);
+          }
+
+          .poa-gantt-sidebar__section + .poa-gantt-sidebar__section{
+            margin-top:22px;
+            padding-top:20px;
+            border-top:1px solid var(--pg-line-soft);
+          }
+
+          .poa-gantt-sidebar__title{
+            margin:0 0 14px;
+            font-size:15px;
+            font-weight:800;
+            color:var(--pg-text);
+          }
+
+          .poa-gantt-checklist{
+            display:grid;
+            gap:10px;
+          }
+
+          .poa-gantt-check{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            min-height:46px;
+            padding:10px 12px;
+            border-radius:14px;
+            color:var(--pg-text);
+            cursor:pointer;
+            transition:.2s ease;
+          }
+
+          .poa-gantt-check:hover,
+          .poa-gantt-axis:hover{
+            background: color-mix(in srgb, var(--pg-complement) 8%, transparent);
+          }
+
+          .poa-gantt-check input{
+            appearance:none;
+            width:18px;
+            height:18px;
+            border-radius:6px;
+            border:1.5px solid color-mix(in srgb, var(--pg-primary) 28%, #94a3b8);
+            background:#ffffff;
+            position:relative;
+            cursor:pointer;
+            flex:0 0 auto;
+          }
+
+          .poa-gantt-check input:checked{
+            background: linear-gradient(135deg, var(--pg-primary), color-mix(in srgb, var(--pg-primary) 60%, black));
+            border-color: color-mix(in srgb, var(--pg-primary) 72%, black);
+          }
+
+          .poa-gantt-check input:checked::after{
+            content:"";
+            position:absolute;
+            left:5px;
+            top:1.5px;
+            width:4px;
+            height:9px;
+            border:solid #fff;
+            border-width:0 2px 2px 0;
+            transform:rotate(45deg);
+          }
+
+          .poa-gantt-axis{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            min-height:46px;
+            padding:10px 12px;
+            border-radius:14px;
+          }
+
+          .poa-gantt-axis__dot{
+            width:16px;
+            height:16px;
+            border-radius:6px;
+            flex:0 0 auto;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,.35);
+          }
+
+          .poa-gantt-content{
+            min-width:0;
+            display:flex;
+            flex-direction:column;
+            background: linear-gradient(180deg, #fbfcff 0%, #f6f8fc 100%);
+          }
+
+          .poa-gantt-toolbar{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:16px;
+            padding:18px 22px 14px;
+            border-bottom:1px solid var(--pg-line);
+            background: rgba(255,255,255,.55);
+            flex-wrap:wrap;
+          }
+
+          .poa-gantt-toolbar__left,
+          .poa-gantt-toolbar__right{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+          }
+
+          .poa-gantt-toggle-group{
+            display:inline-flex;
+            gap:8px;
+            padding:6px;
+            border-radius:18px;
+            border:1px solid var(--pg-line);
+            background: linear-gradient(180deg, #fff, #f7f9fd);
+            box-shadow: var(--pg-shadow-sm);
+          }
+
+          .poa-gantt-toggle{
+            min-height:38px;
+            padding:0 14px;
+            border-radius:12px;
+            border:none;
+            background:transparent;
+            color:var(--pg-text-soft);
+            cursor:pointer;
+            transition:.2s ease;
+          }
+
+          .poa-gantt-toggle.is-active{
+            background: color-mix(in srgb, var(--pg-complement) 14%, white);
+            color:var(--pg-text);
+            font-weight:700;
+          }
+
+          .poa-gantt-goal-card{
+            margin:18px 22px;
+            padding:22px 24px;
+            border:1px solid var(--pg-line);
+            border-radius:22px;
+            background: linear-gradient(180deg, #ffffff, #fbfdff);
+            box-shadow: var(--pg-shadow-md);
+            display:grid;
+            grid-template-columns:56px 1fr auto;
+            gap:18px;
+            align-items:center;
+          }
+
+          .poa-gantt-goal-card__icon{
+            width:56px;
+            height:56px;
+            border-radius:18px;
+            display:grid;
+            place-items:center;
+            color:#ffffff;
+            font-size:22px;
+            font-weight:800;
+            background: linear-gradient(135deg, var(--pg-primary), var(--pg-complement));
+          }
+
+          .poa-gantt-goal-card__title{
+            margin:0 0 8px;
+            font-size:20px;
+            line-height:1.2;
+            font-weight:800;
+            color:var(--pg-text);
+          }
+
+          .poa-gantt-goal-card__meta{
+            font-size:14px;
+            color:var(--pg-text-soft);
+          }
+
+          .poa-gantt-progress{
+            margin-top:14px;
+            display:flex;
+            align-items:center;
+            gap:16px;
+          }
+
+          .poa-gantt-progress__label{
+            min-width:78px;
+            font-size:14px;
+            font-weight:700;
+            color:var(--pg-text);
+          }
+
+          .poa-gantt-progress__bar{
+            position:relative;
+            height:16px;
+            flex:1;
+            min-width:220px;
+            border-radius:999px;
+            overflow:hidden;
+            background:#e9eef6;
+          }
+
+          .poa-gantt-progress__fill{
+            position:absolute;
+            inset:0 auto 0 0;
+            border-radius:999px;
+            background: linear-gradient(90deg, color-mix(in srgb, var(--pg-primary) 72%, white), color-mix(in srgb, var(--pg-complement) 82%, white));
+            box-shadow:0 4px 10px color-mix(in srgb, var(--pg-complement) 24%, transparent);
+          }
+
+          .poa-gantt-progress__value{
+            min-width:44px;
+            text-align:right;
+            font-size:16px;
+            font-weight:800;
+            color:var(--pg-text);
+          }
+
+          .poa-gantt-board{
+            padding:0 22px 24px;
+            min-width:0;
+          }
+
+          .poa-gantt-board__frame{
+            position:relative;
+            border:1px solid var(--pg-line);
+            border-radius:22px;
+            overflow:hidden;
+            background:var(--pg-surface);
+            box-shadow:var(--pg-shadow-md);
+          }
+
+          .poa-gantt-scroll{
+            overflow:auto;
+            scrollbar-width:thin;
+            scrollbar-color:#c8d3e6 transparent;
+          }
+
+          .poa-gantt-scroll::-backendkit-scrollbar{ height:12px; width:12px; }
+          .poa-gantt-scroll::-backendkit-scrollbar-thumb{ background:#c8d3e6; border-radius:999px; }
+
+          .poa-gantt-grid{
+            position:relative;
+            min-width: calc(var(--pg-left-w) + (var(--pg-cols, 12) * var(--pg-col-w)));
+          }
+
+          .poa-gantt-grid__header,
+          .poa-gantt-grid__row{
+            display:grid;
+            grid-template-columns: var(--pg-left-w) calc(var(--pg-cols, 12) * var(--pg-col-w));
+          }
+
+          .poa-gantt-grid__header{
+            position:sticky;
+            top:0;
+            z-index:4;
+            border-bottom:1px solid var(--pg-line);
+            background: linear-gradient(180deg, #f7f9fd, #f3f7fc);
+          }
+
+          .poa-gantt-grid__header-left{
+            border-right:1px solid var(--pg-line);
+            background: linear-gradient(180deg, #f6f8fc, #f2f5fb);
+          }
+
+          .poa-gantt-grid__months{
+            display:grid;
+            grid-template-columns: repeat(var(--pg-cols, 12), var(--pg-col-w));
+          }
+
+          .poa-gantt-grid__month{
+            min-height:64px;
+            display:grid;
+            place-items:center;
+            border-left:1px solid var(--pg-line-soft);
+            font-size:14px;
+            font-weight:700;
+            color:#44536f;
+          }
+
+          .poa-gantt-grid__row{
+            min-height:var(--pg-row-h);
+            border-bottom:1px solid var(--pg-line-soft);
+            background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(251,253,255,.98));
+          }
+
+          .poa-gantt-grid__row:hover{
+            background: linear-gradient(180deg, #ffffff, #f9fbff);
+          }
+
+          .poa-gantt-row__left{
+            position:relative;
+            padding:18px 22px 16px 24px;
+            border-right:1px solid var(--pg-line);
+          }
+
+          .poa-gantt-row__axis{
+            position:absolute;
+            left:0;
+            top:0;
+            bottom:0;
+            width:4px;
+            border-radius:0 4px 4px 0;
+          }
+
+          .poa-gantt-row__top{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:14px;
+            margin-bottom:10px;
+          }
+
+          .poa-gantt-row__title{
+            margin:0;
+            color:var(--pg-text);
+            font-weight:800;
+            letter-spacing:-0.01em;
+            line-height:1.25;
+          }
+
+          .poa-gantt-grid__row[data-kind="objective"] .poa-gantt-row__title{
+            font-size:18px;
+          }
+
+          .poa-gantt-grid__row[data-kind="activity"] .poa-gantt-row__title{
+            font-size:16px;
+            font-weight:700;
+          }
+
+          .poa-gantt-grid__row[data-kind="subactivity"] .poa-gantt-row__title{
+            font-size:15px;
+            font-weight:600;
+            color:#334155;
+          }
+
+          .poa-gantt-row__meta{
+            color:var(--pg-text-soft);
+            font-size:13px;
+            line-height:1.45;
+            margin-bottom:12px;
+          }
+
+          .poa-gantt-row__progress{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            max-width:380px;
+          }
+
+          .poa-gantt-row__progress-label{
+            min-width:60px;
+            font-size:12px;
+            font-weight:700;
+            color:var(--pg-text-soft);
+          }
+
+          .poa-gantt-row__progress-bar{
+            flex:1;
+            height:12px;
+            border-radius:999px;
+            overflow:hidden;
+            background:#e9eef6;
+          }
+
+          .poa-gantt-row__progress-fill{
+            height:100%;
+            border-radius:999px;
+            background: linear-gradient(90deg, color-mix(in srgb, var(--pg-primary) 72%, white), color-mix(in srgb, var(--pg-complement) 82%, white));
+          }
+
+          .poa-gantt-row__progress-value{
+            min-width:38px;
+            text-align:right;
+            font-size:13px;
+            font-weight:800;
+            color:var(--pg-text);
+          }
+
+          .poa-gantt-badge{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            min-height:30px;
+            padding:0 12px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:800;
+            white-space:nowrap;
+            border:1px solid transparent;
+          }
+
+          .poa-gantt-badge--done{
+            color:#fff;
+            background: linear-gradient(90deg, #2f8f83, #4fa49a);
+          }
+
+          .poa-gantt-badge--progress{
+            color:#fff;
+            background: linear-gradient(90deg, color-mix(in srgb, var(--pg-complement) 86%, white), color-mix(in srgb, var(--pg-complement) 64%, var(--pg-primary)));
+          }
+
+          .poa-gantt-badge--planned{
+            color:#546786;
+            background:#edf2fb;
+            border-color:#d8e1f0;
+          }
+
+          .poa-gantt-badge--delay{
+            color:#fff;
+            background: linear-gradient(90deg, #ef7c73, #df5b57);
+          }
+
+          .poa-gantt-row__timeline{
+            position:relative;
+            width:calc(var(--pg-cols, 12) * var(--pg-col-w));
+            background:
+              repeating-linear-gradient(
+                90deg,
+                rgba(79,142,247,0.03) 0,
+                rgba(79,142,247,0.03) calc(var(--pg-col-w) - 1px),
+                rgba(148,163,184,0.18) calc(var(--pg-col-w) - 1px),
+                rgba(148,163,184,0.18) var(--pg-col-w)
+              );
+          }
+
+          .poa-gantt-row__timeline::before{
+            content:"";
+            position:absolute;
+            inset:0;
+            background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
+            pointer-events:none;
+          }
+
+          .poa-gantt-bar{
+            position:absolute;
+            top:50%;
+            transform:translateY(-50%);
+            height:28px;
+            border-radius:999px;
+            box-shadow:0 10px 22px rgba(79,142,247,.18);
+            z-index:2;
+            cursor:pointer;
+          }
+
+          .poa-gantt-bar--planned{
+            background: linear-gradient(90deg, #bfd0ee 0%, #9fb8e7 100%);
+          }
+
+          .poa-gantt-bar--progress{
+            background: linear-gradient(90deg, color-mix(in srgb, var(--pg-primary) 58%, white), color-mix(in srgb, var(--pg-complement) 88%, white));
+          }
+
+          .poa-gantt-bar--done{
+            background: linear-gradient(90deg, #2f8f83 0%, #4fa49a 100%);
+          }
+
+          .poa-gantt-bar--delay{
+            background: linear-gradient(90deg, #ef7c73 0%, #df5b57 100%);
+          }
+
+          .poa-gantt-bar::after{
+            content:"";
+            position:absolute;
+            inset:1px;
+            border-radius:inherit;
+            background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
+            pointer-events:none;
+          }
+
+          .poa-gantt-milestone{
+            position:absolute;
+            top:50%;
+            transform:translate(-50%, -50%);
+            width:18px;
+            height:18px;
+            border-radius:999px;
+            background:#ffffff;
+            border:4px solid var(--pg-primary-2);
+            z-index:3;
+            box-shadow:0 6px 18px rgba(79,142,247,.25);
+          }
+
+          .poa-gantt-milestone--success{
+            border-color:var(--pg-success);
+          }
+
+          .poa-gantt-today{
+            position:absolute;
+            top:64px;
+            bottom:0;
+            width:0;
+            border-left:3px dashed rgba(223,91,87,0.92);
+            z-index:3;
+            pointer-events:none;
+            filter:drop-shadow(0 0 6px rgba(223,91,87,.12));
+          }
+
+          .poa-gantt-empty{
+            padding:24px;
+            color:var(--pg-text-soft);
+          }
+
+          .poa-gantt-tooltip{
+            position:fixed;
+            z-index:30;
+            width:360px;
+            max-width:calc(100vw - 32px);
+            padding:18px 18px 16px;
+            border-radius:18px;
+            background: rgba(255,255,255,.96);
+            border:1px solid var(--pg-line);
+            box-shadow: var(--pg-shadow-lg);
+            backdrop-filter: blur(16px);
+            display:none;
+          }
+
+          .poa-gantt-tooltip.is-visible{
+            display:block;
+          }
+
+          .poa-gantt-tooltip__title{
+            margin:0 0 14px;
+            font-size:16px;
+            line-height:1.3;
+            font-weight:800;
+            color:var(--pg-text);
+          }
+
+          .poa-gantt-tooltip__item{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            padding:8px 0;
+            border-top:1px solid var(--pg-line-soft);
+          }
+
+          .poa-gantt-tooltip__item:first-of-type{
+            border-top:0;
+            padding-top:0;
+          }
+
+          .poa-gantt-tooltip__label{
+            font-size:13px;
+            color:var(--pg-text-soft);
+          }
+
+          .poa-gantt-tooltip__value{
+            font-size:14px;
+            font-weight:700;
+            color:var(--pg-text);
+          }
+
+          .poa-gantt-tooltip__progress{
+            margin-top:10px;
+            display:flex;
+            align-items:center;
+            gap:12px;
+          }
+
+          .poa-gantt-tooltip__progress-bar{
+            flex:1;
+            height:12px;
+            border-radius:999px;
+            overflow:hidden;
+            background:#e9eef6;
+          }
+
+          .poa-gantt-tooltip__progress-fill{
+            height:100%;
+            border-radius:inherit;
+            background: linear-gradient(90deg, color-mix(in srgb, var(--pg-primary) 72%, white), color-mix(in srgb, var(--pg-complement) 82%, white));
+          }
+
+          .poa-gantt-tooltip__progress-value{
+            min-width:42px;
+            text-align:right;
+            font-size:13px;
+            font-weight:800;
+            color:var(--pg-text);
+          }
+
+          @media (max-width: 1280px){
+            .poa-gantt-shell{
+              --pg-sidebar-w: 248px;
+              --pg-left-w: 410px;
+              --pg-col-w: 96px;
+            }
+
+            .poa-gantt-goal-card{
+              grid-template-columns:52px 1fr;
+            }
+
+            .poa-gantt-goal-card > :last-child{
+              grid-column:1 / -1;
+            }
+          }
+
+          @media (max-width: 1024px){
+            .poa-gantt-layout{
+              grid-template-columns:1fr;
+            }
+
+            .poa-gantt-sidebar{
+              border-right:0;
+              border-bottom:1px solid var(--pg-line);
+            }
+
+            .poa-gantt-topbar{
+              padding:14px 16px;
+              flex-wrap:wrap;
+            }
+
+            .poa-gantt-toolbar{
+              padding:14px 16px;
+              flex-direction:column;
+              align-items:flex-start;
+            }
+
+            .poa-gantt-goal-card{
+              margin:16px;
+            }
+
+            .poa-gantt-board{
+              padding:0 16px 16px;
+            }
+          }
+
+          @media (max-width: 768px){
+            .poa-gantt-shell{
+              --pg-left-w: 320px;
+              --pg-col-w: 84px;
+              --pg-row-h: 124px;
+            }
+
+            .poa-gantt-brand__name{
+              display:none;
+            }
+
+            .poa-gantt-title{
+              font-size:16px;
+            }
+
+            .poa-gantt-goal-card{
+              padding:18px;
+              grid-template-columns:1fr;
+            }
+
+            .poa-gantt-goal-card__icon{
+              width:48px;
+              height:48px;
+            }
+
+            .poa-gantt-row__left{
+              padding:16px;
+            }
+
+            .poa-gantt-grid__row[data-kind="objective"] .poa-gantt-row__title{
+              font-size:16px;
+            }
+
+            .poa-gantt-grid__row[data-kind="activity"] .poa-gantt-row__title{
+              font-size:15px;
+            }
+          }
+        </style>
+
+        <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+          <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+              src="/templates/icon/plan.svg"
+              alt="Icono POA"
+              width="96"
+              height="96"
+              class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+              <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
+              <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Vista estratégica del cronograma Gantt para objetivos, actividades, subtareas e hitos del POA.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="poa-gantt-shell" id="poa-gantt-shell">
+          <div class="poa-gantt-topbar">
+            <div class="poa-gantt-topbar__left">
+              <div class="poa-gantt-brand">
+                <div class="poa-gantt-brand__logo">✦</div>
+                <div class="poa-gantt-brand__name">SIPET</div>
+              </div>
+              <div class="poa-gantt-title">Plan Estratégico <span>/ POA</span></div>
+            </div>
+            <div class="poa-gantt-topbar__right">
+              <div class="poa-gantt-select">Vista: Gantt Estratégico</div>
+              <a href="/poa" class="poa-gantt-close" aria-label="Cerrar">×</a>
+            </div>
+          </div>
+
+          <div class="poa-gantt-layout">
+            <aside class="poa-gantt-sidebar">
+              <div class="poa-gantt-sidebar__section">
+                <h3 class="poa-gantt-sidebar__title">Filtros</h3>
+                <div class="poa-gantt-checklist" id="poa-gantt-type-filters"></div>
+              </div>
+              <div class="poa-gantt-sidebar__section">
+                <h3 class="poa-gantt-sidebar__title">Ejes estratégicos</h3>
+                <div class="poa-gantt-checklist" id="poa-gantt-axis-filters"></div>
+              </div>
+            </aside>
+
+            <main class="poa-gantt-content">
+              <div class="poa-gantt-toolbar">
+                <div class="poa-gantt-toolbar__left">
+                  <div class="poa-gantt-toggle-group" id="poa-gantt-view-toggle"></div>
+                </div>
+                <div class="poa-gantt-toolbar__right">
+                  <span class="poa-gantt-pill">Vista:</span>
+                  <div class="poa-gantt-toggle-group" id="poa-gantt-scale-toggle"></div>
+                </div>
+              </div>
+
+              <section class="poa-gantt-goal-card" id="poa-gantt-goal-card"></section>
+
+              <section class="poa-gantt-board">
+                <div id="poa-gantt-page-msg" class="text-sm text-MAIN-content/70 min-h-[1.5rem]" aria-live="polite"></div>
+                <div class="poa-gantt-board__frame">
+                  <div class="poa-gantt-scroll" id="poa-gantt-scroll">
+                    <div class="poa-gantt-grid" id="poa-gantt-grid"></div>
+                  </div>
+                </div>
+              </section>
+            </main>
+          </div>
+        </div>
+
+        <div class="poa-gantt-tooltip" id="poa-gantt-tooltip"></div>
+      </section>
+
+      <script>
+        (() => {
+          const shellEl = document.getElementById("poa-gantt-shell");
+          const gridEl = document.getElementById("poa-gantt-grid");
+          const msgEl = document.getElementById("poa-gantt-page-msg");
+          const goalCardEl = document.getElementById("poa-gantt-goal-card");
+          const tooltipEl = document.getElementById("poa-gantt-tooltip");
+          const typeFiltersEl = document.getElementById("poa-gantt-type-filters");
+          const axisFiltersEl = document.getElementById("poa-gantt-axis-filters");
+          const viewToggleEl = document.getElementById("poa-gantt-view-toggle");
+          const scaleToggleEl = document.getElementById("poa-gantt-scale-toggle");
+
+          let objectives = [];
+          let activities = [];
+          let activeObjectiveId = 0;
+          let viewState = {
+            objectives: true,
+            activities: true,
+            subtasks: true,
+            milestones: true,
+            scale: "month",
+            axisVisibility: {},
+          };
+
+          const escapeHtml = (value) => String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+          const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+          const parseCssColorToRgb = (rawColor) => {
+            const value = String(rawColor || "").trim();
+            if (!value) return null;
+            const hex = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+            if (hex) {
+              let token = hex[1];
+              if (token.length === 3) {
+                token = token.split("").map((char) => char + char).join("");
+              }
+              return {
+                r: parseInt(token.slice(0, 2), 16),
+                g: parseInt(token.slice(2, 4), 16),
+                b: parseInt(token.slice(4, 6), 16),
+              };
+            }
+            const rgb = value.match(/^rgba?\(([^)]+)\)$/i);
+            if (!rgb) return null;
+            const parts = rgb[1].split(",").map((item) => Number(item.trim()));
+            if (parts.length < 3 || parts.some((item) => Number.isNaN(item))) return null;
+            return { r: clamp(parts[0], 0, 255), g: clamp(parts[1], 0, 255), b: clamp(parts[2], 0, 255) };
+          };
+
+          const rgbToHex = ({ r, g, b }) => {
+            const toHex = (channel) => clamp(Math.round(channel), 0, 255).toString(16).padStart(2, "0");
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+          };
+
+          const rgbToHsl = ({ r, g, b }) => {
+            const rr = r / 255;
+            const gg = g / 255;
+            const bb = b / 255;
+            const max = Math.max(rr, gg, bb);
+            const min = Math.min(rr, gg, bb);
+            const delta = max - min;
+            let h = 0;
+            let s = 0;
+            const l = (max + min) / 2;
+            if (delta !== 0) {
+              s = delta / (1 - Math.abs(2 * l - 1));
+              if (max === rr) h = 60 * (((gg - bb) / delta) % 6);
+              else if (max === gg) h = 60 * (((bb - rr) / delta) + 2);
+              else h = 60 * (((rr - gg) / delta) + 4);
+            }
+            if (h < 0) h += 360;
+            return { h, s, l };
+          };
+
+          const hslToRgb = ({ h, s, l }) => {
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+            const m = l - c / 2;
+            let rPrime = 0;
+            let gPrime = 0;
+            let bPrime = 0;
+            if (h < 60) { rPrime = c; gPrime = x; }
+            else if (h < 120) { rPrime = x; gPrime = c; }
+            else if (h < 180) { gPrime = c; bPrime = x; }
+            else if (h < 240) { gPrime = x; bPrime = c; }
+            else if (h < 300) { rPrime = x; bPrime = c; }
+            else { rPrime = c; bPrime = x; }
+            return {
+              r: Math.round((rPrime + m) * 255),
+              g: Math.round((gPrime + m) * 255),
+              b: Math.round((bPrime + m) * 255),
+            };
+          };
+
+          const getComplementaryColor = (rawColor) => {
+            const rgb = parseCssColorToRgb(rawColor);
+            if (!rgb) return "#2563eb";
+            const hsl = rgbToHsl(rgb);
+            return rgbToHex(hslToRgb({ h: (hsl.h + 180) % 360, s: hsl.s, l: hsl.l }));
+          };
+
+          const mixColors = (colorA, colorB, weight = 0.5) => {
+            const a = parseCssColorToRgb(colorA);
+            const b = parseCssColorToRgb(colorB);
+            if (!a || !b) return colorA || colorB || "#2563eb";
+            const safe = clamp(weight, 0, 1);
+            return rgbToHex({
+              r: a.r + (b.r - a.r) * safe,
+              g: a.g + (b.g - a.g) * safe,
+              b: a.b + (b.b - a.b) * safe,
+            });
+          };
+
+          const rgba = (rawColor, alpha) => {
+            const rgb = parseCssColorToRgb(rawColor);
+            if (!rgb) return `rgba(37,99,235,${alpha})`;
+            return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+          };
+
+          const getReadableTextColor = (rawColor) => {
+            const rgb = parseCssColorToRgb(rawColor);
+            if (!rgb) return "#0f172a";
+            const luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+            return luminance > 0.6 ? "#0f172a" : "#ffffff";
+          };
+
+          const applyThemeVars = () => {
+            if (!shellEl) return;
+            const root = window.getComputedStyle(document.documentElement);
+            const sidebarMAIN = (root.getPropertyValue("--sidebar-bottom") || "#0f172a").trim();
+            const navbarBg = (root.getPropertyValue("--navbar-bg") || "#ffffff").trim();
+            const navbarText = (root.getPropertyValue("--navbar-text") || getReadableTextColor(navbarBg)).trim();
+            const complement = getComplementaryColor(sidebarMAIN);
+            const axisPalette = [
+              mixColors(sidebarMAIN, "#ffffff", 0.12),
+              mixColors(complement, "#ffffff", 0.08),
+              mixColors(sidebarMAIN, complement, 0.32),
+              mixColors(complement, "#f59e0b", 0.42),
+              mixColors(sidebarMAIN, "#38bdf8", 0.42),
+            ];
+            shellEl.style.setProperty("--pg-primary", sidebarMAIN);
+            shellEl.style.setProperty("--pg-primary-2", mixColors(complement, "#ffffff", 0.18));
+            shellEl.style.setProperty("--pg-complement", complement);
+            shellEl.style.setProperty("--pg-navbar", navbarBg);
+            shellEl.style.setProperty("--pg-navbar-text", navbarText);
+            axisPalette.forEach((color, index) => {
+              shellEl.style.setProperty(`--pg-axis-${index + 1}`, color);
+            });
+          };
+
+          const showMsg = (text, isError = false) => {
+            if (!msgEl) return;
+            msgEl.textContent = text || "";
+            msgEl.style.color = isError ? "#b91c1c" : "#64748b";
+          };
+
+          const axisKey = (objective) => String(objective?.axis_name || "Sin eje").trim() || "Sin eje";
+          const asDate = (value) => {
+            const raw = String(value || "").trim();
+            if (!raw) return null;
+            const parsed = new Date(`${raw}T00:00:00`);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+          };
+
+          const normalizeStatus = (rawStatus) => {
+            const value = String(rawStatus || "").trim().toLowerCase();
+            if (value.includes("termin")) return "done";
+            if (value.includes("atras")) return "delay";
+            if (value.includes("proceso") || value.includes("revisi")) return "progress";
+            return "planned";
+          };
+
+          const badgeLabel = (status) => {
+            if (status === "done") return "Completado";
+            if (status === "delay") return "Retrasado";
+            if (status === "progress") return "En ejecución";
+            return "Planificado";
+          };
+
+          const monthLabel = (date) => date.toLocaleDateString("es-MX", { month: "short" }).replace(".", "");
+          const longMonthLabel = (date) => date.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+
+          const addDays = (date, days) => {
+            const next = new Date(date.getTime());
+            next.setDate(next.getDate() + days);
+            return next;
+          };
+
+          const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+          const startOfQuarter = (date) => new Date(date.getFullYear(), Math.floor(date.getMonth() / 3) * 3, 1);
+          const startOfYear = (date) => new Date(date.getFullYear(), 0, 1);
+
+          const addUnit = (date, scale) => {
+            if (scale === "year") return new Date(date.getFullYear() + 1, 0, 1);
+            if (scale === "quarter") return new Date(date.getFullYear(), date.getMonth() + 3, 1);
+            return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+          };
+
+          const startForScale = (date, scale) => {
+            if (scale === "year") return startOfYear(date);
+            if (scale === "quarter") return startOfQuarter(date);
+            return startOfMonth(date);
+          };
+
+          const formatScaleLabel = (date, scale) => {
+            if (scale === "year") return String(date.getFullYear());
+            if (scale === "quarter") return `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
+            return `${monthLabel(date)} ${date.getFullYear()}`;
+          };
+
+          const getTimelineSegments = (rows, scale) => {
+            const dated = rows.filter((row) => row.start && row.end);
+            if (!dated.length) return { start: null, end: null, segments: [] };
+            const min = new Date(Math.min(...dated.map((row) => row.start.getTime())));
+            const max = new Date(Math.max(...dated.map((row) => row.end.getTime())));
+            const start = startForScale(min, scale);
+            const end = addUnit(startForScale(max, scale), scale);
+            const segments = [];
+            let cursor = new Date(start.getTime());
+            while (cursor < end) {
+              const next = addUnit(cursor, scale);
+              segments.push({ start: new Date(cursor.getTime()), end: next, label: formatScaleLabel(cursor, scale) });
+              cursor = next;
+            }
+            return { start, end, segments };
+          };
+
+          const getAxisPalette = () => {
+            if (!shellEl) return ["#0f172a"];
+            return [1, 2, 3, 4, 5].map((idx) => shellEl.style.getPropertyValue(`--pg-axis-${idx}`).trim()).filter(Boolean);
+          };
+
+          const getAxisColor = (axisName) => {
+            const names = Array.from(new Set(objectives.map((item) => axisKey(item)))).sort((a, b) => a.localeCompare(b, "es"));
+            const palette = getAxisPalette();
+            const index = Math.max(0, names.indexOf(String(axisName || "").trim()));
+            return palette[index % Math.max(1, palette.length)] || shellEl.style.getPropertyValue("--pg-primary").trim() || "#0f172a";
+          };
+
+          const buildRows = () => {
+            const rows = [];
+            const visibleObjectives = objectives.filter((objective) => viewState.axisVisibility[axisKey(objective)] !== false);
+            visibleObjectives.forEach((objective) => {
+              const objectiveId = Number(objective.id || 0);
+              const objectiveActivities = activities
+                .filter((activity) => Number(activity.objective_id || 0) === objectiveId)
+                .sort((a, b) => String(a.fecha_inicial || "").localeCompare(String(b.fecha_inicial || "")) || Number(a.id || 0) - Number(b.id || 0));
+
+              const progressValues = objectiveActivities.map((item) => Number(item.avance || 0)).filter((value) => Number.isFinite(value));
+              const objectiveProgress = progressValues.length ? Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length) : 0;
+              const objectiveStatus = objectiveActivities.some((item) => normalizeStatus(item.status) === "delay")
+                ? "delay"
+                : objectiveActivities.some((item) => normalizeStatus(item.status) === "progress")
+                  ? "progress"
+                  : objectiveActivities.length && objectiveActivities.every((item) => normalizeStatus(item.status) === "done")
+                    ? "done"
+                    : "planned";
+
+              if (viewState.objectives && asDate(objective.fecha_inicial) && asDate(objective.fecha_final)) {
+                rows.push({
+                  kind: "objective",
+                  id: `objective-${objectiveId}`,
+                  axis: axisKey(objective),
+                  axisColor: getAxisColor(axisKey(objective)),
+                  title: `${objective.codigo || "OBJ"} ${objective.nombre || "Objetivo estratégico"}`,
+                  subtitle: `Responsable: ${objective.lider || "Sin responsable"}`,
+                  status: objectiveStatus,
+                  progress: objectiveProgress,
+                  start: asDate(objective.fecha_inicial),
+                  end: asDate(objective.fecha_final),
+                  objectiveId,
+                  item: objective,
+                  budget: "",
+                  milestones: Array.isArray(objective.hitos) ? objective.hitos : [],
+                });
+              }
+
+              if (viewState.activities) {
+                objectiveActivities.forEach((activity) => {
+                  const start = asDate(activity.fecha_inicial);
+                  const end = asDate(activity.fecha_final);
+                  if (!start || !end) return;
+                  rows.push({
+                    kind: "activity",
+                    id: `activity-${activity.id}`,
+                    axis: axisKey(objective),
+                    axisColor: getAxisColor(axisKey(objective)),
+                    title: `${activity.codigo || "ACT"} ${activity.nombre || "Actividad POA"}`,
+                    subtitle: `Responsable: ${activity.responsable || "Sin responsable"}`,
+                    status: normalizeStatus(activity.status),
+                    progress: Number(activity.avance || 0) || 0,
+                    start,
+                    end,
+                    objectiveId,
+                    item: activity,
+                    budget: Array.isArray(activity.budget_items) && activity.budget_items.length
+                      ? activity.budget_items.reduce((sum, entry) => sum + (Number(entry.monto || entry.importe || 0) || 0), 0)
+                      : 0,
+                    milestones: [],
+                  });
+
+                  if (viewState.subtasks && Array.isArray(activity.subactivities)) {
+                    activity.subactivities.forEach((subactivity) => {
+                      const subStart = asDate(subactivity.fecha_inicial);
+                      const subEnd = asDate(subactivity.fecha_final);
+                      if (!subStart || !subEnd) return;
+                      rows.push({
+                        kind: "subactivity",
+                        id: `subactivity-${subactivity.id}`,
+                        axis: axisKey(objective),
+                        axisColor: getAxisColor(axisKey(objective)),
+                        title: `${subactivity.codigo || "SUB"} ${subactivity.nombre || "Subtarea"}`,
+                        subtitle: `Responsable: ${subactivity.responsable || "Sin responsable"}`,
+                        status: Number(subactivity.avance || 0) >= 100 ? "done" : "planned",
+                        progress: Number(subactivity.avance || 0) || 0,
+                        start: subStart,
+                        end: subEnd,
+                        objectiveId,
+                        item: subactivity,
+                        budget: "",
+                        milestones: [],
+                      });
+                    });
+                  }
+                });
+              }
+
+              if (viewState.milestones) {
+                (Array.isArray(objective.hitos) ? objective.hitos : []).forEach((milestone) => {
+                  const date = asDate(milestone.fecha_realizacion);
+                  if (!date) return;
+                  rows.push({
+                    kind: "milestone",
+                    id: `milestone-${milestone.id}`,
+                    axis: axisKey(objective),
+                    axisColor: getAxisColor(axisKey(objective)),
+                    title: `${objective.codigo || "OBJ"} Hito: ${milestone.nombre || "Sin nombre"}`,
+                    subtitle: `Objetivo: ${objective.nombre || "Sin nombre"}`,
+                    status: milestone.logrado ? "done" : "planned",
+                    progress: milestone.logrado ? 100 : 0,
+                    start: date,
+                    end: date,
+                    objectiveId,
+                    item: milestone,
+                    budget: "",
+                    milestones: [milestone],
+                  });
+                });
+              }
+            });
+            return rows;
+          };
+
+          const ensureActiveObjective = () => {
+            const visibleObjectives = objectives.filter((objective) => viewState.axisVisibility[axisKey(objective)] !== false);
+            if (!visibleObjectives.length) {
+              activeObjectiveId = 0;
+              return null;
+            }
+            const current = visibleObjectives.find((item) => Number(item.id || 0) === Number(activeObjectiveId || 0));
+            if (current) return current;
+            activeObjectiveId = Number(visibleObjectives[0].id || 0);
+            return visibleObjectives[0];
+          };
+
+          const renderGoalCard = () => {
+            if (!goalCardEl) return;
+            const objective = ensureActiveObjective();
+            if (!objective) {
+              goalCardEl.innerHTML = `
+                <div class="poa-gantt-goal-card__icon">⟡</div>
+                <div>
+                  <h3 class="poa-gantt-goal-card__title">Sin objetivos visibles</h3>
+                  <div class="poa-gantt-goal-card__meta">Ajusta los filtros de ejes o tipos para mostrar contenido.</div>
+                </div>
+              `;
+              return;
+            }
+            const relatedActivities = activities.filter((activity) => Number(activity.objective_id || 0) === Number(objective.id || 0));
+            const values = relatedActivities.map((item) => Number(item.avance || 0)).filter((value) => Number.isFinite(value));
+            const progress = values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
+            const axisColor = getAxisColor(axisKey(objective));
+            goalCardEl.innerHTML = `
+              <div class="poa-gantt-goal-card__icon" style="background:linear-gradient(135deg, ${escapeHtml(axisColor)}, ${escapeHtml(mixColors(axisColor, shellEl.style.getPropertyValue("--pg-complement").trim() || axisColor, 0.55))})">⇡</div>
+              <div>
+                <h3 class="poa-gantt-goal-card__title">${escapeHtml(objective.codigo || "")} ${escapeHtml(objective.nombre || "Objetivo estratégico")}</h3>
+                <div class="poa-gantt-goal-card__meta">Responsable: ${escapeHtml(objective.lider || "Sin responsable")} · Eje: ${escapeHtml(axisKey(objective))}</div>
+                <div class="poa-gantt-progress">
+                  <div class="poa-gantt-progress__label">Progreso</div>
+                  <div class="poa-gantt-progress__bar">
+                    <div class="poa-gantt-progress__fill" style="width:${Math.max(0, Math.min(100, progress))}%"></div>
+                  </div>
+                  <div class="poa-gantt-progress__value">${Math.max(0, Math.min(100, progress))}%</div>
+                </div>
+              </div>
+              <div class="poa-gantt-badge poa-gantt-badge--${escapeHtml(relatedActivities.some((item) => normalizeStatus(item.status) === "delay") ? "delay" : relatedActivities.some((item) => normalizeStatus(item.status) === "progress") ? "progress" : progress >= 100 ? "done" : "planned")}">${escapeHtml(relatedActivities.some((item) => normalizeStatus(item.status) === "delay") ? "Retrasado" : relatedActivities.some((item) => normalizeStatus(item.status) === "progress") ? "En ejecución" : progress >= 100 ? "Completado" : "Planificado")}</div>
+            `;
+          };
+
+          const renderTypeFilters = () => {
+            if (!typeFiltersEl) return;
+            const items = [
+              { key: "objectives", label: "Objetivos estratégicos" },
+              { key: "activities", label: "Actividades POA" },
+              { key: "subtasks", label: "Subtareas" },
+              { key: "milestones", label: "Hitos" },
+            ];
+            typeFiltersEl.innerHTML = items.map((item) => `
+              <label class="poa-gantt-check">
+                <input type="checkbox" data-pg-type="${escapeHtml(item.key)}" ${viewState[item.key] ? "checked" : ""}>
+                <span>${escapeHtml(item.label)}</span>
+              </label>
+            `).join("");
+            typeFiltersEl.querySelectorAll("[data-pg-type]").forEach((input) => {
+              input.addEventListener("change", () => {
+                const key = String(input.getAttribute("data-pg-type") || "");
+                if (!key) return;
+                viewState[key] = !!input.checked;
+                renderAll();
+              });
+            });
+          };
+
+          const renderAxisFilters = () => {
+            if (!axisFiltersEl) return;
+            const axes = Array.from(new Set(objectives.map((item) => axisKey(item)))).sort((a, b) => a.localeCompare(b, "es"));
+            axes.forEach((axis) => {
+              if (!Object.prototype.hasOwnProperty.call(viewState.axisVisibility, axis)) {
+                viewState.axisVisibility[axis] = true;
+              }
+            });
+            axisFiltersEl.innerHTML = axes.map((axisName) => `
+              <label class="poa-gantt-axis">
+                <input type="checkbox" data-pg-axis="${escapeHtml(axisName)}" ${viewState.axisVisibility[axisName] !== false ? "checked" : ""}>
+                <span class="poa-gantt-axis__dot" style="background:${escapeHtml(getAxisColor(axisName))}"></span>
+                <span>${escapeHtml(axisName)}</span>
+              </label>
+            `).join("");
+            axisFiltersEl.querySelectorAll("[data-pg-axis]").forEach((input) => {
+              input.addEventListener("change", () => {
+                const axisName = String(input.getAttribute("data-pg-axis") || "");
+                if (!axisName) return;
+                viewState.axisVisibility[axisName] = !!input.checked;
+                renderAll();
+              });
+            });
+          };
+
+          const renderToolbar = () => {
+            if (viewToggleEl) {
+              const items = [
+                { key: "objectives", label: "Objetivos" },
+                { key: "activities", label: "Actividades" },
+                { key: "subtasks", label: "Subtareas" },
+                { key: "milestones", label: "Hitos" },
+              ];
+              viewToggleEl.innerHTML = items.map((item) => `
+                <button type="button" class="poa-gantt-toggle ${viewState[item.key] ? "is-active" : ""}" data-pg-view="${escapeHtml(item.key)}">${escapeHtml(item.label)}</button>
+              `).join("");
+              viewToggleEl.querySelectorAll("[data-pg-view]").forEach((button) => {
+                button.addEventListener("click", () => {
+                  const key = String(button.getAttribute("data-pg-view") || "");
+                  if (!key) return;
+                  viewState[key] = !viewState[key];
+                  renderAll();
+                });
+              });
+            }
+
+            if (scaleToggleEl) {
+              const items = [
+                { key: "month", label: "Mes" },
+                { key: "quarter", label: "Trimestre" },
+                { key: "year", label: "Año" },
+              ];
+              scaleToggleEl.innerHTML = items.map((item) => `
+                <button type="button" class="poa-gantt-toggle ${viewState.scale === item.key ? "is-active" : ""}" data-pg-scale="${escapeHtml(item.key)}">${escapeHtml(item.label)}</button>
+              `).join("");
+              scaleToggleEl.querySelectorAll("[data-pg-scale]").forEach((button) => {
+                button.addEventListener("click", () => {
+                  const key = String(button.getAttribute("data-pg-scale") || "");
+                  if (!key) return;
+                  viewState.scale = key;
+                  renderAll();
+                });
+              });
+            }
+          };
+
+          const getRowBarPosition = (row, timeline) => {
+            const total = Math.max(1, timeline.end.getTime() - timeline.start.getTime());
+            const startOffset = row.start.getTime() - timeline.start.getTime();
+            const endOffset = row.end.getTime() - timeline.start.getTime();
+            const leftPct = clamp((startOffset / total) * 100, 0, 100);
+            const widthPct = clamp(((Math.max(row.end.getTime(), row.start.getTime()) - row.start.getTime()) / total) * 100, 0.8, 100 - leftPct);
+            return { leftPct, widthPct };
+          };
+
+          const renderTooltip = (row, event) => {
+            if (!tooltipEl) return;
+            const rangeLabel = row.start && row.end
+              ? `${longMonthLabel(row.start)} — ${longMonthLabel(row.end)}`
+              : row.start
+                ? longMonthLabel(row.start)
+                : "Sin rango";
+            const budgetLabel = row.budget && Number(row.budget) > 0
+              ? Number(row.budget).toLocaleString("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 })
+              : "Sin presupuesto";
+            tooltipEl.innerHTML = `
+              <h4 class="poa-gantt-tooltip__title">${escapeHtml(row.title)}</h4>
+              <div class="poa-gantt-tooltip__item"><span class="poa-gantt-tooltip__label">Responsable</span><span class="poa-gantt-tooltip__value">${escapeHtml(String(row.item?.responsable || row.item?.lider || "Sin responsable"))}</span></div>
+              <div class="poa-gantt-tooltip__item"><span class="poa-gantt-tooltip__label">Duración</span><span class="poa-gantt-tooltip__value">${escapeHtml(rangeLabel)}</span></div>
+              <div class="poa-gantt-tooltip__item"><span class="poa-gantt-tooltip__label">Presupuesto</span><span class="poa-gantt-tooltip__value">${escapeHtml(budgetLabel)}</span></div>
+              <div class="poa-gantt-tooltip__progress">
+                <div class="poa-gantt-tooltip__progress-bar"><div class="poa-gantt-tooltip__progress-fill" style="width:${Math.max(0, Math.min(100, Number(row.progress || 0)))}%"></div></div>
+                <div class="poa-gantt-tooltip__progress-value">${Math.max(0, Math.min(100, Number(row.progress || 0)))}%</div>
+              </div>
+            `;
+            const margin = 16;
+            const width = Math.min(360, window.innerWidth - (margin * 2));
+            tooltipEl.style.width = `${width}px`;
+            const nextX = Math.min(window.innerWidth - width - margin, event.clientX + 18);
+            const nextY = Math.min(window.innerHeight - 220, event.clientY + 18);
+            tooltipEl.style.left = `${nextX}px`;
+            tooltipEl.style.top = `${Math.max(margin, nextY)}px`;
+            tooltipEl.classList.add("is-visible");
+          };
+
+          const hideTooltip = () => {
+            if (tooltipEl) tooltipEl.classList.remove("is-visible");
+          };
+
+          const renderGrid = () => {
+            if (!gridEl) return;
+            const rows = buildRows();
+            if (!rows.length) {
+              gridEl.innerHTML = `<div class="poa-gantt-empty">No hay fechas suficientes en objetivos, actividades, subtareas o hitos para construir el Gantt.</div>`;
+              return;
+            }
+            const timeline = getTimelineSegments(rows, viewState.scale);
+            if (!timeline.start || !timeline.end || !timeline.segments.length) {
+              gridEl.innerHTML = `<div class="poa-gantt-empty">No hay rango de tiempo disponible.</div>`;
+              return;
+            }
+            gridEl.style.setProperty("--pg-cols", String(timeline.segments.length));
+            const totalTime = Math.max(1, timeline.end.getTime() - timeline.start.getTime());
+            const shellStyles = window.getComputedStyle(shellEl);
+            const leftWidthPx = parseFloat(shellStyles.getPropertyValue("--pg-left-w")) || 470;
+            const colWidthPx = parseFloat(shellStyles.getPropertyValue("--pg-col-w")) || 108;
+            const timelineWidthPx = timeline.segments.length * colWidthPx;
+            const today = new Date();
+            const todayLeftPx = today >= timeline.start && today <= timeline.end
+              ? leftWidthPx + (timelineWidthPx * ((today.getTime() - timeline.start.getTime()) / totalTime))
+              : null;
+
+            const headerHtml = `
+              <div class="poa-gantt-grid__header">
+                <div class="poa-gantt-grid__header-left"></div>
+                <div class="poa-gantt-grid__months">
+                  ${timeline.segments.map((segment) => `<div class="poa-gantt-grid__month">${escapeHtml(segment.label)}</div>`).join("")}
+                </div>
+              </div>
+            `;
+
+            const rowsHtml = rows.map((row) => {
+              const position = getRowBarPosition(row, timeline);
+              const axisColor = row.axisColor || shellEl.style.getPropertyValue("--pg-primary").trim() || "#0f172a";
+              const barClass = row.kind === "objective"
+                ? "done"
+                : row.kind === "milestone"
+                  ? "planned"
+                  : row.status;
+              const milestones = row.kind === "objective" && Array.isArray(row.milestones)
+                ? row.milestones
+                    .map((milestone) => {
+                      const date = asDate(milestone.fecha_realizacion);
+                      if (!date) return "";
+                      const leftPct = clamp(((date.getTime() - timeline.start.getTime()) / totalTime) * 100, 0, 100);
+                      return `<div class="poa-gantt-milestone ${milestone.logrado ? "poa-gantt-milestone--success" : ""}" style="left:${leftPct}%"></div>`;
+                    })
+                    .join("")
+                : row.kind === "milestone"
+                  ? `<div class="poa-gantt-milestone ${row.status === "done" ? "poa-gantt-milestone--success" : ""}" style="left:${position.leftPct}%"></div>`
+                  : "";
+
+              return `
+                <div class="poa-gantt-grid__row" data-kind="${escapeHtml(row.kind)}" data-objective-id="${escapeHtml(String(row.objectiveId || ""))}">
+                  <div class="poa-gantt-row__left">
+                    <div class="poa-gantt-row__axis" style="background:${escapeHtml(axisColor)}"></div>
+                    <div class="poa-gantt-row__top">
+                      <h4 class="poa-gantt-row__title">${escapeHtml(row.title)}</h4>
+                      ${row.kind === "milestone" ? `<span class="poa-gantt-badge poa-gantt-badge--${escapeHtml(row.status)}">Hito</span>` : `<span class="poa-gantt-badge poa-gantt-badge--${escapeHtml(row.status)}">${escapeHtml(badgeLabel(row.status))}</span>`}
+                    </div>
+                    <div class="poa-gantt-row__meta">${escapeHtml(row.subtitle)}</div>
+                    ${row.kind === "milestone" ? "" : `
+                      <div class="poa-gantt-row__progress">
+                        <div class="poa-gantt-row__progress-label">Progreso</div>
+                        <div class="poa-gantt-row__progress-bar"><div class="poa-gantt-row__progress-fill" style="width:${Math.max(0, Math.min(100, Number(row.progress || 0)))}%"></div></div>
+                        <div class="poa-gantt-row__progress-value">${Math.max(0, Math.min(100, Number(row.progress || 0)))}%</div>
+                      </div>
+                    `}
+                  </div>
+                  <div class="poa-gantt-row__timeline">
+                    ${row.kind === "milestone" ? "" : `<div class="poa-gantt-bar poa-gantt-bar--${escapeHtml(barClass)}" data-tooltip-row="${escapeHtml(row.id)}" style="left:${position.leftPct}%;width:${position.widthPct}%"></div>`}
+                    ${milestones}
+                  </div>
+                </div>
+              `;
+            }).join("");
+
+            gridEl.innerHTML = `
+              ${headerHtml}
+              <div class="poa-gantt-grid__body" style="position:relative;">
+                ${todayLeftPx == null ? "" : `<div class="poa-gantt-today" style="left:${todayLeftPx}px"></div>`}
+                ${rowsHtml}
+              </div>
+            `;
+
+            gridEl.querySelectorAll("[data-objective-id]").forEach((rowEl) => {
+              rowEl.addEventListener("click", () => {
+                const nextId = Number(rowEl.getAttribute("data-objective-id") || 0);
+                if (!nextId) return;
+                activeObjectiveId = nextId;
+                renderGoalCard();
+              });
+            });
+
+            const rowMap = Object.fromEntries(rows.map((row) => [row.id, row]));
+            gridEl.querySelectorAll("[data-tooltip-row]").forEach((barEl) => {
+              const row = rowMap[String(barEl.getAttribute("data-tooltip-row") || "")];
+              if (!row) return;
+              barEl.addEventListener("mouseenter", (event) => renderTooltip(row, event));
+              barEl.addEventListener("mousemove", (event) => renderTooltip(row, event));
+              barEl.addEventListener("mouseleave", hideTooltip);
+            });
+          };
+
+          const renderAll = () => {
+            applyThemeVars();
+            renderTypeFilters();
+            renderAxisFilters();
+            renderToolbar();
+            renderGoalCard();
+            renderGrid();
+          };
+
+          const loadBoard = async () => {
+            showMsg("Cargando Gantt estratégico...");
+            try {
+              const response = await fetch("/api/poa/board-data", {
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+              });
+              const payload = await response.json().catch(() => ({}));
+              if (!response.ok || payload?.success === false) {
+                throw new Error(payload?.error || "No se pudo cargar el Gantt estratégico.");
+              }
+              objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
+              activities = Array.isArray(payload.activities) ? payload.activities : [];
+              showMsg("");
+              renderAll();
+            } catch (error) {
+              showMsg(error?.message || "No se pudo cargar el Gantt estratégico.", true);
+            }
+          };
+
+          applyThemeVars();
+          window.addEventListener("resize", () => {
+            applyThemeVars();
+            renderGrid();
+          });
+          document.addEventListener("scroll", hideTooltip, true);
+          loadBoard();
+        })();
+      </script>

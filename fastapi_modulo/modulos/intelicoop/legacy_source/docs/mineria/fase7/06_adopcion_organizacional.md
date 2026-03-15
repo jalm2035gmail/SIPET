@@ -2,7 +2,7 @@
 
 Fecha ejecucion UTC: 2026-02-18T14:59:07.011763+00:00
 
-## Base operativa observada
+## MAIN operativa observada
 - Registros de scoring historicos: 0
 - Alertas de mora historicas: 0
 - Alertas altas: 0

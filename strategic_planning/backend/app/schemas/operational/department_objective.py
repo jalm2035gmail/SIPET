@@ -1,9 +1,9 @@
 from datetime import date
 from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import MAINModel, Field, ConfigDict
 
 
-class DepartmentObjectiveBase(BaseModel):
+class DepartmentObjectiveMAIN(MAINModel):
     poa_id: int
     department_id: int
     name: str
@@ -14,11 +14,11 @@ class DepartmentObjectiveBase(BaseModel):
     end_date: Optional[date] = None
 
 
-class DepartmentObjectiveCreate(DepartmentObjectiveBase):
+class DepartmentObjectiveCreate(DepartmentObjectiveMAIN):
     pass
 
 
-class DepartmentObjectiveUpdate(BaseModel):
+class DepartmentObjectiveUpdate(MAINModel):
     name: Optional[str] = None
     description: Optional[str] = None
     budget: Optional[float] = Field(None, ge=0.0)
@@ -28,7 +28,7 @@ class DepartmentObjectiveUpdate(BaseModel):
     allocated_amount: Optional[float] = Field(None, ge=0.0)
 
 
-class DepartmentObjectiveResponse(DepartmentObjectiveBase):
+class DepartmentObjectiveResponse(DepartmentObjectiveMAIN):
     id: int
     allocated_amount: float
     status: str

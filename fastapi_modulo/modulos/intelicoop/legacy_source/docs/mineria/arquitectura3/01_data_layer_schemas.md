@@ -20,7 +20,7 @@ DB vendor: sqlite
 
 ## Estado
 - Etapa 1 de 4 completada tecnicamente.
-- Base de Data Layer preparada para separar ingestas crudas, limpieza y analitica.
+- MAIN de Data Layer preparada para separar ingestas crudas, limpieza y analitica.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/arquitectura3/01_data_layer_schemas.csv`

@@ -17,8 +17,8 @@ Evidencia:
 - `04_identificadores_consistentes.md`
 - `04_identificadores_consistentes.csv`
 - `04_controles_identificadores.csv`
-- `04_catalogo_sucursales_base.csv`
-- `04_catalogo_productos_base.csv`
+- `04_catalogo_sucursales_MAIN.csv`
+- `04_catalogo_productos_MAIN.csv`
 
 Comando:
 - `cd backend/django_project && ../venv/bin/python manage.py catalogo_maestro_institucional_1_2`

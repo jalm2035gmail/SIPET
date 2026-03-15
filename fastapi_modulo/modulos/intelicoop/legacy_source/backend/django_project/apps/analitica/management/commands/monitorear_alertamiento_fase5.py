@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count
 from django.utils import timezone as dj_timezone
 
@@ -23,7 +23,7 @@ def _hours_since(dt):
     return max((dj_timezone.now() - dt).total_seconds() / 3600.0, 0.0)
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Monitorea salud tecnica/datos/modelo y emite alertas con severidad y escalamiento."
 
     def add_arguments(self, parser):

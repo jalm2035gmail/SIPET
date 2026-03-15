@@ -55,9 +55,9 @@ sys.modules["fastapi_modulo.main"] = fake_main
 
 # ── Module imports ────────────────────────────────────────────────────────────
 
-from fastapi_modulo.db import Base, engine  # noqa: E402
-from fastapi_modulo.modulos.multiempresa.multiempresa import router  # noqa: E402
-from fastapi_modulo.modulos.multiempresa.me_db_models import MeEmpresa  # noqa: E402
+from fastapi_modulo.db import MAIN, engine  # noqa: E402
+from fastapi_modulo.modulos.multiempresa.controladores.multiempresa import router  # noqa: E402
+from fastapi_modulo.modulos.multiempresa.modelos.me_db_models import MeEmpresa  # noqa: E402
 
 _ME_TABLES = [MeEmpresa.__table__]
 
@@ -86,8 +86,8 @@ def _auth(role: str = "usuario", *access: str) -> dict:
 
 
 def setup_function() -> None:
-    Base.metadata.drop_all(bind=engine, tables=_ME_TABLES, checkfirst=True)
-    Base.metadata.create_all(bind=engine, tables=_ME_TABLES, checkfirst=True)
+    MAIN.metadata.drop_all(bind=engine, tables=_ME_TABLES, checkfirst=True)
+    MAIN.metadata.create_all(bind=engine, tables=_ME_TABLES, checkfirst=True)
 
 
 # ── Permisos ──────────────────────────────────────────────────────────────────
@@ -113,7 +113,7 @@ def test_acceso_permitido_con_app_access():
 # ── CRUD básico ───────────────────────────────────────────────────────────────
 
 def _payload(**overrides):
-    base = {
+    MAIN = {
         "codigo": "AVANCOOP",
         "nombre": "Cooperativa Avance",
         "tenant_id": "avancoop",
@@ -123,8 +123,8 @@ def _payload(**overrides):
         "color_primario": "#1e40af",
         "estado": "activa",
     }
-    base.update(overrides)
-    return base
+    MAIN.update(overrides)
+    return MAIN
 
 
 def test_crear_empresa():

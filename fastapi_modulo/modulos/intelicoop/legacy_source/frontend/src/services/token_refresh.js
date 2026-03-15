@@ -2,7 +2,7 @@ import axios from 'axios'
 
 import { clearTokens, getRefreshToken, setTokens } from './auth_storage'
 
-const djangoBaseUrl = import.meta.env.VITE_DJANGO_API_URL || '/api'
+const djangoMAINUrl = import.meta.env.VITE_DJANGO_API_URL || '/api'
 
 export async function refreshAccessToken() {
   const refresh = getRefreshToken()
@@ -11,7 +11,7 @@ export async function refreshAccessToken() {
     throw new Error('No refresh token available')
   }
 
-  const response = await axios.post(`${djangoBaseUrl}/auth/refresh/`, { refresh })
+  const response = await axios.post(`${djangoMAINUrl}/auth/refresh/`, { refresh })
   const newAccess = response.data?.access
 
   if (!newAccess) {

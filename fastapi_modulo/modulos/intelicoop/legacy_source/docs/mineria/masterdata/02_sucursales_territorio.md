@@ -2,7 +2,7 @@
 
 Fecha ejecucion UTC: 2026-02-18T15:34:45.996871+00:00
 
-## Catalogo base
+## Catalogo MAIN
 - Yuriria
 - Cuitzeo
 - Santa Ana Maya

@@ -1,0 +1,46 @@
+  <dialog id="hz-ac-modal" class="modal">
+    <div class="modal-box w-11/12 max-w-lg">
+      <h3 class="font-bold text-lg mb-4" id="hz-ac-modal-titulo">Nueva acción correctiva</h3>
+      <form id="hz-ac-form" class="grid gap-4" novalidate>
+        <input type="hidden" id="hz-ac-id" name="id" value="">
+        <input type="hidden" id="hz-ac-hallazgo-id" name="hallazgo_id" value="">
+        <label class="form-control">
+          <div class="label py-1"><span class="label-text text-xs font-semibold">Descripción <span class="text-error">*</span></span></div>
+          <textarea id="hz-ac-descripcion" name="descripcion" rows="3" required class="textarea textarea-bordered textarea-sm" placeholder="Descripción de la acción correctiva…"></textarea>
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Responsable</span></div>
+            <input type="text" id="hz-ac-responsable" name="responsable" maxlength="150" class="input input-bordered input-sm" placeholder="Responsable de la acción">
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Estado</span></div>
+            <select id="hz-ac-estado" name="estado" class="select select-bordered select-sm">
+              <option selected>Pendiente</option>
+              <option>En proceso</option>
+              <option>Ejecutada</option>
+              <option>Verificada</option>
+              <option>Cancelada</option>
+            </select>
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Fecha compromiso</span></div>
+            <input type="date" id="hz-ac-fecha-compromiso" name="fecha_compromiso" class="input input-bordered input-sm">
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Fecha ejecución real</span></div>
+            <input type="date" id="hz-ac-fecha-ejecucion" name="fecha_ejecucion" class="input input-bordered input-sm">
+          </label>
+        </div>
+        <label class="form-control">
+          <div class="label py-1"><span class="label-text text-xs font-semibold">Evidencia de seguimiento</span></div>
+          <textarea id="hz-ac-evidencia-seguimiento" name="evidencia_seguimiento" rows="2" class="textarea textarea-bordered textarea-sm" placeholder="Notas o referencia de evidencia de seguimiento…"></textarea>
+        </label>
+        <div class="modal-action mt-2">
+          <button type="button" id="hz-ac-btn-cancelar" class="btn btn-ghost">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="hz-ac-btn-guardar">Guardar</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>

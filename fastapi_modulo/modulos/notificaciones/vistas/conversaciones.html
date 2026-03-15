@@ -1,0 +1,120 @@
+<section class="wa-page" data-wa-avatar="/templates/imagenes/lobo.jpg">
+  <link rel="stylesheet" href="/notificaciones/assets/conversaciones.css">
+  <article class="content-section">
+    <header class="content-section-head">
+      <h2 class="content-section-title">Conversaciones</h2>
+    </header>
+    <div class="content-section-body wa-shell">
+      <aside class="wa-sidebar">
+        <div class="wa-sidebar-head">
+          <div class="wa-profile">
+            <img src="/templates/imagenes/lobo.jpg" alt="AVAN">
+            <div>
+              <strong id="wa-me-name">Yo</strong>
+              <small id="wa-me-role">conectado</small>
+            </div>
+          </div>
+          <div class="wa-head-actions view-buttons">
+            <button id="wa-new-btn" class="wa-icon-btn view-pill boton_vista" title="Nueva conversación" data-tooltip="Nueva conversación" aria-label="Nueva conversación" type="button"><i class="fa-solid fa-plus boton_vista-icono view-pill-fa" aria-hidden="true"></i></button>
+            <button id="wa-new-group-btn" class="wa-icon-btn view-pill boton_vista" title="Nuevo grupo" data-tooltip="Nuevo grupo" aria-label="Nuevo grupo" style="display:none" type="button"><i class="fa-solid fa-user-group boton_vista-icono view-pill-fa" aria-hidden="true"></i></button>
+            <button id="wa-index-btn" class="wa-icon-btn view-pill boton_vista" title="Indexar documentos para AVAN" data-tooltip="Indexar" aria-label="Indexar documentos para AVAN" type="button"><i class="fa-solid fa-rotate-right boton_vista-icono view-pill-fa" aria-hidden="true"></i></button>
+          </div>
+        </div>
+
+        <div class="wa-index-status" id="wa-index-status" style="display:none">Cargando índice...</div>
+
+        <div class="wa-search-wrap">
+          <input type="text" id="wa-search" placeholder="Buscar conversación…">
+        </div>
+
+        <div class="wa-list" id="wa-list">
+          <div class="wa-empty">Cargando…</div>
+        </div>
+      </aside>
+
+      <section class="wa-chat">
+        <header class="wa-chat-head">
+          <div class="wa-chat-contact">
+            <div class="wa-chat-avatar" id="wa-chat-avatar-el">AV</div>
+            <div>
+              <strong id="wa-chat-title">Selecciona una conversación</strong>
+              <small id="wa-chat-subtitle">—</small>
+            </div>
+          </div>
+          <div class="wa-chat-tools" id="wa-topk-wrap">
+            <label for="wa-topk">Fuentes</label>
+            <select id="wa-topk">
+              <option value="4">4</option>
+              <option value="6" selected>6</option>
+              <option value="8">8</option>
+            </select>
+          </div>
+          <div class="wa-chat-tools" id="wa-notify-scope-wrap" style="display:none">
+            <label for="wa-notify-scope">Alcance</label>
+            <select id="wa-notify-scope">
+              <option value="conversation">Conversación</option>
+              <option value="department">Departamento</option>
+              <option value="company">Empresa</option>
+            </select>
+          </div>
+          <div class="wa-chat-actions view-buttons">
+            <button id="wa-notify-btn" class="wa-icon-btn view-pill boton_vista" title="Enviar notificación" data-tooltip="Notificar" aria-label="Enviar notificación" style="display:none" type="button"><i class="fa-regular fa-bell boton_vista-icono view-pill-fa" aria-hidden="true"></i></button>
+            <button id="wa-del-conv" class="wa-icon-btn view-pill boton_vista" title="Eliminar conversación" data-tooltip="Eliminar" aria-label="Eliminar conversación" style="display:none" type="button"><i class="fa-regular fa-trash-can boton_vista-icono view-pill-fa" aria-hidden="true"></i></button>
+          </div>
+        </header>
+
+        <div class="wa-messages" id="wa-messages">
+          <div class="wa-msg wa-msg--in">
+            <div class="wa-msg-body">Bienvenido a Conversaciones. Selecciona un chat o inicia uno nuevo.</div>
+            <div class="wa-msg-meta">Sistema</div>
+          </div>
+        </div>
+
+        <form id="wa-form" class="wa-input">
+          <input id="wa-input" type="text" placeholder="Escribe un mensaje…" autocomplete="off" required>
+          <button type="submit" class="wa-send-btn" id="wa-send-btn">Enviar</button>
+        </form>
+      </section>
+    </div>
+  </article>
+
+  <div id="wa-modal" class="wa-modal-backdrop" style="display:none" role="dialog" aria-modal="true">
+    <div class="wa-modal">
+      <header class="wa-modal-head">
+        <span>Nueva conversación con usuario</span>
+        <button id="wa-modal-close" class="wa-icon-btn" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </header>
+      <div class="wa-modal-search-wrap">
+        <input type="text" id="wa-modal-search" placeholder="Buscar usuario…">
+      </div>
+      <ul class="wa-modal-list" id="wa-modal-list">
+        <li class="wa-empty">Cargando usuarios…</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="wa-group-modal" class="wa-modal-backdrop" style="display:none" role="dialog" aria-modal="true">
+    <div class="wa-modal">
+      <header class="wa-modal-head">
+        <span>Nuevo grupo</span>
+        <button id="wa-group-modal-close" class="wa-icon-btn" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </header>
+      <div class="wa-modal-search-wrap">
+        <input type="text" id="wa-group-name" placeholder="Nombre del grupo">
+      </div>
+      <div class="wa-modal-search-wrap">
+        <input type="text" id="wa-group-search" placeholder="Buscar usuario…">
+      </div>
+      <ul class="wa-modal-list" id="wa-group-list">
+        <li class="wa-empty">Cargando usuarios…</li>
+      </ul>
+      <div class="wa-modal-head">
+        <span id="wa-group-selected">0 seleccionados</span>
+        <button id="wa-group-create" class="wa-send-btn" type="button">Crear grupo</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="wa-floating-stack" aria-live="polite"></div>
+  <script src="/notificaciones/assets/conversaciones.js"></script>
+</section>

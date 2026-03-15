@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
 SOURCE_RULES = {
@@ -29,7 +29,7 @@ def _is_date_yyyy_mm_dd(value: str) -> bool:
     return value[4] == "-" and value[7] == "-" and value.replace("-", "").isdigit()
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Etapa 3/4 de Data Intake: validaciones de duplicados, obligatorios, formatos y consistencia."
 
     def add_arguments(self, parser):

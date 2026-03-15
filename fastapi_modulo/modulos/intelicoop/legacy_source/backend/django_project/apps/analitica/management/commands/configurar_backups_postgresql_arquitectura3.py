@@ -3,11 +3,11 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db import connections
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = (
         "Arquitectura 3 - Etapa 2/4: configura artefactos operativos de backup/restore "
         "para PostgreSQL y genera evidencias."
@@ -119,7 +119,7 @@ class Command(BaseCommand):
         }
         manifest_payload = {
             "generated_at": executed_at,
-            "database": {"alias": db_alias, "vendor": vendor},
+            "dataMAIN": {"alias": db_alias, "vendor": vendor},
             "retention_days": retention_days,
             "cron_schedule": cron_schedule,
             "summary": summary,

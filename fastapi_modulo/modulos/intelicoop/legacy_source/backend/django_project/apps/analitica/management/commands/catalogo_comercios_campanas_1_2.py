@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import Campania
 
@@ -23,7 +23,7 @@ def _asignar_comercio(campania: Campania) -> dict:
     return DEFAULT_COMERCIOS[2]
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 3/4 de 1.2: catalogo de comercios aliados y vinculacion con campanas."
 
     def add_arguments(self, parser):
@@ -104,7 +104,7 @@ class Command(BaseCommand):
             "",
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             "",
-            "## Catalogo base de comercios aliados",
+            "## Catalogo MAIN de comercios aliados",
             f"- Comercios catalogados: {len(DEFAULT_COMERCIOS)}",
             f"- Campanas vinculadas: {len(campanias_rows)}",
             "",

@@ -1,6 +1,6 @@
 import logging
 
-from .base import IAProviderBase, IAProviderError
+from .base import IAProviderMAIN, IAProviderError
 
 logger = logging.getLogger("deepseek_provider")
 
@@ -8,7 +8,7 @@ logger = logging.getLogger("deepseek_provider")
 DEEPSEEK_VALID_MODELS = {"deepseek-chat", "deepseek-reasoner"}
 
 
-class DeepSeekProvider(IAProviderBase):
+class DeepSeekProvider(IAProviderMAIN):
     provider_name = "deepseek"
 
     @staticmethod
@@ -28,9 +28,9 @@ class DeepSeekProvider(IAProviderBase):
         return "deepseek-chat"
 
     @staticmethod
-    def _resolve_url(base_url: str) -> str:
+    def _resolve_url(MAIN_url: str) -> str:
         """Devuelve la URL correcta del endpoint, descartando URLs de Ollama/locales."""
-        url = str(base_url or "").strip()
+        url = str(MAIN_url or "").strip()
         # Descartar URLs que claramente son de Ollama u otros proveedores locales
         if not url or "11434" in url or "/api/generate" in url or "/api/tags" in url:
             return "https://api.deepseek.com/v1/chat/completions"
@@ -39,7 +39,7 @@ class DeepSeekProvider(IAProviderBase):
         return url
 
     def complete(self, prompt, **kwargs):
-        url = self._resolve_url(self.base_url)
+        url = self._resolve_url(self.MAIN_url)
         model = self._validate_model(kwargs.get("model") or self.model or "deepseek-chat")
         max_tokens = int(kwargs.get("max_tokens", 700) or 700)
         temperature = float(kwargs.get("temperature", 0.7) or 0.7)

@@ -11,7 +11,7 @@ from app.core.exceptions import (
     UserInactiveException,
 )
 from app.core.security import PasswordValidator, TokenUtils
-from app.crud.base import CRUDBase
+from app.crud.MAIN import CRUDMAIN
 from app.crud.token import token_crud
 from app.models.user import User, UserRole, UserStatus
 from app.schemas.user import (
@@ -23,7 +23,7 @@ from app.schemas.user import (
 )
 
 
-class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
+class CRUDUser(CRUDMAIN[User, UserCreate, UserUpdate]):
     """CRUD avanzado para el modelo User."""
 
     def get_by_email(self, db: Session, email: str) -> Optional[User]:

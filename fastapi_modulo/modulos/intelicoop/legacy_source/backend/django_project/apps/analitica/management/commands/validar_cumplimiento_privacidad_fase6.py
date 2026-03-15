@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica import views as analitica_views
 from apps.analitica.models import (
@@ -18,7 +18,7 @@ def _estado(condicion: bool) -> str:
     return "Cumple" if condicion else "En revision"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Valida cumplimiento normativo y privacidad (minimizacion, uso legitimo, retencion y anonimización) para Fase 6."
 
     def add_arguments(self, parser):
@@ -78,7 +78,7 @@ class Command(BaseCommand):
         rows = [
             {
                 "dimension": "cumplimiento",
-                "control": "politicas_controles_base_documentados",
+                "control": "politicas_controles_MAIN_documentados",
                 "estado": _estado(controles_seguridad_previos),
                 "detalle": "evidencia_fase6_seguridad=si" if controles_seguridad_previos else "evidencia_fase6_seguridad=no",
             },
@@ -123,7 +123,7 @@ class Command(BaseCommand):
         total = len(rows)
         cumple = sum(1 for row in rows if row["estado"] == "Cumple")
         en_revision = total - cumple
-        estado_global = "Cumplimiento y privacidad base aceptables" if en_revision <= 1 else "Cumplimiento en seguimiento"
+        estado_global = "Cumplimiento y privacidad MAIN aceptables" if en_revision <= 1 else "Cumplimiento en seguimiento"
 
         report_csv.parent.mkdir(parents=True, exist_ok=True)
         with report_csv.open("w", newline="", encoding="utf-8") as file:
@@ -158,7 +158,7 @@ class Command(BaseCommand):
                 "",
                 "## Estado",
                 "- Punto 5 de 8 completado tecnicamente.",
-                "- Cumplimiento normativo y privacidad base documentados con evidencia reproducible.",
+                "- Cumplimiento normativo y privacidad MAIN documentados con evidencia reproducible.",
                 "",
                 "## Artefactos",
                 f"- Reporte CSV: `{report_csv}`",

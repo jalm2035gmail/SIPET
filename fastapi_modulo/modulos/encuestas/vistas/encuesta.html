@@ -1,0 +1,578 @@
+<section
+  id="enc-root"
+  class="enc-shell"
+  data-enc-app="survey-module"
+  data-enc-js-url="/modulos/encuestas/encuesta.js"
+  data-enc-bootstrap='__ENCUESTA_BOOTSTRAP__'
+>
+  <div class="enc-hero">
+    <div class="enc-hero-copy enc-hero-brand">
+      <img
+        src="/modulos/encuestas/imagenes/encuestas.svg"
+        alt=""
+        aria-hidden="true"
+        class="enc-hero-icon"
+      >
+      <div class="enc-hero-copy-text">
+        <h1 class="enc-title">Encuestas</h1>
+        <p class="enc-subtitle">
+          Encuestas a clientes, evaluaciones 360, Quizzes y mucho más...
+        </p>
+      </div>
+    </div>
+    <div class="enc-hero-actions">
+      <button type="button" class="enc-button enc-button-primary" data-enc-action="new-survey">
+        Nueva encuesta
+      </button>
+      <button type="button" class="enc-button enc-button-secondary" data-enc-action="open-builder">
+        Abrir constructor
+      </button>
+    </div>
+  </div>
+
+  <div class="enc-main">
+      <section class="enc-panel is-active" data-enc-panel="dashboard">
+        <div class="enc-card-grid">
+          <article class="enc-card enc-stat-card">
+            <span class="enc-stat-label">Borradores</span>
+            <strong class="enc-stat-value" data-enc-metric="drafts">0</strong>
+            <p class="enc-stat-note">Encuestas listas para terminar configuracion.</p>
+          </article>
+          <article class="enc-card enc-stat-card">
+            <span class="enc-stat-label">Activas</span>
+            <strong class="enc-stat-value" data-enc-metric="active">0</strong>
+            <p class="enc-stat-note">Campanas publicadas con captura habilitada.</p>
+          </article>
+          <article class="enc-card enc-stat-card">
+            <span class="enc-stat-label">Tasa de respuesta</span>
+            <strong class="enc-stat-value" data-enc-metric="completion_rate">0%</strong>
+            <p class="enc-stat-note">Promedio general de finalizacion del modulo.</p>
+          </article>
+          <article class="enc-card enc-stat-card">
+            <span class="enc-stat-label">Respuestas hoy</span>
+            <strong class="enc-stat-value" data-enc-metric="responses_today">0</strong>
+            <p class="enc-stat-note">Actividad de captura del dia actual.</p>
+          </article>
+        </div>
+
+        <article class="enc-card enc-roadmap-card">
+          <div class="enc-section-head">
+            <div>
+              <h2>Ruta de implementacion</h2>
+              <p>Inicio del modulo con dependencias front listas para las siguientes epicas.</p>
+            </div>
+            <span class="enc-badge">EPIC 1</span>
+          </div>
+          <ol class="enc-roadmap-list">
+            <li>Router HTML y assets desacoplados de <code>main.py</code>.</li>
+            <li>Layout MAIN con navegacion interna del modulo.</li>
+            <li>CSS namespaced para evitar choques con otros modulos.</li>
+            <li>Bootstrap JS con tabs, acciones y estado inicial.</li>
+          </ol>
+        </article>
+      </section>
+
+      <section class="enc-panel" data-enc-panel="encuestas">
+        <article class="enc-card">
+          <div class="enc-section-head">
+            <div>
+              <h2>Campañas</h2>
+              <p>Campañas del tenant actual con acceso directo al constructor.</p>
+            </div>
+            <button type="button" class="enc-button enc-button-primary" data-enc-action="new-survey">
+              Crear campaña
+            </button>
+          </div>
+          <div id="enc-campaigns-msg" class="enc-inline-msg" aria-live="polite"></div>
+          <div class="enc-table-wrap">
+            <table class="enc-table">
+              <thead>
+                <tr>
+                  <th>Encuesta</th>
+                  <th>Estado</th>
+                  <th>Audiencia</th>
+                  <th>Publicacion</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="enc-campaigns-body">
+                <tr><td colspan="5">Cargando campañas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="enc-panel" data-enc-panel="constructor">
+        <article class="enc-card enc-builder-shell">
+          <div class="enc-section-head">
+            <div>
+              <h2>Constructor</h2>
+              <p>Editor MVP con persistencia de secciones, preguntas, reordenamiento, duplicado y validación previa.</p>
+            </div>
+            <div class="enc-builder-toolbar">
+              <select id="enc-template-select" class="enc-input enc-select">
+                <option value="">Usar plantilla</option>
+              </select>
+              <button type="button" class="enc-button enc-button-secondary" data-enc-action="create-from-template">Crear desde plantilla</button>
+              <select id="enc-builder-instance-select" class="enc-input enc-select">
+                <option value="">Selecciona una campaña</option>
+              </select>
+              <button type="button" class="enc-button enc-button-secondary" data-enc-action="save-as-template">Guardar como plantilla</button>
+              <button type="button" class="enc-button enc-button-secondary" data-enc-action="refresh-builder">Recargar</button>
+            </div>
+          </div>
+          <div id="enc-builder-msg" class="enc-inline-msg" aria-live="polite"></div>
+          <div class="enc-builder-tabs" role="tablist" aria-label="Etapas del constructor">
+            <button type="button" class="enc-builder-tab is-active" data-enc-builder-tab="general">Datos generales</button>
+            <button type="button" class="enc-builder-tab" data-enc-builder-tab="estructura">Estructura</button>
+            <button type="button" class="enc-builder-tab" data-enc-builder-tab="audiencia">Audiencia</button>
+            <button type="button" class="enc-builder-tab" data-enc-builder-tab="reglas">Reglas</button>
+            <button type="button" class="enc-builder-tab" data-enc-builder-tab="publicacion">Publicación</button>
+            <button type="button" class="enc-builder-tab" data-enc-builder-tab="preview">Vista previa</button>
+          </div>
+
+          <div class="enc-builder-panels">
+            <section class="enc-builder-panel is-active" data-enc-builder-panel="general">
+              <form id="enc-general-form" class="enc-form-grid">
+                <label class="enc-field">
+                  <span>Nombre</span>
+                  <input id="enc-general-nombre" class="enc-input" type="text" placeholder="Ej. Encuesta de clima 2026">
+                </label>
+                <label class="enc-field">
+                  <span>Modo de publicación</span>
+                  <select id="enc-general-publication-mode" class="enc-input enc-select">
+                    <option value="manual">Manual</option>
+                    <option value="scheduled">Programada</option>
+                  </select>
+                </label>
+                <label class="enc-field enc-field-span-2">
+                  <span>Descripción</span>
+                  <textarea id="enc-general-descripcion" class="enc-input enc-textarea" placeholder="Contexto de la encuesta"></textarea>
+                </label>
+                <label class="enc-field">
+                  <span>Fecha inicio</span>
+                  <input id="enc-general-start-at" class="enc-input" type="datetime-local">
+                </label>
+                <label class="enc-field">
+                  <span>Fecha cierre</span>
+                  <input id="enc-general-end-at" class="enc-input" type="datetime-local">
+                </label>
+                <div class="enc-form-actions enc-field-span-2">
+                  <button type="submit" class="enc-button enc-button-primary">Guardar datos generales</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="enc-builder-panel" data-enc-builder-panel="estructura">
+              <div class="enc-survey-editor">
+                <div class="enc-survey-editor-topbar">
+                  <div class="enc-survey-editor-titlebox">
+                    <div class="enc-survey-editor-badge">Nuevo</div>
+                    <div>
+                      <p class="enc-sidebar-label">Encuestas</p>
+                      <strong>Nuevo</strong>
+                    </div>
+                  </div>
+                  <div class="enc-survey-editor-stats">
+                    <span class="enc-survey-editor-stat">
+                      <span class="enc-survey-editor-stat-icon">☑</span>
+                      <span>Participaciones <strong id="enc-editor-participaciones">0</strong></span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="enc-survey-editor-hero">
+                  <div class="enc-survey-editor-copy">
+                    <input id="enc-editor-title" class="enc-survey-editor-title" type="text" placeholder="p. ej. Encuesta de satisfacción">
+                    <div class="enc-survey-editor-meta">
+                      <div><strong>Responsable</strong><span id="enc-editor-responsable">SIPET</span></div>
+                      <div><strong>Restringido a</strong><span id="enc-editor-restringido">Todos los participantes autorizados</span></div>
+                    </div>
+                  </div>
+                  <div class="enc-survey-editor-mark">A</div>
+                </div>
+
+                <div class="enc-survey-tabs" role="tablist" aria-label="Configuración de encuesta">
+                  <button type="button" class="enc-survey-tab is-active" data-enc-survey-tab="questions">Preguntas</button>
+                  <button type="button" class="enc-survey-tab" data-enc-survey-tab="options">Opciones</button>
+                  <button type="button" class="enc-survey-tab" data-enc-survey-tab="description">Descripción</button>
+                  <button type="button" class="enc-survey-tab" data-enc-survey-tab="final-message">Mensaje final</button>
+                </div>
+
+                <div class="enc-survey-panels">
+                  <section class="enc-survey-panel is-active" data-enc-survey-panel="questions">
+                    <div class="enc-question-board-head">
+                      <div class="enc-question-board-columns">
+                        <span>Título</span>
+                        <span>Tipo de pregunta</span>
+                      </div>
+                      <button type="button" class="enc-mini-btn" data-enc-action="add-question-settings" title="Ajustes">⚙</button>
+                    </div>
+                    <div class="enc-question-board-actions">
+                      <button type="button" class="enc-button enc-button-secondary" data-enc-action="add-question">Agregar una pregunta</button>
+                      <button type="button" class="enc-button enc-button-secondary" data-enc-action="add-section">Agregar una sección</button>
+                    </div>
+                    <div id="enc-sections-list" class="enc-stack"></div>
+                    <div id="enc-questions-empty" class="enc-placeholder">Selecciona una sección para administrar sus preguntas.</div>
+                    <div id="enc-questions-list" class="enc-stack"></div>
+                  </section>
+
+                  <section class="enc-survey-panel" data-enc-survey-panel="options">
+                    <form id="enc-survey-options-form" class="enc-form-grid">
+                      <label class="enc-field">
+                        <span>Modo de audiencia</span>
+                        <select id="enc-editor-audience-mode" class="enc-input enc-select">
+                          <option value="internal">Interna</option>
+                          <option value="mixed">Mixta</option>
+                          <option value="public_link">Enlace público</option>
+                        </select>
+                      </label>
+                      <label class="enc-field">
+                        <span>Modo de anonimato</span>
+                        <select id="enc-editor-anonymity-mode" class="enc-input enc-select">
+                          <option value="identified">Identificada</option>
+                          <option value="restricted">Restringida</option>
+                          <option value="anonymous">Anónima</option>
+                        </select>
+                      </label>
+                      <label class="enc-field">
+                        <span>Scoring</span>
+                        <select id="enc-editor-scoring-mode" class="enc-input enc-select">
+                          <option value="none">Sin scoring</option>
+                          <option value="quiz">Quiz</option>
+                          <option value="nps">NPS</option>
+                          <option value="csat">CSAT</option>
+                          <option value="ces">CES</option>
+                        </select>
+                      </label>
+                      <label class="enc-field">
+                        <span>Publicación</span>
+                        <select id="enc-editor-publication-mode" class="enc-input enc-select">
+                          <option value="manual">Manual</option>
+                          <option value="scheduled">Programada</option>
+                        </select>
+                      </label>
+                      <div class="enc-form-actions enc-field-span-2">
+                        <button type="submit" class="enc-button enc-button-primary">Guardar opciones</button>
+                      </div>
+                    </form>
+                  </section>
+
+                  <section class="enc-survey-panel" data-enc-survey-panel="description">
+                    <form id="enc-survey-description-form">
+                      <textarea id="enc-editor-description" class="enc-input enc-textarea" placeholder="Describe el contexto y objetivo de la encuesta"></textarea>
+                      <div class="enc-form-actions" style="margin-top:16px;">
+                        <button type="submit" class="enc-button enc-button-primary">Guardar descripción</button>
+                      </div>
+                    </form>
+                  </section>
+
+                  <section class="enc-survey-panel" data-enc-survey-panel="final-message">
+                    <form id="enc-survey-final-message-form">
+                      <textarea id="enc-editor-final-message" class="enc-input enc-textarea" placeholder="Mensaje final que verá la persona al enviar la encuesta"></textarea>
+                      <div class="enc-form-actions" style="margin-top:16px;">
+                        <button type="submit" class="enc-button enc-button-primary">Guardar mensaje final</button>
+                      </div>
+                    </form>
+                  </section>
+                </div>
+              </div>
+            </section>
+
+            <section class="enc-builder-panel" data-enc-builder-panel="audiencia">
+              <form id="enc-audience-form" class="enc-form-grid">
+                <label class="enc-field">
+                  <span>Modo de audiencia</span>
+                  <select id="enc-audience-mode" class="enc-input enc-select">
+                    <option value="internal">Interna</option>
+                    <option value="mixed">Mixta</option>
+                    <option value="public_link">Enlace público</option>
+                  </select>
+                </label>
+                <label class="enc-field">
+                  <span>Origen fuente</span>
+                  <input id="enc-audience-source-app" class="enc-input" type="text" placeholder="empleados, crm, capacitacion">
+                </label>
+                <label class="enc-field">
+                  <span>Asignar por</span>
+                  <select id="enc-audience-assignment-type" class="enc-input enc-select">
+                    <option value="user">Usuarios</option>
+                    <option value="role">Rol</option>
+                    <option value="department">Departamento</option>
+                    <option value="position">Puesto</option>
+                  </select>
+                </label>
+                <label class="enc-field">
+                  <span>Valores</span>
+                  <input id="enc-audience-values" class="enc-input" type="text" placeholder="1, 2, 3 o Ventas, administrador">
+                </label>
+                <label class="enc-field enc-field-span-2">
+                  <span>Regla / grupo objetivo</span>
+                  <textarea id="enc-audience-group-note" class="enc-input enc-textarea" placeholder="Ej. Departamento comercial, rol supervisor, clientes activos..."></textarea>
+                </label>
+                <label class="enc-field enc-field-span-2">
+                  <span>Grupo manual</span>
+                  <textarea id="enc-audience-manual-group" class="enc-input enc-textarea" placeholder='{"name":"Grupo especial","members":[{"user_id":"1","nombre":"Ana"}]}'></textarea>
+                </label>
+                <div class="enc-form-actions enc-field-span-2">
+                  <button type="submit" class="enc-button enc-button-primary">Guardar y materializar audiencia</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="enc-builder-panel" data-enc-builder-panel="reglas">
+              <form id="enc-rules-form" class="enc-form-grid">
+                <label class="enc-field">
+                  <span>Modo de anonimato</span>
+                  <select id="enc-rules-anonymity-mode" class="enc-input enc-select">
+                    <option value="identified">Identificada</option>
+                    <option value="restricted">Restringida</option>
+                    <option value="anonymous">Anónima</option>
+                  </select>
+                </label>
+                <label class="enc-field">
+                  <span>Scoring</span>
+                  <select id="enc-rules-scoring-mode" class="enc-input enc-select">
+                    <option value="none">Sin scoring</option>
+                    <option value="quiz">Quiz</option>
+                    <option value="nps">NPS</option>
+                    <option value="csat">CSAT</option>
+                    <option value="ces">CES</option>
+                  </select>
+                </label>
+                <label class="enc-field enc-field-span-2">
+                  <span>Reglas adicionales</span>
+                  <textarea id="enc-rules-json" class="enc-input enc-textarea" placeholder='{"require_all_sections": true}'></textarea>
+                </label>
+                <div class="enc-form-actions enc-field-span-2">
+                  <button type="submit" class="enc-button enc-button-primary">Guardar reglas</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="enc-builder-panel" data-enc-builder-panel="publicacion">
+              <div class="enc-publish-grid">
+                <article class="enc-card enc-subcard">
+                  <div class="enc-subhead">
+                    <h3>Estado de publicación</h3>
+                  </div>
+                  <div id="enc-publish-validation" class="enc-validation-box">
+                    Selecciona una campaña para evaluar su publicación.
+                  </div>
+                  <div class="enc-form-actions">
+                    <button type="button" class="enc-button enc-button-primary" data-enc-action="publish-campaign">Publicar</button>
+                    <button type="button" class="enc-button enc-button-secondary" data-enc-action="close-campaign">Cerrar</button>
+                  </div>
+                </article>
+                <article class="enc-card enc-subcard">
+                  <div class="enc-subhead">
+                    <h3>Canal</h3>
+                  </div>
+                  <form id="enc-publication-form" class="enc-form-grid">
+                    <label class="enc-field">
+                      <span>Enlace público</span>
+                      <select id="enc-public-link-enabled" class="enc-input enc-select">
+                        <option value="false">No</option>
+                        <option value="true">Sí</option>
+                      </select>
+                    </label>
+                    <label class="enc-field">
+                      <span>Token / slug público</span>
+                      <input id="enc-public-link-token" class="enc-input" type="text" placeholder="encuesta-clientes-2026">
+                    </label>
+                    <label class="enc-field">
+                      <span>Fecha compromiso</span>
+                      <input id="enc-publication-due-at" class="enc-input" type="datetime-local">
+                    </label>
+                    <div class="enc-form-actions enc-field-span-2">
+                      <button type="submit" class="enc-button enc-button-primary">Guardar publicación</button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+            </section>
+
+            <section class="enc-builder-panel" data-enc-builder-panel="preview">
+              <div id="enc-preview-root" class="enc-preview-root">
+                <div class="enc-placeholder">Selecciona una campaña para visualizar la vista previa.</div>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <section class="enc-panel" data-enc-panel="resultados">
+        <article class="enc-card">
+          <div class="enc-section-head">
+            <div>
+              <h2>Resultados</h2>
+              <p>Dashboard, reportes por pregunta, segmentos, tabla de respuestas y exportaciones.</p>
+            </div>
+            <div class="enc-builder-toolbar">
+              <select id="enc-results-instance-select" class="enc-input enc-select">
+                <option value="">Selecciona una campaña</option>
+              </select>
+              <button type="button" class="enc-button enc-button-secondary" data-enc-action="refresh-results">Recargar</button>
+              <a id="enc-results-export-csv" class="enc-button enc-button-secondary" href="#" download>CSV</a>
+              <a id="enc-results-export-pdf" class="enc-button enc-button-secondary" href="#" download>PDF</a>
+              <a id="enc-results-export-xlsx" class="enc-button enc-button-primary" href="#" download>Excel</a>
+            </div>
+          </div>
+          <div id="enc-results-msg" class="enc-inline-msg" aria-live="polite"></div>
+          <div id="enc-results-empty" class="enc-placeholder">Selecciona una campaña para ver sus resultados.</div>
+          <div id="enc-results-body" class="enc-results-body" hidden>
+            <div class="enc-builder-toolbar" style="margin-bottom:16px;">
+              <select id="enc-results-filter-department" class="enc-input enc-select">
+                <option value="">Todos los departamentos</option>
+              </select>
+              <select id="enc-results-filter-role" class="enc-input enc-select">
+                <option value="">Todos los roles</option>
+              </select>
+              <select id="enc-results-filter-company" class="enc-input enc-select">
+                <option value="">Todas las empresas</option>
+              </select>
+              <select id="enc-results-segment-by" class="enc-input enc-select">
+                <option value="department">Comparar por departamento</option>
+                <option value="role">Comparar por rol</option>
+                <option value="company">Comparar por empresa</option>
+              </select>
+            </div>
+            <div class="enc-card-grid">
+              <article class="enc-card enc-stat-card">
+                <span class="enc-stat-label">Respuestas</span>
+                <strong id="enc-results-responses-count" class="enc-stat-value">0</strong>
+              </article>
+              <article class="enc-card enc-stat-card">
+                <span class="enc-stat-label">Finalización</span>
+                <strong id="enc-results-completion" class="enc-stat-value">0%</strong>
+              </article>
+              <article class="enc-card enc-stat-card">
+                <span class="enc-stat-label">NPS</span>
+                <strong id="enc-results-nps" class="enc-stat-value">0</strong>
+              </article>
+              <article class="enc-card enc-stat-card">
+                <span class="enc-stat-label">Score promedio</span>
+                <strong id="enc-results-score" class="enc-stat-value">0</strong>
+              </article>
+            </div>
+
+            <div class="enc-results-grid">
+              <article class="enc-card enc-subcard">
+                <div class="enc-subhead">
+                  <h3>Resumen gráfico</h3>
+                </div>
+                <canvas id="enc-results-chart" height="180"></canvas>
+              </article>
+
+              <article class="enc-card enc-subcard">
+                <div class="enc-subhead">
+                  <h3>Segmentos</h3>
+                </div>
+                <div id="enc-results-segments" class="enc-stack"></div>
+              </article>
+            </div>
+
+            <article class="enc-card enc-subcard">
+              <div class="enc-subhead">
+                <h3>Comparativo</h3>
+              </div>
+              <div id="enc-results-comparison" class="enc-stack"></div>
+            </article>
+
+            <article class="enc-card enc-subcard">
+              <div class="enc-subhead">
+                <h3>Reporte por pregunta</h3>
+              </div>
+              <div id="enc-results-questions" class="enc-stack"></div>
+            </article>
+
+            <article class="enc-card enc-subcard">
+              <div class="enc-subhead">
+                <h3>Tabla de respuestas</h3>
+              </div>
+              <div class="enc-table-wrap">
+                <table class="enc-table">
+                  <thead>
+                    <tr>
+                      <th>Participante</th>
+                      <th>Rol</th>
+                      <th>Departamento</th>
+                      <th>Estado</th>
+                      <th>Score</th>
+                      <th>Enviado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="enc-results-responses-body">
+                    <tr><td colspan="6">Sin respuestas enviadas.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </article>
+      </section>
+  </div>
+</section>
+
+<div id="enc-question-modal" class="enc-modal" hidden>
+  <div class="enc-modal-backdrop" data-enc-close-modal="question"></div>
+  <div class="enc-modal-dialog">
+    <div class="enc-modal-head">
+      <h3>Crear secciones y preguntas</h3>
+      <button type="button" class="enc-modal-close" data-enc-close-modal="question">×</button>
+    </div>
+    <div class="enc-modal-body">
+      <div class="enc-modal-layout">
+        <div class="enc-modal-copy">
+          <label class="enc-field">
+            <span>Pregunta</span>
+            <input id="enc-modal-question-title" class="enc-input" type="text" placeholder='p. ej., "¿Qué es...?"'>
+          </label>
+          <div class="enc-modal-type-grid">
+            <div class="enc-modal-type-list">
+              <p class="enc-sidebar-label">Tipo de pregunta</p>
+              <div id="enc-modal-question-types" class="enc-modal-type-options"></div>
+            </div>
+            <div class="enc-modal-preview">
+              <div id="enc-modal-question-preview" class="enc-card enc-subcard"></div>
+            </div>
+          </div>
+          <div class="enc-modal-tabs">
+            <button type="button" class="enc-survey-tab is-active" data-enc-question-tab="answers">Respuestas</button>
+            <button type="button" class="enc-survey-tab" data-enc-question-tab="description">Descripción</button>
+            <button type="button" class="enc-survey-tab" data-enc-question-tab="options">Opciones</button>
+          </div>
+          <div class="enc-modal-panels">
+            <section class="enc-survey-panel is-active" data-enc-question-panel="answers">
+              <label class="enc-field">
+                <span>Opciones</span>
+                <textarea id="enc-modal-question-options" class="enc-input enc-textarea" placeholder="Una opción por línea"></textarea>
+              </label>
+            </section>
+            <section class="enc-survey-panel" data-enc-question-panel="description">
+              <label class="enc-field">
+                <span>Descripción</span>
+                <textarea id="enc-modal-question-description" class="enc-input enc-textarea" placeholder="Texto de ayuda para la pregunta"></textarea>
+              </label>
+            </section>
+            <section class="enc-survey-panel" data-enc-question-panel="options">
+              <label class="enc-field">
+                <span>Obligatoria</span>
+                <select id="enc-modal-question-required" class="enc-input enc-select">
+                  <option value="false">No</option>
+                  <option value="true">Sí</option>
+                </select>
+              </label>
+            </section>
+          </div>
+        </div>
+        <div class="enc-modal-actions">
+          <button type="button" id="enc-modal-question-save-close" class="enc-button enc-button-primary">Guardar y cerrar</button>
+          <button type="button" id="enc-modal-question-save-new" class="enc-button enc-button-secondary">Guardar y nuevo</button>
+          <button type="button" class="enc-button enc-button-secondary" data-enc-close-modal="question">Descartar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from apps.authentication.models import UserProfile
@@ -21,7 +21,7 @@ def _check(ok: bool, criterio: str, evidencia: str):
     }
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.8 Cierre UAT: valida criterios de aceptacion de negocio y genera evidencias operativas."
 
     def add_arguments(self, parser):

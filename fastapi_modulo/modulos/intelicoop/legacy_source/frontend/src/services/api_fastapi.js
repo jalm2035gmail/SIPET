@@ -3,7 +3,7 @@ import { getAccessToken } from './auth_storage'
 import { refreshAccessToken } from './token_refresh'
 
 export const fastapiApi = axios.create({
-  baseURL: import.meta.env.VITE_FASTAPI_API_URL || 'http://localhost:8001/api'
+  MAINURL: import.meta.env.VITE_FASTAPI_API_URL || 'http://localhost:8001/api'
 })
 
 fastapiApi.interceptors.request.use((config) => {
@@ -27,7 +27,7 @@ fastapiApi.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccess}`
         return fastapiApi(originalRequest)
       } catch (refreshError) {
-        window.location.href = '/web/login'
+        window.location.href = '/backend/login'
         return Promise.reject(refreshError)
       }
     }

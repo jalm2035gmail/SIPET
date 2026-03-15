@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg
 from django.utils import timezone as dj_timezone
 
@@ -21,7 +21,7 @@ def _parse_dt(value: str | None) -> datetime | None:
         return None
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Automatiza ciclo de reentrenamiento de scoring: detectar, reentrenar, evaluar y promover version."
 
     def add_arguments(self, parser):

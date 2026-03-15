@@ -12,7 +12,7 @@
 @source "../../templates/**/*.html";
 @source "../../fastapi_modulo/templates/**/*.html";
 
-/* Módulos del backend (HTML parciales que se inyectan en base.html) */
+/* Módulos del backend (HTML parciales que se inyectan en MAIN.html) */
 @source "../../fastapi_modulo/modulos/**/*.html";
 
 /* Archivos Python con HTML embebido (main.py, módulos con f-strings HTML) */
@@ -34,16 +34,16 @@
 @layer components {
 
   /* ── Cards ────────────────────────────────────────────────────── */
-  .emp-card          { @apply card bg-base-100 border border-base-300 rounded-2xl p-4 shadow-sm; }
-  .reporte-card      { @apply card bg-base-100 border border-base-300 rounded-xl p-3 cursor-pointer text-left; }
-  .kpi-sipet-card    { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
-  .reporte-detalle   { @apply card bg-base-100 border border-base-300 rounded-xl p-4; }
-  .alertas-box       { @apply card bg-base-100 border border-base-300 rounded-xl p-3 mb-3; }
-  .cp-card           { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
-  .cp-panel          { @apply card bg-base-100 border border-base-300 rounded-xl p-3 overflow-hidden; }
-  .reporte-kpi       { @apply card bg-base-200 border border-base-300 rounded-xl p-2; }
-  .reporte-bar-chart { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
-  .line-chart-wrap   { @apply card bg-base-100 border border-base-300 rounded-xl p-3; }
+  .emp-card          { @apply card bg-MAIN-100 border border-MAIN-300 rounded-2xl p-4 shadow-sm; }
+  .reporte-card      { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-3 cursor-pointer text-left; }
+  .kpi-sipet-card    { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-3; }
+  .reporte-detalle   { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-4; }
+  .alertas-box       { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-3 mb-3; }
+  .cp-card           { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-3; }
+  .cp-panel          { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-3 overflow-hidden; }
+  .reporte-kpi       { @apply card bg-MAIN-200 border border-MAIN-300 rounded-xl p-2; }
+  .reporte-bar-chart { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-3; }
+  .line-chart-wrap   { @apply card bg-MAIN-100 border border-MAIN-300 rounded-xl p-3; }
 
   /* ── Tables ───────────────────────────────────────────────────── */
   .emp-table       { @apply table table-zebra w-full text-sm; }
@@ -86,15 +86,15 @@
   .cm-acc-modal.is-open    { pointer-events: auto; visibility: visible; opacity: 1; background-color: oklch(0% 0 0/.4); }
   .cm-acc-dialog           { @apply modal-box w-11/12 max-w-5xl overflow-auto; }
   .cm-acc-header           { @apply flex items-center justify-between gap-3 mb-3; }
-  .cm-acc-title            { @apply m-0 text-base font-black text-base-content; }
+  .cm-acc-title            { @apply m-0 text-MAIN font-black text-MAIN-content; }
 
   /* ── Typography helpers ──────────────────────────────────────── */
-  .emp-head                { @apply m-0 mb-3 text-base text-base-content; }
-  .emp-empty               { @apply text-base-content/50 text-sm; }
-  .emp-kanban-name         { @apply m-0 text-base font-bold leading-tight; }
+  .emp-head                { @apply m-0 mb-3 text-MAIN text-MAIN-content; }
+  .emp-empty               { @apply text-MAIN-content/50 text-sm; }
+  .emp-kanban-name         { @apply m-0 text-MAIN font-bold leading-tight; }
   .emp-kanban-puesto       { @apply m-0 text-sm font-medium leading-snug; }
   .reporte-card-title      { @apply m-0 text-sm font-bold leading-tight; }
-  .alertas-title           { @apply m-0 mb-2 text-base font-black; }
+  .alertas-title           { @apply m-0 mb-2 text-MAIN font-black; }
   .cp-head                 { @apply text-center font-black py-3 px-4; }
   .cp-panel-title          { @apply m-0 mb-2 font-black; }
   .cp-card-title           { @apply m-0 font-bold; }

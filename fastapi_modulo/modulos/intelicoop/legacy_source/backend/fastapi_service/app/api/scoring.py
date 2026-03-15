@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import MAINModel, Field
 from fastapi import APIRouter
 
 from app.core.scoring_model import load_model_artifact, predict_score
@@ -6,7 +6,7 @@ from app.core.scoring_model import load_model_artifact, predict_score
 router = APIRouter()
 
 
-class ScoringInput(BaseModel):
+class ScoringInput(MAINModel):
     ingreso_mensual: float = Field(..., gt=0)
     deuda_actual: float = Field(..., ge=0)
     antiguedad_meses: int = Field(..., ge=0)

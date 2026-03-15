@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
 SOURCE_SPECS = {
@@ -30,7 +30,7 @@ SOURCE_SPECS = {
 }
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Etapa 1/4 de Data Intake: cargadores por fuente para socios, creditos, captacion, cobranza y contabilidad."
 
     def add_arguments(self, parser):
@@ -196,7 +196,7 @@ class Command(BaseCommand):
                 "",
                 "## Estado",
                 "- Etapa 1 de 4 completada tecnicamente.",
-                "- Cargadores base por fuente implementados con salida raw.",
+                "- Cargadores MAIN por fuente implementados con salida raw.",
                 "",
                 "## Artefactos",
                 f"- Reporte CSV: `{report_csv}`",

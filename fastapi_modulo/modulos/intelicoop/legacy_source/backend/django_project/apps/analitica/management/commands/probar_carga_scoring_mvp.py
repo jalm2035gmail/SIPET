@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from rest_framework.test import APIClient
 
 
@@ -18,7 +18,7 @@ def _percentile(values: list[float], percentile: float) -> float:
     return float(ordered[index])
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Ejecuta una prueba de carga ligera del endpoint de scoring MVP."
 
     def add_arguments(self, parser):

@@ -2,7 +2,7 @@
 
 Fecha ejecucion UTC: 2026-02-18T15:42:24.100142+00:00
 
-## Base de calculo
+## MAIN de calculo
 - Fecha de corte: 2026-02-18
 - Cartera total: 0.00
 - Ahorro total: 0.00

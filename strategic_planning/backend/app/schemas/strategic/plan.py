@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, ConfigDict, validator
+from pydantic import MAINModel, Field, ConfigDict, validator
 
 
 # ========== ENUMS ==========
@@ -16,9 +16,9 @@ class PlanStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-# ========== BASE SCHEMAS ==========
-class StrategicPlanBase(BaseModel):
-    """Schema base para Plan Estratégico"""
+# ========== MAIN SCHEMAS ==========
+class StrategicPlanMAIN(MAINModel):
+    """Schema MAIN para Plan Estratégico"""
     name: str = Field(..., min_length=3, max_length=200, description="Nombre del plan")
     code: str = Field(..., min_length=2, max_length=50, description="Código único del plan")
     description: Optional[str] = Field(None, max_length=1000, description="Descripción detallada")
@@ -48,7 +48,7 @@ class StrategicPlanBase(BaseModel):
 
 
 # ========== CREATE SCHEMA ==========
-class StrategicPlanCreate(StrategicPlanBase):
+class StrategicPlanCreate(StrategicPlanMAIN):
     """Schema para creación de Plan Estratégico"""
     model_config = ConfigDict(
         json_schema_extra={
@@ -69,7 +69,7 @@ class StrategicPlanCreate(StrategicPlanBase):
 
 
 # ========== UPDATE SCHEMA ==========
-class StrategicPlanUpdate(BaseModel):
+class StrategicPlanUpdate(MAINModel):
     """Schema para actualización de Plan Estratégico"""
     name: Optional[str] = Field(None, min_length=3, max_length=200)
     code: Optional[str] = Field(None, min_length=2, max_length=50)
@@ -99,8 +99,8 @@ class StrategicPlanUpdate(BaseModel):
 
 
 # ========== RESPONSE SCHEMAS ==========
-class StrategicPlanInDBBase(StrategicPlanBase):
-    """Schema base para respuesta de Plan en DB"""
+class StrategicPlanInDBMAIN(StrategicPlanMAIN):
+    """Schema MAIN para respuesta de Plan en DB"""
     id: int
     status: PlanStatus
     created_at: datetime
@@ -114,7 +114,7 @@ class StrategicPlanInDBBase(StrategicPlanBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class StrategicPlanResponse(StrategicPlanInDBBase):
+class StrategicPlanResponse(StrategicPlanInDBMAIN):
     """Schema para respuesta completa de Plan"""
     progress: Optional[float] = Field(0.0, ge=0, le=100, description="Progreso general")
     days_remaining: Optional[int] = Field(None, description="Días restantes")
@@ -137,7 +137,7 @@ class StrategicPlanResponse(StrategicPlanInDBBase):
     )
 
 
-class StrategicPlanList(BaseModel):
+class StrategicPlanList(MAINModel):
     """Schema para listado de Planes"""
     id: int
     name: str
@@ -154,7 +154,7 @@ class StrategicPlanList(BaseModel):
 
 
 # ========== QUERY/FILTER SCHEMAS ==========
-class StrategicPlanFilter(BaseModel):
+class StrategicPlanFilter(MAINModel):
     """Schema para filtrar planes estratégicos"""
     status: Optional[PlanStatus] = None
     department_id: Optional[int] = None
@@ -167,7 +167,7 @@ class StrategicPlanFilter(BaseModel):
     is_active: Optional[bool] = True
 
 
-class StrategicPlanStats(BaseModel):
+class StrategicPlanStats(MAINModel):
     """Schema para estadísticas de planes"""
     total: int
     active: int

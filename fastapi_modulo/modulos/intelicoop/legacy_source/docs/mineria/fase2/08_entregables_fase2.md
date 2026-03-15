@@ -11,4 +11,4 @@
 - Plantilla de perfilamiento.
 - Lineamientos de homologacion.
 - Diseno inicial de repositorio analitico.
-- Politicas base de seguridad/cumplimiento.
+- Politicas MAIN de seguridad/cumplimiento.

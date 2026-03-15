@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import EjecucionPipeline
 from apps.authentication.models import UserProfile
@@ -13,7 +13,7 @@ def _estado(condicion: bool) -> str:
     return "Cumple" if condicion else "En revision"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Define y verifica gobierno de cambios del modulo (comite, promocion entre ambientes e impacto post-cambio)."
 
     def add_arguments(self, parser):

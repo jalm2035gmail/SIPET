@@ -181,7 +181,7 @@
       border-bottom: 1px solid #e2e8f0;
       background: #f8fafc;
     }
-    .departamentos-page .emp-note-tabs::-webkit-scrollbar { display: none; }
+    .departamentos-page .emp-note-tabs::-backendkit-scrollbar { display: none; }
     .departamentos-page .emp-note-tab {
       border: 0;
       background: transparent;
@@ -368,7 +368,7 @@ table {
   color: #0f172a;
 }
 
-#empleados-module .cv-accordion-title::-webkit-details-marker {
+#empleados-module .cv-accordion-title::-backendkit-details-marker {
   display: none;
 }
 
@@ -519,4 +519,94 @@ table {
   #empleados-module .cv-field-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Overrides institucionales para módulos migrados */
+.departamentos-page .area-card,
+.departamentos-page .list-item,
+.departamentos-page .kanban-col,
+.departamentos-page .emp-note,
+.departamentos-page .dept-org-dialog,
+.departamentos-page .cv-record-card,
+#empleados-module .cv-record-card {
+  border-color: var(--field-border, #cbd5e1);
+  background: var(--content-bg, #ffffff);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--sidebar-bottom, #0f172a) 8%, transparent);
+}
+
+.departamentos-page .list-item:hover,
+.departamentos-page .emp-note-tabs,
+#empleados-module .cv-field-value,
+#empleados-module .cv-field-input,
+#empleados-module .cv-value-item {
+  background: var(--surface-soft, #f8fafc);
+}
+
+.departamentos-page .dept-org-modal {
+  background: color-mix(in srgb, var(--sidebar-bottom, #0f172a) 30%, transparent);
+}
+
+.departamentos-page .dept-org-title,
+.departamentos-page .emp-note-tab,
+.departamentos-page .oc-name,
+.departamentos-page .oc-title,
+#empleados-module .cv-field-value,
+#empleados-module .cv-field-input {
+  color: var(--body-text, #0f172a);
+}
+
+.departamentos-page .dept-org-close,
+.departamentos-page .emp-note-tab.active,
+.departamentos-page .poa-sub-btn,
+#empleados-module .cv-field-input,
+#empleados-module .cv-value-item {
+  border-color: var(--field-border, #cbd5e1);
+  background: var(--field-color, #ffffff);
+  color: var(--field-text, #0f172a);
+}
+
+.departamentos-page .emp-note-tab.active {
+  border-bottom-color: var(--button-bg, #0f172a);
+}
+
+.departamentos-page .save-status.is-pending,
+.departamentos-page .emp-assigned-meta,
+#empleados-module .cv-record-title,
+#empleados-module .cv-field-label {
+  color: color-mix(in srgb, var(--body-text, #0f172a) 58%, #ffffff 42%);
+}
+
+.departamentos-page .save-status.is-ok {
+  color: color-mix(in srgb, var(--institutional-accent, #166534) 82%, #0b0b0b 18%);
+}
+
+.departamentos-page .save-status.is-error,
+.departamentos-page .poa-sub-btn.warn {
+  color: #b91c1c;
+}
+
+.departamentos-page .color-swatch,
+#empleados-module .cv-readonly-checkbox {
+  border-color: var(--field-border, #cbd5e1);
+  accent-color: var(--button-bg, #0f172a);
+}
+
+.departamentos-page .oc-card {
+  background: var(--content-bg, #ffffff);
+  border-color: var(--field-border, #cbd5e1);
+}
+
+.departamentos-page .oc-top {
+  background: linear-gradient(180deg, var(--content-bg, #ffffff), var(--surface-soft, #f8fafc));
+}
+
+.departamentos-page .oc-code {
+  background: var(--button-bg, #0f172a);
+  color: var(--button-text, #ffffff);
+}
+
+.departamentos-page .oc-meta,
+.departamentos-page .cv-field-label,
+#empleados-module .cv-record-title {
+  color: color-mix(in srgb, var(--body-text, #0f172a) 56%, #ffffff 44%);
 }

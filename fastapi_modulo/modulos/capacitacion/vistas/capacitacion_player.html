@@ -1,0 +1,103 @@
+<link rel="stylesheet" href="/capacitacion/assets/css/capacitacion_player.css?v=20260314a">
+
+<div class="cp-shell" id="cp-root"
+  data-js-url="/capacitacion/assets/js/capacitacion_player.js?v=20260309"
+  data-curso-id="">
+
+  <button class="cp-back" type="button" onclick="window.location.href='/capacitacion'">
+    ← Volver al catálogo
+  </button>
+
+  <!-- Progress header -->
+  <div class="cp-progress-header" id="cp-progress-header">
+    <div style="flex:1;">
+      <p class="cp-progress-title" id="cp-curso-title">Cargando…</p>
+      <div class="cp-progress-meta" id="cp-curso-meta"></div>
+    </div>
+    <div class="cp-progress-bar-wrap" style="max-width:260px;">
+      <div class="cp-progress-bar"><div class="cp-progress-fill" id="cp-progress-fill" style="width:0%"></div></div>
+      <div class="cp-progress-pct" id="cp-progress-pct">0%</div>
+    </div>
+  </div>
+
+  <div id="cp-main-status" class="cp-status-msg"></div>
+
+  <!-- Layout: sidebar + player -->
+  <div class="cp-layout" id="cp-layout" style="display:none;">
+
+    <!-- Sidebar -->
+    <aside class="cp-sidebar">
+      <div class="cp-sidebar-header">
+        Lecciones
+        <span class="cp-sidebar-count" id="cp-lesson-count">0</span>
+      </div>
+      <ul class="cp-lesson-list" id="cp-lesson-list"></ul>
+      <!-- Info del curso -->
+      <div class="cp-info-card" id="cp-course-info"></div>
+    </aside>
+
+    <!-- Player -->
+    <div class="cp-player">
+      <!-- Carta de lección activa -->
+      <div class="cp-player-card" id="cp-player-card">
+        <div class="cp-player-header">
+          <div>
+            <h2 class="cp-player-lesson-title" id="cp-lesson-title">Selecciona una lección</h2>
+            <div class="cp-player-lesson-meta" id="cp-lesson-meta"></div>
+          </div>
+          <div id="cp-lesson-done-badge"></div>
+        </div>
+        <div class="cp-player-content" id="cp-player-content">
+          <p class="cp-status-msg">Selecciona una lección del índice para comenzar.</p>
+        </div>
+        <div class="cp-player-footer" id="cp-player-footer" style="display:none;">
+          <button class="cp-btn is-ghost" type="button" id="cp-btn-prev">← Anterior</button>
+          <button class="cp-btn is-green" type="button" id="cp-btn-complete">✓ Marcar como completada</button>
+          <button class="cp-btn is-ghost" type="button" id="cp-btn-next">Siguiente →</button>
+        </div>
+      </div>
+      <!-- Banner evaluación (visible cuando corresponde) -->
+      <div class="cp-eval-banner" id="cp-eval-banner" style="display:none;">
+        <div>
+          <h3>¡Lecciones completadas!</h3>
+          <p id="cp-eval-banner-desc">Ahora puedes presentar la evaluación final.</p>
+        </div>
+        <button class="cp-btn is-eval" type="button" id="cp-btn-go-eval">Presentar evaluación →</button>
+      </div>
+      <div class="cp-live-banner" id="cp-live-banner">
+        <div>
+          <h3>Encuestas en vivo</h3>
+          <p>Dinámicas rápidas tipo Mentimeter vinculadas a este curso.</p>
+        </div>
+        <div class="cp-live-list" id="cp-live-list"></div>
+      </div>
+      <div class="cp-live-panel" id="cp-live-panel">
+        <div class="cp-live-panel-head">
+          <div>
+            <strong id="cp-live-panel-title">Encuesta en vivo</strong>
+            <p id="cp-live-panel-desc">Responde sin salir del curso.</p>
+          </div>
+          <button class="cp-btn is-outline" type="button" id="cp-live-close">Cerrar</button>
+        </div>
+        <iframe id="cp-live-frame" class="cp-live-frame" title="Encuesta en vivo"></iframe>
+      </div>
+    </div>
+
+  </div><!-- /cp-layout -->
+
+</div><!-- /cp-shell -->
+
+<script>
+  (function () {
+    // Inyectar curso_id desde la URL en el elemento raíz
+    var root = document.getElementById('cp-root');
+    if (!root) return;
+    var m = window.location.pathname.match(/\/capacitacion\/curso\/(\d+)/);
+    if (m) root.setAttribute('data-curso-id', m[1]);
+    var jsUrl = root.getAttribute('data-js-url');
+    if (!jsUrl) return;
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  })();
+</script>

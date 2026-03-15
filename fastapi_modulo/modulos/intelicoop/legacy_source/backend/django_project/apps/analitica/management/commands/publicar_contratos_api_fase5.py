@@ -5,10 +5,10 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Publica contratos API versionados (OpenAPI v1) y matriz de compatibilidad con sistemas consumidores."
 
     def add_arguments(self, parser):

@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import (
     EjecucionPipeline,
@@ -18,7 +18,7 @@ def _json_dump(data: dict) -> str:
     return json.dumps(data, ensure_ascii=True, separators=(",", ":"))
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Centraliza observabilidad y trazabilidad de inferencias/batch para Fase 5."
 
     def add_arguments(self, parser):

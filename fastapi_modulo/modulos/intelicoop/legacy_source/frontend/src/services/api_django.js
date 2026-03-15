@@ -3,7 +3,7 @@ import { getAccessToken } from './auth_storage'
 import { refreshAccessToken } from './token_refresh'
 
 export const djangoApi = axios.create({
-  baseURL: import.meta.env.VITE_DJANGO_API_URL || '/api'
+  MAINURL: import.meta.env.VITE_DJANGO_API_URL || '/api'
 })
 
 djangoApi.interceptors.request.use((config) => {
@@ -29,7 +29,7 @@ djangoApi.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccess}`
         return djangoApi(originalRequest)
       } catch (refreshError) {
-        window.location.href = '/web/login'
+        window.location.href = '/backend/login'
         return Promise.reject(refreshError)
       }
     }

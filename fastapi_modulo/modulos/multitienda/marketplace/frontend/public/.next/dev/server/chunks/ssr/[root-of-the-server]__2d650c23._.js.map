@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/jalm/multitienda/marketplace/frontend/public/pages/index.js"],"sourcesContent":["export default function Home() {\n  return (\n    <main style={{ padding: 32 }}>\n      <h1>MultiTiendApp</h1>\n      <p>Catálogo público que muestra tiendas independientes.</p>\n      <p>Usa `/store/[slug]` para cargar datos por vendedor.</p>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS;IACtB,qBACE,qKAAC;QAAK,OAAO;YAAE,SAAS;QAAG;;0BACzB,qKAAC;0BAAG;;;;;;0BACJ,qKAAC;0BAAE;;;;;;0BACH,qKAAC;0BAAE;;;;;;;;;;;;AAGT"}}]
+}

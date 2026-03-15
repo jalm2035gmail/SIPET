@@ -2,7 +2,7 @@
 
 Fecha ejecucion UTC: 2026-02-18T15:40:42.022270+00:00
 
-## Base de calculo
+## MAIN de calculo
 - Cartera total: 0.00
 - Cartera vencida estimada: 0.00
 - Pagos ultimos 90 dias: 0.00

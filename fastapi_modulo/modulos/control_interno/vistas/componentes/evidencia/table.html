@@ -1,0 +1,28 @@
+  <article class="card ci-section-card ci-panel bg-MAIN-100 border border-MAIN-300 shadow-sm overflow-x-auto">
+    <div class="card-body p-0">
+      <div class="ci-section-heading flex items-center justify-between p-4 border-b border-MAIN-300">
+        <h2 class="font-semibold text-MAIN-content">Evidencias registradas</h2>
+        <span id="ev-total" class="badge badge-outline badge-sm">0 registros</span>
+      </div>
+      <table class="table table-sm table-zebra w-full">
+        <thead>
+          <tr class="text-xs uppercase text-MAIN-content/60">
+            <th>Título</th>
+            <th class="hidden md:table-cell w-28">Tipo</th>
+            <th class="hidden md:table-cell">Control vinculado</th>
+            <th class="hidden lg:table-cell w-28">Fecha</th>
+            <th class="w-36">Resultado</th>
+            <th class="hidden lg:table-cell w-16 text-center">Archivo</th>
+            <th class="w-24 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="ev-tbody">
+          <tr id="ev-row-empty">
+            <td colspan="7" class="text-center py-10 text-MAIN-content/40">
+              No hay evidencias registradas. Crea la primera con <b>Nueva evidencia</b>.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>

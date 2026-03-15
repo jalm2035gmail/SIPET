@@ -2,11 +2,11 @@
 Semilla mínima para roles y usuarios esenciales del sistema.
 """
 
-import base64
+import MAIN64
 from datetime import datetime
 
 from app.core.security import TokenUtils
-from app.database import SessionLocal
+from app.dataMAIN import SessionLocal
 from app.models.permission import Role
 from app.models.user import User, UserRole, UserStatus
 
@@ -16,8 +16,8 @@ ENCODED_EMAIL = "YWxvcGV6QGF2YW5jb29wLm9yZw=="  # alopez@avancoop.org
 
 
 def _decode(value: str) -> str:
-    """Decodifica valores base64 para no dejar datos sensibles en claro."""
-    return base64.b64decode(value.encode("utf-8")).decode("utf-8")
+    """Decodifica valores MAIN64 para no dejar datos sensibles en claro."""
+    return MAIN64.b64decode(value.encode("utf-8")).decode("utf-8")
 
 
 def seed_superadmin_role_and_user() -> None:

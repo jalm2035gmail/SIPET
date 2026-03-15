@@ -1,0 +1,240 @@
+{% from "modulos/backend/vistas/sidebar_icons.html" import module_icon %}
+{% set cartera_module = (modules_payload_map | default({})).get('cartera_prestamos', {}) %}
+{% set control_module = (modules_payload_map | default({})).get('control_seguimiento', {}) %}
+<div class="sidebar" id="sidebar">
+    <button type="button" class="sidebar-mobile-close" id="sidebar-mobile-close" aria-label="Cerrar menú">×</button>
+    <div class="sidebar-section-title">Navegacion</div>
+    <div class="sidebar-app-filter" id="sidebar-app-filter-wrap">
+        <label class="sidebar-app-filter-label" for="sidebar-app-filter-input">Buscar app</label>
+        <div class="sidebar-app-filter-field">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input id="sidebar-app-filter-input" type="search" placeholder="Buscar apps" autocomplete="off">
+        </div>
+    </div>
+    <nav>
+        {% if is_superadmin_effective or 'backend' in (active_module_keys | default([])) %}
+        <a class="sidebar-main-link" href="/backend" data-menu-name="backend" data-route="/backend">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-globe" aria-hidden="true"></i>
+                <span class="sidebar-main-label">backend</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'mi_tablero' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Mi tablero' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/mi-tablero" data-menu-name="Mi tablero" data-route="/mi-tablero">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-rectangle-list" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Mi tablero</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'conversaciones' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Conversaciones' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/notificaciones" data-menu-name="Conversaciones" data-route="/notificaciones">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-envelope" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Conversaciones</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'organizacion' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Organización' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/inicio/departamentos" data-menu-name="Organización" data-route="/inicio/departamentos">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-sitemap" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Organización</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'estrategia_tactica' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Estrategia y táctica' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/planes" data-menu-name="Estrategia y táctica" data-route="/planes">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-chess-board" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Estrategia y táctica</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'datos_financieros' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Datos financieros' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/proyectando" data-menu-name="Datos financieros" data-route="/proyectando">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-chart-column" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Datos financieros</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'mesa_control' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Mesa de control' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/mesa-de-control" data-menu-name="Mesa de control" data-route="/mesa-de-control">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-gauge-high" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Mesa de control</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'cartera_prestamos' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Cartera de préstamos' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="{{ cartera_module.get('route', '/resumen_ejecutivo') }}" data-menu-name="{{ cartera_module.get('label', 'Cartera de préstamos') }}" data-route="{{ cartera_module.get('route', '/resumen_ejecutivo') }}">
+            <span class="sidebar-main-left">
+                <span class="sidebar-main-icon sidebar-main-icon-custom" aria-hidden="true">
+                    <img src="{{ cartera_module.get('icon_url', '/modulos/cartera_prestamos/static/description/financiamiento.svg') }}" alt="">
+                </span>
+                <span class="sidebar-main-label">{{ cartera_module.get('label', 'Cartera de préstamos') }}</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'pld' in (active_module_keys | default([]))) and (is_superadmin_effective or 'PLD' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/pld" data-menu-name="PLD" data-route="/pld">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-shield-halved" aria-hidden="true"></i>
+                <span class="sidebar-main-label">PLD</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'mkt' in (active_module_keys | default([]))) and (is_superadmin_effective or 'MKT' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/mkt/digital" data-menu-name="MKT" data-route="/mkt/digital">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-bullhorn" aria-hidden="true"></i>
+                <span class="sidebar-main-label">MKT</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'intelicoop' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Intelicoop' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/inicio/intelicoop" data-menu-name="Intelicoop" data-route="/inicio/intelicoop">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-microchip" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Intelicoop</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'brujula' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Brújula' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/brujula" data-menu-name="BRUJULA" data-route="/brujula" data-route-match="exact">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-compass" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Brújula</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'crm' in (active_module_keys | default([]))) and (is_superadmin_effective or 'CRM' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/crm" data-menu-name="CRM" data-route="/crm">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-address-card" aria-hidden="true"></i>
+                <span class="sidebar-main-label">CRM</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if is_superadmin_effective or 'encuestas' in (active_module_keys | default([])) %}
+        <a class="sidebar-main-link" href="/encuestas" data-menu-name="Encuestas" data-route="/encuestas">
+            <span class="sidebar-main-left">
+                <span class="sidebar-main-icon" aria-hidden="true">
+                    {{ module_icon('encuestas') }}
+                </span>
+                <span class="sidebar-main-label">Encuestas</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'auditoria' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Auditoria' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/auditoria" data-menu-name="Auditoría" data-route="/auditoria">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-clipboard-check" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Auditoría</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'activo_fijo' in (active_module_keys | default([]))) and (is_superadmin_effective or 'ActivoFijo' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/activo-fijo" data-menu-name="Gestión de Activo Fijo" data-route="/activo-fijo">
+            <span class="sidebar-main-left">
+                <span class="sidebar-main-icon sidebar-main-icon-custom" aria-hidden="true">
+                    {{ module_icon('activo_fijo') }}
+                </span>
+                <span class="sidebar-main-label">Gestión de Activo Fijo</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'bsc' in (active_module_keys | default([]))) and (is_superadmin_effective or 'BSC' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/inicio" data-menu-name="BSC" data-route="/inicio">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-circle-dot" aria-hidden="true"></i>
+                <span class="sidebar-main-label">BSC</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'control_seguimiento' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Control y seguimiento' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="{{ control_module.get('route', '/control-seguimiento') }}" data-menu-name="{{ control_module.get('label', 'Control y seguimiento') }}" data-route="{{ control_module.get('route', '/control-seguimiento') }}">
+            <span class="sidebar-main-left">
+                <span class="sidebar-main-icon sidebar-main-icon-custom" aria-hidden="true">
+                    <img src="{{ control_module.get('icon_url', '/modulos/control_interno/static/description/control.svg') }}" alt="">
+                </span>
+                <span class="sidebar-main-label">{{ control_module.get('label', 'Control y seguimiento') }}</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'kpis' in (active_module_keys | default([]))) and (is_superadmin_effective or 'KPIs' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/kpis" data-menu-name="KPI's" data-route="/kpis">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-chart-line" aria-hidden="true"></i>
+                <span class="sidebar-main-label">KPI's</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'reportes' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Reportes' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/reportes" data-menu-name="Reportes" data-route="/reportes">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-regular fa-file-lines" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Reportes</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'empresa' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Empresa' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/identidad-institucional" data-menu-name="Empresa" data-route="/identidad-institucional">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-building" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Empresa</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'capacitacion' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Capacitacion' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/capacitacion" data-menu-name="Capacitación" data-route="/capacitacion">
+            <span class="sidebar-main-left">
+                <span class="sidebar-main-icon" aria-hidden="true">
+                    {{ module_icon('capacitacion') }}
+                </span>
+                <span class="sidebar-main-label">Capacitación</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if (is_superadmin_effective or 'multiempresa' in (active_module_keys | default([]))) and (is_superadmin_effective or 'Multiempresa' in (user_app_access | default([]))) %}
+        <a class="sidebar-main-link" href="/multiempresa" data-menu-name="Multiempresa" data-route="/multiempresa">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-layer-group" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Multiempresa</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if current_role in ['superadministrador', 'superadmin'] %}
+        <a class="sidebar-main-link" href="/modulos" data-menu-name="Módulos" data-route="/modulos">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-cubes" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Módulos</span>
+            </span>
+        </a>
+        {% endif %}
+        {% if current_role in ['superadministrador', 'superadmin'] %}
+        <a class="sidebar-main-link" href="/ajustes/configuracion" data-menu-name="Ajustes" data-route="/ajustes/configuracion">
+            <span class="sidebar-main-left">
+                <i class="sidebar-main-icon fa-solid fa-gear" aria-hidden="true"></i>
+                <span class="sidebar-main-label">Ajustes</span>
+            </span>
+        </a>
+        {% endif %}
+    </nav>
+    <div class="sidebar-notifications-panel" id="sidebar-notifications-panel" aria-hidden="true">
+        <div class="sidebar-notifications-header">
+            <div>
+                <strong>Notificaciones</strong>
+                <div class="sidebar-notifications-count" id="sidebar-notifications-count">Sin pendientes</div>
+            </div>
+            <div class="sidebar-notifications-actions">
+                <button type="button" class="sidebar-notifications-refresh" id="sidebar-notifications-mark-all">Marcar todo</button>
+                <button type="button" class="sidebar-notifications-refresh" id="sidebar-notifications-refresh">Actualizar</button>
+            </div>
+        </div>
+        <div class="sidebar-notifications-empty" id="sidebar-notifications-empty">No tienes notificaciones pendientes.</div>
+        <ul class="sidebar-notifications-list" id="sidebar-notifications-list"></ul>
+    </div>
+</div>

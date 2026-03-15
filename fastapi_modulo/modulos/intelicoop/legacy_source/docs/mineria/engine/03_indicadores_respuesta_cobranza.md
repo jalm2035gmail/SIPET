@@ -2,7 +2,7 @@
 
 Fecha ejecucion UTC: 2026-02-18T15:45:25.488055+00:00
 
-## Base de calculo
+## MAIN de calculo
 - Fecha de corte: 2026-02-18
 - Gestiones consideradas: 0
 - Gestiones con recuperacion: 0

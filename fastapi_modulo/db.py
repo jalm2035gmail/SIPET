@@ -32,7 +32,7 @@ def _normalize_host(value: Optional[str]) -> str:
     return raw
 
 
-def _normalize_database_url(raw_url: str) -> str:
+def _normalize_dataMAIN_url(raw_url: str) -> str:
     if raw_url.startswith("postgres://"):
         return raw_url.replace("postgres://", "postgresql://", 1)
     return raw_url
@@ -48,29 +48,29 @@ def _resolve_sqlite_path(raw_path: str) -> str:
     return os.path.abspath(os.path.join(PROJECT_ROOT, candidate))
 
 
-def _coerce_database_target_to_url(target: str) -> str:
+def _coerce_dataMAIN_target_to_url(target: str) -> str:
     raw = (target or "").strip()
     if not raw:
-        raise RuntimeError("Destino de base de datos vacío.")
+        raise RuntimeError("Destino de MAIN de datos vacío.")
     if "://" in raw:
-        return _normalize_database_url(raw)
+        return _normalize_dataMAIN_url(raw)
     sqlite_path = _resolve_sqlite_path(raw)
     return f"sqlite:///{sqlite_path}"
 
 
-def _resolve_default_database_url() -> str:
+def _resolve_default_dataMAIN_url() -> str:
     raw_url = (
-        os.environ.get("DATABASE_URL")
+        os.environ.get("DATAMAIN_URL")
         or os.environ.get("POSTGRES_URL")
         or os.environ.get("POSTGRESQL_URL")
         or ""
     ).strip()
     if raw_url:
-        return _normalize_database_url(raw_url)
+        return _normalize_dataMAIN_url(raw_url)
 
     sqlite_db_path = (os.environ.get("SQLITE_DB_PATH") or "").strip()
     if sqlite_db_path:
-        return _coerce_database_target_to_url(sqlite_db_path)
+        return _coerce_dataMAIN_target_to_url(sqlite_db_path)
 
     is_railway = any(str(value or "").strip() for key, value in os.environ.items() if key.startswith("RAILWAY_"))
     is_prod_like = APP_ENV_DEFAULT in {"production", "prod"} or is_railway
@@ -78,7 +78,7 @@ def _resolve_default_database_url() -> str:
     if is_prod_like:
         fallback_path = os.path.join("/tmp", default_name)
         print(
-            "[db] DATABASE_URL no configurada en producción/Railway; "
+            "[db] DATAMAIN_URL no configurada en producción/Railway; "
             f"usando fallback SQLite temporal en {fallback_path}."
         )
         return f"sqlite:///{fallback_path}"
@@ -86,9 +86,9 @@ def _resolve_default_database_url() -> str:
     return f"sqlite:///{os.path.join(PROJECT_ROOT, default_name)}"
 
 
-def _load_host_database_map() -> Dict[str, str]:
+def _load_host_dataMAIN_map() -> Dict[str, str]:
     mapping: Dict[str, str] = {}
-    raw_json = (os.environ.get("HOST_DATABASE_MAP_JSON") or "").strip()
+    raw_json = (os.environ.get("HOST_DATAMAIN_MAP_JSON") or "").strip()
     if raw_json:
         try:
             data = json.loads(raw_json)
@@ -99,9 +99,9 @@ def _load_host_database_map() -> Dict[str, str]:
                     if normalized_host and normalized_target:
                         mapping[normalized_host] = normalized_target
         except Exception as exc:
-            print(f"[db] No se pudo leer HOST_DATABASE_MAP_JSON: {exc}")
+            print(f"[db] No se pudo leer HOST_DATAMAIN_MAP_JSON: {exc}")
 
-    raw_pairs = (os.environ.get("HOST_DATABASE_MAP") or "").strip()
+    raw_pairs = (os.environ.get("HOST_DATAMAIN_MAP") or "").strip()
     if raw_pairs:
         for chunk in raw_pairs.split(","):
             host, separator, target = chunk.partition("=")
@@ -115,8 +115,8 @@ def _load_host_database_map() -> Dict[str, str]:
     return mapping
 
 
-HOST_DATABASE_MAP = _load_host_database_map()
-DATABASE_URL = _resolve_default_database_url()
+HOST_DATAMAIN_MAP = _load_host_dataMAIN_map()
+DATAMAIN_URL = _resolve_default_dataMAIN_url()
 
 
 def _extract_sqlite_path(db_url: str) -> Optional[str]:
@@ -137,15 +137,15 @@ def get_request_host() -> str:
     return _REQUEST_HOST.get("")
 
 
-def get_database_url_for_host(host: Optional[str] = None) -> str:
+def get_dataMAIN_url_for_host(host: Optional[str] = None) -> str:
     normalized_host = _normalize_host(host) or get_request_host()
-    if normalized_host and normalized_host in HOST_DATABASE_MAP:
-        return _coerce_database_target_to_url(HOST_DATABASE_MAP[normalized_host])
-    return DATABASE_URL
+    if normalized_host and normalized_host in HOST_DATAMAIN_MAP:
+        return _coerce_dataMAIN_target_to_url(HOST_DATAMAIN_MAP[normalized_host])
+    return DATAMAIN_URL
 
 
 def get_engine_for_host(host: Optional[str] = None) -> Engine:
-    db_url = get_database_url_for_host(host)
+    db_url = get_dataMAIN_url_for_host(host)
     engine_instance = _ENGINE_CACHE.get(db_url)
     if engine_instance is not None:
         return engine_instance
@@ -156,7 +156,7 @@ def get_engine_for_host(host: Optional[str] = None) -> Engine:
 
 
 def get_session_factory_for_host(host: Optional[str] = None) -> sessionmaker:
-    db_url = get_database_url_for_host(host)
+    db_url = get_dataMAIN_url_for_host(host)
     session_factory = _SESSION_FACTORY_CACHE.get(db_url)
     if session_factory is not None:
         return session_factory
@@ -173,8 +173,8 @@ def get_current_engine() -> Engine:
     return get_engine_for_host()
 
 
-def get_current_database_info(host: Optional[str] = None) -> Dict[str, str]:
-    db_url = get_database_url_for_host(host)
+def get_current_dataMAIN_info(host: Optional[str] = None) -> Dict[str, str]:
+    db_url = get_dataMAIN_url_for_host(host)
     sqlite_path = _extract_sqlite_path(db_url)
     info = {
         "host": _normalize_host(host) or get_request_host() or "",
@@ -187,7 +187,7 @@ def get_current_database_info(host: Optional[str] = None) -> Dict[str, str]:
 
 
 def dispose_engine_for_host(host: Optional[str] = None) -> None:
-    db_url = get_database_url_for_host(host)
+    db_url = get_dataMAIN_url_for_host(host)
     engine_instance = _ENGINE_CACHE.pop(db_url, None)
     _SESSION_FACTORY_CACHE.pop(db_url, None)
     if engine_instance is not None:
@@ -201,10 +201,10 @@ class _DynamicSessionLocal:
 
 engine = get_engine_for_host()
 SessionLocal = _DynamicSessionLocal()
-Base = declarative_base()
+MAIN = declarative_base()
 
 
-class IAInteraction(Base):
+class IAInteraction(MAIN):
     __tablename__ = "ia_interactions"
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -221,12 +221,12 @@ class IAInteraction(Base):
     error_message = Column(String, default="")
 
 
-class IAConfig(Base):
+class IAConfig(MAIN):
     __tablename__ = "ia_config"
     id = Column(Integer, primary_key=True, index=True)
     ai_provider = Column(String, nullable=False)
     ai_api_key = Column(String, nullable=False)
-    ai_base_url = Column(String, default="")
+    ai_MAIN_url = Column(String, default="")
     ai_model = Column(String, default="")
     ai_timeout = Column(Integer, default=30)
     ai_temperature = Column(Float, default=0.7)
@@ -235,7 +235,7 @@ class IAConfig(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class IAFeatureFlag(Base):
+class IAFeatureFlag(MAIN):
     __tablename__ = "ia_feature_flags"
     id = Column(Integer, primary_key=True, index=True)
     feature_key = Column(String, nullable=False)
@@ -245,7 +245,7 @@ class IAFeatureFlag(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class IASuggestionDraft(Base):
+class IASuggestionDraft(MAIN):
     __tablename__ = "ia_suggestion_drafts"
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -267,7 +267,7 @@ class IASuggestionDraft(Base):
     interaction_id = Column(Integer, default=0)
 
 
-class IAJob(Base):
+class IAJob(MAIN):
     __tablename__ = "ia_jobs"
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -292,7 +292,7 @@ class IAJob(Base):
     model_name = Column(String, default="")
 
 
-class DepartamentoOrganizacional(Base):
+class DepartamentoOrganizacional(MAIN):
     __tablename__ = "organizational_departments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -306,7 +306,7 @@ class DepartamentoOrganizacional(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class RegionOrganizacional(Base):
+class RegionOrganizacional(MAIN):
     __tablename__ = "organizational_regions"
 
     id = Column(Integer, primary_key=True, index=True)

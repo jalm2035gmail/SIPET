@@ -1,0 +1,26 @@
+  <section class="card rounded-box border border-MAIN-300 bg-MAIN-100 shadow-sm hidden" data-brujula-ind-panel="desc">
+    <div class="card-body gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="card-title">Descripcion de indicadores</h2>
+          <p class="text-MAIN-content/70">Catalogo fijo del sistema con nombre, meta y semaforos de referencia.</p>
+        </div>
+      </div>
+
+      <div id="brujula-kpi-msg" class="text-sm text-MAIN-content/70 min-h-[1.25rem]" aria-live="polite"></div>
+      <div class="overflow-x-auto rounded-box border border-MAIN-300">
+        <table class="table table-zebra w-full text-sm">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th class="text-right">Meta</th>
+              <th class="text-right">Srojo</th>
+              <th class="text-right">Sverde</th>
+              <th class="w-32">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="brujula-kpi-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>

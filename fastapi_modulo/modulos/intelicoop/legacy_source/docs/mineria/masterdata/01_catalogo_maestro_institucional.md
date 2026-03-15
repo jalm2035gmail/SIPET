@@ -11,7 +11,7 @@ Fecha ejecucion UTC: 2026-02-18T15:33:23.404751+00:00
 
 ## Estado
 - Elemento 1 de 4 completado tecnicamente.
-- Verdad unica institucional base implementada a nivel de catalogo maestro.
+- Verdad unica institucional MAIN implementada a nivel de catalogo maestro.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/masterdata/01_catalogo_maestro_institucional.csv`

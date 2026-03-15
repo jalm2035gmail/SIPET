@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
 DEFAULT_CATALOGO = {
@@ -32,7 +32,7 @@ DEFAULT_CATALOGO = {
 }
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Configura catalogo operativo de sucursales/territorio/ejecutivos para Growth Engine 1.6."
 
     def add_arguments(self, parser):

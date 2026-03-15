@@ -1,5 +1,5 @@
 dimension,control,estado,detalle
-cumplimiento,politicas_controles_base_documentados,Cumple,evidencia_fase6_seguridad=si
+cumplimiento,politicas_controles_MAIN_documentados,Cumple,evidencia_fase6_seguridad=si
 cumplimiento,versionado_api_para_gobierno_regulatorio,En revision,rutas_api_v1=no
 privacidad_minimizacion,entrada_scoring_minimizada,Cumple,campos_entrada=8
 privacidad_uso_legitimo,acceso_analitica_con_permiso_rol,Cumple,endpoints_protegidos=15

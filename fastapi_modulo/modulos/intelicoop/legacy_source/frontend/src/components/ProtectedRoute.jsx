@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
 
   if (!isAuthenticated) {
-    return <Navigate to="/web/login" replace />
+    return <Navigate to="/backend/login" replace />
   }
 
   return children

@@ -1,6 +1,6 @@
 # Estructura estandar de pantallas backend
 
-Todas las pantallas backend renderizadas con `base.html` siguen este formato:
+Todas las pantallas backend renderizadas con `MAIN.html` siguen este formato:
 
 1. Titulo
 2. Descripcion
@@ -33,7 +33,7 @@ return render_backend_page(
 
 ## Clases CSS de contenido
 
-La base ya incluye estas clases para mantener formato uniforme:
+La MAIN ya incluye estas clases para mantener formato uniforme:
 
 - `.content-section`
 - `.content-section-head`

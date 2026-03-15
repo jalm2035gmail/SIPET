@@ -48,7 +48,7 @@ export default function Register() {
             <Button type="submit" variant="primary">
               Crear cuenta
             </Button>
-            <Link to="/web/login">Ya tengo cuenta</Link>
+            <Link to="/backend/login">Ya tengo cuenta</Link>
           </div>
         </form>
       </Card>

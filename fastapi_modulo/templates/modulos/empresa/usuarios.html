@@ -1,28 +1,228 @@
 <section id="empresa-usuarios-module" class="w-full space-y-4">
-  <div class="titulo bg-base-200 rounded-box border border-base-300 p-4 sm:p-6">
+  <style>
+    .access-module-block {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .access-module-block__header {
+      border-bottom: 1px solid oklch(var(--bc) / 0.2);
+      padding-bottom: 0.25rem;
+    }
+
+    .access-module-block__eyebrow {
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: oklch(var(--bc) / 0.7);
+    }
+
+    .access-module-block__row {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .access-module-block__name {
+      padding-top: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: oklch(var(--bc) / 1);
+    }
+
+    .access-module-block__name-line {
+      margin-top: 0.75rem;
+      width: 100%;
+      border-bottom: 1px solid oklch(var(--bc) / 0.18);
+    }
+
+    .access-module-block__content {
+      display: grid;
+      gap: 0.75rem;
+      padding-left: 1.5rem;
+    }
+
+    .access-module-block__hint {
+      font-size: 0.75rem;
+      color: oklch(var(--bc) / 0.6);
+    }
+
+    .access-module-block__panel {
+      border-radius: 20px;
+      background: #f6ebeb;
+      padding: 1rem 1.25rem;
+    }
+
+    .access-module-block__options {
+      display: grid;
+      gap: 0.75rem;
+      padding-left: 0;
+      margin-top: 0;
+    }
+
+    .access-module-block__option-control {
+      display: inline-flex;
+      width: 1.25rem;
+      min-width: 1.25rem;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .access-module-block__note {
+      font-size: 0.75rem;
+      color: oklch(var(--bc) / 0.7);
+    }
+
+    .access-module-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .access-module-card {
+      display: grid;
+      gap: 0.875rem;
+      border: 1px solid oklch(var(--bc) / 0.12);
+      border-radius: 20px;
+      background: var(--b1, #fff);
+      padding: 1rem 1.125rem;
+    }
+
+    .access-module-card__title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: oklch(var(--bc) / 0.85);
+    }
+
+    .access-module-card__divider {
+      width: 100%;
+      border-top: 1px solid oklch(var(--bc) / 0.14);
+    }
+
+    .access-module-card__fields {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .access-module-card__panel {
+      border: 1px solid oklch(var(--bc) / 0.12);
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--b1, #ffffff) 86%, var(--b2, #f3f4f6) 14%);
+      padding: 1rem;
+    }
+
+    .access-module-card__control {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .access-module-card__control-label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: oklch(var(--bc) / 0.92);
+    }
+
+    .access-module-card__select {
+      width: 100%;
+    }
+
+    .access-module-card__toggle {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.75rem;
+      min-height: 0;
+      border: 1px solid oklch(var(--bc) / 0.1);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--b1, #ffffff) 88%, var(--b2, #f3f4f6) 12%);
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+    }
+
+    .access-module-card__toggle-label {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: oklch(var(--bc) / 0.92);
+    }
+
+    @media (min-width: 768px) {
+      .access-module-block__row {
+        grid-template-columns: 220px minmax(0, 1fr);
+        align-items: start;
+      }
+
+      .access-module-block__content {
+        padding-left: 2rem;
+      }
+
+      .access-module-block__options {
+        padding-left: 2rem;
+      }
+
+      .access-module-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+  <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
     <div class="w-full flex flex-col md:flex-row items-center gap-10">
       <img
         src="/templates/icon/usuarios.svg"
         alt="Icono usuarios"
         width="96"
         height="96"
-        class="shrink-0 rounded-box border border-base-300 bg-base-100 p-3 object-contain"
+        class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
       />
       <div class="w-full grid gap-2 content-center">
         <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Usuarios</div>
-        <div class="block w-full text-base sm:text-lg text-base-content/70">Administra roles y permisos de acceso de los usuarios del sistema.</div>
+        <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Administra roles y permisos de acceso de los usuarios del sistema.</div>
       </div>
     </div>
   </div>
 
-  <article class="card bg-base-100 border border-base-300 shadow-sm">
-    <div class="card-body gap-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <h3 class="card-title">Usuarios del sistema</h3>
-        <label class="input input-bordered flex items-center gap-2 w-full md:max-w-sm">
-          <input id="usuarios-search" type="text" class="grow" placeholder="Buscar por nombre, usuario, correo, rol o puesto">
-        </label>
+  <template id="usuarios-create-template">
+    <div class="grid gap-4">
+      <div>
+        <h3 class="card-title" id="usuarios-create-title">Alta de usuario</h3>
+        <p class="text-sm text-MAIN-content/70" id="usuarios-create-description">Crea un nuevo colaborador del sistema y define su acceso inicial.</p>
       </div>
+      <form id="usuarios-create-form" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <label class="form-control">
+          <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+          <input type="text" name="nombre" class="input input-bordered" placeholder="Nombre completo" required>
+        </label>
+        <label class="form-control">
+          <div class="label"><span class="label-text font-semibold">Usuario</span></div>
+          <input type="text" name="usuario" class="input input-bordered" placeholder="usuario" required>
+        </label>
+        <label class="form-control">
+          <div class="label"><span class="label-text font-semibold">Correo</span></div>
+          <input type="email" name="correo" class="input input-bordered" placeholder="correo@empresa.com">
+        </label>
+        <label class="form-control">
+          <div class="label"><span class="label-text font-semibold">Contraseña</span></div>
+          <input type="password" name="contrasena" class="input input-bordered" placeholder="Mínimo 8 caracteres" required>
+        </label>
+        <label class="label justify-start gap-3 cursor-pointer rounded-box border border-MAIN-300 bg-MAIN-100 px-4 py-3">
+          <input type="checkbox" name="empleado" class="checkbox">
+          <span class="label-text font-semibold">Empleado</span>
+        </label>
+        <label class="label justify-start gap-3 cursor-pointer rounded-box border border-MAIN-300 bg-MAIN-100 px-4 py-3">
+          <input type="checkbox" name="totp_enabled" class="checkbox">
+          <span class="label-text font-semibold">Habilitar doble autenticación</span>
+        </label>
+        <div class="md:col-span-2 xl:col-span-2 flex items-end">
+          <button type="submit" class="btn btn-primary" id="usuarios-create-submit">Dar de alta</button>
+        </div>
+      </form>
+      <div class="pt-2 grid gap-4" id="usuarios-create-notebook-host"></div>
+    </div>
+  </template>
+
+  <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+    <div class="card-body gap-4">
       <div class="view-buttons page-view-buttons">
         <button class="view-pill boton_vista active" type="button" data-usuarios-view="list" data-tooltip="Lista" aria-label="Lista">
           <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
@@ -40,85 +240,55 @@
           <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span>
           <span class="view-pill-label boton_vista-label">Formulario</span>
         </button>
+        <button class="view-pill boton_vista" type="button" id="usuarios-new-btn" data-tooltip="Nuevo" aria-label="Nuevo">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Nuevo</span>
+        </button>
+      </div>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <h3 class="card-title">Usuarios del sistema</h3>
+        <label class="input input-bordered flex items-center gap-2 w-full md:max-w-sm">
+          <input id="usuarios-search" type="text" class="grow" placeholder="Buscar por nombre, usuario, correo, rol o puesto">
+        </label>
       </div>
       <div id="usuarios-view"></div>
     </div>
   </article>
 
-  <div id="usuarios-access-modal" class="fixed inset-0 z-[70] hidden overflow-y-auto p-4">
-    <button type="button" id="usuarios-access-backdrop" class="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]" aria-label="Cerrar permisos de acceso"></button>
-    <article class="relative z-[71] my-4 mx-auto w-full max-w-6xl rounded-[28px] border border-base-300 bg-base-100 shadow-2xl" style="-webkit-overflow-scrolling:touch;">
-      <div class="sticky top-0 z-[72] flex items-center justify-between gap-3 border-b border-base-300 bg-base-100 px-5 py-4">
-        <div>
-          <h3 class="card-title m-0">Permisos de acceso</h3>
-          <p class="text-sm text-base-content/60">Se abre al dar clic sobre un usuario.</p>
-        </div>
-        <button type="button" id="usuarios-modal-close" class="btn btn-ghost btn-sm">Cerrar</button>
-      </div>
-      <div class="px-5 py-5 pb-8">
-        <div class="grid gap-4" id="usuarios-form-host">
-          <p class="text-sm text-base-content/60">Selecciona un usuario en la lista para editar sus permisos.</p>
-        </div>
-      </div>
-    </article>
-  </div>
 </section>
 
 <script>
 (function () {
   var viewHost = document.getElementById('usuarios-view');
-  var formHost = document.getElementById('usuarios-form-host');
   var searchInput = document.getElementById('usuarios-search');
   var viewButtons = Array.from(document.querySelectorAll('#empresa-usuarios-module .view-buttons .view-pill[data-usuarios-view]'));
-  var modal = document.getElementById('usuarios-access-modal');
-  var modalBackdrop = document.getElementById('usuarios-access-backdrop');
-  var modalCloseBtn = document.getElementById('usuarios-modal-close');
+  var newBtn = document.getElementById('usuarios-new-btn');
   var initialPayloadNode = document.getElementById('usuarios-initial-data');
-  if (!viewHost || !formHost) return;
+  var createTemplate = document.getElementById('usuarios-create-template');
+  var createForm = null;
+  var createSubmitBtn = null;
+  var createNotebookHost = null;
+  var createTitle = null;
+  var createDescription = null;
+  if (!viewHost) return;
 
   var usuarios = [];
   var selectedKey = '';
   var searchTerm = '';
   var assignableRoles = [];
   var currentView = 'list';
-  var bodyScrollLockY = 0;
+  var currentCreateTab = 'roles';
+  var createProfileState = null;
   var orgLibPromise = null;
   var usuariosOrgChart = null;
   var orgExpandedUsuarioId = '';
 
-  function lockBodyScroll() {
-    bodyScrollLockY = window.scrollY || window.pageYOffset || 0;
-    document.body.style.position = 'fixed';
-    document.body.style.top = '-' + String(bodyScrollLockY) + 'px';
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    document.body.style.width = '100%';
-    document.body.style.overflow = 'hidden';
-  }
-
-  function unlockBodyScroll() {
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.body.style.right = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    window.scrollTo(0, bodyScrollLockY || 0);
-  }
-
-  function openAccessModal() {
-    if (!modal) return;
-    lockBodyScroll();
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    modal.scrollTop = 0;
-  }
-
-  function closeAccessModal() {
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    unlockBodyScroll();
+  function cacheCreateElements() {
+    createForm = document.getElementById('usuarios-create-form');
+    createSubmitBtn = document.getElementById('usuarios-create-submit');
+    createNotebookHost = document.getElementById('usuarios-create-notebook-host');
+    createTitle = document.getElementById('usuarios-create-title');
+    createDescription = document.getElementById('usuarios-create-description');
   }
 
   function setActiveViewButton(view) {
@@ -127,7 +297,7 @@
     });
   }
 
-  var ACCESS_APP_OPTIONS = ['Mi tablero', 'Conversaciones', 'BSC', 'Organización', 'Estrategia y táctica', 'Datos financieros', 'Control y seguimiento', 'KPIs', 'Reportes', 'Empresa', 'Intelicoop', 'Brújula', 'CRM', 'Auditoria', 'ActivoFijo', 'Multiempresa'];
+  var ACCESS_APP_OPTIONS = ['Mi tablero', 'Conversaciones', 'BSC', 'Organización', 'Estrategia y táctica', 'Datos financieros', 'Mesa de control', 'Cartera de préstamos', 'MKT', 'PLD', 'Control y seguimiento', 'KPIs', 'Reportes', 'Empresa', 'Intelicoop', 'Brújula', 'CRM', 'Encuestas', 'Auditoria', 'ActivoFijo', 'Multiempresa', 'Capacitacion'];
   var ACCESS_LEVEL_OPTIONS = [
     { key: 'full_access', label: 'Acceso total' },
     { key: 'read_only', label: 'Solo lectura' },
@@ -139,10 +309,31 @@
     { value: 'mis_tareas', label: 'Mis tareas (sin vista Gantt)' },
     { value: 'todas_tareas', label: 'Todas las tareas (incluye Gantt)' }
   ];
-  var ACCESS_WEB_ROLE_OPTIONS = [
+  var STRATEGY_SUBMENU_OPTIONS = ['Diagnóstico', 'Plan estratégico', 'POA', 'Tablero de control', 'IA estrategia'];
+  var ACCESS_backend_ROLE_OPTIONS = [
     { value: 'editor', label: 'Editor' },
     { value: 'designer', label: 'Diseñador' }
   ];
+  var CONVERSATION_ACCESS_CONFIG = {
+    title: 'Conversaciones',
+    help_badge: '?',
+    role_label: 'Nivel de acceso',
+    roles: [
+      { value: '', label: 'Sin acceso' },
+      { value: 'usuario', label: 'Usuario' },
+      { value: 'administrador', label: 'Administrador' }
+    ],
+    toggles: [
+      { key: 'can_create_groups', label: 'Puede crear grupos', data_attr: 'create-groups', enabled_when_role: ['usuario', 'administrador'] },
+      { key: 'can_send_notifications', label: 'Puede enviar notificaciones', data_attr: 'send-notifications', enabled_when_role: ['administrador'] }
+    ],
+    scope_label: 'Alcance de notificaciones',
+    scopes: [
+      { value: '', label: 'Solo conversación' },
+      { value: 'department', label: 'Mi departamento' },
+      { value: 'company', label: 'Toda la empresa' }
+    ]
+  };
 
   function esc(value) {
     return String(value == null ? '' : value)
@@ -209,14 +400,105 @@
     });
   }
 
-  function renderAccessRadioGroup(name, options, selectedValue, dataAttrName) {
+  function roleLabel(role) {
+    return role === 'superadministrador' ? 'Superadministrador'
+      : role === 'administrador' ? 'Administrador'
+      : role === 'autoridades' ? 'Autoridades'
+      : role === 'departamento' ? 'Departamento'
+      : role === 'administrador_multiempresa' ? 'Administrador multiempresa'
+      : 'Usuario';
+  }
+
+  function normalizeConversationAccess(raw) {
+    var entry = raw && typeof raw === 'object' ? raw : {};
+    var role = String(entry.role || entry.rol || '').trim().toLowerCase();
+    if (role === 'sin_acceso') role = '';
+    if (role !== 'usuario' && role !== 'administrador') role = '';
+    var notificationScope = String(entry.notification_scope || entry.scope || '').trim().toLowerCase();
+    if (notificationScope !== 'department' && notificationScope !== 'company') notificationScope = '';
+    if (role !== 'administrador' && notificationScope === 'company') notificationScope = 'department';
+    if (!Boolean(entry.can_send_notifications)) notificationScope = '';
+    return {
+      role: role,
+      can_create_groups: Boolean(entry.can_create_groups),
+      can_send_notifications: role === 'administrador' && Boolean(entry.can_send_notifications),
+      notification_scope: notificationScope
+    };
+  }
+
+  function renderConversationAccessConfigurator(namePrefix, accessState, dataPrefix) {
+    var state = normalizeConversationAccess(accessState);
+    var attr = dataPrefix ? String(dataPrefix) : 'conversation-access';
+    var config = CONVERSATION_ACCESS_CONFIG || {};
+    var roleOptions = Array.isArray(config.roles) && config.roles.length ? config.roles : [];
+    var toggleOptions = Array.isArray(config.toggles) ? config.toggles : [];
+    var scopeOptions = Array.isArray(config.scopes) ? config.scopes : [];
+    return '' +
+      '<section class="access-module-card">' +
+        '<h5 class="access-module-card__title">' + esc(config.title || 'Conversaciones') + ' <span class="text-info normal-case">' + esc(config.help_badge || '?') + '</span></h5>' +
+        '<div class="access-module-card__divider"></div>' +
+        '<div class="access-module-card__fields">' +
+          '<div class="access-module-card__panel">' +
+            '<label class="access-module-card__control">' +
+              '<span class="access-module-card__control-label">' + esc(config.role_label || 'Nivel de acceso') + '</span>' +
+              '<select class="select select-bordered access-module-card__select" name="' + esc(namePrefix + '-role') + '" data-' + attr + '-role="1">' +
+                roleOptions.map(function (opt) {
+                  var selected = String(opt.value || '').trim().toLowerCase() === String(state.role || '').trim().toLowerCase();
+                  return '<option value="' + esc(opt.value || '') + '"' + (selected ? ' selected' : '') + '>' + esc(opt.label || '') + '</option>';
+                }).join('') +
+              '</select>' +
+            '</label>' +
+          '</div>' +
+          toggleOptions.map(function (toggle) {
+            var key = String(toggle.key || '').trim();
+            var dataAttr = String(toggle.data_attr || '').trim();
+            var enabledRoles = Array.isArray(toggle.enabled_when_role) ? toggle.enabled_when_role.map(function (value) { return String(value || '').trim().toLowerCase(); }) : [];
+            var isEnabled = enabledRoles.length ? enabledRoles.indexOf(String(state.role || '').trim().toLowerCase()) !== -1 : !!state.role;
+            return '<label class="access-module-card__toggle">' +
+              '<span class="access-module-block__option-control"><input type="checkbox" class="checkbox checkbox-sm" data-' + attr + '-' + esc(dataAttr) + '="1"' + (state[key] ? ' checked' : '') + (isEnabled ? '' : ' disabled') + '></span>' +
+              '<span class="access-module-card__toggle-label">' + esc(toggle.label || key) + '</span>' +
+            '</label>';
+          }).join('') +
+          '<div class="access-module-card__panel">' +
+            '<label class="access-module-card__control">' +
+              '<span class="access-module-card__control-label">' + esc(config.scope_label || 'Alcance de notificaciones') + '</span>' +
+              '<select class="select select-bordered access-module-card__select" name="' + esc(namePrefix + '-scope') + '" data-' + attr + '-scope="1"' + (state.can_send_notifications ? '' : ' disabled') + '>' +
+                scopeOptions.map(function (opt) {
+                  var selected = String(opt.value || '').trim().toLowerCase() === String(state.notification_scope || '').trim().toLowerCase();
+                  return '<option value="' + esc(opt.value || '') + '"' + (selected ? ' selected' : '') + '>' + esc(opt.label || '') + '</option>';
+                }).join('') +
+              '</select>' +
+            '</label>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+  }
+
+  function resetCreateProfileState() {
+    createProfileState = {
+      rol: 'usuario',
+      conversation_access: normalizeConversationAccess(null),
+      app_access_levels: normalizeAccessMatrix(null, [])
+    };
+  }
+
+  function syncCreateProfileFromUser(user) {
+    createProfileState = {
+      rol: normalizeAccessRole(user && (user.rol || user.role) || 'usuario'),
+      conversation_access: normalizeConversationAccess(user && user.conversation_access),
+      app_access_levels: normalizeAccessMatrix(user && user.app_access_levels, user && user.app_access)
+    };
+  }
+
+  function renderAccessRadioGroup(name, options, selectedValue, dataAttrName, textClass) {
     var dataAttr = dataAttrName ? (' ' + dataAttrName + '="1"') : '';
+    var labelClass = textClass ? String(textClass) : 'text-sm';
     return '<div class="grid gap-2">' +
       (options || []).map(function (opt) {
         var checked = String(opt.value || '').trim().toLowerCase() === String(selectedValue || '').trim().toLowerCase();
         return '<label class="label justify-start gap-3 cursor-pointer p-0 min-h-0">' +
-          '<input type="radio" class="radio radio-sm" name="' + esc(name) + '" value="' + esc(opt.value || '') + '"' + dataAttr + (checked ? ' checked' : '') + '>' +
-          '<span class="label-text text-base-content font-semibold">' + esc(opt.label || '') + '</span>' +
+          '<span class="access-module-block__option-control"><input type="radio" class="radio radio-sm" name="' + esc(name) + '" value="' + esc(opt.value || '') + '"' + dataAttr + (checked ? ' checked' : '') + '></span>' +
+          '<span class="label-text ' + labelClass + ' text-MAIN-content font-normal">' + esc(opt.label || '') + '</span>' +
         '</label>';
       }).join('') +
       '</div>';
@@ -232,16 +514,40 @@
         var checked = selected.indexOf(String(value || '').trim().toLowerCase()) !== -1;
         return '<label class="label justify-start gap-3 cursor-pointer p-0 min-h-0">' +
           '<input type="checkbox" class="checkbox checkbox-sm" value="' + esc(value) + '"' + dataAttr + (checked ? ' checked' : '') + '>' +
-          '<span class="label-text text-base-content font-semibold">' + esc(label) + '</span>' +
+          '<span class="label-text text-MAIN-content font-semibold">' + esc(label) + '</span>' +
         '</label>';
       }).join('') +
       '</div>';
   }
 
+  function renderAccessModuleCards(selectedMatrix, conversationAccess) {
+    var matrix = normalizeAccessMatrix(selectedMatrix, []);
+    var moduleNames = ACCESS_APP_OPTIONS.filter(function (appName) {
+      return appName !== 'Conversaciones';
+    });
+    return '<div class="access-module-grid">' +
+      moduleNames.map(function (appName) {
+        return '<section class="access-module-card">' +
+          '<h5 class="access-module-card__title">' + esc(appName) + '</h5>' +
+          '<div class="access-module-card__divider"></div>' +
+          '<div class="access-module-card__fields">' +
+            ACCESS_LEVEL_OPTIONS.map(function (level) {
+              return '<label class="label justify-start gap-3 cursor-pointer p-0 min-h-0">' +
+                '<span class="access-module-block__option-control"><input type="checkbox" class="checkbox checkbox-sm" data-access-app-level="1" data-menu-name="' + esc(appName) + '" data-level-key="' + esc(level.key) + '"' + (matrix[appName][level.key] ? ' checked' : '') + '></span>' +
+                '<span class="label-text text-sm text-MAIN-content font-normal">' + esc(level.label) + '</span>' +
+              '</label>';
+            }).join('') +
+          '</div>' +
+        '</section>';
+      }).join('') +
+      renderConversationAccessConfigurator('create-conversation', conversationAccess, 'create-conversation') +
+    '</div>';
+  }
+
   function renderAccessMatrix(selectedMatrix) {
     var matrix = normalizeAccessMatrix(selectedMatrix, []);
     return '<div class="overflow-x-auto">' +
-      '<table class="table table-sm w-full border border-base-300 rounded-box">' +
+      '<table class="table table-sm w-full border border-MAIN-300 rounded-box">' +
         '<thead><tr><th class="min-w-[220px]">Nombre del menu</th>' +
           ACCESS_LEVEL_OPTIONS.map(function (level) {
             return '<th class="text-center min-w-[120px]">' + esc(level.label) + '</th>';
@@ -249,7 +555,7 @@
         '</tr></thead>' +
         '<tbody>' +
           ACCESS_APP_OPTIONS.map(function (appName) {
-            return '<tr><td class="font-semibold text-base-content">' + esc(appName) + '</td>' +
+            return '<tr><td class="font-semibold text-MAIN-content">' + esc(appName) + '</td>' +
               ACCESS_LEVEL_OPTIONS.map(function (level) {
                 return '<td class="text-center">' +
                   '<input type="checkbox" class="checkbox checkbox-sm" data-access-app-level="1" data-menu-name="' + esc(appName) + '" data-level-key="' + esc(level.key) + '"' + (matrix[appName][level.key] ? ' checked' : '') + '>' +
@@ -262,16 +568,70 @@
     '</div>';
   }
 
-  function collectCheckedValues(selector) {
-    return Array.from(formHost.querySelectorAll(selector))
+  function normalizeStrategySubmenuAccessMatrix(rawMatrix) {
+    var normalized = {};
+    STRATEGY_SUBMENU_OPTIONS.forEach(function (submenuName) {
+      normalized[submenuName] = {
+        full_access: false,
+        read_only: false,
+        department_only: false,
+        user_only: false,
+        special_permissions: false
+      };
+      var rawEntry = rawMatrix && typeof rawMatrix === 'object' ? rawMatrix[submenuName] : null;
+      if (rawEntry && typeof rawEntry === 'object') {
+        ACCESS_LEVEL_OPTIONS.forEach(function (level) {
+          normalized[submenuName][level.key] = Boolean(rawEntry[level.key]);
+        });
+        var selectedKeys = ACCESS_LEVEL_OPTIONS
+          .filter(function (level) { return normalized[submenuName][level.key]; })
+          .map(function (level) { return level.key; });
+        if (selectedKeys.length > 1) {
+          ACCESS_LEVEL_OPTIONS.forEach(function (level, index) {
+            normalized[submenuName][level.key] = index === 0 ? normalized[submenuName][level.key] : false;
+          });
+        }
+      }
+    });
+    return normalized;
+  }
+
+  function renderStrategySubmenuMatrix(selectedMatrix) {
+    var matrix = normalizeStrategySubmenuAccessMatrix(selectedMatrix);
+    return '<div class="overflow-x-auto">' +
+      '<table class="table table-sm w-full border border-MAIN-300 rounded-box">' +
+        '<thead><tr><th class="min-w-[220px]">Submenú estrategia y táctica</th>' +
+          ACCESS_LEVEL_OPTIONS.map(function (level) {
+            return '<th class="text-center min-w-[120px]">' + esc(level.label) + '</th>';
+          }).join('') +
+        '</tr></thead>' +
+        '<tbody>' +
+          STRATEGY_SUBMENU_OPTIONS.map(function (submenuName) {
+            return '<tr><td class="font-semibold text-MAIN-content">' + esc(submenuName) + '</td>' +
+              ACCESS_LEVEL_OPTIONS.map(function (level) {
+                return '<td class="text-center">' +
+                  '<input type="checkbox" class="checkbox checkbox-sm" data-strategy-submenu-level="1" data-submenu-name="' + esc(submenuName) + '" data-level-key="' + esc(level.key) + '"' + (matrix[submenuName][level.key] ? ' checked' : '') + '>' +
+                '</td>';
+              }).join('') +
+            '</tr>';
+          }).join('') +
+        '</tbody>' +
+      '</table>' +
+    '</div>';
+  }
+
+  function collectCheckedValues(selector, rootEl) {
+    var root = rootEl || document;
+    return Array.from(root.querySelectorAll(selector))
       .filter(function (el) { return !!el && !!el.checked; })
       .map(function (el) { return String(el.value || '').trim(); })
       .filter(Boolean);
   }
 
-  function collectAccessMatrix() {
+  function collectAccessMatrix(rootEl) {
+    var root = rootEl || document;
     var matrix = normalizeAccessMatrix(null, []);
-    Array.from(formHost.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
+    Array.from(root.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
       var menuName = String(el.getAttribute('data-menu-name') || '').trim();
       var levelKey = String(el.getAttribute('data-level-key') || '').trim();
       if (!menuName || !levelKey || !matrix[menuName] || !(levelKey in matrix[menuName])) return;
@@ -280,19 +640,104 @@
     return matrix;
   }
 
-  function bindAccessMatrixExclusive() {
-    Array.from(formHost.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
+  function collectStrategySubmenuAccessMatrix(rootEl) {
+    var root = rootEl || document;
+    var matrix = normalizeStrategySubmenuAccessMatrix(null);
+    Array.from(root.querySelectorAll('input[type="checkbox"][data-strategy-submenu-level="1"]')).forEach(function (el) {
+      var submenuName = String(el.getAttribute('data-submenu-name') || '').trim();
+      var levelKey = String(el.getAttribute('data-level-key') || '').trim();
+      if (!submenuName || !levelKey || !matrix[submenuName] || !(levelKey in matrix[submenuName])) return;
+      matrix[submenuName][levelKey] = Boolean(el.checked);
+    });
+    return matrix;
+  }
+
+  function bindAccessMatrixExclusive(rootEl) {
+    var root = rootEl || document;
+    Array.from(root.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (el) {
       el.addEventListener('change', function () {
         if (!el.checked) return;
         var menuName = String(el.getAttribute('data-menu-name') || '').trim();
         if (!menuName) return;
-        Array.from(formHost.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (peer) {
+        Array.from(root.querySelectorAll('input[type="checkbox"][data-access-app-level="1"]')).forEach(function (peer) {
           if (peer === el) return;
           if (String(peer.getAttribute('data-menu-name') || '').trim() !== menuName) return;
           peer.checked = false;
         });
       });
     });
+    Array.from(root.querySelectorAll('input[type="checkbox"][data-strategy-submenu-level="1"]')).forEach(function (el) {
+      el.addEventListener('change', function () {
+        if (!el.checked) return;
+        var submenuName = String(el.getAttribute('data-submenu-name') || '').trim();
+        if (!submenuName) return;
+        Array.from(root.querySelectorAll('input[type="checkbox"][data-strategy-submenu-level="1"]')).forEach(function (peer) {
+          if (peer === el) return;
+          if (String(peer.getAttribute('data-submenu-name') || '').trim() !== submenuName) return;
+          peer.checked = false;
+        });
+      });
+    });
+  }
+
+  function syncCreateProfileFromDom() {
+    if (!createNotebookHost) return;
+    var selectedRoleInput = createNotebookHost.querySelector('input[name="create-rol"]:checked');
+    if (selectedRoleInput) {
+      createProfileState.rol = normalizeAccessRole(selectedRoleInput.value || 'usuario');
+    }
+    var moduleRoleInput = createNotebookHost.querySelector('select[name="create-conversation-role"], input[name="create-conversation-role"]:checked');
+    var currentConversationAccess = normalizeConversationAccess(createProfileState.conversation_access);
+    if (moduleRoleInput) {
+      currentConversationAccess.role = String(moduleRoleInput.value || '').trim().toLowerCase();
+    }
+    currentConversationAccess.can_create_groups = Boolean(createNotebookHost.querySelector('input[type="checkbox"][data-create-conversation-create-groups="1"]')?.checked);
+    currentConversationAccess.can_send_notifications = currentConversationAccess.role === 'administrador'
+      && Boolean(createNotebookHost.querySelector('input[type="checkbox"][data-create-conversation-send-notifications="1"]')?.checked);
+    currentConversationAccess.notification_scope = currentConversationAccess.can_send_notifications
+      ? String(createNotebookHost.querySelector('select[name="create-conversation-scope"]')?.value || '').trim().toLowerCase()
+      : '';
+    if (!currentConversationAccess.role) {
+      currentConversationAccess.can_create_groups = false;
+      currentConversationAccess.can_send_notifications = false;
+      currentConversationAccess.notification_scope = '';
+    }
+    if (currentConversationAccess.role !== 'administrador') {
+      currentConversationAccess.can_send_notifications = false;
+      currentConversationAccess.notification_scope = '';
+    }
+    if (currentConversationAccess.notification_scope !== 'department' && currentConversationAccess.notification_scope !== 'company') {
+      currentConversationAccess.notification_scope = '';
+    }
+    createProfileState.conversation_access = currentConversationAccess;
+    if (createNotebookHost.querySelector('input[type="checkbox"][data-access-app-level="1"]')) {
+      createProfileState.app_access_levels = collectAccessMatrix(createNotebookHost);
+    }
+  }
+
+  function collectConversationAccess(rootEl, prefix) {
+    var root = rootEl || document;
+    var key = String(prefix || 'conversation-access').trim();
+    var roleEl = root.querySelector('select[name="' + key + '-role"], input[name="' + key + '-role"]:checked');
+    var state = {
+      role: roleEl ? String(roleEl.value || '').trim().toLowerCase() : '',
+      can_create_groups: Boolean(root.querySelector('input[type="checkbox"][data-' + key + '-create-groups="1"]')?.checked),
+      can_send_notifications: Boolean(root.querySelector('input[type="checkbox"][data-' + key + '-send-notifications="1"]')?.checked),
+      notification_scope: String(root.querySelector('select[name="' + key + '-scope"]')?.value || '').trim().toLowerCase()
+    };
+    if (!state.role) {
+      state.can_create_groups = false;
+      state.can_send_notifications = false;
+      state.notification_scope = '';
+    }
+    if (state.role !== 'administrador') {
+      state.can_send_notifications = false;
+      state.notification_scope = '';
+    }
+    if (state.notification_scope !== 'department' && state.notification_scope !== 'company') {
+      state.notification_scope = '';
+    }
+    return normalizeConversationAccess(state);
   }
 
   function getKey(item) {
@@ -309,6 +754,15 @@
     return usuarios.filter(matchesSearch);
   }
 
+  function openUserFormByKey(key) {
+    selectedKey = String(key || '');
+    currentView = 'form';
+    renderCurrentView();
+    if (viewHost && typeof viewHost.scrollIntoView === 'function') {
+      viewHost.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   function matchesSearch(item) {
     var term = String(searchTerm || '').trim().toLowerCase();
     if (!term) return true;
@@ -323,22 +777,13 @@
     return haystack.indexOf(term) >= 0;
   }
 
-  function openUserAccessByKey(key) {
-    selectedKey = String(key || '');
-    renderCurrentView();
-    renderForm();
-    openAccessModal();
-  }
-
   function renderList() {
     var visible = getVisibleUsuarios();
     var rowsHtml = !visible.length
-      ? '<tr><td colspan="5" class="text-base-content/60">Sin usuarios.</td></tr>'
+      ? '<tr><td colspan="5" class="text-MAIN-content/60">Sin usuarios.</td></tr>'
       : visible.map(function (item) {
-      var key = getKey(item);
-      var active = key === selectedKey ? ' class="active"' : '';
-      return '<tr data-usuario-key="' + esc(key) + '" class="cursor-pointer hover">' +
-        '<td><button type="button" class="link link-hover font-semibold"' + active + '>' + esc(item.nombre || '') + '</button></td>' +
+      return '<tr class="cursor-pointer hover" data-usuario-key="' + esc(getKey(item)) + '">' +
+        '<td><button type="button" class="link link-hover font-semibold">' + esc(item.nombre || '') + '</button></td>' +
         '<td>' + esc(item.usuario || '') + '</td>' +
         '<td>' + esc(item.correo || '') + '</td>' +
         '<td>' + esc(item.rol || '') + '</td>' +
@@ -346,7 +791,7 @@
       '</tr>';
       }).join('');
     viewHost.innerHTML = '' +
-      '<div class="overflow-x-auto rounded-box border border-base-300">' +
+      '<div class="overflow-x-auto rounded-box border border-MAIN-300">' +
         '<table class="table table-zebra table-sm md:table-md">' +
           '<thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Puesto</th></tr></thead>' +
           '<tbody id="usuarios-tbody">' + rowsHtml + '</tbody>' +
@@ -366,16 +811,16 @@
     var lanes = Object.keys(groups).map(function (groupName) {
       var cards = groups[groupName].length
         ? groups[groupName].map(function (item) {
-            return '<button type="button" class="w-full text-left rounded-box border border-base-300 bg-base-100 p-4 grid gap-1 hover:border-base-content/30" data-usuario-key="' + esc(getKey(item)) + '">' +
-              '<strong class="text-base-content text-base">' + esc(item.nombre || '') + '</strong>' +
-              '<span class="text-sm text-base-content/75">' + esc(item.usuario || '') + '</span>' +
-              '<span class="text-sm text-base-content/75">' + esc(item.puesto || 'Sin puesto') + '</span>' +
-              '<span class="text-xs uppercase tracking-wide text-base-content/50">' + esc(item.rol || 'Usuario') + '</span>' +
-            '</button>';
+            return '<article class="w-full rounded-box border border-MAIN-300 bg-MAIN-100 p-4 grid gap-1 cursor-pointer hover:border-MAIN-content/30" data-usuario-key="' + esc(getKey(item)) + '" role="button" tabindex="0">' +
+              '<strong class="text-MAIN-content text-MAIN">' + esc(item.nombre || '') + '</strong>' +
+              '<span class="text-sm text-MAIN-content/75">' + esc(item.usuario || '') + '</span>' +
+              '<span class="text-sm text-MAIN-content/75">' + esc(item.puesto || 'Sin puesto') + '</span>' +
+              '<span class="text-xs uppercase tracking-wide text-MAIN-content/50">' + esc(item.rol || 'Usuario') + '</span>' +
+            '</article>';
           }).join('')
-        : '<p class="text-sm text-base-content/60">Sin usuarios.</p>';
-      return '<div class="rounded-box border border-base-300 bg-base-200 p-4 grid gap-3">' +
-        '<h4 class="font-semibold text-base-content text-lg">' + esc(groupName) + '</h4>' +
+        : '<p class="text-sm text-MAIN-content/60">Sin usuarios.</p>';
+      return '<div class="rounded-box border border-MAIN-300 bg-MAIN-200 p-4 grid gap-3">' +
+        '<h4 class="font-semibold text-MAIN-content text-lg">' + esc(groupName) + '</h4>' +
         cards +
       '</div>';
     }).join('');
@@ -425,11 +870,11 @@
 
   async function renderOrganigrama() {
     viewHost.innerHTML = '' +
-      '<article class="card bg-base-100 border border-base-300 shadow-sm">' +
+      '<article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">' +
         '<div class="card-body gap-4">' +
           '<h3 class="card-title">Organigrama de usuarios</h3>' +
-          '<div data-usuarios-org-chart class="org-chart-wrap w-full min-h-[640px] overflow-auto rounded-box border border-base-300 bg-base-200 p-3">' +
-            '<p class="text-sm text-base-content/70">Cargando organigrama...</p>' +
+          '<div data-usuarios-org-chart class="org-chart-wrap w-full min-h-[640px] overflow-auto rounded-box border border-MAIN-300 bg-MAIN-200 p-3">' +
+            '<p class="text-sm text-MAIN-content/70">Cargando organigrama...</p>' +
           '</div>' +
         '</div>' +
       '</article>';
@@ -439,12 +884,12 @@
     try {
       var data = getVisibleUsuarios();
       if (!data.length) {
-        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">Sin datos para organigrama.</p>';
+        orgChartEl.innerHTML = '<p class="text-sm text-MAIN-content/70">Sin datos para organigrama.</p>';
         return;
       }
       var libOk = await ensureOrgLibrary();
       if (!libOk) {
-        orgChartEl.innerHTML = '<p class="text-sm text-base-content/70">No se pudo cargar la librería de organigrama.</p>';
+        orgChartEl.innerHTML = '<p class="text-sm text-MAIN-content/70">No se pudo cargar la librería de organigrama.</p>';
         return;
       }
 
@@ -480,8 +925,8 @@
 
       var nodeMap = {};
       nodes.forEach(function (node) { nodeMap[node.id] = node; });
-      var baseRootId = nodeMap.__ROOT__ ? '__ROOT__' : (roots[0] ? roots[0].id : '');
-      if (!orgExpandedUsuarioId) orgExpandedUsuarioId = baseRootId;
+      var MAINRootId = nodeMap.__ROOT__ ? '__ROOT__' : (roots[0] ? roots[0].id : '');
+      if (!orgExpandedUsuarioId) orgExpandedUsuarioId = MAINRootId;
       var expandedPath = new Set(getOrgPathToRoot(orgExpandedUsuarioId, nodeMap));
       nodes = nodes.map(function (node) {
         node._expanded = expandedPath.has(node.id);
@@ -528,8 +973,8 @@
         .onNodeClick(function (d) {
           var clickedId = d && d.data ? d.data.id : '';
           if (!clickedId) return;
-          orgExpandedUsuarioId = orgExpandedUsuarioId === clickedId ? baseRootId : clickedId;
-          openUserAccessByKey(clickedId);
+          orgExpandedUsuarioId = orgExpandedUsuarioId === clickedId ? MAINRootId : clickedId;
+          openUserFormByKey(clickedId);
         })
         .render();
     } catch (error) {
@@ -538,32 +983,39 @@
   }
 
   function renderFormView() {
-    var visible = getVisibleUsuarios();
-    if (!visible.length) {
-      viewHost.innerHTML = '<article class="card bg-base-100 border border-base-300 shadow-sm"><div class="card-body"><p class="text-sm text-base-content/60">Sin usuarios.</p></div></article>';
-      return;
+    viewHost.innerHTML = createTemplate ? createTemplate.innerHTML : '';
+    cacheCreateElements();
+    var current = getCurrent();
+    if (current) {
+      syncCreateProfileFromUser(current);
     }
-    viewHost.innerHTML = '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' +
-      visible.map(function (item) {
-        return '<div role="button" tabindex="0" class="w-full text-left rounded-[24px] border border-base-300 bg-base-100 p-5 shadow-sm hover:border-base-content/30 cursor-pointer" data-usuario-key="' + esc(getKey(item)) + '">' +
-          '<div class="grid gap-4">' +
-            '<div class="flex items-start justify-between gap-3">' +
-              '<div>' +
-                '<div class="text-2xl font-bold text-base-content">' + esc(item.nombre || '') + '</div>' +
-                '<div class="text-sm text-base-content/60">' + esc(item.usuario || '') + ' · ' + esc(item.rol || 'Usuario') + '</div>' +
-              '</div>' +
-              '<span class="badge badge-outline">Abrir</span>' +
-            '</div>' +
-            '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Nombre</span></div><div class="input input-bordered flex items-center">' + esc(item.nombre || '') + '</div></div>' +
-              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Puesto</span></div><div class="input input-bordered flex items-center">' + esc(item.puesto || '') + '</div></div>' +
-              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Usuario</span></div><div class="input input-bordered flex items-center">' + esc(item.usuario || '') + '</div></div>' +
-              '<div class="form-control"><div class="label"><span class="label-text font-semibold">Correo</span></div><div class="input input-bordered flex items-center">' + esc(item.correo || '') + '</div></div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('') +
-    '</div>';
+    if (createTitle) {
+      createTitle.textContent = current ? 'Editar usuario' : 'Alta de usuario';
+    }
+    if (createDescription) {
+      createDescription.textContent = current
+        ? 'Actualiza los datos MAIN y el acceso inicial del usuario seleccionado.'
+        : 'Crea un nuevo colaborador del sistema y define su acceso inicial.';
+    }
+    if (createForm && current) {
+      var nombreInput = createForm.querySelector('input[name="nombre"]');
+      var usuarioInput = createForm.querySelector('input[name="usuario"]');
+      var correoInput = createForm.querySelector('input[name="correo"]');
+      var passwordInput = createForm.querySelector('input[name="contrasena"]');
+      var empleadoInput = createForm.querySelector('input[name="empleado"]');
+      var totpInput = createForm.querySelector('input[name="totp_enabled"]');
+      if (nombreInput) nombreInput.value = String(current.nombre || '');
+      if (usuarioInput) usuarioInput.value = String(current.usuario || '');
+      if (correoInput) correoInput.value = String(current.correo || '');
+      if (passwordInput) passwordInput.value = '';
+      if (empleadoInput) empleadoInput.checked = Boolean(current.empleado != null ? current.empleado : current.colaborador);
+      if (totpInput) totpInput.checked = Boolean(current.totp_enabled);
+    }
+    renderCreateNotebook();
+    if (createSubmitBtn) {
+      createSubmitBtn.textContent = current ? 'Guardar cambios' : 'Dar de alta';
+    }
+    bindCreateForm();
   }
 
   function renderCurrentView() {
@@ -574,141 +1026,55 @@
     return renderList();
   }
 
-  function buildSavePayload(current) {
-    var roleEl = formHost.querySelector('input[name="usuario-acceso-rol"][data-access-role="1"]:checked');
-    var poaEl = formHost.querySelector('input[name="usuario-acceso-poa"][data-access-poa="1"]:checked');
-    var appAccessLevels = collectAccessMatrix();
-    return {
-      id: current.id,
-      nombre: String(current.nombre || '').trim(),
-      usuario: String(current.usuario || '').trim(),
-      correo: String(current.correo || '').trim(),
-      contrasena: '',
-      departamento: String(current.departamento || '').trim(),
-      puesto: String(current.puesto || '').trim(),
-      jefe_inmediato_id: current.jefe_inmediato_id || null,
-      celular: String(current.celular || '').trim(),
-      nivel_organizacional: String(current.nivel_organizacional || current.coach || '').trim(),
-      imagen: String(current.imagen || '').trim(),
-      eficiencia: current.eficiencia,
-      colaborador: Boolean(current.colaborador),
-      rol: roleEl ? String(roleEl.value || '').trim() : normalizeAccessRole(current.rol || current.role || ''),
-      poa_access_level: poaEl ? String(poaEl.value || '').trim() : normalizePoaAccess(current.poa_access_level || ''),
-      app_access_levels: appAccessLevels,
-      app_access: deriveAppAccessFromMatrix(appAccessLevels),
-      menu_blocks: [],
-      web_roles: collectCheckedValues('input[type="checkbox"][data-access-web-role="1"]'),
-      cv_contacto: current.cv_contacto || {},
-      cv_perfil_profesional: current.cv_perfil_profesional || '',
-      cv_experiencia: Array.isArray(current.cv_experiencia) ? current.cv_experiencia : [],
-      cv_educacion: Array.isArray(current.cv_educacion) ? current.cv_educacion : [],
-      cv_habilidades: current.cv_habilidades || { tecnicas: [], blandas: [] },
-      cv_idiomas: Array.isArray(current.cv_idiomas) ? current.cv_idiomas : [],
-      cv_formacion: Array.isArray(current.cv_formacion) ? current.cv_formacion : [],
-      cv_logros: Array.isArray(current.cv_logros) ? current.cv_logros : [],
-      cv_voluntariado: Array.isArray(current.cv_voluntariado) ? current.cv_voluntariado : [],
-      cv_info_adicional: current.cv_info_adicional || {},
-      identidad_mision: String(current.identidad_mision || '').trim(),
-      identidad_vision: String(current.identidad_vision || '').trim()
-    };
-  }
-
-  function renderForm() {
-    var current = getCurrent();
-    if (!current) {
-      formHost.innerHTML = '<p class="text-sm text-base-content/60">Selecciona un usuario en la lista para editar sus permisos.</p>';
-      return;
-    }
-    var rawRole = normalizeAccessRole(current.rol || current.role || 'usuario');
-    var roleOptions = assignableRoles.map(function (role) {
-      return {
-        value: role,
-        label: role === 'superadministrador' ? 'Superadministrador'
-          : role === 'administrador' ? 'Administrador'
-          : role === 'autoridades' ? 'Autoridades'
-          : role === 'departamento' ? 'Departamento'
-          : role === 'administrador_multiempresa' ? 'Administrador multiempresa'
-          : 'Usuario'
-      };
+  function renderCreateNotebook() {
+    if (!createNotebookHost) return;
+    var roleOptions = (assignableRoles.length ? assignableRoles : ['usuario']).map(function (role) {
+      return { value: role, label: roleLabel(role) };
     });
-    if (!roleOptions.some(function (opt) { return opt.value === rawRole; })) {
-      roleOptions.unshift({ value: rawRole, label: rawRole });
+    if (!roleOptions.some(function (opt) { return opt.value === 'usuario'; })) {
+      roleOptions.push({ value: 'usuario', label: 'Usuario' });
     }
-    var appAccess = Array.isArray(current.app_access) ? current.app_access : [];
-    var appAccessLevels = normalizeAccessMatrix(current.app_access_levels, appAccess);
-    var webRoles = Array.isArray(current.web_roles) ? current.web_roles : [];
+    var selectedRole = normalizeAccessRole(createProfileState.rol || 'usuario');
+    var conversationAccess = normalizeConversationAccess(createProfileState.conversation_access);
+    var appAccessLevels = normalizeAccessMatrix(createProfileState.app_access_levels, []);
 
-    formHost.innerHTML = '' +
-      '<div class="flex items-start justify-between gap-3">' +
-        '<div>' +
-          '<h3 class="card-title">Permisos de acceso</h3>' +
-          '<p class="text-sm text-base-content/70">' + esc(current.nombre || '') + ' · ' + esc(current.usuario || '') + '</p>' +
-        '</div>' +
-        '<button type="button" class="btn btn-primary btn-sm" id="usuarios-save-btn">Guardar acceso</button>' +
+    createNotebookHost.innerHTML = '' +
+      '<div>' +
+        '<h3 class="card-title">Notebook</h3>' +
+        '<p class="text-sm text-MAIN-content/70">Estas pestañas definen el perfil inicial del usuario.</p>' +
       '</div>' +
-      '<div class="grid gap-4">' +
-        '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Nombre</span></div><input class="input input-bordered" type="text" value="' + esc(current.nombre || '') + '" readonly></label>' +
-          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Puesto</span></div><input class="input input-bordered" type="text" value="' + esc(current.puesto || '') + '" readonly></label>' +
-          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Usuario</span></div><input class="input input-bordered" type="text" value="' + esc(current.usuario || '') + '" readonly></label>' +
-          '<label class="form-control"><div class="label"><span class="label-text font-semibold">Correo</span></div><input class="input input-bordered" type="text" value="' + esc(current.correo || '') + '" readonly></label>' +
-        '</div>' +
-        '<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">' +
-          '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
-            '<h4 class="font-bold text-base-content text-xl mb-3">Roles</h4>' +
-            renderAccessRadioGroup('usuario-acceso-rol', roleOptions, rawRole, 'data-access-role') +
-          '</div>' +
-          '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
-            '<h4 class="font-bold text-base-content text-xl mb-3">POA</h4>' +
-            renderAccessRadioGroup('usuario-acceso-poa', ACCESS_POA_OPTIONS, normalizePoaAccess(current.poa_access_level || ''), 'data-access-poa') +
-          '</div>' +
-          '<div class="rounded-box border border-base-300 bg-base-100 p-3 lg:col-span-2">' +
-            '<h4 class="font-bold text-base-content text-xl mb-1">Bloques del menú</h4>' +
-            '<p class="text-sm text-base-content/70 mb-3">Si un menú no tiene ningún checkbox marcado, el usuario no podrá verlo. Permisos especiales queda reservado por ahora.</p>' +
-            renderAccessMatrix(appAccessLevels) +
-          '</div>' +
-          '<div class="rounded-box border border-base-300 bg-base-100 p-3">' +
-            '<h4 class="font-bold text-base-content text-xl mb-3">Página web</h4>' +
-            renderAccessCheckboxGroup(ACCESS_WEB_ROLE_OPTIONS, webRoles, 'data-access-web-role') +
-          '</div>' +
-        '</div>' +
+      '<div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Perfil del usuario">' +
+        '<button type="button" class="tab tab-lifted text-sm font-normal' + (currentCreateTab === 'roles' ? ' tab-active' : '') + '" data-create-tab="roles" aria-selected="' + (currentCreateTab === 'roles' ? 'true' : 'false') + '">Rol</button>' +
+        '<button type="button" class="tab tab-lifted text-sm font-normal' + (currentCreateTab === 'acceso' ? ' tab-active' : '') + '" data-create-tab="acceso" aria-selected="' + (currentCreateTab === 'acceso' ? 'true' : 'false') + '">Acceso</button>' +
+      '</div>' +
+      '<div class="rounded-box border border-MAIN-300 bg-MAIN-200 p-4 sm:p-5">' +
+        (currentCreateTab === 'roles'
+          ? '<div class="grid gap-4">' +
+              '<h4 class="text-MAIN font-normal text-MAIN-content">Roles</h4>' +
+              renderAccessRadioGroup('create-rol', roleOptions, selectedRole, 'data-create-role') +
+            '</div>'
+          : '<div class="grid gap-5">' +
+              '<div class="rounded-box border border-dashed border-MAIN-300 bg-MAIN-100 p-4">' +
+                '<div class="grid gap-3">' +
+                  '<div class="grid gap-2 pt-2">' +
+                    '<h4 class="text-MAIN font-semibold text-MAIN-content">Permisos de módulos</h4>' +
+                    '<p class="text-sm text-MAIN-content/70">Selecciona un nivel de acceso por módulo.</p>' +
+                  '</div>' +
+                  renderAccessModuleCards(appAccessLevels, conversationAccess) +
+                '</div>' +
+              '</div>' +
+            '</div>') +
       '</div>';
 
-    bindAccessMatrixExclusive();
-
-    var saveBtn = document.getElementById('usuarios-save-btn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function () {
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Guardando...';
-        fetch('/api/colaboradores', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(buildSavePayload(current))
-        })
-          .then(function (res) { return res.json().then(function (json) { return { ok: res.ok, json: json }; }); })
-          .then(function (result) {
-            if (!result.ok || !result.json || result.json.success === false) {
-              throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo guardar acceso');
-            }
-            if (result.json && result.json.data) {
-              var key = getKey(result.json.data);
-              usuarios = usuarios.map(function (item) { return getKey(item) === key ? Object.assign({}, item, result.json.data) : item; });
-              selectedKey = key;
-              renderList();
-              renderForm();
-            }
-            window.alert('Acceso guardado correctamente.');
-          })
-          .catch(function (error) {
-            window.alert(error && error.message ? error.message : 'No se pudo guardar acceso');
-          })
-          .finally(function () {
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Guardar acceso';
-          });
+    Array.from(createNotebookHost.querySelectorAll('[data-create-tab]')).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        syncCreateProfileFromDom();
+        currentCreateTab = btn.getAttribute('data-create-tab') || 'roles';
+        renderCreateNotebook();
       });
-    }
+    });
+
+    bindAccessMatrixExclusive(createNotebookHost);
   }
 
   viewHost.addEventListener('click', function (event) {
@@ -716,7 +1082,7 @@
     if (!(target instanceof HTMLElement)) return;
     var row = target.closest('[data-usuario-key]');
     if (!(row instanceof HTMLElement)) return;
-    openUserAccessByKey(row.getAttribute('data-usuario-key') || '');
+    openUserFormByKey(row.getAttribute('data-usuario-key') || '');
   });
 
   viewHost.addEventListener('keydown', function (event) {
@@ -726,19 +1092,7 @@
     var row = target.closest('[data-usuario-key]');
     if (!(row instanceof HTMLElement)) return;
     event.preventDefault();
-    openUserAccessByKey(row.getAttribute('data-usuario-key') || '');
-  });
-
-  if (modalCloseBtn) {
-    modalCloseBtn.addEventListener('click', closeAccessModal);
-  }
-  if (modalBackdrop) {
-    modalBackdrop.addEventListener('click', closeAccessModal);
-  }
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
-      closeAccessModal();
-    }
+    openUserFormByKey(row.getAttribute('data-usuario-key') || '');
   });
 
   if (searchInput) {
@@ -755,42 +1109,171 @@
     });
   });
 
+  if (newBtn) {
+    newBtn.addEventListener('click', function () {
+      selectedKey = '';
+      resetCreateProfileState();
+      currentCreateTab = 'roles';
+      currentView = 'form';
+      renderCurrentView();
+      var firstInput = createForm ? createForm.querySelector('input[name="nombre"]') : null;
+      if (viewHost && typeof viewHost.scrollIntoView === 'function') {
+        viewHost.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      if (firstInput && typeof firstInput.focus === 'function') {
+        window.setTimeout(function () { firstInput.focus(); }, 180);
+      }
+    });
+  }
+
   function applyUsuariosPayload(payload) {
     if (!payload || payload.success === false) {
       throw new Error((payload && payload.error) || 'No se pudieron cargar usuarios');
     }
     usuarios = Array.isArray(payload.data) ? payload.data : [];
     assignableRoles = Array.isArray(payload.assignable_roles) ? payload.assignable_roles : [];
+    renderCreateNotebook();
     renderCurrentView();
-    renderForm();
+  }
+
+  function upsertUsuario(item) {
+    var key = getKey(item);
+    var index = usuarios.findIndex(function (row) { return getKey(row) === key; });
+    if (index >= 0) {
+      usuarios[index] = Object.assign({}, usuarios[index], item);
+    } else {
+      usuarios.unshift(item);
+    }
   }
 
   function showUsuariosError(error) {
-    viewHost.innerHTML = '<article class="card bg-base-100 border border-base-300 shadow-sm"><div class="card-body"><p class="text-sm text-error">' + esc(error && error.message ? error.message : 'No se pudieron cargar usuarios.') + '</p></div></article>';
-    formHost.innerHTML = '<p class="text-sm text-error">No se pudieron cargar los usuarios.</p>';
+    viewHost.innerHTML = '<article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm"><div class="card-body"><p class="text-sm text-error">' + esc(error && error.message ? error.message : 'No se pudieron cargar usuarios.') + '</p></div></article>';
   }
 
   try {
     var initialPayload = initialPayloadNode ? JSON.parse(initialPayloadNode.textContent || '{}') : null;
     if (initialPayload && initialPayload.success) {
       applyUsuariosPayload(initialPayload);
-      return;
     }
   } catch (error) {}
 
-  fetch('/api/colaboradores', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
-    .then(async function (res) {
-      const raw = await res.text();
-      let json = null;
-      try { json = raw ? JSON.parse(raw) : {}; } catch (err) {}
-      return { ok: res.ok, json: json, raw: raw };
-    })
+  fetch('/api/v1/conversaciones/access-config', { headers: { Accept: 'application/json' } })
+    .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
     .then(function (result) {
-      if (!result.ok || !result.json || result.json.success === false) {
-        throw new Error((result.json && result.json.error) || 'No se pudieron cargar usuarios');
-      }
-      applyUsuariosPayload(result.json);
+      if (!result.ok || !result.data || result.data.success === false || !result.data.data) return;
+      CONVERSATION_ACCESS_CONFIG = Object.assign({}, CONVERSATION_ACCESS_CONFIG, result.data.data);
+      renderCreateNotebook();
     })
-    .catch(showUsuariosError);
+    .catch(function () {});
+
+  function bindCreateForm() {
+    if (!createForm || createForm.getAttribute('data-bound') === '1') return;
+    createForm.setAttribute('data-bound', '1');
+    createForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      if (!createSubmitBtn) return;
+      var formData = new window.FormData(createForm);
+      syncCreateProfileFromDom();
+      var current = getCurrent();
+      var payload = {
+        id: current && current.id != null ? current.id : undefined,
+        nombre: String(formData.get('nombre') || '').trim(),
+        usuario: String(formData.get('usuario') || '').trim(),
+        correo: String(formData.get('correo') || '').trim(),
+        contrasena: String(formData.get('contrasena') || ''),
+        empleado: formData.get('empleado') === 'on',
+        colaborador: formData.get('empleado') === 'on',
+        totp_enabled: formData.get('totp_enabled') === 'on',
+        rol: normalizeAccessRole(createProfileState.rol || 'usuario'),
+        conversation_access: normalizeConversationAccess(createProfileState.conversation_access),
+        app_access_levels: normalizeAccessMatrix(createProfileState.app_access_levels, []),
+        app_access: deriveAppAccessFromMatrix(createProfileState.app_access_levels)
+      };
+      if (current) {
+        payload.departamento = String(current.departamento || '').trim();
+        payload.puesto = String(current.puesto || '').trim();
+        payload.jefe_inmediato_id = current.jefe_inmediato_id || null;
+        payload.celular = String(current.celular || '').trim();
+        payload.nivel_organizacional = String(current.nivel_organizacional || current.coach || '').trim();
+        payload.imagen = String(current.imagen || '').trim();
+        payload.eficiencia = current.eficiencia;
+        payload.menu_blocks = Array.isArray(current.menu_blocks) ? current.menu_blocks : [];
+        payload.cv_contacto = current.cv_contacto || {};
+        payload.cv_perfil_profesional = current.cv_perfil_profesional || '';
+        payload.cv_experiencia = Array.isArray(current.cv_experiencia) ? current.cv_experiencia : [];
+        payload.cv_educacion = Array.isArray(current.cv_educacion) ? current.cv_educacion : [];
+        payload.cv_habilidades = current.cv_habilidades || { tecnicas: [], blandas: [] };
+        payload.cv_idiomas = Array.isArray(current.cv_idiomas) ? current.cv_idiomas : [];
+        payload.cv_formacion = Array.isArray(current.cv_formacion) ? current.cv_formacion : [];
+        payload.cv_logros = Array.isArray(current.cv_logros) ? current.cv_logros : [];
+        payload.cv_voluntariado = Array.isArray(current.cv_voluntariado) ? current.cv_voluntariado : [];
+        payload.cv_info_adicional = current.cv_info_adicional || {};
+        payload.identidad_mision = String(current.identidad_mision || '').trim();
+        payload.identidad_vision = String(current.identidad_vision || '').trim();
+      }
+      if (!payload.contrasena) delete payload.contrasena;
+
+      createSubmitBtn.disabled = true;
+      createSubmitBtn.textContent = 'Guardando...';
+
+      fetch('/api/colaboradores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(async function (res) {
+          var raw = await res.text();
+          var json = null;
+          try { json = raw ? JSON.parse(raw) : {}; } catch (err) {}
+          return { ok: res.ok, json: json, raw: raw };
+        })
+        .then(function (result) {
+          if (!result.ok || !result.json || result.json.success === false) {
+            throw new Error((result.json && (result.json.error || result.json.detail)) || 'No se pudo guardar el usuario');
+          }
+          if (result.json && result.json.data) {
+            upsertUsuario(result.json.data);
+            selectedKey = getKey(result.json.data);
+            renderCurrentView();
+          }
+          if (!current) {
+            createForm.reset();
+            resetCreateProfileState();
+            currentCreateTab = 'roles';
+            renderCreateNotebook();
+          }
+          window.alert(current ? 'Usuario actualizado correctamente.' : 'Usuario dado de alta correctamente.');
+        })
+        .catch(function (error) {
+          window.alert(error && error.message ? error.message : 'No se pudo guardar el usuario');
+        })
+        .finally(function () {
+          createSubmitBtn.disabled = false;
+          createSubmitBtn.textContent = getCurrent() ? 'Guardar cambios' : 'Dar de alta';
+        });
+    });
+  }
+
+  resetCreateProfileState();
+  cacheCreateElements();
+  renderCreateNotebook();
+  bindCreateForm();
+
+  if (!usuarios.length) {
+    fetch('/api/colaboradores', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(async function (res) {
+        const raw = await res.text();
+        let json = null;
+        try { json = raw ? JSON.parse(raw) : {}; } catch (err) {}
+        return { ok: res.ok, json: json, raw: raw };
+      })
+      .then(function (result) {
+        if (!result.ok || !result.json || result.json.success === false) {
+          throw new Error((result.json && result.json.error) || 'No se pudieron cargar usuarios');
+        }
+        applyUsuariosPayload(result.json);
+      })
+      .catch(showUsuariosError);
+  }
 })();
 </script>

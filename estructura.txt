@@ -1,19 +1,15 @@
 
-Dolores de la cooperativa que resuelve esta app:
-- Dificultad para planificar y dar seguimiento a los objetivos estratégicos y operativos.
-- Falta de visibilidad sobre el avance de los planes y cumplimiento de metas.
-- Procesos manuales y dispersos para la gestión de actividades, indicadores y reportes.
-- Problemas para centralizar la información y generar reportes automáticos.
-- Necesidad de mejorar la comunicación y notificación de tareas y resultados.
+Estructura de los modulos
 
-Avance: 70%
 
-Estructura actual (✳️ marcados los módulos ya implementados)
+
+
+
 
 backend/
 ├── app/ ✅
 │   ├── main.py ✅
-│   ├── database.py ✅
+│   ├── dataMAIN.py ✅
 │   ├── core/ ✅
 │   │   ├── config.py ✅
 │   │   ├── security.py ✅
@@ -33,7 +29,7 @@ backend/
 │   │           ├── roles.py ✅
 │   │           └── dashboard.py ✅
 │   ├── models/ ✅
-│   │   ├── base.py ✅
+│   │   ├── MAIN.py ✅
 │   │   ├── user.py ✅
 │   │   ├── token.py ✅
 │   │   ├── permission.py ✅
@@ -66,7 +62,7 @@ backend/
 │   │   ├── poa_service.py ✅
 │   │   ├── poa_generator.py ✅
 │   ├── crud/ ✅
-│   │   ├── base.py ✅
+│   │   ├── MAIN.py ✅
 │   │   ├── strategic/
 │   │   │   ├── plan.py ✅
 │   │   └── operational/
@@ -87,8 +83,3 @@ infra/
 ├── alembic/ ✅ (migraciones para auth + permisos + análisis)
 └── docker/ (plantillas y configs por venir)
 
-Notas
------
-- El backend ya entrega APIs completas (strategic, users, auth, permissions, roles, dashboard, POA).
-- Se implementaron exportes Excel/PDF, notificaciones, dashboard métricas, POA automático y análisis integrados.
-- Falta completar algunos componentes frontend y pruebas automatizadas, pero el núcleo data+services ya está activo.

@@ -3,10 +3,10 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = (
         "Arquitectura 3 - Etapa 3/4: valida y documenta configuracion TLS "
         "en gateway Nginx con compose override."

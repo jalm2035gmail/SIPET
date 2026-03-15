@@ -14,7 +14,7 @@ PERSISTENT_DB_PATH="${PERSISTENT_DB_PATH:-${PERSISTENT_DB_DIR}/avandbcoop.db}"
 LEGACY_DB_PATH="${LEGACY_DB_PATH:-/opt/avancoop/strategic_planning.db}"
 PREVIOUS_PERSISTENT_DB_PATH="${PREVIOUS_PERSISTENT_DB_PATH:-${PERSISTENT_DB_DIR}/strategic_planning.db}"
 RESTART_CMD="${RESTART_CMD:-/usr/local/bin/avancoop-restart}"
-DATABASE_URL_VALUE="sqlite:////${PERSISTENT_DB_PATH#/}"
+DATAMAIN_URL_VALUE="sqlite:////${PERSISTENT_DB_PATH#/}"
 
 echo "Configuracion activa:"
 echo "  SERVER=$SERVER"
@@ -23,7 +23,7 @@ echo "  REMOTE_DIR=$REMOTE_DIR"
 echo "  PERSISTENT_DB_DIR=$PERSISTENT_DB_DIR"
 echo "  RESTART_CMD=$RESTART_CMD"
 
-echo "Validando ruta persistente de base de datos en servidor..."
+echo "Validando ruta persistente de MAIN de datos en servidor..."
 ssh "$SERVER" "test -d '${PERSISTENT_DB_DIR}' || { echo 'ERROR: ${PERSISTENT_DB_DIR} no existe en servidor.'; exit 1; }"
 
 echo "Migrando BD legacy si aplica..."
@@ -35,7 +35,7 @@ ssh "$SERVER" "if [ -f '${PREVIOUS_PERSISTENT_DB_PATH}' ] && [ ! -f '${PERSISTEN
 echo "Fijando configuracion de produccion en ${REMOTE_DIR}.env..."
 ssh "$SERVER" "touch '${REMOTE_DIR}.env' && \
   grep -q '^APP_ENV=' '${REMOTE_DIR}.env' && sed -i 's|^APP_ENV=.*|APP_ENV=production|' '${REMOTE_DIR}.env' || echo 'APP_ENV=production' >> '${REMOTE_DIR}.env' && \
-  grep -q '^DATABASE_URL=' '${REMOTE_DIR}.env' && sed -i 's|^DATABASE_URL=.*|DATABASE_URL=${DATABASE_URL_VALUE}|' '${REMOTE_DIR}.env' || echo 'DATABASE_URL=${DATABASE_URL_VALUE}' >> '${REMOTE_DIR}.env' && \
+  grep -q '^DATAMAIN_URL=' '${REMOTE_DIR}.env' && sed -i 's|^DATAMAIN_URL=.*|DATAMAIN_URL=${DATAMAIN_URL_VALUE}|' '${REMOTE_DIR}.env' || echo 'DATAMAIN_URL=${DATAMAIN_URL_VALUE}' >> '${REMOTE_DIR}.env' && \
   grep -q '^SQLITE_DB_PATH=' '${REMOTE_DIR}.env' && sed -i 's|^SQLITE_DB_PATH=.*|SQLITE_DB_PATH=${PERSISTENT_DB_PATH}|' '${REMOTE_DIR}.env' || echo 'SQLITE_DB_PATH=${PERSISTENT_DB_PATH}' >> '${REMOTE_DIR}.env' && \
   grep -q '^AUTH_COOKIE_SECRET=' '${REMOTE_DIR}.env' || (python3 -c 'import secrets; print(\"AUTH_COOKIE_SECRET=\" + secrets.token_urlsafe(48))' >> '${REMOTE_DIR}.env')"
 

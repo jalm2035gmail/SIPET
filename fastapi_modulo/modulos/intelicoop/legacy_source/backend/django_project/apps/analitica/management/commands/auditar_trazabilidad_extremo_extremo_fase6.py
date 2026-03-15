@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import (
     EjecucionPipeline,
@@ -18,7 +18,7 @@ def _json_dump(data: dict) -> str:
     return json.dumps(data, ensure_ascii=True, separators=(",", ":"))
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Audita trazabilidad extremo a extremo: inferencias, cambios y aprobaciones/rechazos de modelos (Fase 6)."
 
     def add_arguments(self, parser):

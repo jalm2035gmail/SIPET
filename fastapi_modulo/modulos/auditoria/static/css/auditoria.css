@@ -1,0 +1,213 @@
+/* auditoria.css */
+.aud-shell {
+  padding: 20px;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #0f172a;
+}
+.aud-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.aud-hero-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.aud-hero-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.aud-hero-copy h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+.aud-hero-copy p {
+  margin: 6px 0 0;
+  color: #334155;
+}
+.aud-kpi-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.aud-kpi-card {
+  background: #fff;
+  border: 1px solid rgba(15,23,42,.1);
+  border-radius: 14px;
+  padding: 14px 20px;
+  min-width: 140px;
+  text-align: center;
+}
+.aud-kpi-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #475569;
+  margin-bottom: 6px;
+}
+.aud-kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.aud-kpi-value.is-danger { color: #dc2626; }
+.aud-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+.aud-nav {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.aud-nav a {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(15,23,42,.1);
+  background: #fff;
+  color: #0f172a;
+  border-radius: 12px;
+  padding: 11px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background .15s;
+  text-decoration: none;
+}
+.aud-nav a.is-active, .aud-nav a:hover {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.aud-panel { display: none; }
+.aud-panel.is-active { display: block; }
+.aud-card {
+  background: #fff;
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 16px;
+  padding: 20px;
+}
+.aud-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.aud-table th, .aud-table td {
+  padding: 8px 11px;
+  border-bottom: 1px solid rgba(15,23,42,.07);
+  text-align: left;
+  vertical-align: top;
+}
+.aud-table th {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #475569;
+  background: #f8fafc;
+}
+.aud-table tbody tr:hover { background: #f1f5f9; }
+.aud-status-msg {
+  color: #64748b;
+  font-size: 14px;
+}
+.aud-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+.aud-form-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.aud-form input, .aud-form select, .aud-form textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #fff;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.aud-form textarea { resize: vertical; min-height: 72px; }
+.aud-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.aud-actions button {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 16px;
+  background: #0f172a;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+.aud-actions button.is-danger { background: #dc2626; }
+.aud-actions button.is-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+.aud-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* estados auditoría */
+.aud-badge.planificada  { background:#dbeafe; color:#1d4ed8; }
+.aud-badge.en_proceso   { background:#fef9c3; color:#a16207; }
+.aud-badge.informe      { background:#ede9fe; color:#6d28d9; }
+.aud-badge.cerrada      { background:#dcfce7; color:#15803d; }
+/* nivel riesgo */
+.aud-badge.bajo     { background:#dcfce7; color:#15803d; }
+.aud-badge.medio    { background:#fef9c3; color:#a16207; }
+.aud-badge.alto     { background:#ffedd5; color:#c2410c; }
+.aud-badge.critico  { background:#fee2e2; color:#dc2626; }
+/* estado hallazgo */
+.aud-badge.abierto      { background:#fee2e2; color:#dc2626; }
+.aud-badge.en_atencion  { background:#fef9c3; color:#a16207; }
+.aud-badge.implementado { background:#dcfce7; color:#15803d; }
+.aud-badge.verificado   { background:#d1fae5; color:#065f46; }
+/* estado recomendacion */
+.aud-badge.pendiente    { background:#fee2e2; color:#dc2626; }
+.aud-badge.en_proceso   { background:#fef9c3; color:#a16207; }
+.aud-badge.implementada { background:#dcfce7; color:#15803d; }
+.aud-badge.rechazada    { background:#f1f5f9; color:#64748b; }
+.aud-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #334155;
+  margin: 18px 0 10px;
+}
+.aud-progress {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  display: inline-block;
+  width: 80px;
+  vertical-align: middle;
+}
+.aud-progress-fill {
+  height: 100%;
+  background: #16a34a;
+  transition: width .3s;
+}
+@media (max-width: 900px) {
+  .aud-layout { grid-template-columns: 1fr; }
+}

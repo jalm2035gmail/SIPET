@@ -1,0 +1,27 @@
+<header class="cp-topbar">
+    <div style="display:flex;align-items:flex-start;gap:14px;">
+        <button class="cp-mobile-toggle" id="cp-mobile-toggle" type="button" aria-label="Abrir menú">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+        <div>
+            <h1 class="cp-topbar-title">{{ page_title or title }}</h1>
+            <p class="cp-topbar-subtitle">{{ description }}</p>
+        </div>
+    </div>
+    <div class="cp-topbar-actions">
+        {% if current_subdomain %}
+        <span class="cp-chip">
+            <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
+            {{ current_subdomain.label }}
+        </span>
+        {% endif %}
+        <span class="cp-chip">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            cartera_prestamos
+        </span>
+        <span class="cp-chip">
+            <i class="fa-solid fa-shield-check" aria-hidden="true"></i>
+            {{ current_role_label or "Activo" }}
+        </span>
+    </div>
+</header>

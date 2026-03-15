@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from statistics import pstdev
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Sum
 from django.utils import timezone as dj_timezone
 
@@ -11,7 +11,7 @@ from apps.ahorros.models import Cuenta
 from apps.creditos.models import Credito
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 2/4 de 1.3: calcula indicadores de dinamica de creditos y ahorro."
 
     def add_arguments(self, parser):
@@ -105,7 +105,7 @@ class Command(BaseCommand):
             "",
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             "",
-            "## Base de calculo",
+            "## MAIN de calculo",
             f"- Fecha de corte: {hoy.isoformat()}",
             f"- Cartera total: {cartera_total:.2f}",
             f"- Ahorro total: {ahorro_total:.2f}",

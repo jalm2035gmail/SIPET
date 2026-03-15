@@ -3,7 +3,7 @@ from collections import Counter
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.utils import timezone as dj_timezone
 
 from apps.analitica.models import ResultadoMoraTemprana
@@ -11,7 +11,7 @@ from apps.analitica.views import _calcular_probabilidades_mora
 from apps.creditos.models import Credito
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Genera alertas batch de mora temprana (30/60/90) y publica resultados historicos."
 
     def add_arguments(self, parser):

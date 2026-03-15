@@ -16,7 +16,7 @@ Fecha ejecucion UTC: 2026-02-18T14:07:47.064302+00:00
 
 ## Estado
 - Punto 1 de 8 completado tecnicamente.
-- Validacion tecnica base de modelos en produccion documentada.
+- Validacion tecnica MAIN de modelos en produccion documentada.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase6/01_validacion_tecnica_modelos.csv`

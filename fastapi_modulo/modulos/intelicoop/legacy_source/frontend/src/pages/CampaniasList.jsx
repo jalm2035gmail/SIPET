@@ -99,10 +99,10 @@ export default function CampaniasList() {
       <h1>Campañas</h1>
       <p>Gestión de campañas de captación y reactivación.</p>
       <p className="campanias-page__link-row">
-        <Link to="/web/prospectos">Ver prospectos potenciales</Link>
+        <Link to="/backend/prospectos">Ver prospectos potenciales</Link>
       </p>
       <p className="campanias-page__link-row">
-        <Link to="/web/socios-inactivos">Ver socios inactivos por zona</Link>
+        <Link to="/backend/socios-inactivos">Ver socios inactivos por zona</Link>
       </p>
 
       <Card title="Nueva campaña">

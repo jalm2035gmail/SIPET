@@ -8,13 +8,13 @@
   "connectors": [
     {
       "conector": "postgresql",
-      "tipo": "database",
+      "tipo": "dataMAIN",
       "estado": "Pendiente",
       "detalle": "configurar POSTGRES_HOST y POSTGRES_DB"
     },
     {
       "conector": "mysql",
-      "tipo": "database",
+      "tipo": "dataMAIN",
       "estado": "Pendiente",
       "detalle": "configurar MYSQL_HOST y MYSQL_DB"
     },
@@ -22,7 +22,7 @@
       "conector": "api_rest",
       "tipo": "api",
       "estado": "Pendiente",
-      "detalle": "configurar EXTERNAL_API_BASE_URL"
+      "detalle": "configurar EXTERNAL_API_MAIN_URL"
     },
     {
       "conector": "sftp",

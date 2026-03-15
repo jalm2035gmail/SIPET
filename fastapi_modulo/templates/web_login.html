@@ -449,7 +449,7 @@
                     </svg>
                 </div>
                 <h2>Login</h2>
-                <form class="login-form" method="post" action="/web/login">
+                <form class="login-form" method="post" action="/backend/login">
                     <div class="field">
                         <label for="usuario">Usuario</label>
                         <input id="usuario" name="usuario" type="text" placeholder="Nombre de usuario" autocomplete="username" enterkeyhint="next" required>
@@ -571,13 +571,13 @@
 
         const withPasskeySupportGuard = () => {
             if (isPasskeySupported) return true;
-            setPasskeyStatus("Tu navegador no soporta biometría web.");
+            setPasskeyStatus("Tu navegador no soporta biometría backend.");
             return false;
         };
         const isDemoUser = (value) => (value || "").trim().toLowerCase() === "demo";
         const tryPasskeyAuth = async (usuario) => {
             setPasskeyStatus("Solicitando biometría...");
-            const optionsRes = await postJson("/web/passkey/auth/options", { usuario });
+            const optionsRes = await postJson("/backend/passkey/auth/options", { usuario });
             const options = optionsRes.options || {};
             options.challenge = b64ToBuffer(options.challenge);
             options.allowCredentials = (options.allowCredentials || []).map((item) => ({
@@ -597,13 +597,13 @@
                     userHandle: assertion.response.userHandle ? bufferToB64(assertion.response.userHandle) : "",
                 },
             };
-            const verifyRes = await postJson("/web/passkey/auth/verify", verifyPayload);
+            const verifyRes = await postJson("/backend/passkey/auth/verify", verifyPayload);
             setPasskeyStatus("Biometría validada. Ingresando...");
             window.location.href = verifyRes.redirect || "/inicio";
         };
         const tryPasskeyRegister = async (usuario, contrasena) => {
             setPasskeyStatus("Preparando registro biométrico...");
-            const optionsRes = await postJson("/web/passkey/register/options", { usuario, contrasena });
+            const optionsRes = await postJson("/backend/passkey/register/options", { usuario, contrasena });
             const options = optionsRes.options || {};
             options.challenge = b64ToBuffer(options.challenge);
             if (options.user && options.user.id) options.user.id = b64ToBuffer(options.user.id);
@@ -625,7 +625,7 @@
                     publicKeyAlgorithm: attestationResponse.getPublicKeyAlgorithm ? attestationResponse.getPublicKeyAlgorithm() : null,
                 },
             };
-            await postJson("/web/passkey/register/verify", verifyPayload);
+            await postJson("/backend/passkey/register/verify", verifyPayload);
             applyPasskeyMode("login");
             setPasskeyStatus("Biometría habilitada. Ya puedes ingresar con biometría.");
         };
@@ -636,7 +636,7 @@
                 return;
             }
             try {
-                await postJson("/web/passkey/auth/options", { usuario });
+                await postJson("/backend/passkey/auth/options", { usuario });
                 applyPasskeyMode("login");
             } catch (err) {
                 applyPasskeyMode("register");

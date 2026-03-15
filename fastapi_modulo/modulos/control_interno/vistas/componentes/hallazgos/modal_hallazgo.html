@@ -1,0 +1,82 @@
+  <dialog id="hz-modal" class="modal">
+    <div class="modal-box w-11/12 max-w-3xl">
+      <h3 class="font-bold text-lg mb-4" id="hz-modal-titulo">Nuevo hallazgo</h3>
+      <form id="hz-form" class="grid gap-4" novalidate>
+        <input type="hidden" id="hz-id" name="id" value="">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Código</span></div>
+            <input type="text" id="hz-codigo" name="codigo" maxlength="30" class="input input-bordered input-sm" placeholder="Ej. HZ-2024-001">
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Título <span class="text-error">*</span></span></div>
+            <input type="text" id="hz-titulo" name="titulo" maxlength="200" required class="input input-bordered input-sm" placeholder="Título del hallazgo">
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Componente COSO</span></div>
+            <select id="hz-componente-coso" name="componente_coso" class="select select-bordered select-sm">
+              <option value="">— Seleccionar —</option>
+              <option>Entorno de control</option>
+              <option>Evaluación de riesgos</option>
+              <option>Actividades de control</option>
+              <option>Información y comunicación</option>
+              <option>Monitoreo</option>
+            </select>
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Nivel de riesgo</span></div>
+            <select id="hz-nivel-riesgo" name="nivel_riesgo" class="select select-bordered select-sm">
+              <option>Bajo</option>
+              <option selected>Medio</option>
+              <option>Alto</option>
+              <option>Crítico</option>
+            </select>
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Estado</span></div>
+            <select id="hz-estado" name="estado" class="select select-bordered select-sm">
+              <option selected>Abierto</option>
+              <option>En atención</option>
+              <option>Subsanado</option>
+              <option>Cerrado</option>
+            </select>
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Responsable</span></div>
+            <input type="text" id="hz-responsable" name="responsable" maxlength="150" class="input input-bordered input-sm" placeholder="Nombre del responsable">
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Fecha detección</span></div>
+            <input type="date" id="hz-fecha-deteccion" name="fecha_deteccion" class="input input-bordered input-sm">
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Fecha límite</span></div>
+            <input type="date" id="hz-fecha-limite" name="fecha_limite" class="input input-bordered input-sm">
+          </label>
+          <label class="form-control">
+            <div class="label py-1"><span class="label-text text-xs font-semibold">Control vinculado</span></div>
+            <select id="hz-control-id" name="control_id" class="select select-bordered select-sm">
+              <option value="">— Sin vincular —</option>
+            </select>
+          </label>
+        </div>
+        <label class="form-control">
+          <div class="label py-1"><span class="label-text text-xs font-semibold">Descripción</span></div>
+          <textarea id="hz-descripcion" name="descripcion" rows="3" class="textarea textarea-bordered textarea-sm" placeholder="Descripción detallada del hallazgo…"></textarea>
+        </label>
+        <label class="form-control">
+          <div class="label py-1"><span class="label-text text-xs font-semibold">Causa raíz</span></div>
+          <textarea id="hz-causa" name="causa" rows="2" class="textarea textarea-bordered textarea-sm" placeholder="Causa que originó el hallazgo…"></textarea>
+        </label>
+        <label class="form-control">
+          <div class="label py-1"><span class="label-text text-xs font-semibold">Efecto / Impacto</span></div>
+          <textarea id="hz-efecto" name="efecto" rows="2" class="textarea textarea-bordered textarea-sm" placeholder="Impacto potencial del hallazgo…"></textarea>
+        </label>
+        <div class="modal-action mt-2">
+          <button type="button" id="hz-btn-cancelar" class="btn btn-ghost">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="hz-btn-guardar">Guardar</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>

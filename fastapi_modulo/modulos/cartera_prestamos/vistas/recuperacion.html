@@ -1,0 +1,264 @@
+<section class="cp-cobranza-shell" data-module-page="recuperacion">
+
+  <div class="cp-cobranza-app">
+    <aside class="cp-cobranza-rail cp-ui-rail" aria-label="Navegacion de cobranza">
+      <div class="cp-cobranza-brand cp-ui-brand">
+        <div class="cp-cobranza-brand-logo cp-ui-brand-logo">C</div>
+        <div>
+          <div class="cp-cobranza-brand-title">Cartera de cobranza</div>
+          <div class="cp-cobranza-brand-sub">Gestión operativa de recuperación</div>
+        </div>
+      </div>
+
+      <nav class="cp-cobranza-nav cp-ui-nav">
+        <a href="/cartera-prestamos/recuperacion" class="cp-cobranza-nav-item cp-ui-nav-item is-active"><span class="cp-cobranza-nav-icon">▣</span>Dashboard</a>
+        <a href="/cartera-prestamos/gestion-cobranza" class="cp-cobranza-nav-item cp-ui-nav-item"><span class="cp-cobranza-nav-icon">◔</span>Gestion de cobranza</a>
+        <a href="/cartera-prestamos/cartera-vencida" class="cp-cobranza-nav-item cp-ui-nav-item"><span class="cp-cobranza-nav-icon">◫</span>Cartera vencida</a>
+        <a href="/cartera-prestamos/promesas-pago" class="cp-cobranza-nav-item cp-ui-nav-item"><span class="cp-cobranza-nav-icon">✓</span>Promesas de pago</a>
+        <a href="/cartera-prestamos/visitas-gestiones" class="cp-cobranza-nav-item cp-ui-nav-item"><span class="cp-cobranza-nav-icon">↗</span>Visitas y gestiones</a>
+        <a href="/cartera-prestamos/analisis-reportes" class="cp-cobranza-nav-item cp-ui-nav-item"><span class="cp-cobranza-nav-icon">≋</span>Analisis y reportes</a>
+        <a href="/cartera-prestamos/configuracion" class="cp-cobranza-nav-item cp-ui-nav-item"><span class="cp-cobranza-nav-icon">⚙</span>Configuracion</a>
+      </nav>
+
+      <div class="cp-cobranza-critical">
+        <span class="cp-cobranza-critical-icon">▲</span>
+        <div>
+          <strong>Alerta critica</strong>
+          <span>76 cuentas</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="cp-cobranza-main">
+      <div class="cp-ui-topbar-actions" style="display:flex;justify-content:flex-end;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+        <button type="button" class="cp-ui-btn cp-ui-btn-secondary" data-export-url="/api/cartera-prestamos/export/promesas-pago.xls" data-export-filename="promesas_pago.xls">Exportar promesas</button>
+        <button type="button" class="cp-ui-btn cp-ui-btn-primary" data-export-url="/api/cartera-prestamos/export/cartera-vencida.xls" data-export-filename="cartera_vencida.xls">Exportar cartera vencida</button>
+      </div>
+
+      <section class="cp-cobranza-kpis">
+        <article class="cp-cobranza-kpi cp-ui-kpi-card">
+          <div class="cp-cobranza-kpi-label">Gestiones de hoy</div>
+          <div class="cp-cobranza-kpi-value" data-role="gestiones_dia">182</div>
+          <div class="cp-cobranza-kpi-foot is-neutral" data-role="visitas_programadas">33 en progreso</div>
+        </article>
+
+        <article class="cp-cobranza-kpi cp-ui-kpi-card">
+          <div class="cp-cobranza-kpi-label">Promesas cumplidas</div>
+          <div class="cp-cobranza-kpi-value" data-role="promesas_activas">72%</div>
+          <div class="cp-cobranza-kpi-foot is-success" data-role="efectividad_cobranza">64 confirmadas</div>
+        </article>
+
+        <article class="cp-cobranza-kpi cp-ui-kpi-card">
+          <div class="cp-cobranza-kpi-label">Montos recuperados</div>
+          <div class="cp-cobranza-kpi-value" data-role="recuperado_periodo">$4,280,500</div>
+          <div class="cp-cobranza-kpi-foot is-success" data-role="avance_meta">Hoy: $850,200</div>
+        </article>
+
+        <article class="cp-cobranza-kpi cp-ui-kpi-card is-trend">
+          <div class="cp-cobranza-kpi-label">Tasa de mora</div>
+          <div class="cp-cobranza-kpi-value" data-role="casos_criticos_total">5.9%</div>
+          <div class="cp-cobranza-kpi-foot is-danger" data-role="tramo_principal">Objetivo: &lt; 5%</div>
+          <div class="cp-cobranza-mini-chart">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </article>
+      </section>
+
+      <section class="cp-cobranza-grid">
+        <article class="cp-cobranza-panel cp-ui-panel is-large">
+          <div class="cp-cobranza-panel-head cp-ui-panel-head">
+            <div><h3>Curva de recuperacion</h3></div>
+          </div>
+
+          <div class="cp-cobranza-chart">
+            <div class="cp-cobranza-chart-lines">
+              <span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="cp-cobranza-bars">
+              <div class="cp-cobranza-bar-group"><i style="height:18%"></i><b style="height:35%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:28%"></i><b style="height:42%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:24%"></i><b style="height:38%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:36%"></i><b style="height:52%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:32%"></i><b style="height:49%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:40%"></i><b style="height:58%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:44%"></i><b style="height:64%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:41%"></i><b style="height:60%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:48%"></i><b style="height:68%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:52%"></i><b style="height:74%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:56%"></i><b style="height:80%"></b></div>
+              <div class="cp-cobranza-bar-group"><i style="height:60%"></i><b style="height:84%"></b></div>
+            </div>
+
+            <svg class="cp-cobranza-line" viewBox="0 0 1000 300" preserveAspectRatio="none">
+              <path d="M20,240 C90,225 120,190 180,188 C250,184 275,130 340,118 C410,106 440,122 510,110 C590,95 650,70 730,45 C810,28 875,35 980,20"></path>
+            </svg>
+
+            <div class="cp-cobranza-chart-badge">
+              <strong>$11.2M</strong>
+              <span>▲ 7.1% esta semana</span>
+            </div>
+          </div>
+
+          <div class="cp-cobranza-chart-legend">
+            <span><i class="cp-cobranza-legend-dot is-blue"></i>Objetivo</span>
+            <span><i class="cp-cobranza-legend-dot is-purple"></i>Recuperado</span>
+          </div>
+        </article>
+
+        <article class="cp-cobranza-panel cp-ui-panel">
+          <div class="cp-cobranza-panel-head cp-ui-panel-head">
+            <h3>Segmentacion de deuda</h3>
+          </div>
+
+          <div class="cp-cobranza-donut-wrap">
+            <div class="cp-cobranza-donut">
+              <div class="cp-cobranza-donut-center">45%</div>
+            </div>
+
+            <div class="cp-cobranza-legend-list">
+              <div class="cp-cobranza-legend-row"><i class="cp-cobranza-lg is-blue"></i>Al dia 45%</div>
+              <div class="cp-cobranza-legend-row"><i class="cp-cobranza-lg is-pink"></i>Vencida 25%</div>
+              <div class="cp-cobranza-legend-row"><i class="cp-cobranza-lg is-orange"></i>En gestion 20%</div>
+              <div class="cp-cobranza-legend-row"><i class="cp-cobranza-lg is-violet"></i>Castigada 10%</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-cobranza-panel cp-ui-panel">
+          <div class="cp-cobranza-panel-head cp-ui-panel-head">
+            <h3>Alertas prioritarias</h3>
+            <a href="#">Ver mas</a>
+          </div>
+
+          <div class="cp-cobranza-alerts">
+            <div class="cp-cobranza-alert-item">
+              <span class="cp-cobranza-alert-dot is-red"></span>
+              <div>
+                <strong>38 creditos &gt; 60 dias</strong>
+                <small>Accion inmediata</small>
+              </div>
+            </div>
+            <div class="cp-cobranza-alert-item">
+              <span class="cp-cobranza-alert-dot is-orange"></span>
+              <div>
+                <strong>15 pagos fallidos</strong>
+                <small>Reintentar contacto</small>
+              </div>
+            </div>
+            <div class="cp-cobranza-alert-item">
+              <span class="cp-cobranza-alert-dot is-pink"></span>
+              <div>
+                <strong>Sucursal Norte en riesgo</strong>
+                <small>10 cuentas criticas</small>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-cobranza-panel cp-ui-panel">
+          <div class="cp-cobranza-panel-head cp-ui-panel-head">
+            <h3>Agenda de gestores</h3>
+            <a href="#">Agenda completa</a>
+          </div>
+
+          <div class="cp-cobranza-agenda">
+            <div class="cp-cobranza-agenda-title">Siguiente visita: 11:30 AM</div>
+            <div class="cp-cobranza-agenda-sub">Juan Perez · Empresa “Textiles Luxi”</div>
+            <div class="cp-cobranza-timeline">
+              <span class="is-done"></span>
+              <span class="is-done"></span>
+              <span class="is-done"></span>
+              <span class="is-current"></span>
+              <span></span>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-cobranza-panel cp-ui-panel">
+          <div class="cp-cobranza-panel-head cp-ui-panel-head">
+            <h3>Acciones rapidas</h3>
+          </div>
+
+          <div class="cp-cobranza-actions">
+            <button type="button">Registrar promesa</button>
+            <button type="button">Notificar SMS</button>
+            <button type="button">Generar convenio</button>
+            <button type="button">Escalar a legal</button>
+          </div>
+        </article>
+
+        <article class="cp-cobranza-panel cp-ui-panel is-full">
+          <div class="cp-cobranza-panel-head cp-ui-panel-head">
+            <h3>Creditos en gestion activa</h3>
+            <button type="button" class="cp-cobranza-close">×</button>
+          </div>
+
+          <div class="cp-cobranza-table-wrap cp-ui-table-wrap" data-table-search="Gestion activa">
+            <table class="cp-cobranza-table cp-ui-table" id="cp-recuperacion-gestiones-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Saldo vencido</th>
+                  <th>Dias atraso</th>
+                  <th>Estatus</th>
+                  <th>Accion</th>
+                </tr>
+              </thead>
+              <tbody id="cp-recuperacion-casos-body">
+                <tr>
+                  <td>
+                    <div class="cp-cobranza-client">
+                      <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80&auto=format&fit=crop" alt="">
+                      Ana Morales
+                    </div>
+                  </td>
+                  <td>$42,500</td>
+                  <td>48 dias</td>
+                  <td><span class="cp-cobranza-status is-pink">Prejudicial</span></td>
+                  <td><button type="button" class="cp-cobranza-row-btn">Contactar</button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="cp-cobranza-client">
+                      <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=80&auto=format&fit=crop" alt="">
+                      Carlos Reyes
+                    </div>
+                  </td>
+                  <td>$75,800</td>
+                  <td>32 dias</td>
+                  <td><span class="cp-cobranza-status is-blue">En negociacion</span></td>
+                  <td><button type="button" class="cp-cobranza-row-btn">Hacer oferta</button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="cp-cobranza-client">
+                      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&q=80&auto=format&fit=crop" alt="">
+                      Grupo Almeja S.A.
+                    </div>
+                  </td>
+                  <td>$215,000</td>
+                  <td>15 dias</td>
+                  <td><span class="cp-cobranza-status is-orange">Visita pendiente</span></td>
+                  <td><button type="button" class="cp-cobranza-row-btn">Programar</button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="cp-cobranza-client">
+                      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=80&auto=format&fit=crop" alt="">
+                      Rosa Ibarra
+                    </div>
+                  </td>
+                  <td>$9,600</td>
+                  <td>8 dias</td>
+                  <td><span class="cp-cobranza-status is-violet">Promesa acordada</span></td>
+                  <td><button type="button" class="cp-cobranza-row-btn">Confirmar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</section>

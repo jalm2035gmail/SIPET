@@ -159,7 +159,7 @@ SIPET debe implementar una capa desacoplada de proveedor para poder usar ChatGPT
    - `AI_PROVIDER=chatgpt|deepseek|otro`
    - `AI_MODEL=<modelo_default>`
    - `AI_API_KEY=<secreto>`
-   - `AI_BASE_URL=<url_opcional_para_proveedores_compatibles>`
+   - `AI_MAIN_URL=<url_opcional_para_proveedores_compatibles>`
    - `AI_TIMEOUT_SECONDS=30`
    - `AI_MAX_TOKENS=1200`
 4. Fallback:
@@ -172,7 +172,7 @@ SIPET debe implementar una capa desacoplada de proveedor para poder usar ChatGPT
    - Capacidad para espanol y contexto institucional
    - Politicas de seguridad y retencion
 6. Recomendacion operativa:
-   - Empezar con `chatgpt` como baseline y habilitar `deepseek` como opcion alternativa en entorno de pruebas/piloto.
+   - Empezar con `chatgpt` como MAINline y habilitar `deepseek` como opcion alternativa en entorno de pruebas/piloto.
    - Mantener prompts y validaciones iguales para poder comparar resultados entre modelos.
 
 ## 10. Endpoints funcionales sugeridos (v1)
@@ -214,7 +214,7 @@ SIPET debe implementar una capa desacoplada de proveedor para poder usar ChatGPT
 ## 12. Fases de desarrollo
 
 ## Fase 0 - Preparacion (1 semana)
-Objetivo: dejar base tecnica lista.
+Objetivo: dejar MAIN tecnica lista.
 
 1. ✅ Definir proveedor IA y variables de entorno (chatgpt/deepseek/otro).
 2. ✅ Crear modulo `ia/` y contratos de respuesta.
@@ -321,7 +321,7 @@ Precondiciones:
 
 ## 16. Evidencia real implementada
 1. Multi-proveedor robusto:
-   - Contrato unico en `fastsipet_modulo/modulos/ia/providers/base.py`.
+   - Contrato unico en `fastsipet_modulo/modulos/ia/providers/MAIN.py`.
    - Adaptadores operativos: OpenAI, DeepSeek, Ollama.
    - Fallback/reintentos/backoff/costos en `fastsipet_modulo/modulos/ia/ia_service.py`.
 2. Riesgo POA + alertas IA:

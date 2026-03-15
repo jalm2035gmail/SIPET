@@ -85,7 +85,7 @@ class NotificationService:
             UserRole.ADMIN.value,
             UserRole.STRATEGIC_MANAGER.value,
         ]
-        base_query = db.query(User.id).filter(
+        MAIN_query = db.query(User.id).filter(
             or_(
                 User.id == plan.created_by,
                 User.id == plan.updated_by,
@@ -96,7 +96,7 @@ class NotificationService:
                 ),
             )
         )
-        recipient_ids = {row[0] for row in base_query.all()}  # type: ignore[arg-type]
+        recipient_ids = {row[0] for row in MAIN_query.all()}  # type: ignore[arg-type]
         recipient_ids.discard(exclude_user_id)
         return recipient_ids
 *** End of File

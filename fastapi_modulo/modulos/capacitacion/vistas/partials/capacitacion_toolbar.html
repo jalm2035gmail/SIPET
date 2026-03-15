@@ -1,0 +1,33 @@
+<div class="cap-toolbar">
+  <input class="cap-search" id="cap-search" type="text" placeholder="Buscar curso..." />
+  <select class="cap-select" id="cap-filter-cat">
+    <option value="">Todas las categorías</option>
+  </select>
+  <select class="cap-select" id="cap-filter-nivel">
+    <option value="">Todos los niveles</option>
+    <option value="basico">Básico</option>
+    <option value="intermedio">Intermedio</option>
+    <option value="avanzado">Avanzado</option>
+  </select>
+  <select class="cap-select" id="cap-filter-estado-curso">
+    <option value="publicado">Publicados</option>
+    <option value="">Todos los estados</option>
+    <option value="borrador">Borrador</option>
+    <option value="archivado">Archivado</option>
+  </select>
+  <div class="cap-toolbar-spacer"></div>
+  <div class="view-buttons page-view-buttons">
+    <button class="view-pill boton_vista active" type="button" data-cap-view="tarjetas" aria-label="Tarjetas">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Tarjetas</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-cap-view="tabla" aria-label="Tabla">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/lista.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Tabla</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-cap-view="kanban" aria-label="Kanban">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Kanban</span>
+    </button>
+  </div>
+</div>

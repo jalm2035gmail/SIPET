@@ -1,4 +1,4 @@
-"""Alembic migration: Módulo de Capacitación — tablas base.
+"""Alembic migration: Módulo de Capacitación — tablas MAIN.
 
 Revision ID: 20260309_add_capacitacion_tables
 Revises: 20260305_add_ci_hallazgos_tables

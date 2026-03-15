@@ -1,0 +1,425 @@
+<link rel="stylesheet" href="/modulos/proyectando/proyectando.css">
+<section class="proy-shell">
+  <div class="view-buttons page-view-buttons" id="presupuesto-view-switch" style="margin-bottom:12px;">
+    <button class="view-pill boton_vista active" type="button" data-presupuesto-view="list" data-tooltip="Lista" aria-label="Lista">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+      <span class="view-pill-label boton_vista-label">List</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-presupuesto-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Kanban</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-presupuesto-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Organigrama</span>
+    </button>
+  </div>
+  <div style="margin-bottom: 24px;">
+    <a href="/proyectando/descargar-csv-presupuesto" class="color-btn color-btn--primary" download>Descargar CSV</a>
+    <button type="button" id="presupuesto-import-btn" class="color-btn color-btn--ghost">Importar CSV o Excel</button>
+    <button type="button" id="presupuesto-export-pdf-btn" class="color-btn color-btn--ghost">Exportar PDF</button>
+    <input type="file" id="presupuesto-import-file" accept=".csv,.xlsx,.xlsm,.xltx,.xltm" style="display:none;">
+    <span id="presupuesto-action-status"></span>
+  </div>
+
+  <section class="card border shadow-sm rounded-[2rem]" style="margin-bottom:20px;background:var(--surface-soft, #f6fbf9);border-color:var(--field-border, #cfd7df);">
+    <div class="card-body p-5">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h3 class="page-title" style="margin:0;">Ejercicio operativo</h3>
+          <p class="page-description" style="margin:6px 0 0;">Presupuesto y POA comparten el mismo año activo.</p>
+        </div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label class="form-control">
+            <span class="label-text">Año activo</span>
+            <select id="annual-cycle-select" class="select">
+              <option value="{{ active_year }}">{{ active_year }}</option>
+            </select>
+          </label>
+          <button type="button" id="annual-cycle-start-btn" class="color-btn color-btn--ghost">Iniciar nuevo año</button>
+          <a id="annual-cycle-archive-link" class="color-btn color-btn--ghost" href="#" hidden>Descargar ZIP anterior</a>
+        </div>
+      </div>
+      <div id="annual-cycle-status" class="text-sm text-MAIN-content/70" style="margin-top:10px;"></div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <div class="section-title">
+      <h2>Fase 9: Presupuesto anual</h2>
+    </div>
+    <section class="notebook-section presupuesto-notebook">
+      <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Presupuesto">
+        <button type="button" class="tab tab-active gap-2 rounded-t-lg" data-presupuesto-tab="presupuesto-anual"><img src="/templates/icon/financiamiento.svg" alt="" class="w-4 h-4">Presupuesto anual</button>
+        <button type="button" class="tab gap-2 rounded-t-lg" data-presupuesto-tab="control-mensual"><img src="/templates/icon/calendario.svg" alt="" class="w-4 h-4">Control mensual</button>
+        <button type="button" class="tab gap-2 rounded-t-lg" data-presupuesto-tab="reportes"><img src="/templates/icon/crecimiento.svg" alt="" class="w-4 h-4">Reportes</button>
+      </div>
+      <div class="proy-notebook-body notebook-content">
+        <div class="presupuesto-tab-panel" data-presupuesto-panel="presupuesto-anual">
+          <div class="tabla-oficial-wrap cod-toggle-wrap">
+            <button type="button" id="toggle-cod-col-btn" class="cod-toggle-btn" aria-label="Mostrar u ocultar columna Cod">+</button>
+            <table id="presupuesto-table" class="tabla-oficial">
+              <thead>
+                <tr>
+                  <th class="cod-col" style="display:none;">Cod</th>
+                  <th class="tipo-col" style="display:none;">Tipo</th>
+                  <th>Rubro</th>
+                  <th class="tabla-oficial-num">Monto</th>
+                  <th class="tabla-oficial-num">Mensual</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{ presupuesto_table_rows|safe }}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="presupuesto-tab-panel" data-presupuesto-panel="control-mensual" hidden>
+          <div class="control-mensual-actions">
+            <button type="button" id="control-mensual-acc-btn" class="color-btn color-btn--ghost">Ver tabla acumulada</button>
+          </div>
+          <div class="tabla-oficial-wrap">
+            <table id="control-mensual-table" class="tabla-oficial">
+              <thead>
+                <tr>
+                  <th rowspan="2">Rubro</th>
+                  {{ control_mensual_header_top|safe }}
+                </tr>
+                <tr>
+                  {{ control_mensual_header_bottom|safe }}
+                </tr>
+              </thead>
+              <tbody>
+                {{ control_mensual_rows|safe }}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="presupuesto-tab-panel" data-presupuesto-panel="reportes" hidden>
+          <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+            <button type="button" id="reportes-fullscreen-btn" class="color-btn color-btn--ghost">Ver en pantalla completa</button>
+          </div>
+          <div class="reportes-fullscreen-hint">Esc para volver</div>
+          <div class="reportes-filtros">
+            <label for="reportes-filtro-nivel">Nivel
+              <select id="reportes-filtro-nivel">
+                <option value="consolidado">Consolidado</option>
+                <option value="region">Región</option>
+                <option value="departamento">Departamento</option>
+                <option value="sucursal">Sucursal</option>
+                <option value="colaborador">Colaborador</option>
+              </select>
+            </label>
+            <label for="reportes-filtro-elemento">Elementos del nivel
+              <select id="reportes-filtro-elemento"></select>
+            </label>
+            <button type="button" id="reportes-filtro-aplicar" class="color-btn color-btn--ghost">Aplicar filtro</button>
+          </div>
+          <p id="reportes-filtro-note" class="reportes-filtros-note"></p>
+          <section class="cp-dashboard">
+            <header class="cp-head">Dashboard de Control Presupuestal</header>
+            <div class="cp-grid">
+              <section class="cp-cards">
+                <article class="cp-card">
+                  <p class="cp-card-title">Ingresos Ejecutados</p>
+                  <p class="cp-card-value" id="cp-kpi-ingresos">$0</p>
+                  <p class="cp-card-sub cp-sub-blue" id="cp-kpi-ingresos-pct">0.0%</p>
+                </article>
+                <article class="cp-card">
+                  <p class="cp-card-title">Egresos Ejecutados</p>
+                  <p class="cp-card-value" id="cp-kpi-egresos">$0</p>
+                  <p class="cp-card-sub cp-sub-orange" id="cp-kpi-egresos-pct">0.0%</p>
+                </article>
+                <article class="cp-card">
+                  <p class="cp-card-title">Resultado Neto</p>
+                  <p class="cp-card-value" id="cp-kpi-resultado">$0</p>
+                  <p class="cp-card-sub cp-sub-green" id="cp-kpi-resultado-delta">$0</p>
+                </article>
+                <article class="cp-card">
+                  <p class="cp-card-title">Desviación Promedio</p>
+                  <p class="cp-card-value" id="cp-kpi-desv-prom">0.0%</p>
+                </article>
+                <article class="cp-card">
+                  <p class="cp-card-title">Riesgo Global</p>
+                  <p class="cp-card-value" id="cp-kpi-riesgo">0.0%</p>
+                  <div class="cp-gauge"><span class="cp-gauge-pointer" id="cp-gauge-pointer" style="left:0%;"></span></div>
+                </article>
+              </section>
+
+              <section class="cp-row-2">
+                <article class="cp-panel">
+                  <h3 class="cp-panel-title">Ejecución Presupuestal Mensual</h3>
+                  <div id="cp-monthly-bars" class="cp-plot"></div>
+                </article>
+                <article class="cp-panel">
+                  <h3 class="cp-panel-title">Tendencia Acumulada Anual</h3>
+                  <div id="cp-tendencia-chart" class="cp-plot"></div>
+                </article>
+              </section>
+
+              <section class="cp-row-3">
+                <article class="cp-panel">
+                  <h3 class="cp-panel-title">Desviaciones Presupuestales</h3>
+                  <div class="cp-desv-wrap">
+                    <table class="cp-desv-table">
+                      <thead>
+                        <tr>
+                          <th>Rubro</th>
+                          <th>Presupuesto</th>
+                          <th>Real</th>
+                          <th>Diferencia</th>
+                          <th>% Desv</th>
+                          <th>Semáforo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="cp-desv-body"></tbody>
+                    </table>
+                  </div>
+                </article>
+                <article class="cp-panel">
+                  <h3 class="cp-panel-title">Distribución de Egresos</h3>
+                  <div class="cp-dist">
+                    <div class="cp-dist-list" id="cp-dist-list"></div>
+                    <div id="cp-donut-chart" class="cp-donut"></div>
+                  </div>
+                </article>
+              </section>
+
+              <article class="cp-panel">
+                <h3 class="cp-panel-title">Mapa de Calor Presupuestal</h3>
+                <div id="cp-heatmap-chart" class="cp-plot"></div>
+              </article>
+            </div>
+          </section>
+          <section class="alertas-box">
+            <h3 class="alertas-title">Alertas inteligentes</h3>
+            <div id="alertas-inteligentes-list" class="alertas-list"></div>
+          </section>
+          <div class="reportes-grid">
+            <button type="button" class="reporte-card" data-report-target="reporte-ejecucion">
+              <p class="reporte-card-title">1. Reporte Ejecutivo de Ejecución Presupuestal</p>
+              <p class="reporte-card-subtitle">Principal para Dirección y CNBV</p>
+            </button>
+            <button type="button" class="reporte-card" data-report-target="reporte-desviaciones">
+              <p class="reporte-card-title">2. Reporte de Desviaciones Presupuestales</p>
+              <p class="reporte-card-subtitle">Crítico para CNBV</p>
+            </button>
+            <button type="button" class="reporte-card" data-report-target="reporte-tendencia">
+              <p class="reporte-card-title">3. Tendencia Presupuestal</p>
+              <p class="reporte-card-subtitle">Análisis preventivo</p>
+            </button>
+            <button type="button" class="reporte-card" data-report-target="reporte-ejecucion-area">
+              <p class="reporte-card-title">4. Reporte de Ejecución por Área / Sucursal</p>
+              <p class="reporte-card-subtitle">Gobernanza</p>
+            </button>
+            <button type="button" class="reporte-card" data-report-target="reporte-composicion-gasto">
+              <p class="reporte-card-title">5. Reporte de Composición del Gasto</p>
+              <p class="reporte-card-subtitle">Estructura financiera</p>
+            </button>
+            <button type="button" class="reporte-card" data-report-target="reporte-kpis-sipet">
+              <p class="reporte-card-title">6. Indicadores Presupuestales Clave</p>
+              <p class="reporte-card-subtitle">KPIs SIPET</p>
+            </button>
+            <button type="button" class="reporte-card" data-report-target="reporte-mapa-calor">
+              <p class="reporte-card-title">7. Mapa de Calor Presupuestal</p>
+              <p class="reporte-card-subtitle">Meses críticos</p>
+            </button>
+          </div>
+          <section id="reporte-ejecucion" class="reporte-detalle">
+            <h3>Reporte Ejecutivo de Ejecución Presupuestal</h3>
+            <div class="tabla-oficial-wrap">
+              <table class="tabla-oficial" id="reporte-ejecucion-table">
+                <thead>
+                  <tr>
+                    <th>Concepto</th>
+                    <th class="tabla-oficial-num">Presupuestado</th>
+                    <th class="tabla-oficial-num">Real</th>
+                    <th class="tabla-oficial-num">Variación</th>
+                    <th class="tabla-oficial-num">% Cumplimiento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-concept="ingresos">
+                    <td>Ingresos</td>
+                    <td class="tabla-oficial-num" data-field="presupuestado">0</td>
+                    <td class="tabla-oficial-num" data-field="real">0</td>
+                    <td class="tabla-oficial-num" data-field="variacion">0</td>
+                    <td class="tabla-oficial-num month-percent-col" data-field="cumplimiento">0.0%</td>
+                  </tr>
+                  <tr data-concept="egresos">
+                    <td>Egresos</td>
+                    <td class="tabla-oficial-num" data-field="presupuestado">0</td>
+                    <td class="tabla-oficial-num" data-field="real">0</td>
+                    <td class="tabla-oficial-num" data-field="variacion">0</td>
+                    <td class="tabla-oficial-num month-percent-col" data-field="cumplimiento">0.0%</td>
+                  </tr>
+                  <tr data-concept="resultado">
+                    <td>Resultado</td>
+                    <td class="tabla-oficial-num" data-field="presupuestado">0</td>
+                    <td class="tabla-oficial-num" data-field="real">0</td>
+                    <td class="tabla-oficial-num" data-field="variacion">0</td>
+                    <td class="tabla-oficial-num month-percent-col" data-field="cumplimiento">0.0%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="reporte-kpis">
+              <div class="reporte-kpi">
+                <div class="reporte-kpi-label">% ejecución ingresos</div>
+                <div class="reporte-kpi-value" id="kpi-ejecucion-ingresos">0.0%</div>
+              </div>
+              <div class="reporte-kpi">
+                <div class="reporte-kpi-label">% ejecución egresos</div>
+                <div class="reporte-kpi-value" id="kpi-ejecucion-egresos">0.0%</div>
+              </div>
+              <div class="reporte-kpi">
+                <div class="reporte-kpi-label">Resultado operativo vs esperado</div>
+                <div class="reporte-kpi-value" id="kpi-resultado-vs">0.0%</div>
+              </div>
+            </div>
+            <div class="reporte-bar-chart">
+              <div class="reporte-bar-chart-head">
+                <span><i class="legend-dot legend-dot-proy"></i>Presupuesto</span>
+                <span><i class="legend-dot legend-dot-real"></i>Real</span>
+                <span>Comparativo mensual</span>
+              </div>
+              <div id="reporte-ejecucion-bars" class="reporte-bars"></div>
+            </div>
+          </section>
+          <section id="reporte-desviaciones" class="reporte-detalle" style="margin-top:12px;">
+            <h3>Reporte de Desviaciones Presupuestales</h3>
+            <div class="tabla-oficial-wrap">
+              <table class="tabla-oficial" id="reporte-desviaciones-table">
+                <thead>
+                  <tr>
+                    <th>Rubro</th>
+                    <th class="tabla-oficial-num">Presupuesto</th>
+                    <th class="tabla-oficial-num">Real</th>
+                    <th class="tabla-oficial-num">Diferencia</th>
+                    <th class="tabla-oficial-num">% Desviación</th>
+                    <th>Semáforo</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="reporte-bar-chart">
+              <div class="reporte-bar-chart-head">
+                <span>Barras de variación por rubro</span>
+              </div>
+              <div id="reporte-desviaciones-bars" class="reporte-variacion-bars"></div>
+            </div>
+          </section>
+          <section id="reporte-tendencia" class="reporte-detalle" style="margin-top:12px;">
+            <h3>Tendencia Presupuestal</h3>
+            <div class="tabla-oficial-wrap">
+              <table class="tabla-oficial" id="reporte-tendencia-table">
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th class="tabla-oficial-num">Presupuesto acumulado</th>
+                    <th class="tabla-oficial-num">Real acumulado</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="line-chart-wrap">
+              <svg id="reporte-tendencia-svg" viewBox="0 0 1000 260" preserveAspectRatio="none"></svg>
+            </div>
+          </section>
+          <section id="reporte-ejecucion-area" class="reporte-detalle" style="margin-top:12px;">
+            <h3>Reporte de Ejecución por Área / Sucursal</h3>
+            <div class="tabla-oficial-wrap">
+              <table class="tabla-oficial" id="reporte-area-table">
+                <thead>
+                  <tr>
+                    <th>Área/Sucursal</th>
+                    <th class="tabla-oficial-num">Presupuesto</th>
+                    <th class="tabla-oficial-num">Ejercido</th>
+                    <th class="tabla-oficial-num">% Ejecución</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="reporte-bar-chart">
+              <div class="reporte-bar-chart-head">
+                <span>Barras horizontales comparativas</span>
+              </div>
+              <div id="reporte-area-bars" class="area-bars"></div>
+            </div>
+          </section>
+          <section id="reporte-composicion-gasto" class="reporte-detalle" style="margin-top:12px;">
+            <h3>Reporte de Composición del Gasto</h3>
+            <div class="gasto-composicion">
+              <div class="gasto-donut-wrap">
+                <div id="reporte-gasto-donut" class="gasto-donut" aria-label="Composición de egresos"></div>
+              </div>
+              <div id="reporte-gasto-legend" class="gasto-legend"></div>
+            </div>
+          </section>
+          <section id="reporte-kpis-sipet" class="reporte-detalle" style="margin-top:12px;">
+            <h3>Indicadores Presupuestales Clave (KPIs SIPET)</h3>
+            <div class="kpi-sipet-grid">
+              <article class="kpi-sipet-card"><p class="kpi-sipet-title">Índice de ejecución presupuestal</p><p class="kpi-sipet-value" id="kpi-sipet-ejecucion">0.0%</p></article>
+              <article class="kpi-sipet-card"><p class="kpi-sipet-title">Variación presupuestal promedio</p><p class="kpi-sipet-value" id="kpi-sipet-variacion-prom">0.0%</p></article>
+              <article class="kpi-sipet-card"><p class="kpi-sipet-title">Ratio gasto operativo / ingreso</p><p class="kpi-sipet-value" id="kpi-sipet-ratio-gasto-ingreso">0.0%</p></article>
+              <article class="kpi-sipet-card"><p class="kpi-sipet-title">Cumplimiento mensual promedio</p><p class="kpi-sipet-value" id="kpi-sipet-cumplimiento-prom">0.0%</p></article>
+              <article class="kpi-sipet-card"><p class="kpi-sipet-title">Desviación acumulada anual</p><p class="kpi-sipet-value" id="kpi-sipet-desviacion-anual">0</p></article>
+              <article class="kpi-sipet-card"><p class="kpi-sipet-title">Índice de disciplina presupuestal</p><p class="kpi-sipet-value" id="kpi-sipet-disciplina">0.0%</p></article>
+            </div>
+          </section>
+          <section id="reporte-mapa-calor" class="reporte-detalle" style="margin-top:12px;">
+            <h3>Mapa de Calor Presupuestal</h3>
+            <div class="tabla-oficial-wrap">
+              <table class="tabla-oficial" id="reporte-mapa-calor-table">
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th style="text-align:center;">Ingresos</th>
+                    <th style="text-align:center;">Egresos</th>
+                    <th style="text-align:center;">Resultado</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+    <div id="control-mensual-acc-modal" class="cm-acc-modal" aria-hidden="true">
+      <div class="cm-acc-dialog" role="dialog" aria-modal="true" aria-labelledby="cm-acc-title">
+        <div class="cm-acc-header">
+          <h3 id="cm-acc-title" class="cm-acc-title">Tabla acumulada de control presupuestal</h3>
+          <button type="button" id="control-mensual-acc-close" class="cm-acc-close" aria-label="Cerrar">x</button>
+        </div>
+        <div class="tabla-oficial-wrap" style="max-height:70vh;">
+          <table class="tabla-oficial" id="control-mensual-acc-table">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th class="tabla-oficial-num">Ingresos Proy. Acum.</th>
+                <th class="tabla-oficial-num">Ingresos Real Acum.</th>
+                <th class="tabla-oficial-num">Egresos Proy. Acum.</th>
+                <th class="tabla-oficial-num">Egresos Real Acum.</th>
+                <th class="tabla-oficial-num">Resultado Proy. Acum.</th>
+                <th class="tabla-oficial-num">Resultado Real Acum.</th>
+                <th class="tabla-oficial-num">% Cumpl. Resultado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 24px;">
+      <button type="button" class="color-btn color-btn--primary dg-save-trigger">Guardar presupuesto</button>
+      <span class="dg-save-status"></span>
+    </div>
+  </section>
+</section>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="/proyectando/presupuesto.js?v=20260309-3"></script>

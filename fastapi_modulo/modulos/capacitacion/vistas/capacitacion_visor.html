@@ -1,0 +1,478 @@
+<style>
+  .visor-shell {
+    --visor-bg: #060b16;
+    --visor-ink: #eff6ff;
+    --visor-muted: rgba(203, 213, 225, 0.82);
+    --visor-line: rgba(255,255,255,.12);
+    --visor-accent: #ff8a00;
+    --visor-accent-2: #ffd166;
+    background:
+      radial-gradient(circle at top left, rgba(34,211,238,.14), transparent 20%),
+      radial-gradient(circle at 88% 16%, rgba(255,138,0,.18), transparent 18%),
+      linear-gradient(160deg, #040912 0%, #091427 44%, #060b16 100%);
+    min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 24px 16px 60px;
+    box-sizing: border-box;
+    font-family: 'Avenir Next', 'Montserrat', 'Segoe UI', sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+  .visor-shell::before {
+    content: "";
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    right: -90px;
+    top: -80px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(255,209,102,.28), transparent 68%);
+    filter: blur(12px);
+    pointer-events: none;
+  }
+
+  .visor-header {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 18px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--visor-line);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 46px rgba(0,0,0,.24);
+    position: relative;
+    z-index: 1;
+  }
+  #visor-pres-title {
+    color: var(--visor-ink);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    margin: 0;
+  }
+  .visor-header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .visor-icon-btn {
+    background: rgba(255,255,255,.08);
+    border: none;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 16px;
+    width: 40px; height: 40px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s;
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .visor-icon-btn:hover { background: rgba(255,255,255,.22); }
+  .visor-icon-btn:disabled { opacity: .35; cursor: default; }
+
+  /* 16:9 responsive canvas */
+  .visor-slide-wrapper {
+    width: 100%;
+    max-width: 960px;
+    position: relative;
+    z-index: 1;
+  }
+  .visor-slide-ratio {
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 */
+    position: relative;
+  }
+  #visor-slide-area {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    overflow: hidden;
+    border-radius: 28px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.48);
+    border: 10px solid rgba(255,255,255,.06);
+  }
+
+  /* Elements inside slide */
+  .visor-element {
+    position: absolute;
+    box-sizing: border-box;
+  }
+  .visor-el-texto {
+    width: 100%; height: 100%;
+    display: flex; align-items: center;
+    overflow: hidden;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .visor-el-imagen {
+    width: 100%; height: 100%; overflow: hidden;
+  }
+  .visor-el-imagen img { width: 100%; height: 100%; display: block; }
+  .visor-el-boton {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 16px;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+    user-select: none;
+    transition: opacity .12s;
+  }
+  .visor-el-boton:hover { opacity: .88; }
+  .visor-el-forma { width: 100%; height: 100%; box-sizing: border-box; }
+  .visor-el-embed { width: 100%; height: 100%; overflow: hidden; }
+  .visor-el-embed iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* Navigation bar */
+  .visor-nav {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 20px;
+    padding: 12px 16px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--visor-line);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 46px rgba(0,0,0,.22);
+    position: relative;
+    z-index: 1;
+  }
+  .visor-shell.is-present-mode {
+    min-height: 100vh;
+    padding: 0;
+    justify-content: center;
+  }
+  .visor-shell.is-present-mode::before {
+    display: none;
+  }
+  .visor-shell.is-present-mode .visor-header,
+  .visor-shell.is-present-mode .visor-nav {
+    display: none;
+  }
+  .visor-shell.is-present-mode .visor-slide-wrapper {
+    max-width: none;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .visor-shell.is-present-mode .visor-slide-ratio {
+    width: min(100vw, calc(100vh * 16 / 9));
+    padding-top: 0;
+    aspect-ratio: 16 / 9;
+  }
+  .visor-shell.is-present-mode #visor-slide-area {
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+  }
+  .visor-shell.is-present-mode .visor-survey-dialog {
+    width: min(1320px, 100vw);
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  #visor-prev, #visor-next {
+    background: linear-gradient(135deg, rgba(255,138,0,.92), rgba(255,209,102,.92));
+    border: none;
+    border-radius: 50%;
+    color: #251100;
+    width: 44px; height: 44px;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .12s;
+  }
+  #visor-prev:hover, #visor-next:hover { filter: brightness(1.04); }
+  #visor-prev:disabled, #visor-next:disabled { opacity: .25; cursor: default; }
+  #visor-counter {
+    color: var(--visor-muted);
+    font-size: 14px;
+    min-width: 72px;
+    text-align: center;
+    font-family: 'Avenir Next', 'Montserrat', 'Segoe UI', sans-serif;
+    font-weight: 700;
+  }
+
+  /* Dot indicators */
+  .visor-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 400px;
+  }
+  .visor-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.22);
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+  }
+  .visor-dot.active { background: var(--visor-accent); transform: scale(1.45); }
+  .visor-dot:hover  { background: rgba(255,255,255,.6); }
+
+  /* Loading / Error states */
+  #visor-loading {
+    color: var(--visor-muted); font-size: 15px; padding: 60px 0; text-align: center;
+  }
+  .visor-survey-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    background: rgba(2,6,23,.58);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .visor-survey-modal.is-open { display: flex; }
+  .visor-survey-dialog {
+    width: min(1180px, 96vw);
+    max-height: 92vh;
+    border-radius: 26px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 30px 90px rgba(0,0,0,.45);
+  }
+  .visor-survey-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #081120;
+    color: #eff6ff;
+  }
+  .visor-survey-head strong { font-size: 16px; }
+  .visor-survey-close {
+    border: 0;
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .visor-survey-close:hover { background: rgba(255,255,255,.16); }
+  .visor-survey-frame {
+    width: 100%;
+    min-height: 78vh;
+    border: 0;
+    display: block;
+    background: #fff;
+  }
+  .visor-results-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    background: rgba(2,6,23,.62);
+    backdrop-filter: blur(12px);
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .visor-results-modal.is-open { display: flex; }
+  .visor-results-dialog {
+    width: min(1160px, 96vw);
+    max-height: 92vh;
+    overflow: hidden;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #081120 0%, #0f172a 100%);
+    color: #eff6ff;
+    box-shadow: 0 30px 90px rgba(0,0,0,.45);
+    display: flex;
+    flex-direction: column;
+  }
+  .visor-results-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .visor-results-copy small {
+    display: block;
+    color: rgba(203,213,225,.82);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    margin-bottom: 6px;
+  }
+  .visor-results-copy strong {
+    display: block;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+  .visor-results-close {
+    border: 0;
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .visor-results-close:hover { background: rgba(255,255,255,.16); }
+  .visor-results-body {
+    padding: 22px;
+    overflow: auto;
+    display: grid;
+    gap: 20px;
+  }
+  .visor-results-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .visor-results-kpi {
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .visor-results-kpi span {
+    display: block;
+    color: rgba(203,213,225,.78);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    margin-bottom: 8px;
+  }
+  .visor-results-kpi strong {
+    display: block;
+    font-size: 28px;
+    line-height: 1;
+  }
+  .visor-results-section {
+    padding: 18px;
+    border-radius: 24px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .visor-results-section h3 {
+    margin: 0 0 14px;
+    font-size: 18px;
+  }
+  .visor-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .visor-results-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(15,23,42,.88);
+    border: 1px solid rgba(255,255,255,.06);
+  }
+  .visor-results-card strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  .visor-results-card p {
+    margin: 0;
+    color: rgba(203,213,225,.84);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .visor-results-empty {
+    padding: 18px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.05);
+    color: rgba(203,213,225,.82);
+  }
+  .visor-shell.is-present-mode .visor-results-dialog {
+    width: min(1320px, 100vw);
+    max-height: 100vh;
+    border-radius: 0;
+  }
+</style>
+
+<div id="visor-root" class="visor-shell"
+     data-js-url="/capacitacion/assets/js/capacitacion_visor.js?v=20260309"
+     data-pres-id="__PRES_ID__">
+
+  <div class="visor-header">
+    <h1 id="visor-pres-title">Cargando...</h1>
+    <div class="visor-header-right">
+      <button id="visor-edit-btn"  class="visor-icon-btn" title="Editar">✏</button>
+      <button id="visor-fullscreen" class="visor-icon-btn" title="Pantalla completa">⛶</button>
+    </div>
+  </div>
+
+  <div class="visor-slide-wrapper">
+    <div class="visor-slide-ratio">
+      <div id="visor-slide-area">
+        <div id="visor-loading">Cargando presentación...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="visor-nav">
+    <button id="visor-prev" disabled>&#8592;</button>
+    <div class="visor-dots" id="visor-dots"></div>
+    <span id="visor-counter">— / —</span>
+    <button id="visor-next" disabled>&#8594;</button>
+  </div>
+
+</div>
+
+<div id="visor-survey-modal" class="visor-survey-modal">
+  <div class="visor-survey-dialog">
+    <div class="visor-survey-head">
+      <strong id="visor-survey-title">Encuesta live</strong>
+      <button id="visor-survey-close" class="visor-survey-close" type="button">✕</button>
+    </div>
+    <iframe id="visor-survey-frame" class="visor-survey-frame" title="Encuesta live"></iframe>
+  </div>
+</div>
+
+<div id="visor-results-modal" class="visor-results-modal">
+  <div class="visor-results-dialog">
+    <div class="visor-results-head">
+      <div class="visor-results-copy">
+        <small>Resultado en vivo</small>
+        <strong id="visor-results-title">Cargando resultados...</strong>
+      </div>
+      <button id="visor-results-close" class="visor-results-close" type="button">✕</button>
+    </div>
+    <div id="visor-results-body" class="visor-results-body"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var root  = document.getElementById('visor-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

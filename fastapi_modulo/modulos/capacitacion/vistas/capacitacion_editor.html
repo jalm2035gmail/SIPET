@@ -1,0 +1,616 @@
+<link rel="stylesheet" href="/static/vendor/grapesjs/css/grapes.min.css">
+<link rel="stylesheet" href="/capacitacion/assets/css/capacitacion_editor.css?v=20260314a">
+
+<div id="ped-root" class="ped-shell"
+     data-js-url="/capacitacion/assets/js/capacitacion_editor.js?v=20260314a"
+     data-pres-id="__PRES_ID__">
+  <aside class="ped-rail" aria-label="Herramientas del editor">
+    <div class="ped-brand">G</div>
+
+    <div class="ped-rail-group">
+      <button id="ped-btn-add-texto" class="ped-rail-btn is-active" type="button">
+        <span class="ped-rail-icon">A</span>
+        <span class="ped-rail-label">Texto</span>
+      </button>
+      <button id="ped-btn-add-imagen" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">⌂</span>
+        <span class="ped-rail-label">Recursos</span>
+      </button>
+      <button id="ped-btn-add-hotspot" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">◉</span>
+        <span class="ped-rail-label">Elementos interactivos</span>
+      </button>
+      <button id="ped-btn-add-survey" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">?</span>
+        <span class="ped-rail-label">Preguntas interactivas</span>
+      </button>
+      <button id="ped-btn-add-survey-list" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">⌘</span>
+        <span class="ped-rail-label">Widgets</span>
+      </button>
+      <button id="ped-btn-add-forma" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">＋</span>
+        <span class="ped-rail-label">Insertar</span>
+      </button>
+      <button id="ped-btn-add-boton" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">✎</span>
+        <span class="ped-rail-label">Estilo</span>
+      </button>
+      <button id="ped-btn-add-embed" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">▧</span>
+        <span class="ped-rail-label">Fondo</span>
+      </button>
+      <button id="ped-btn-add-slide" class="ped-rail-btn" type="button">
+        <span class="ped-rail-icon">▤</span>
+        <span class="ped-rail-label">Páginas</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="ped-main">
+    <div class="ped-topbar">
+      <button id="ped-btn-back" class="ped-mini-btn" type="button" title="Volver">☰</button>
+      <button id="ped-btn-toggle-sidepanel" class="ped-mini-btn" type="button" title="Ocultar o mostrar submenú">−</button>
+      <button id="ped-btn-dup-slide" class="ped-mini-btn" type="button" title="Duplicar diapositiva">⧉</button>
+
+      <div class="ped-pres-chip">
+        <input id="ped-pres-title" type="text" value="Cargando..." title="Título de la presentación">
+        <span>✎</span>
+      </div>
+
+      <div class="ped-top-actions">
+        <button id="ped-btn-publish" class="ped-chip-btn dark" type="button">Publicar</button>
+        <span id="ped-slide-status" class="ped-status-badge">Sin slide</span>
+        <button id="ped-btn-preview" class="ped-chip-btn light" type="button">Presentar</button>
+        <button id="ped-btn-save" class="ped-chip-btn primary" type="button">Compartir / Guardar</button>
+      </div>
+    </div>
+
+    <div class="ped-workspace">
+      <main class="ped-stage-area">
+        <div class="ped-ruler" aria-hidden="true">
+          <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span><span>600</span><span>700</span><span>800</span><span>900</span><span>1000</span><span>1100</span>
+        </div>
+        <div class="ped-stage-wrap">
+          <div class="ped-stage">
+            <div id="ped-canvas"></div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="ped-sidepanel">
+        <div id="ped-sidepanel-head" class="ped-sidepanel-head">
+          <strong id="ped-sidepanel-title">Panel de edición</strong>
+          <span id="ped-sidepanel-copy">Bloques, estilos, capas y propiedades de cada slide.</span>
+        </div>
+        <div id="ped-text-panel" class="ped-text-panel">
+          <button class="ped-text-card is-h1" data-ped-text="title-1" type="button">
+            <strong>Título 1</strong>
+          </button>
+          <button class="ped-text-card is-h2" data-ped-text="title-2" type="button">
+            <strong>Título 2</strong>
+          </button>
+          <button class="ped-text-card is-subtitle" data-ped-text="subtitle" type="button">
+            <span>Subtítulo</span>
+          </button>
+          <button class="ped-text-card is-paragraph" data-ped-text="paragraph" type="button">
+            <p>Esto es un párrafo listo para contener creatividad, experiencias e historias geniales.</p>
+          </button>
+          <button class="ped-text-card is-bullets" data-ped-text="bullets" type="button">
+            <ul>
+              <li>Listado de puntos</li>
+              <li>Listado de puntos</li>
+            </ul>
+          </button>
+          <button class="ped-text-card is-list" data-ped-text="ordered" type="button">
+            <ol>
+              <li>Listado ordenado</li>
+              <li>Listado ordenado</li>
+            </ol>
+          </button>
+          <button class="ped-text-card" data-ped-text="brand-typography" type="button">
+            <small>Contextualiza tu tema</small>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:end;">
+              <strong style="font-size:24px;line-height:1.02;font-weight:500;">ESCRIBE UN<br>TITULAR GENIAL</strong>
+              <strong style="font-size:16px;line-height:1.15;font-weight:700;">UN TÍTULO GENIAL</strong>
+            </div>
+          </button>
+          <button class="ped-text-brand-btn" data-ped-text="brand-typography" type="button">Usar tipografía de marca</button>
+        </div>
+        <div id="ped-interactive-panel" class="ped-interactive-panel">
+          <div class="ped-search-box">
+            <span>Buscar elemento</span>
+            <span>⌕</span>
+          </div>
+          <section class="ped-interactive-section">
+            <div class="ped-interactive-title"><strong>Contenido</strong></div>
+            <div class="ped-interactive-grid">
+              <button class="ped-interactive-card" data-ped-interactive="content-window" type="button">
+                <div class="ped-interactive-thumb is-window"></div>
+                <span>Ventana</span>
+              </button>
+              <button class="ped-interactive-card" data-ped-interactive="content-label" type="button">
+                <div class="ped-interactive-thumb is-tag"></div>
+                <span>Etiqueta</span>
+              </button>
+              <button class="ped-interactive-card" data-ped-interactive="content-audio" type="button">
+                <div class="ped-interactive-thumb is-audio"></div>
+                <span>Audio</span>
+              </button>
+            </div>
+          </section>
+          <section class="ped-interactive-section">
+            <div class="ped-interactive-title"><strong>Navegación</strong></div>
+            <div class="ped-interactive-grid">
+              <button class="ped-interactive-card" data-ped-interactive="nav-link" type="button">
+                <div class="ped-interactive-thumb is-link"></div>
+                <span>Enlace</span>
+              </button>
+              <button class="ped-interactive-card" data-ped-interactive="nav-page" type="button">
+                <div class="ped-interactive-thumb is-page"></div>
+                <span>Ir a página</span>
+              </button>
+            </div>
+          </section>
+          <section class="ped-interactive-section">
+            <div class="ped-interactive-title"><strong>Sticker con efectos</strong><span>Ver más</span></div>
+            <div class="ped-interactive-grid">
+              <button class="ped-interactive-card" data-ped-interactive="sticker-party" type="button">
+                <div class="ped-interactive-thumb is-sticker">🎉</div>
+                <span>Confeti</span>
+              </button>
+              <button class="ped-interactive-card" data-ped-interactive="sticker-clap" type="button">
+                <div class="ped-interactive-thumb is-sticker">👏</div>
+                <span>Aplausos</span>
+              </button>
+              <button class="ped-interactive-card" data-ped-interactive="sticker-pin" type="button">
+                <div class="ped-interactive-thumb is-sticker">📌</div>
+                <span>Pin</span>
+              </button>
+            </div>
+          </section>
+          <section class="ped-interactive-section">
+            <div class="ped-interactive-title"><strong>Botones</strong><span>Ver más</span></div>
+            <div class="ped-interactive-grid">
+              <button class="ped-interactive-card" data-ped-interactive="button-primary" type="button">
+                <div class="ped-interactive-thumb is-button">◉</div>
+                <span>Principal</span>
+              </button>
+              <button class="ped-interactive-card" data-ped-interactive="button-secondary" type="button">
+                <div class="ped-interactive-thumb is-button">◎</div>
+                <span>Secundario</span>
+              </button>
+              <button class="ped-interactive-card" data-ped-interactive="button-icon" type="button">
+                <div class="ped-interactive-thumb is-button">➜</div>
+                <span>Con icono</span>
+              </button>
+            </div>
+          </section>
+          <section class="ped-interactive-section">
+            <div class="ped-interactive-title"><strong>Área interactiva</strong></div>
+            <div class="ped-interactive-grid">
+              <button class="ped-interactive-card" data-ped-interactive="interactive-area" type="button">
+                <div class="ped-interactive-thumb">▣</div>
+                <span>Zona clicable</span>
+              </button>
+            </div>
+          </section>
+        </div>
+        <div id="ped-questions-panel" class="ped-questions-panel">
+          <button class="ped-question-bank-btn" type="button">Bancos de preguntas</button>
+
+          <section class="ped-question-section">
+            <h4>Evaluación</h4>
+            <button class="ped-question-card" data-ped-question="quiz-single" type="button">
+              <span class="ped-question-icon">☰</span>
+              <span>Elección única</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="quiz-multi" type="button">
+              <span class="ped-question-icon">☑</span>
+              <span>Elección múltiple</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="quiz-boolean" type="button">
+              <span class="ped-question-icon">◐</span>
+              <span>Verdadero o falso</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="quiz-image" type="button">
+              <span class="ped-question-icon">▣</span>
+              <span>Elección de imagen</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="quiz-order" type="button">
+              <span class="ped-question-icon">≣</span>
+              <span>Ordenar</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="quiz-fill" type="button">
+              <span class="ped-question-icon">☷</span>
+              <span>Completar huecos</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="quiz-short" type="button">
+              <span class="ped-question-icon">▁</span>
+              <span>Respuesta corta</span>
+            </button>
+          </section>
+
+          <section class="ped-question-section">
+            <h4>Multicamino</h4>
+            <button class="ped-question-card" data-ped-question="branching" type="button">
+              <span class="ped-question-icon">⤴</span>
+              <span>Puntos de decisión</span>
+              <span class="ped-question-badge">new</span>
+            </button>
+          </section>
+
+          <section class="ped-question-section">
+            <h4>Recogida de información</h4>
+            <button class="ped-question-card" data-ped-question="open-answer" type="button">
+              <span class="ped-question-icon">✎</span>
+              <span>Respuesta abierta</span>
+              <span class="ped-question-badge is-premium">♛</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="survey-mentimeter" type="button">
+              <span class="ped-question-icon">◔</span>
+              <span>Encuesta</span>
+              <span class="ped-question-badge is-premium">♛</span>
+            </button>
+            <button class="ped-question-card" data-ped-question="survey-image" type="button">
+              <span class="ped-question-icon">🖼</span>
+              <span>Encuesta con imagen</span>
+              <span class="ped-question-badge is-premium">♛</span>
+            </button>
+          </section>
+
+          <button id="ped-question-config-btn" class="ped-question-config-btn" type="button">Configuración de preguntas</button>
+        </div>
+        <div id="ped-widgets-panel" class="ped-widgets-panel">
+          <section class="ped-widget-group">
+            <h4>Galerías y datos</h4>
+            <button class="ped-widget-card" data-ped-widget="gallery-carousel" type="button">
+              <span class="ped-widget-icon">🖼</span>
+              <span>Carrusel</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="gallery-mosaic" type="button">
+              <span class="ped-widget-icon">▦</span>
+              <span>Mosaico</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="gallery-compare" type="button">
+              <span class="ped-widget-icon">◫</span>
+              <span>Comparador</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="gallery-cards" type="button">
+              <span class="ped-widget-icon">🗂</span>
+              <span>Tarjetas</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="gallery-chart" type="button">
+              <span class="ped-widget-icon">📊</span>
+              <span>Gráfica</span>
+            </button>
+          </section>
+
+          <section class="ped-widget-group">
+            <h4>Juegos</h4>
+            <button class="ped-widget-card" data-ped-widget="game-dice" type="button">
+              <span class="ped-widget-icon">⚄</span>
+              <span>Dado</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="game-coin" type="button">
+              <span class="ped-widget-icon">◍</span>
+              <span>Moneda</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="game-randomizer" type="button">
+              <span class="ped-widget-icon">⇄</span>
+              <span>Randomizer</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="game-match" type="button">
+              <span class="ped-widget-icon">❔</span>
+              <span>Encontrar la pareja</span>
+            </button>
+          </section>
+
+          <section class="ped-widget-group">
+            <h4>Temporizadores</h4>
+            <button class="ped-widget-card" data-ped-widget="timer-hourglass" type="button">
+              <span class="ped-widget-icon">⌛</span>
+              <span>Temporizador</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="timer-stopwatch" type="button">
+              <span class="ped-widget-icon">⏱</span>
+              <span>Cronómetro</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="timer-countdown" type="button">
+              <span class="ped-widget-icon">🗓</span>
+              <span>Cuenta atrás</span>
+            </button>
+          </section>
+
+          <section class="ped-widget-group">
+            <h4>Navegación</h4>
+            <button class="ped-widget-card" data-ped-widget="nav-progress" type="button">
+              <span class="ped-widget-icon">▬</span>
+              <span>Barra de progreso</span>
+              <span class="ped-question-badge">new</span>
+            </button>
+            <button class="ped-widget-card" data-ped-widget="nav-menu" type="button">
+              <span class="ped-widget-icon">☰</span>
+              <span>Menú de navegación</span>
+            </button>
+          </section>
+        </div>
+        <div id="ped-insert-panel" class="ped-insert-panel">
+          <div class="ped-insert-tabs">
+            <button class="ped-insert-tab is-active" data-ped-insert-tab="image" type="button">Imagen</button>
+            <button class="ped-insert-tab" data-ped-insert-tab="audio" type="button">Audio</button>
+            <button class="ped-insert-tab" data-ped-insert-tab="video" type="button">Vídeo</button>
+            <button class="ped-insert-tab" data-ped-insert-tab="other" type="button">Otros</button>
+          </div>
+
+          <div class="ped-insert-view is-active" data-ped-insert-view="image">
+            <button class="ped-upload-btn" data-ped-insert="upload-image" type="button">Subir imagen ⌄</button>
+            <p class="ped-insert-copy">Sube una imagen para empezar. (Tamaño máximo de archivo 5MB)</p>
+            <button class="ped-insert-action" data-ped-insert="cover-image" type="button"><span>🖼</span><span>Insertar imagen grande</span></button>
+            <button class="ped-insert-action" data-ped-insert="gallery-image" type="button"><span>▦</span><span>Insertar mini galería</span></button>
+          </div>
+
+          <div class="ped-insert-view" data-ped-insert-view="audio">
+            <button class="ped-upload-btn" data-ped-insert="upload-audio" type="button">Subir audio ⌄</button>
+            <p class="ped-insert-copy">Agrega una pista o un botón de audio para acompañar la narrativa de tu diapositiva.</p>
+            <button class="ped-insert-action" data-ped-insert="audio-button" type="button"><span>🔊</span><span>Botón de audio</span></button>
+          </div>
+
+          <div class="ped-insert-view" data-ped-insert-view="video">
+            <button class="ped-upload-btn" data-ped-insert="upload-video" type="button">Subir vídeo ⌄</button>
+            <p class="ped-insert-copy">Inserta un vídeo en formato visual o como bloque destacado dentro de la diapositiva.</p>
+            <button class="ped-insert-action" data-ped-insert="video-embed" type="button"><span>▶</span><span>Vídeo incrustado</span></button>
+          </div>
+
+          <div class="ped-insert-view" data-ped-insert-view="other">
+            <button class="ped-insert-action" data-ped-insert="divider" type="button"><span>—</span><span>Separador</span></button>
+            <button class="ped-insert-action" data-ped-insert="code-block" type="button"><span>{ }</span><span>Bloque destacado</span></button>
+            <button class="ped-insert-action" data-ped-insert="embed-frame" type="button"><span>▣</span><span>Marco embebido</span></button>
+          </div>
+        </div>
+        <div id="ped-style-panel" class="ped-style-panel">
+          <section class="ped-style-section">
+            <h4 class="ped-style-title">Colores de la creación <span class="ped-style-info">i</span></h4>
+            <div class="ped-style-swatches">
+              <button class="ped-style-swatch" data-ped-style-palette="creation-1" type="button" style="background:#e89a6d;"></button>
+              <button class="ped-style-swatch" data-ped-style-palette="creation-2" type="button" style="background:#65a620;"></button>
+              <button class="ped-style-swatch" data-ped-style-palette="creation-3" type="button" style="background:#3f6f12;"></button>
+            </div>
+            <div class="ped-style-title" style="font-size:16px;margin-top:8px;">Otras opciones</div>
+            <div class="ped-style-brand-grid">
+              <button class="ped-style-combo" data-ped-style-palette="combo-1" type="button"><span style="background:#e8e95d;"></span><span style="background:#63b28e;"></span><span style="background:#16647d;"></span></button>
+              <button class="ped-style-combo" data-ped-style-palette="combo-2" type="button"><span style="background:#ecdbac;"></span><span style="background:#e39b6e;"></span><span style="background:#bf4343;"></span></button>
+              <button class="ped-style-combo" data-ped-style-palette="combo-3" type="button"><span style="background:#eed27b;"></span><span style="background:#6eb1d8;"></span><span style="background:#1d5f96;"></span></button>
+              <button class="ped-style-combo" data-ped-style-palette="combo-4" type="button"><span style="background:#ece76e;"></span><span style="background:#edc84f;"></span><span style="background:#5462f0;"></span></button>
+              <button class="ped-style-combo" data-ped-style-palette="combo-5" type="button"><span style="background:#dbe870;"></span><span style="background:#ebefef;"></span><span style="background:#0f1d59;"></span></button>
+              <button class="ped-style-combo" data-ped-style-palette="combo-6" type="button"><span style="background:#bbe885;"></span><span style="background:#d57183;"></span><span style="background:#8e1010;"></span></button>
+            </div>
+            <div class="ped-style-title" style="font-size:16px;margin-top:8px;">Opciones con tu marca</div>
+            <div class="ped-style-brand-grid">
+              <button class="ped-style-swatch is-brand-add" data-ped-style-palette="brand-add" type="button">+</button>
+            </div>
+          </section>
+
+          <section class="ped-style-section">
+            <h4 class="ped-style-title">Estilos de texto <span class="ped-style-info">i</span></h4>
+            <button class="ped-style-card is-h1" data-ped-style-text="title-1" type="button">Título 1</button>
+            <button class="ped-style-card is-h2" data-ped-style-text="title-2" type="button">Título 2</button>
+            <button class="ped-style-card is-subtitle" data-ped-style-text="subtitle" type="button">Subtítulo</button>
+            <button class="ped-style-card is-paragraph" data-ped-style-text="paragraph" type="button">Párrafo</button>
+            <button class="ped-style-btn is-soft" data-ped-style-text="brand-typography" type="button">Usar tipografía de marca</button>
+            <button class="ped-style-btn is-dark" data-ped-style-palette="brand-kit" type="button">Aplicar Kit de marca</button>
+          </section>
+        </div>
+        <div id="ped-background-panel" class="ped-background-panel">
+          <div class="ped-background-tabs">
+            <button class="ped-background-tab is-active" data-ped-bg-tab="canvas" type="button">Lienzo</button>
+            <button class="ped-background-tab" data-ped-bg-tab="MAIN" type="button">MAIN</button>
+          </div>
+
+          <div class="ped-background-view is-active" data-ped-bg-view="canvas">
+            <div class="ped-background-card">
+              <div id="ped-bg-preview" class="ped-background-preview"></div>
+            </div>
+            <h4 class="ped-bg-title">Color</h4>
+            <div class="ped-bg-row-title">Colores recientes</div>
+            <div class="ped-bg-swatches">
+              <button class="ped-bg-swatch is-add" data-ped-bg-color="custom" type="button">+</button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#e89a6d" type="button" style="background:#e89a6d;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#65a620" type="button" style="background:#65a620;"></button>
+              <button class="ped-bg-swatch is-selected" data-ped-bg-color="#3f6f12" type="button" style="background:#3f6f12;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#8a6700" type="button" style="background:#8a6700;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#05070a" type="button" style="background:#05070a;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#9f0909" type="button" style="background:#9f0909;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#e9c86c" type="button" style="background:#e9c86c;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#000000" type="button" style="background:#000000;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#e7d8aa" type="button" style="background:#e7d8aa;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#c75b0a" type="button" style="background:#c75b0a;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#cb1212" type="button" style="background:#cb1212;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#c8940f" type="button" style="background:#c8940f;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#ef7a2a" type="button" style="background:#ef7a2a;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#8d3f05" type="button" style="background:#8d3f05;"></button>
+              <button class="ped-bg-swatch" data-ped-bg-color="#ef2d2d" type="button" style="background:#ef2d2d;"></button>
+            </div>
+
+            <div class="ped-bg-row-title">Paleta de la creación</div>
+            <div class="ped-style-swatches" style="margin-bottom:22px;">
+              <button class="ped-style-swatch" data-ped-bg-color="#e89a6d" type="button" style="background:#e89a6d;"></button>
+              <button class="ped-style-swatch" data-ped-bg-color="#65a620" type="button" style="background:#65a620;"></button>
+              <button class="ped-style-swatch" data-ped-bg-color="#3f6f12" type="button" style="background:#3f6f12;"></button>
+              <button class="ped-style-swatch is-brand-add" data-ped-bg-color="palette" type="button">🎨</button>
+            </div>
+
+            <div class="ped-bg-row-title">Subidas por ti</div>
+            <button class="ped-upload-btn" data-ped-bg-action="upload-image" type="button">Subir imagen ⌄</button>
+            <button class="ped-style-btn is-soft" data-ped-bg-action="apply-all" type="button">Aplicar a todas las páginas</button>
+          </div>
+
+          <div class="ped-background-view" data-ped-bg-view="MAIN">
+            <p class="ped-insert-copy">Configura una MAIN visual reutilizable para futuras diapositivas del proyecto.</p>
+            <button class="ped-style-btn is-dark" data-ped-bg-action="set-MAIN" type="button">Guardar como fondo MAIN</button>
+          </div>
+        </div>
+        <div id="ped-pages-panel" class="ped-pages-panel">
+          <div class="ped-pages-add">
+            <button id="ped-pages-add-btn" class="ped-pages-add-btn" type="button">+</button>
+            <div class="ped-pages-add-label">Añadir página</div>
+          </div>
+          <div id="ped-pages-list" class="ped-pages-list"></div>
+          <div class="ped-pages-footer">
+            <div class="ped-pages-help">?</div>
+            <button id="ped-pages-view-list" class="ped-pages-view-btn is-active" type="button">
+              <span class="ped-pages-view-icon">▤</span>
+              <span>Lista</span>
+            </button>
+            <button id="ped-pages-view-grid" class="ped-pages-view-btn" type="button">
+              <span class="ped-pages-view-icon">▦</span>
+              <span>Cuadrícula</span>
+            </button>
+          </div>
+        </div>
+        <div id="ped-resource-panel" class="ped-resource-panel">
+          <section class="ped-resource-section">
+            <div class="ped-resource-title"><strong>Imágenes y Gifts</strong><span>Ver más</span></div>
+            <div class="ped-resource-grid">
+              <button class="ped-resource-card" data-ped-resource="image-upload" type="button">⤴</button>
+              <button class="ped-resource-card is-photo" data-ped-resource="image-laptop" type="button" style="background-image:url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=480&q=80');"></button>
+              <button class="ped-resource-card is-photo" data-ped-resource="image-training" type="button" style="background-image:url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=480&q=80');"></button>
+              <button class="ped-resource-card is-photo" data-ped-resource="image-cat" type="button" style="background-image:url('https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=480&q=80');"></button>
+              <button class="ped-resource-card ai-card" data-ped-resource="image-ai" type="button">✦ Imagen con IA</button>
+            </div>
+          </section>
+          <section class="ped-resource-section">
+            <div class="ped-resource-title"><strong>Formas y conectores</strong><span>Ver más</span></div>
+            <div class="ped-resource-grid">
+              <button class="ped-resource-card is-shape-square" data-ped-resource="shape-square" type="button"></button>
+              <button class="ped-resource-card is-shape-circle" data-ped-resource="shape-circle" type="button"></button>
+              <button class="ped-resource-card is-shape-line" data-ped-resource="shape-line" type="button"></button>
+              <button class="ped-resource-card is-shape-animal" data-ped-resource="shape-cat" type="button">🐈</button>
+            </div>
+          </section>
+          <section class="ped-resource-section">
+            <div class="ped-resource-title"><strong>Iconos</strong><span>Ver más</span></div>
+            <div class="ped-resource-grid">
+              <button class="ped-resource-card" data-ped-resource="icon-touch" type="button">☝</button>
+              <button class="ped-resource-card" data-ped-resource="icon-chart" type="button">◔</button>
+              <button class="ped-resource-card" data-ped-resource="icon-team" type="button">☺</button>
+              <button class="ped-resource-card" data-ped-resource="icon-burst" type="button">✺</button>
+            </div>
+          </section>
+          <section class="ped-resource-section">
+            <div class="ped-resource-title"><strong>Ilustraciones</strong><span>Ver más</span></div>
+            <div class="ped-resource-grid">
+              <button class="ped-resource-card" data-ped-resource="illus-folder" type="button">📁</button>
+              <button class="ped-resource-card" data-ped-resource="illus-cassette" type="button">📼</button>
+              <button class="ped-resource-card" data-ped-resource="illus-rocket" type="button">🚀</button>
+              <button class="ped-resource-card" data-ped-resource="illus-trophy" type="button">🏆</button>
+            </div>
+          </section>
+          <section class="ped-resource-section">
+            <div class="ped-resource-title"><strong>Personajes</strong><span>Ver más</span></div>
+            <div class="ped-resource-grid">
+              <button class="ped-resource-card" data-ped-resource="char-1" type="button">🧑</button>
+              <button class="ped-resource-card" data-ped-resource="char-2" type="button">👩</button>
+              <button class="ped-resource-card" data-ped-resource="char-3" type="button">🧑‍💼</button>
+              <button class="ped-resource-card" data-ped-resource="char-4" type="button">🧔</button>
+            </div>
+          </section>
+          <section class="ped-resource-section">
+            <div class="ped-resource-title"><strong>Gráficas</strong><span>Ver más</span></div>
+            <div class="ped-resource-grid">
+              <button class="ped-resource-card" data-ped-resource="chart-bars" type="button">▥</button>
+              <button class="ped-resource-card" data-ped-resource="chart-line" type="button">⌁</button>
+              <button class="ped-resource-card" data-ped-resource="chart-pie" type="button">◕</button>
+              <button class="ped-resource-card" data-ped-resource="chart-kpi" type="button">%</button>
+            </div>
+          </section>
+          <section class="ped-resource-section">
+            <div class="ped-resource-title"><strong>Composiciones</strong><span>Ver más</span></div>
+            <div class="ped-resource-grid">
+              <button class="ped-resource-card" data-ped-resource="comp-hero" type="button">▣</button>
+              <button class="ped-resource-card" data-ped-resource="comp-quote" type="button">❝</button>
+              <button class="ped-resource-card" data-ped-resource="comp-timeline" type="button">↦</button>
+              <button class="ped-resource-card" data-ped-resource="comp-highlight" type="button">✦</button>
+            </div>
+          </section>
+        </div>
+        <div id="ped-slide-settings" class="ped-slide-settings">
+          <div class="ped-field">
+            <label for="ped-slide-title">Título slide</label>
+            <input id="ped-slide-title" type="text" placeholder="Diapositiva 1">
+          </div>
+          <div class="ped-field">
+            <label>Fondo</label>
+            <div class="ped-field-inline">
+              <input id="ped-slide-bg-color" type="color" value="#ffffff">
+              <input id="ped-slide-bg-image" type="url" placeholder="Imagen de fondo (opcional)">
+            </div>
+          </div>
+          <div class="ped-field">
+            <label for="ped-slide-notes">Notas</label>
+            <textarea id="ped-slide-notes" placeholder="Notas internas"></textarea>
+          </div>
+        </div>
+        <div id="ped-audit-panel" class="ped-audit-panel">
+          <div class="ped-audit-head">
+            <strong>Historial</strong>
+            <span id="ped-audit-meta">Sin actividad reciente.</span>
+          </div>
+          <div id="ped-audit-list" class="ped-audit-list">
+            <div class="ped-empty">Cargando historial…</div>
+          </div>
+        </div>
+        <div id="ped-panel-tabs" class="ped-panel-tabs">
+          <button class="ped-panel-tab" data-ped-tab="blocks" type="button">Bloques</button>
+          <button class="ped-panel-tab is-active" data-ped-tab="styles" type="button">Estilos</button>
+          <button class="ped-panel-tab" data-ped-tab="layers" type="button">Capas</button>
+          <button class="ped-panel-tab" data-ped-tab="traits" type="button">Props</button>
+        </div>
+        <div id="ped-props">
+          <div class="ped-props-view" data-ped-view="blocks">
+            <div id="ped-blocks"></div>
+          </div>
+          <div class="ped-props-view is-active" data-ped-view="styles">
+            <div id="ped-styles"></div>
+          </div>
+          <div class="ped-props-view" data-ped-view="layers">
+            <div id="ped-layers"></div>
+          </div>
+          <div class="ped-props-view" data-ped-view="traits">
+            <div id="ped-widget-config"></div>
+            <div id="ped-traits"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="ped-footer">
+      <div class="ped-footer-tools">
+        <button id="ped-btn-slide-up" class="ped-footer-btn" type="button">↑</button>
+        <button id="ped-btn-slide-dn" class="ped-footer-btn" type="button">↓</button>
+        <button id="ped-btn-del-slide" class="ped-footer-btn" type="button">Eliminar</button>
+      </div>
+      <div class="ped-footer-center">
+        <span>100%</span>
+        <span>|</span>
+        <span>Editor activo</span>
+      </div>
+      <div id="ped-slide-list" class="ped-slide-list-inline"></div>
+    </div>
+  </div>
+</div>
+
+<div id="ped-toast"></div>
+
+<script src="/static/vendor/grapesjs/grapes.min.js"></script>
+<script>
+(function () {
+  var root = document.getElementById('ped-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

@@ -252,7 +252,7 @@ async def check_permission(
             has_perm = PermissionManager.has_permission(current_user["role"], system_perm)
             permission_name = system_perm.name
         except ValueError:
-            # Verificar en permisos personalizados de la base de datos
+            # Verificar en permisos personalizados de la MAIN de datos
             user_perms = role_crud.get_user_permissions(db, user_id=current_user["id"])
             has_perm = permission_code in user_perms["permissions"]
             permission_name = permission_code

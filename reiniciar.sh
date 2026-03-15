@@ -1,7 +1,6 @@
 #!/bin/bash
 # Script de reinicio local del workspace.
 # No es el reinicio remoto usado por AVANCOOP en produccion.
-
 # Activar entorno virtual .venv si existe
 if [ -f ".venv/bin/activate" ]; then
     source .venv/bin/activate
@@ -56,17 +55,17 @@ else
 fi
 echo "Usando SQLITE_DB_PATH=${SQLITE_DB_PATH}"
 
-# En producción, forzar DATABASE_URL hacia ruta persistente para evitar
+# En producción, forzar DATAMAIN_URL hacia ruta persistente para evitar
 # que quede apuntando a sqlite:///./avandbcoop.db dentro de /opt/sipet.
 APP_ENV_EFFECTIVE="${APP_ENV:-development}"
 if [ "$APP_ENV_EFFECTIVE" = "production" ] || [ "$APP_ENV_EFFECTIVE" = "prod" ]; then
-    DATABASE_URL="sqlite:///${SQLITE_DB_PATH}"
-    export DATABASE_URL
+    DATAMAIN_URL="sqlite:///${SQLITE_DB_PATH}"
+    export DATAMAIN_URL
     if [ -f ".env" ]; then
-        if grep -q '^DATABASE_URL=' ".env"; then
-            sed -i.bak "s|^DATABASE_URL=.*|DATABASE_URL=${DATABASE_URL}|g" ".env" && rm -f ".env.bak"
+        if grep -q '^DATAMAIN_URL=' ".env"; then
+            sed -i.bak "s|^DATAMAIN_URL=.*|DATAMAIN_URL=${DATAMAIN_URL}|g" ".env" && rm -f ".env.bak"
         else
-            printf '\nDATABASE_URL=%s\n' "$DATABASE_URL" >> ".env"
+            printf '\nDATAMAIN_URL=%s\n' "$DATAMAIN_URL" >> ".env"
         fi
         if grep -q '^APP_ENV=' ".env"; then
             sed -i.bak "s|^APP_ENV=.*|APP_ENV=production|g" ".env" && rm -f ".env.bak"
@@ -74,7 +73,7 @@ if [ "$APP_ENV_EFFECTIVE" = "production" ] || [ "$APP_ENV_EFFECTIVE" = "prod" ];
             printf '\nAPP_ENV=production\n' >> ".env"
         fi
     fi
-    echo "Producción activa. DATABASE_URL fijada a ${DATABASE_URL}"
+    echo "Producción activa. DATAMAIN_URL fijada a ${DATAMAIN_URL}"
 fi
 
 # Asegurar secreto estable para login/hash de usuarios.
@@ -97,8 +96,8 @@ if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
 fi
 
-# Migrar base de datos (Alembic — usa 'heads' para soportar múltiples cabezas)
-# En desarrollo local lo omitimos por defecto porque hay bases con tablas ya existentes
+# Migrar MAIN de datos (Alembic — usa 'heads' para soportar múltiples cabezas)
+# En desarrollo local lo omitimos por defecto porque hay MAINs con tablas ya existentes
 # fuera del historial de Alembic. Se puede forzar con RUN_ALEMBIC_ON_RESTART=1.
 RUN_ALEMBIC_ON_RESTART="${RUN_ALEMBIC_ON_RESTART:-}"
 if [ -f "alembic.ini" ]; then
@@ -122,6 +121,12 @@ fi
 PORT="${PORT:-8000}"
 HOST="${HOST:-0.0.0.0}"
 LOG_FILE="${LOG_FILE:-uvicorn.log}"
+STARTUP_TIMEOUT_SECONDS="${STARTUP_TIMEOUT_SECONDS:-45}"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+
+if [ -x ".venv/bin/python" ]; then
+    PYTHON_BIN="${PWD}/.venv/bin/python"
+fi
 
 # Detener procesos previos
 PIDS_EN_PUERTO=$(lsof -ti:"$PORT" 2>/dev/null)
@@ -151,11 +156,28 @@ fi
 
 # Iniciar el servidor y guardar logs reales
 echo "Iniciando servidor FastAPI en ${HOST}:${PORT}..."
-uvicorn fastapi_modulo.main:app --host "$HOST" --port "$PORT" > "$LOG_FILE" 2>&1 &
+mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
+: > "$LOG_FILE"
+if command -v setsid >/dev/null 2>&1; then
+    nohup setsid "$PYTHON_BIN" -m uvicorn fastapi_modulo.main:app --host "$HOST" --port "$PORT" > "$LOG_FILE" 2>&1 < /dev/null &
+else
+    nohup "$PYTHON_BIN" -m uvicorn fastapi_modulo.main:app --host "$HOST" --port "$PORT" > "$LOG_FILE" 2>&1 < /dev/null &
+fi
 UVICORN_PID=$!
-sleep 3
+disown "$UVICORN_PID" 2>/dev/null || true
+SERVER_READY=0
+for _ in $(seq 1 "$STARTUP_TIMEOUT_SECONDS"); do
+    if kill -0 "$UVICORN_PID" 2>/dev/null && lsof -ti:"$PORT" 2>/dev/null | grep -qx "$UVICORN_PID"; then
+        SERVER_READY=1
+        break
+    fi
+    if ! kill -0 "$UVICORN_PID" 2>/dev/null; then
+        break
+    fi
+    sleep 1
+done
 
-if kill -0 "$UVICORN_PID" 2>/dev/null && lsof -ti:"$PORT" 2>/dev/null | grep -qx "$UVICORN_PID"; then
+if [ "$SERVER_READY" = "1" ]; then
     echo "Servidor iniciado correctamente en ${HOST}:${PORT}."
 else
     echo "Error: El servidor no se inició. Revisa $LOG_FILE para detalles."

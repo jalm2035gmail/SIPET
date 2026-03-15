@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="icon" type="image/svg+xml" href="/modulos/cartera_prestamos/static/description/financiamiento.svg">
+    <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/static/dist/output.css?v={{ asset_version | default('dev', true) }}">
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/modulos/cartera_prestamos/static/css/cartera_base.css?v={{ asset_version | default('dev', true) }}">
+    <link rel="stylesheet" href="/modulos/cartera_prestamos/static/css/cartera_components.css?v={{ asset_version | default('dev', true) }}">
+    {% for stylesheet in extra_stylesheets %}
+    <link rel="stylesheet" href="{{ stylesheet }}?v={{ asset_version | default('dev', true) }}">
+    {% endfor %}
+</head>
+<body>
+    <div class="cp-module-shell" id="cp-module-shell">
+        <div class="cp-sidebar-backdrop" id="cp-sidebar-backdrop"></div>
+        {% include "sidebar.html" %}
+        <main class="cp-module-main">
+            <div class="cp-module-frame">
+                {% include "navbar.html" %}
+                <section class="cp-content-card">
+                    {{ content | safe }}
+                </section>
+            </div>
+        </main>
+    </div>
+    <script>
+        (function() {
+            var shell = document.getElementById("cp-module-shell");
+            var toggle = document.getElementById("cp-mobile-toggle");
+            var closeBtn = document.getElementById("cp-sidebar-close");
+            var backdrop = document.getElementById("cp-sidebar-backdrop");
+            if (!shell) return;
+
+            function openSidebar() {
+                shell.classList.add("is-sidebar-open");
+            }
+
+            function closeSidebar() {
+                shell.classList.remove("is-sidebar-open");
+            }
+
+            if (toggle) toggle.addEventListener("click", openSidebar);
+            if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
+            if (backdrop) backdrop.addEventListener("click", closeSidebar);
+        })();
+    </script>
+    <script src="/modulos/cartera_prestamos/static/js/cartera_prestamos.js?v={{ asset_version | default('dev', true) }}"></script>
+    {% for script in extra_scripts %}
+    <script src="{{ script }}?v={{ asset_version | default('dev', true) }}"></script>
+    {% endfor %}
+</body>
+</html>

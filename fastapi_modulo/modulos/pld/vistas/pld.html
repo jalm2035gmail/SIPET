@@ -1,0 +1,942 @@
+<section class="cp-pld-shell">
+  <style>
+    .cp-pld-shell {
+      --pp-bg: #ffffff;
+      --pp-bg-2: color-mix(in srgb, var(--page-bg, #f4f6fb) 72%, #ffffff 28%);
+      --pp-panel: color-mix(in srgb, var(--content-bg, #ffffff) 90%, var(--page-bg, #f4f6fb) 10%);
+      --pp-panel-2: color-mix(in srgb, var(--field-color, #ffffff) 86%, var(--page-bg, #f4f6fb) 14%);
+      --pp-line: color-mix(in srgb, var(--button-bg, #0f172a) 10%, #ffffff 90%);
+      --pp-text: var(--body-text, #0f172a);
+      --pp-muted: color-mix(in srgb, var(--body-text, #0f172a) 64%, #ffffff 36%);
+      --pp-blue: color-mix(in srgb, var(--institutional-accent-contrast, #2a220f) 18%, #6b8cff 82%);
+      --pp-blue-2: color-mix(in srgb, var(--institutional-accent-contrast, #2a220f) 12%, #8cb4ff 88%);
+      --pp-purple: color-mix(in srgb, var(--institutional-accent-contrast, #2a220f) 16%, #a26bff 84%);
+      --pp-violet: color-mix(in srgb, var(--institutional-accent-contrast, #2a220f) 16%, #7e5cff 84%);
+      --pp-pink: #ff5b9a;
+      --pp-orange: #ffb35c;
+      --pp-red: #ff617f;
+      --pp-green: #6ee7b7;
+      --pp-shadow: 0 18px 42px rgba(15, 23, 42, 0.10);
+      width: 100%;
+      max-height: calc(100vh - 140px);
+      background:
+        radial-gradient(circle at left bottom, color-mix(in srgb, var(--pp-pink) 6%, transparent) 0%, transparent 22%),
+        radial-gradient(circle at right top, color-mix(in srgb, var(--pp-blue) 8%, transparent) 0%, transparent 20%),
+        linear-gradient(180deg, var(--pp-bg) 0%, var(--pp-bg-2) 100%);
+      color: var(--pp-text);
+      border: 1px solid var(--pp-line);
+      border-radius: 28px;
+      overflow: auto;
+      box-shadow: var(--pp-shadow);
+    }
+
+    .cp-pld-shell * { box-sizing: border-box; }
+    .cp-pld-shell a { text-decoration: none; color: inherit; }
+    .cp-pld-shell button, .cp-pld-shell input { font: inherit; }
+    .cp-pld-shell button { border: none; cursor: pointer; }
+
+    .cp-pld-shell::-backendkit-scrollbar,
+    .cp-pld-main::-backendkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .cp-pld-shell::-backendkit-scrollbar-thumb,
+    .cp-pld-main::-backendkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 18%, #ffffff 82%);
+      border-radius: 999px;
+    }
+
+    .cp-pld-shell::-backendkit-scrollbar-track,
+    .cp-pld-main::-backendkit-scrollbar-track {
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 5%, #ffffff 95%);
+      border-radius: 999px;
+    }
+
+    .cp-pld-app {
+      display: block;
+      min-height: 860px;
+      max-height: calc(100vh - 140px);
+    }
+    
+    .cp-pld-critical {
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 20px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--pp-red) 14%, #ffffff 86%), color-mix(in srgb, var(--pp-pink) 10%, #ffffff 90%));
+      border: 1px solid color-mix(in srgb, var(--pp-red) 18%, #ffffff 82%);
+      box-shadow: var(--pp-shadow);
+      color: #7f1d1d;
+    }
+
+    .cp-pld-critical strong {
+      display: block;
+      font-size: 1.1rem;
+    }
+
+    .cp-pld-critical span {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #9f1239;
+    }
+
+    .cp-pld-critical-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: color-mix(in srgb, var(--pp-red) 20%, #ffffff 80%);
+      color: var(--pp-red);
+      font-size: 1.1rem;
+      font-weight: 800;
+      flex: 0 0 48px;
+    }
+
+    .cp-pld-main {
+      padding: 18px 20px 24px;
+      min-width: 0;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .cp-pld-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .cp-pld-search {
+      flex: 1;
+      max-width: 520px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 4%, #ffffff 96%);
+      border: 1px solid var(--pp-line);
+      box-shadow: var(--pp-shadow);
+    }
+
+    .cp-pld-search-icon {
+      color: var(--pp-muted);
+      font-size: 1rem;
+    }
+
+    .cp-pld-search input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--pp-text);
+      font-size: 0.95rem;
+    }
+
+    .cp-pld-search input::placeholder {
+      color: var(--pp-muted);
+    }
+
+    .cp-pld-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cp-pld-icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 4%, #ffffff 96%);
+      color: var(--pp-text);
+      border: 1px solid var(--pp-line);
+      display: grid;
+      place-items: center;
+    }
+
+    .cp-pld-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 4%, #ffffff 96%);
+      border: 1px solid var(--pp-line);
+    }
+
+    .cp-pld-profile img,
+    .cp-pld-client img,
+    .cp-pld-alert img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .cp-pld-profile strong {
+      display: block;
+      font-size: 0.93rem;
+    }
+
+    .cp-pld-profile span {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--pp-muted);
+    }
+
+    .cp-pld-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .cp-pld-kpi,
+    .cp-pld-panel {
+      background:
+        linear-gradient(180deg, var(--pp-panel-2), var(--pp-panel));
+      border: 1px solid var(--pp-line);
+      border-radius: 20px;
+      box-shadow: var(--pp-shadow);
+    }
+
+    .cp-pld-kpi {
+      padding: 18px 20px;
+      min-height: 132px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cp-pld-kpi-label {
+      color: var(--pp-muted);
+      font-size: 0.92rem;
+      margin-bottom: 12px;
+    }
+
+    .cp-pld-kpi-value {
+      font-size: 2rem;
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .cp-pld-kpi-foot {
+      margin-top: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .cp-pld-kpi-foot.is-success { color: var(--pp-green); }
+    .cp-pld-kpi-foot.is-danger { color: var(--pp-red); }
+    .cp-pld-kpi-foot.is-neutral { color: var(--pp-muted); }
+
+    .cp-pld-kpi.is-danger {
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--pp-red) 12%, #ffffff 88%), color-mix(in srgb, var(--pp-orange) 8%, #ffffff 92%)),
+        var(--pp-panel);
+    }
+
+    .cp-pld-mini-chart {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 54px;
+      width: 130px;
+      opacity: 0.95;
+    }
+
+    .cp-pld-mini-chart span {
+      width: 10px;
+      border-radius: 999px 999px 0 0;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--pp-pink) 45%, transparent), color-mix(in srgb, var(--pp-purple) 95%, transparent));
+    }
+
+    .cp-pld-mini-chart span:nth-child(1) { height: 10px; }
+    .cp-pld-mini-chart span:nth-child(2) { height: 14px; }
+    .cp-pld-mini-chart span:nth-child(3) { height: 12px; }
+    .cp-pld-mini-chart span:nth-child(4) { height: 20px; }
+    .cp-pld-mini-chart span:nth-child(5) { height: 28px; }
+    .cp-pld-mini-chart span:nth-child(6) { height: 24px; }
+    .cp-pld-mini-chart span:nth-child(7) { height: 36px; }
+
+    .cp-pld-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    .cp-pld-panel {
+      padding: 18px;
+    }
+
+    .cp-pld-panel.is-chart-large {
+      grid-column: span 2;
+      min-height: 320px;
+    }
+
+    .cp-pld-panel.is-span-2 {
+      grid-column: span 2;
+    }
+
+    .cp-pld-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .cp-pld-panel-head h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      letter-spacing: -0.02em;
+    }
+
+    .cp-pld-panel-head a {
+      font-size: 0.85rem;
+      color: var(--pp-blue);
+      opacity: 1;
+    }
+
+    .cp-pld-chart {
+      position: relative;
+      height: 230px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--button-bg, #0f172a) 2%, #ffffff 98%), color-mix(in srgb, var(--button-bg, #0f172a) 1%, #ffffff 99%));
+      overflow: hidden;
+      padding: 22px 18px 14px;
+    }
+
+    .cp-pld-chart-lines span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      border-top: 1px dashed color-mix(in srgb, var(--button-bg, #0f172a) 10%, #ffffff 90%);
+    }
+
+    .cp-pld-chart-lines span:nth-child(1) { top: 20%; }
+    .cp-pld-chart-lines span:nth-child(2) { top: 40%; }
+    .cp-pld-chart-lines span:nth-child(3) { top: 60%; }
+    .cp-pld-chart-lines span:nth-child(4) { top: 80%; }
+
+    .cp-pld-bars {
+      position: absolute;
+      inset: auto 20px 18px 20px;
+      height: 170px;
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
+    }
+
+    .cp-pld-bar-group {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 100%;
+    }
+
+    .cp-pld-bar-group i,
+    .cp-pld-bar-group b {
+      flex: 1;
+      border-radius: 10px 10px 0 0;
+      display: block;
+    }
+
+    .cp-pld-bar-group i {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--pp-blue) 28%, transparent), color-mix(in srgb, var(--pp-blue) 84%, transparent));
+    }
+
+    .cp-pld-bar-group b {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--pp-purple) 22%, transparent), color-mix(in srgb, var(--pp-pink) 65%, transparent));
+    }
+
+    .cp-pld-line {
+      position: absolute;
+      inset: 20px 20px 18px 20px;
+      width: calc(100% - 40px);
+      height: calc(100% - 38px);
+    }
+
+    .cp-pld-line path {
+      fill: none;
+      stroke: #ffb3c8;
+      stroke-width: 4;
+      filter: drop-shadow(0 0 8px color-mix(in srgb, #ffb3c8 25%, transparent));
+    }
+
+    .cp-pld-chart-badge {
+      position: absolute;
+      right: 18px;
+      top: 18px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--pp-red) 12%, #ffffff 88%), color-mix(in srgb, var(--pp-orange) 10%, #ffffff 90%));
+      border: 1px solid var(--pp-line);
+      box-shadow: var(--pp-shadow);
+    }
+
+    .cp-pld-chart-badge strong {
+      display: block;
+      font-size: 1.45rem;
+    }
+
+    .cp-pld-chart-badge span {
+      display: block;
+      margin-top: 5px;
+      font-size: 0.82rem;
+      color: #b9f6d7;
+    }
+
+    .cp-pld-chart-legend {
+      display: flex;
+      gap: 18px;
+      padding-top: 14px;
+      color: var(--pp-muted);
+      font-size: 0.88rem;
+    }
+
+    .cp-pld-legend {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .cp-pld-legend.is-blue { background: var(--pp-blue); }
+    .cp-pld-legend.is-purple { background: linear-gradient(135deg, var(--pp-purple), var(--pp-pink)); }
+
+    .cp-pld-donut-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 250px;
+    }
+
+    .cp-pld-donut {
+      position: relative;
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      background:
+        conic-gradient(var(--pp-blue) 0 68%, var(--pp-orange) 68% 90%, var(--pp-red) 90% 100%);
+      box-shadow: inset 0 0 30px color-mix(in srgb, var(--button-bg, #0f172a) 4%, #ffffff 96%);
+    }
+
+    .cp-pld-donut-hole {
+      position: absolute;
+      inset: 52px;
+      border-radius: 50%;
+      background: var(--pp-panel);
+      box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .cp-pld-donut-center {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .cp-pld-legend-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cp-pld-legend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--pp-text);
+    }
+
+    .cp-pld-lg {
+      width: 14px;
+      height: 14px;
+      border-radius: 5px;
+      display: inline-block;
+    }
+
+    .cp-pld-lg.is-blue { background: var(--pp-blue); }
+    .cp-pld-lg.is-orange { background: var(--pp-orange); }
+    .cp-pld-lg.is-red { background: var(--pp-red); }
+    .cp-pld-lg.is-violet { background: var(--pp-violet); }
+
+    .cp-pld-filter-btn,
+    .cp-pld-row-btn,
+    .cp-pld-mini-action {
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .cp-pld-filter-btn {
+      padding: 10px 14px;
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 6%, #ffffff 94%);
+      border: 1px solid var(--pp-line);
+      color: var(--pp-text);
+    }
+
+    .cp-pld-table-wrap {
+      overflow: auto;
+      border-radius: 16px;
+      border: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 6%, #ffffff 94%);
+    }
+
+    .cp-pld-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    .cp-pld-table thead {
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 4%, #ffffff 96%);
+    }
+
+    .cp-pld-table th,
+    .cp-pld-table td {
+      padding: 16px 14px;
+      text-align: left;
+      border-bottom: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 6%, #ffffff 94%);
+    }
+
+    .cp-pld-table th {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: color-mix(in srgb, var(--button-bg, #0f172a) 72%, #ffffff 28%);
+    }
+
+    .cp-pld-table td {
+      font-size: 0.93rem;
+      color: var(--pp-text);
+    }
+
+    .cp-pld-table tbody tr:hover {
+      background: color-mix(in srgb, var(--button-bg, #0f172a) 2.5%, #ffffff 97.5%);
+    }
+
+    .cp-pld-client {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+    }
+
+    .cp-pld-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+
+    .cp-pld-status.is-red {
+      background: color-mix(in srgb, var(--pp-red) 14%, transparent);
+      color: #ffd4dd;
+      border-color: color-mix(in srgb, var(--pp-red) 18%, transparent);
+    }
+
+    .cp-pld-status.is-orange {
+      background: color-mix(in srgb, var(--pp-orange) 14%, transparent);
+      color: #ffe2c0;
+      border-color: color-mix(in srgb, var(--pp-orange) 18%, transparent);
+    }
+
+    .cp-pld-row-btn,
+    .cp-pld-mini-action {
+      padding: 10px 14px;
+      background: linear-gradient(135deg, var(--pp-pink), var(--pp-purple));
+      box-shadow: 0 12px 30px color-mix(in srgb, var(--pp-blue) 18%, transparent);
+    }
+
+    .cp-pld-mini-action {
+      padding: 9px 12px;
+      background: color-mix(in srgb, var(--pp-purple) 12%, #ffffff 88%);
+      border: 1px solid color-mix(in srgb, var(--pp-purple) 18%, #ffffff 82%);
+      box-shadow: none;
+    }
+
+    .cp-pld-alerts {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cp-pld-alert {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 6%, #ffffff 94%);
+    }
+
+    .cp-pld-alert:last-child { border-bottom: none; }
+
+    .cp-pld-alert-content {
+      flex: 1;
+    }
+
+    .cp-pld-alert-content strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.96rem;
+    }
+
+    .cp-pld-alert-content small {
+      color: var(--pp-muted);
+      font-size: 0.82rem;
+    }
+
+    .cp-pld-report-summary {
+      margin-bottom: 16px;
+    }
+
+    .cp-pld-report-big {
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .cp-pld-report-text {
+      color: var(--pp-muted);
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    .cp-pld-gauge-wrap {
+      margin: 16px 0;
+      padding-top: 8px;
+    }
+
+    .cp-pld-gauge {
+      width: 100%;
+      height: 110px;
+      border-radius: 110px 110px 0 0;
+      background:
+        conic-gradient(
+          from 180deg at 50% 100%,
+          #7fd2ff 0 22%,
+          var(--pp-orange) 22% 50%,
+          var(--pp-red) 50% 78%,
+          var(--pp-violet) 78% 100%
+        );
+      border: 1px solid var(--pp-line);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cp-pld-gauge::after {
+      content: "";
+      position: absolute;
+      inset: 20px 20px 0 20px;
+      border-radius: 999px 999px 0 0;
+      background: var(--pp-panel);
+    }
+
+    .cp-pld-report-legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      color: var(--pp-muted);
+      font-size: 0.88rem;
+    }
+
+    .cp-pld-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .cp-pld-dot.is-low { background: #7fd2ff; }
+    .cp-pld-dot.is-med { background: var(--pp-orange); }
+    .cp-pld-dot.is-high { background: var(--pp-red); }
+    .cp-pld-dot.is-backlog { background: var(--pp-violet); }
+
+    @media (max-width: 1280px) {
+      .cp-pld-kpis {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .cp-pld-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cp-pld-panel.is-chart-large,
+      .cp-pld-panel.is-span-2 {
+        grid-column: span 1;
+      }
+
+      .cp-pld-donut-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .cp-pld-topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .cp-pld-search {
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .cp-pld-main {
+        padding: 14px;
+      }
+
+      .cp-pld-kpis {
+        grid-template-columns: 1fr;
+      }
+
+      .cp-pld-profile div {
+        display: none;
+      }
+
+      .cp-pld-report-legend {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <div class="cp-pld-app">
+    <main class="cp-pld-main">
+      <section class="cp-pld-critical">
+        <span class="cp-pld-critical-icon">▲</span>
+        <div>
+          <strong>Alerta Alta</strong>
+          <span>28 casos</span>
+        </div>
+      </section>
+
+      <section class="cp-pld-kpis">
+        <article class="cp-pld-kpi">
+          <div class="cp-pld-kpi-label">Alertas activas</div>
+          <div class="cp-pld-kpi-value">187</div>
+          <div class="cp-pld-kpi-foot is-neutral">28 en revision</div>
+        </article>
+
+        <article class="cp-pld-kpi">
+          <div class="cp-pld-kpi-label">Escaladas a investigacion</div>
+          <div class="cp-pld-kpi-value">14</div>
+          <div class="cp-pld-kpi-foot is-danger">5 casos criticos</div>
+        </article>
+
+        <article class="cp-pld-kpi is-danger">
+          <div class="cp-pld-kpi-label">Riesgo institucional</div>
+          <div class="cp-pld-kpi-value">Moderado</div>
+          <div class="cp-pld-kpi-foot is-success">+5 vs semana anterior · 64/100</div>
+        </article>
+
+        <article class="cp-pld-kpi">
+          <div class="cp-pld-kpi-label">Reportes UIF</div>
+          <div class="cp-pld-kpi-value">6</div>
+          <div class="cp-pld-kpi-foot is-neutral">1 por enviar</div>
+          <div class="cp-pld-mini-chart">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </article>
+      </section>
+
+      <section class="cp-pld-grid">
+        <article class="cp-pld-panel is-chart-large">
+          <div class="cp-pld-panel-head">
+            <h3>Curva de Alertas Sospechosas</h3>
+          </div>
+
+          <div class="cp-pld-chart">
+            <div class="cp-pld-chart-lines">
+              <span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="cp-pld-bars">
+              <div class="cp-pld-bar-group"><i style="height:16%"></i><b style="height:22%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:18%"></i><b style="height:28%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:22%"></i><b style="height:32%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:26%"></i><b style="height:36%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:30%"></i><b style="height:42%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:38%"></i><b style="height:50%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:42%"></i><b style="height:58%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:46%"></i><b style="height:60%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:48%"></i><b style="height:64%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:52%"></i><b style="height:68%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:58%"></i><b style="height:74%"></b></div>
+              <div class="cp-pld-bar-group"><i style="height:64%"></i><b style="height:80%"></b></div>
+            </div>
+
+            <svg class="cp-pld-line" viewBox="0 0 1000 300" preserveAspectRatio="none">
+              <path d="M20,250 C70,220 110,210 170,190 C240,166 275,132 340,118 C410,104 470,120 530,92 C620,56 690,60 760,44 C850,30 910,24 980,12"></path>
+            </svg>
+
+            <div class="cp-pld-chart-badge">
+              <strong>▲ 272%</strong>
+              <span>27% este mes</span>
+            </div>
+          </div>
+
+          <div class="cp-pld-chart-legend">
+            <span><i class="cp-pld-legend is-blue"></i>Esperado</span>
+            <span><i class="cp-pld-legend is-purple"></i>Detectado</span>
+          </div>
+        </article>
+
+        <article class="cp-pld-panel">
+          <div class="cp-pld-panel-head">
+            <h3>Segmentacion de Riesgo PLD</h3>
+          </div>
+
+          <div class="cp-pld-donut-wrap">
+            <div class="cp-pld-donut">
+              <div class="cp-pld-donut-hole"></div>
+              <div class="cp-pld-donut-center">68%</div>
+            </div>
+
+            <div class="cp-pld-legend-list">
+              <div class="cp-pld-legend-row"><i class="cp-pld-lg is-blue"></i>Bajo 68%</div>
+              <div class="cp-pld-legend-row"><i class="cp-pld-lg is-orange"></i>Medio 22%</div>
+              <div class="cp-pld-legend-row"><i class="cp-pld-lg is-red"></i>Alto 10%</div>
+              <div class="cp-pld-legend-row"><i class="cp-pld-lg is-violet"></i>Score 64/100</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-pld-panel is-span-2">
+          <div class="cp-pld-panel-head">
+            <h3>Transacciones Sospechosas</h3>
+            <button type="button" class="cp-pld-filter-btn">Filtrar &amp; analizar</button>
+          </div>
+
+          <div class="cp-pld-table-wrap">
+            <table class="cp-pld-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Monto</th>
+                  <th>Concepto</th>
+                  <th>Score PLD</th>
+                  <th>Accion</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div class="cp-pld-client"><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80&auto=format&fit=crop" alt="">Alfredo Ramirez</div></td>
+                  <td>$85,250</td>
+                  <td>Movimiento inusual</td>
+                  <td><span class="cp-pld-status is-red">Critico 81</span></td>
+                  <td><button type="button" class="cp-pld-row-btn">Investigar</button></td>
+                </tr>
+                <tr>
+                  <td><div class="cp-pld-client"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&q=80&auto=format&fit=crop" alt="">Maria Quinones</div></td>
+                  <td>$23,600</td>
+                  <td>Transferencia atipica</td>
+                  <td><span class="cp-pld-status is-orange">Medio</span></td>
+                  <td><button type="button" class="cp-pld-row-btn">Investigar</button></td>
+                </tr>
+                <tr>
+                  <td><div class="cp-pld-client"><img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&q=80&auto=format&fit=crop" alt="">Grupo Salazar S.A.</div></td>
+                  <td>$342,000</td>
+                  <td>Operacion no habitual</td>
+                  <td><span class="cp-pld-status is-red">Critico 93</span></td>
+                  <td><button type="button" class="cp-pld-row-btn">Investigar</button></td>
+                </tr>
+                <tr>
+                  <td><div class="cp-pld-client"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=80&auto=format&fit=crop" alt="">Rene Cortes</div></td>
+                  <td>$19,700</td>
+                  <td>Criptomoneda</td>
+                  <td><span class="cp-pld-status is-orange">Medio</span></td>
+                  <td><button type="button" class="cp-pld-row-btn">Investigar</button></td>
+                </tr>
+                <tr>
+                  <td><div class="cp-pld-client"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=80&q=80&auto=format&fit=crop" alt="">Jose Aguilera</div></td>
+                  <td>$140,000</td>
+                  <td>Deposito en caja</td>
+                  <td><span class="cp-pld-status is-red">Critico 88</span></td>
+                  <td><button type="button" class="cp-pld-row-btn">Investigar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="cp-pld-panel">
+          <div class="cp-pld-panel-head">
+            <h3>Alertas Prioritarias</h3>
+          </div>
+
+          <div class="cp-pld-alerts">
+            <div class="cp-pld-alert">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=80&auto=format&fit=crop" alt="">
+              <div class="cp-pld-alert-content">
+                <strong>Renato Silva</strong>
+                <small>Fragmentacion inusual por varios dias</small>
+              </div>
+              <button type="button" class="cp-pld-mini-action">Investigar</button>
+            </div>
+
+            <div class="cp-pld-alert">
+              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&q=80&auto=format&fit=crop" alt="">
+              <div class="cp-pld-alert-content">
+                <strong>Alfredo Ramirez</strong>
+                <small>Desviacion de perfil transaccional</small>
+              </div>
+              <button type="button" class="cp-pld-mini-action">Investigar</button>
+            </div>
+
+            <div class="cp-pld-alert">
+              <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&q=80&auto=format&fit=crop" alt="">
+              <div class="cp-pld-alert-content">
+                <strong>Hotel Playa Azul S.A.</strong>
+                <small>Operaciones recurrentes no justificadas</small>
+              </div>
+              <button type="button" class="cp-pld-mini-action">Investigar</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-pld-panel">
+          <div class="cp-pld-panel-head">
+            <h3>Estado de reportes regulatorios</h3>
+          </div>
+
+          <div class="cp-pld-report-summary">
+            <div class="cp-pld-report-big">5 / 14</div>
+            <div class="cp-pld-report-text">Reportes UIF en los ultimos 90 dias</div>
+          </div>
+
+          <div class="cp-pld-gauge-wrap">
+            <div class="cp-pld-gauge"></div>
+          </div>
+
+          <div class="cp-pld-report-legend">
+            <span><i class="cp-pld-dot is-low"></i>5 bajos</span>
+            <span><i class="cp-pld-dot is-med"></i>5 medias</span>
+            <span><i class="cp-pld-dot is-high"></i>4 altos</span>
+            <span><i class="cp-pld-dot is-backlog"></i>3 rezagos</span>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</section>

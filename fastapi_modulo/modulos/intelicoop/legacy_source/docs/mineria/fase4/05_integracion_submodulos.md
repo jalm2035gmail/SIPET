@@ -13,7 +13,7 @@ Fecha ejecucion UTC: 2026-02-18T16:02:02.053988+00:00
 
 ## Estado
 - Punto 5 de 7 completado tecnicamente.
-- Integracion base entre scoring, mora temprana, segmentacion y reglas de asociacion validada.
+- Integracion MAIN entre scoring, mora temprana, segmentacion y reglas de asociacion validada.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase4/05_integracion_submodulos.csv`

@@ -22,7 +22,7 @@ La persistencia activa del modulo queda en las tablas SQLAlchemy definidas en:
 
 - `intelicoop_db_models.py`
 
-No se conserva como almacenamiento activo la base SQLite ni ninguna persistencia propia de la app original.
+No se conserva como almacenamiento activo la MAIN SQLite ni ninguna persistencia propia de la app original.
 
 ## 2. Modelo ML que se queda activo
 

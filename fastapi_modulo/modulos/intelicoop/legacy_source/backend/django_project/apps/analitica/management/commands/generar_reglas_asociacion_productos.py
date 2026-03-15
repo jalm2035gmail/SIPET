@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from itertools import permutations
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.utils import timezone as dj_timezone
 
 from apps.ahorros.models import Cuenta, Transaccion
@@ -31,7 +31,7 @@ def _oportunidad_por_item(item: str) -> str:
     return mapping.get(item, "Campana de cross-sell basada en patron de productos.")
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Genera reglas de asociacion tipo Apriori para productos por socio y publica oportunidades comerciales."
 
     def add_arguments(self, parser):

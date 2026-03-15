@@ -1,0 +1,71 @@
+<section class="mkt-shell">
+  <style>
+    .mkt-shell{
+      display:grid;
+      gap:18px;
+      color:var(--sidebar-bottom, #1f2940);
+    }
+    .mkt-hero,.mkt-card{background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid var(--field-border, #e2eaf4);border-radius:24px;box-shadow:0 10px 24px rgba(31,41,64,.06);}
+    .mkt-hero{padding:24px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;}
+    .mkt-hero h1{margin:0;font-size:28px;line-height:1.05;letter-spacing:-.03em;}
+    .mkt-hero p{margin:10px 0 0;max-width:840px;font-size:16px;line-height:1.6;color:var(--text-muted, #667792);}
+    .mkt-pill{padding:10px 14px;border-radius:999px;background:color-mix(in srgb, var(--institutional-accent, #22b8cf) 12%, #ffffff);color:var(--sidebar-bottom, #1f2940);font-size:12px;font-weight:800;white-space:nowrap;}
+    .mkt-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+    .mkt-kpi{min-height:132px;padding:18px;border-radius:22px;color:#fff;box-shadow:0 12px 26px rgba(31,41,64,.10);}
+    .mkt-kpi.green{background:linear-gradient(135deg,#6bcf9b,#25b27f);}
+    .mkt-kpi.teal{background:linear-gradient(135deg,#63d8cf,#22b8cf);}
+    .mkt-kpi.blue{background:linear-gradient(135deg,#63a5ff,#3b82f6);}
+    .mkt-kpi.gold{background:linear-gradient(135deg,#ffd56a,#f2b035);}
+    .mkt-kpi__title{font-size:14px;font-weight:700;opacity:.94;}
+    .mkt-kpi__value{margin-top:10px;font-size:28px;font-weight:800;letter-spacing:-.03em;}
+    .mkt-kpi__meta{margin-top:8px;font-size:13px;font-weight:600;opacity:.92;}
+    .mkt-grid{display:grid;grid-template-columns:1.15fr .95fr;gap:16px;}
+    .mkt-card{padding:18px;}
+    .mkt-card__title{margin:0 0 14px;font-size:18px;font-weight:800;letter-spacing:-.02em;}
+    .mkt-list{display:grid;gap:12px;}
+    .mkt-item{padding:16px;border:1px solid var(--field-border, #e2eaf4);border-radius:20px;background:linear-gradient(180deg,#fbfdff,#f8fbff);}
+    .mkt-item__head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+    .mkt-item__title{font-size:15px;font-weight:800;}
+    .mkt-item__meta{font-size:13px;color:var(--text-muted, #667792);line-height:1.55;}
+    .mkt-badge{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;}
+    .mkt-badge.green{background:#ebfbf3;color:#25a36c;}
+    .mkt-badge.blue{background:#edf5ff;color:#3b82f6;}
+    .mkt-badge.gold{background:#fff6dd;color:#cb9224;}
+    @media (max-width:1180px){.mkt-kpis{grid-template-columns:repeat(2,1fr)}.mkt-grid{grid-template-columns:1fr}}
+    @media (max-width:640px){.mkt-hero{flex-direction:column}.mkt-kpis{grid-template-columns:1fr}}
+  </style>
+
+  <section class="mkt-hero">
+    <div>
+      <h1>WhatsApp Business</h1>
+      <p>Cascarón para atención y seguimiento comercial por WhatsApp Business: conversaciones, plantillas, campañas, automatización y control de respuesta.</p>
+    </div>
+    <div class="mkt-pill">Atención y campañas conversacionales</div>
+  </section>
+
+  <section class="mkt-kpis">
+    <article class="mkt-kpi green"><div class="mkt-kpi__title">Chats activos</div><div class="mkt-kpi__value">84</div><div class="mkt-kpi__meta">Seguimiento diario</div></article>
+    <article class="mkt-kpi teal"><div class="mkt-kpi__title">Tiempo de respuesta</div><div class="mkt-kpi__value">7 min</div><div class="mkt-kpi__meta">Promedio</div></article>
+    <article class="mkt-kpi blue"><div class="mkt-kpi__title">Plantillas aprobadas</div><div class="mkt-kpi__value">19</div><div class="mkt-kpi__meta">Mensajería oficial</div></article>
+    <article class="mkt-kpi gold"><div class="mkt-kpi__title">Campañas</div><div class="mkt-kpi__value">6</div><div class="mkt-kpi__meta">Mes actual</div></article>
+  </section>
+
+  <section class="mkt-grid">
+    <article class="mkt-card">
+      <h3 class="mkt-card__title">Bandeja operativa</h3>
+      <div class="mkt-list">
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Seguimiento comercial</div><span class="mkt-badge green">Activo</span></div><div class="mkt-item__meta">Leads, recordatorios y contacto personalizado con socios y prospectos.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Plantillas institucionales</div><span class="mkt-badge blue">Catálogo</span></div><div class="mkt-item__meta">Mensajes aprobados para campañas, soporte y recuperación.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Automatizaciones</div><span class="mkt-badge gold">En diseño</span></div><div class="mkt-item__meta">Bienvenida, encuestas, vencimientos y seguimiento posventa.</div></div>
+      </div>
+    </article>
+    <article class="mkt-card">
+      <h3 class="mkt-card__title">Próximos componentes</h3>
+      <div class="mkt-list">
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Métricas por ejecutivo</div><span class="mkt-badge blue">Pendiente</span></div><div class="mkt-item__meta">Atención, respuesta, cierres y calidad de servicio.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Motor de campañas</div><span class="mkt-badge blue">Pendiente</span></div><div class="mkt-item__meta">Disparos masivos controlados y segmentación por audiencias.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Trazabilidad CRM</div><span class="mkt-badge green">Diseño</span></div><div class="mkt-item__meta">Historial conversacional integrado al expediente del socio.</div></div>
+      </div>
+    </article>
+  </section>
+</section>

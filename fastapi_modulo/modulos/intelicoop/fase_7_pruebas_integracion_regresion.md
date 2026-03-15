@@ -46,7 +46,7 @@ Si esta suite pasa, se considera validado que:
 - la navegacion principal del modulo responde
 - los permisos del modulo se aplican
 - la persistencia principal del modulo funciona
-- los endpoints base del MVP siguen operativos
+- los endpoints MAIN del MVP siguen operativos
 - el flujo de scoring continua funcionando dentro de SIPET
 
 ## Dependencias reales del modulo absorbido
@@ -92,5 +92,5 @@ La fase queda cerrada cuando:
 Con esta fase:
 
 - Intelicoop deja de depender de pruebas del legado para validar el MVP actual
-- SIPET tiene una base minima de regresion del modulo absorbido
+- SIPET tiene una MAIN minima de regresion del modulo absorbido
 - queda explicitado que dependencias siguen siendo operativas y cuales ya no

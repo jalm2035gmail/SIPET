@@ -34,9 +34,9 @@ return templates.TemplateResponse(
 ```
 
 ## 4) Variables de entorno recomendadas
-- `DJANGO_BASE_URL` (ej: `http://localhost:8010`)
-- `FASTAPI_BASE_URL` (ej: `http://localhost:8001`)
-- `FRONTEND_BASE_URL` (ej: `http://localhost:3010`)
+- `DJANGO_MAIN_URL` (ej: `http://localhost:8010`)
+- `FASTAPI_MAIN_URL` (ej: `http://localhost:8001`)
+- `FRONTEND_MAIN_URL` (ej: `http://localhost:3010`)
 
 Rutas sugeridas en este proyecto:
 - Template backend: `/admin/template-backend`

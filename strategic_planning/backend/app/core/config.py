@@ -2,10 +2,10 @@ import secrets
 from typing import List, Union
 
 from pydantic import AnyHttpUrl, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import MAINSettings
 
 
-class Settings(BaseSettings):
+class Settings(MAINSettings):
     # API
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Strategic Planning System"
@@ -35,10 +35,10 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    # Database
-    DATABASE_URL: str = "sqlite:///./strategic_planning.db"
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 40
+    # DataMAIN
+    DATAMAIN_URL: str = "sqlite:///./strategic_planning.db"
+    DATAMAIN_POOL_SIZE: int = 20
+    DATAMAIN_MAX_OVERFLOW: int = 40
 
     # Email (para recuperación de contraseña)
     SMTP_HOST: str = "smtp.gmail.com"

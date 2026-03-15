@@ -16,7 +16,7 @@ Fecha: 2026-02-18T04:11:40.002371+00:00
 ## Criterios de rollback y contingencia
 - Activar rollback si error rate supera 1% durante 15 minutos continuos.
 - Activar rollback si p95 supera 500 ms durante 3 ventanas consecutivas.
-- Congelar avance de canary si riesgo alto supera 50% frente a baseline operativo.
+- Congelar avance de canary si riesgo alto supera 50% frente a MAINline operativo.
 - Contingencia: retornar al modelo/version previa y mantener inferencia en modo manual.
 
 ## Artefactos

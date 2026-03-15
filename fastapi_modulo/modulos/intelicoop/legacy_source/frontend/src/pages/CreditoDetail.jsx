@@ -148,7 +148,7 @@ export default function CreditoDetail() {
     djangoApi
       .delete(`/creditos/${id}/`)
       .then(() => {
-        navigate('/web/creditos')
+        navigate('/backend/creditos')
       })
       .catch(() => {
         setDeleteError('No se pudo eliminar la solicitud.')
@@ -258,7 +258,7 @@ export default function CreditoDetail() {
             >
               {deletingCredito ? 'Eliminando...' : 'Eliminar solicitud'}
             </button>
-            <Link to="/web/creditos">Volver al listado</Link>
+            <Link to="/backend/creditos">Volver al listado</Link>
           </div>
         </>
       ) : null}

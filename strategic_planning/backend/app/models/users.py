@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
-from app.models.base import Base
+from app.models.MAIN import MAIN
 
-class Department(Base):
+class Department(MAIN):
     __tablename__ = "departments"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -21,7 +21,7 @@ class Department(Base):
     objectives = relationship("DepartmentObjective", back_populates="department")
     kpis = relationship("KPI", back_populates="department")
 
-class User(Base):
+class User(MAIN):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)

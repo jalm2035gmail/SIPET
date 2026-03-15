@@ -2,10 +2,10 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Disena arquitectura de ejecucion de Fase 5 (real-time vs batch) y define dependencias operativas."
 
     def add_arguments(self, parser):
@@ -81,7 +81,7 @@ class Command(BaseCommand):
             "",
             "## Estado",
             "- Punto 1 de 8 completado tecnicamente.",
-            "- Arquitectura base de ejecucion definida para orquestacion en Fase 5.",
+            "- Arquitectura MAIN de ejecucion definida para orquestacion en Fase 5.",
             "",
             "## Artefactos",
             f"- Reporte CSV: `{report_csv}`",

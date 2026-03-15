@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from app.templates.base_template import render_base
+from app.templates.MAIN_template import render_MAIN
 from app.models.permission import Role
 from app.core.permissions import PermissionManager
 
@@ -19,7 +19,7 @@ def roles_permisos(request: Request):
         }
         for p in PermissionManager.get_role_permissions("super_admin")
     ]
-    return render_base(
+    return render_MAIN(
         request,
         title="Roles y Permisos",
         content=render_roles_permisos_html(roles, permissions)

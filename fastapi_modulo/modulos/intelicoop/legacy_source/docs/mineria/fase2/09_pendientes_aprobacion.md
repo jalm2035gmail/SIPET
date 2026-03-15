@@ -1,6 +1,6 @@
 # Pendientes de Firma y Aprobacion - Fase 2
 
-Fecha base de planificacion: 2026-02-18
+Fecha MAIN de planificacion: 2026-02-18
 
 ## Checklist de aprobacion
 

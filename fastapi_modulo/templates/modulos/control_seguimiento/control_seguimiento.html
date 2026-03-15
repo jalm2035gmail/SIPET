@@ -1,0 +1,335 @@
+<section class="cs-shell">
+  <style>
+    .cs-shell{
+      display:grid;
+      gap:20px;
+      width:100%;
+    }
+    .cs-hero{
+      display:grid;
+      gap:18px;
+      padding:24px;
+      border:1px solid var(--field-border, #dbe2ea);
+      border-radius:24px;
+      background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--institutional-accent, #166534) 12%, transparent), transparent 24%),
+        linear-gradient(180deg, color-mix(in srgb, var(--navbar-bg, #ffffff) 10%, #ffffff), #ffffff 65%);
+      box-shadow:0 14px 34px rgba(15, 23, 42, 0.08);
+    }
+    .cs-hero__eyebrow{
+      margin:0;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--text-muted, #64748b);
+    }
+    .cs-hero__title{
+      margin:0;
+      font-size:clamp(2rem, 3.2vw, 3.2rem);
+      line-height:1.05;
+      color:var(--sidebar-bottom, #0f172a);
+    }
+    .cs-hero__text{
+      margin:0;
+      max-width:880px;
+      font-size:1rem;
+      line-height:1.6;
+      color:var(--text-muted, #475569);
+    }
+    .cs-mode-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+      gap:14px;
+    }
+    .cs-mode-btn{
+      display:grid;
+      gap:8px;
+      width:100%;
+      padding:18px 18px 16px;
+      border:1px solid var(--field-border, #dbe2ea);
+      border-radius:20px;
+      background:#fff;
+      text-align:left;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow:0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    .cs-mode-btn:hover{
+      transform:translateY(-1px);
+      border-color:color-mix(in srgb, var(--institutional-accent, #166534) 40%, #dbe2ea);
+    }
+    .cs-mode-btn.is-active{
+      border-color:var(--institutional-accent, #166534);
+      background:color-mix(in srgb, var(--institutional-accent, #166534) 8%, #ffffff);
+      box-shadow:0 14px 28px rgba(15, 23, 42, 0.08);
+    }
+    .cs-mode-btn__title{
+      margin:0;
+      font-size:1.05rem;
+      font-weight:800;
+      color:var(--sidebar-bottom, #0f172a);
+    }
+    .cs-mode-btn__meta{
+      margin:0;
+      font-size:.94rem;
+      line-height:1.45;
+      color:var(--text-muted, #64748b);
+    }
+    .cs-panel{
+      display:none;
+      gap:18px;
+      padding:24px;
+      border:1px solid var(--field-border, #dbe2ea);
+      border-radius:24px;
+      background:#fff;
+      box-shadow:0 12px 28px rgba(15, 23, 42, 0.06);
+    }
+    .cs-panel.is-active{
+      display:grid;
+    }
+    .cs-panel__header{
+      display:grid;
+      gap:8px;
+    }
+    .cs-panel__title{
+      margin:0;
+      font-size:1.4rem;
+      color:var(--sidebar-bottom, #0f172a);
+    }
+    .cs-panel__text{
+      margin:0;
+      color:var(--text-muted, #64748b);
+      line-height:1.6;
+      max-width:900px;
+    }
+    .cs-kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+      gap:14px;
+    }
+    .cs-kpi{
+      padding:18px;
+      border:1px solid var(--field-border, #dbe2ea);
+      border-radius:18px;
+      background:linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--field-color, #f8fafc) 55%, #ffffff));
+    }
+    .cs-kpi__label{
+      margin:0 0 10px;
+      font-size:.86rem;
+      font-weight:700;
+      color:var(--text-muted, #64748b);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .cs-kpi__value{
+      margin:0;
+      font-size:1.8rem;
+      font-weight:800;
+      color:var(--sidebar-bottom, #0f172a);
+    }
+    .cs-layout{
+      display:grid;
+      grid-template-columns:1.3fr .9fr;
+      gap:18px;
+    }
+    .cs-card{
+      padding:20px;
+      border:1px solid var(--field-border, #dbe2ea);
+      border-radius:20px;
+      background:#fff;
+    }
+    .cs-card h4{
+      margin:0 0 12px;
+      font-size:1rem;
+      color:var(--sidebar-bottom, #0f172a);
+    }
+    .cs-list{
+      display:grid;
+      gap:10px;
+    }
+    .cs-list__item{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      padding:12px 14px;
+      border:1px solid var(--field-border, #e2e8f0);
+      border-radius:16px;
+      background:color-mix(in srgb, var(--field-color, #f8fafc) 38%, #ffffff);
+    }
+    .cs-list__title{
+      margin:0;
+      font-weight:700;
+      color:var(--sidebar-bottom, #0f172a);
+    }
+    .cs-list__meta{
+      margin:4px 0 0;
+      font-size:.92rem;
+      color:var(--text-muted, #64748b);
+    }
+    .cs-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:96px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--institutional-accent, #166534) 14%, #ffffff);
+      color:var(--sidebar-bottom, #0f172a);
+      font-size:.84rem;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .cs-note{
+      padding:16px 18px;
+      border-radius:18px;
+      border:1px dashed color-mix(in srgb, var(--institutional-accent, #166534) 34%, #cbd5e1);
+      background:color-mix(in srgb, var(--institutional-accent, #166534) 6%, #ffffff);
+      color:var(--text-muted, #475569);
+      line-height:1.6;
+    }
+    @media (max-width: 960px){
+      .cs-layout{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+
+  <header class="cs-hero">
+    <div>
+      <p class="cs-hero__eyebrow">Control y seguimiento</p>
+      <h1 class="cs-hero__title">Sistema de control y seguimiento</h1>
+    </div>
+    <p class="cs-hero__text">
+      Esta MAIN deja lista la navegación para seguimiento a nivel de persona, sucursal, departamento, región y cooperativa.
+      El siguiente paso será conectar indicadores, responsables, cumplimiento y alertas reales por nivel.
+    </p>
+    <div class="cs-mode-grid" role="tablist" aria-label="Niveles de control y seguimiento">
+      <button type="button" class="cs-mode-btn is-active" data-cs-target="persona" role="tab" aria-selected="true">
+        <p class="cs-mode-btn__title">Persona</p>
+        <p class="cs-mode-btn__meta">Seguimiento individual por colaborador, responsable directo y cumplimiento diario.</p>
+      </button>
+      <button type="button" class="cs-mode-btn" data-cs-target="sucursal" role="tab" aria-selected="false">
+        <p class="cs-mode-btn__title">Sucursal</p>
+        <p class="cs-mode-btn__meta">Vista operativa por sucursal para metas, incidencias y semáforos de ejecución.</p>
+      </button>
+      <button type="button" class="cs-mode-btn" data-cs-target="departamento" role="tab" aria-selected="false">
+        <p class="cs-mode-btn__title">Departamento</p>
+        <p class="cs-mode-btn__meta">Seguimiento funcional por área organizacional y responsables de procesos.</p>
+      </button>
+      <button type="button" class="cs-mode-btn" data-cs-target="region" role="tab" aria-selected="false">
+        <p class="cs-mode-btn__title">Región</p>
+        <p class="cs-mode-btn__meta">Consolidado regional para comparar desempeño, desviaciones y acciones correctivas.</p>
+      </button>
+      <button type="button" class="cs-mode-btn" data-cs-target="cooperativa" role="tab" aria-selected="false">
+        <p class="cs-mode-btn__title">Cooperativa</p>
+        <p class="cs-mode-btn__meta">Tablero ejecutivo integral para dirección, consejo y seguimiento estratégico institucional.</p>
+      </button>
+    </div>
+  </header>
+
+  <section class="cs-panel is-active" data-cs-panel="persona">
+    <div class="cs-panel__header">
+      <h2 class="cs-panel__title">Seguimiento por persona</h2>
+      <p class="cs-panel__text">Aquí vivirá el control individual de actividades, eficiencia, entregables, incidencias, evidencias y alertas por colaborador.</p>
+    </div>
+    <div class="cs-kpi-grid">
+      <article class="cs-kpi"><p class="cs-kpi__label">Colaborador</p><p class="cs-kpi__value">Pendiente</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Cumplimiento</p><p class="cs-kpi__value">--%</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Tareas vencidas</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Alertas</p><p class="cs-kpi__value">--</p></article>
+    </div>
+    <div class="cs-layout">
+      <article class="cs-card">
+        <h4>Widgets previstos</h4>
+        <div class="cs-list">
+          <div class="cs-list__item"><div><p class="cs-list__title">Carga de trabajo semanal</p><p class="cs-list__meta">Actividades comprometidas, avance y desvío individual.</p></div><span class="cs-badge">Cascarón</span></div>
+          <div class="cs-list__item"><div><p class="cs-list__title">Semáforo de cumplimiento</p><p class="cs-list__meta">Comparación entre meta, resultado y observaciones.</p></div><span class="cs-badge">Cascarón</span></div>
+          <div class="cs-list__item"><div><p class="cs-list__title">Evidencia y seguimiento</p><p class="cs-list__meta">Notas, archivos y fecha del último seguimiento.</p></div><span class="cs-badge">Cascarón</span></div>
+        </div>
+      </article>
+      <aside class="cs-note">MAIN pensada para enlazarse con colaboradores, POA, KPIs y control de desempeño.</aside>
+    </div>
+  </section>
+
+  <section class="cs-panel" data-cs-panel="sucursal">
+    <div class="cs-panel__header">
+      <h2 class="cs-panel__title">Seguimiento por sucursal</h2>
+      <p class="cs-panel__text">Cascarón para consolidar metas operativas, productividad, cartera, captación y alertas por cada sucursal.</p>
+    </div>
+    <div class="cs-kpi-grid">
+      <article class="cs-kpi"><p class="cs-kpi__label">Sucursal activa</p><p class="cs-kpi__value">Pendiente</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Meta global</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Resultado</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Desviación</p><p class="cs-kpi__value">--</p></article>
+    </div>
+    <div class="cs-note">Se conectará con sucursales, presupuesto, información financiera y metas comerciales.</div>
+  </section>
+
+  <section class="cs-panel" data-cs-panel="departamento">
+    <div class="cs-panel__header">
+      <h2 class="cs-panel__title">Seguimiento por departamento</h2>
+      <p class="cs-panel__text">Vista para áreas organizacionales con control de objetivos, responsables, eficiencia, cargas y cumplimiento.</p>
+    </div>
+    <div class="cs-kpi-grid">
+      <article class="cs-kpi"><p class="cs-kpi__label">Departamento</p><p class="cs-kpi__value">Pendiente</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Responsable</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Indicadores</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Estado</p><p class="cs-kpi__value">--</p></article>
+    </div>
+    <div class="cs-note">Se integrará con departamentos, colaboradores, indicadores y estructura organizacional.</div>
+  </section>
+
+  <section class="cs-panel" data-cs-panel="region">
+    <div class="cs-panel__header">
+      <h2 class="cs-panel__title">Seguimiento por región</h2>
+      <p class="cs-panel__text">Cascarón para consolidar sucursales, comparar desempeño entre territorios y priorizar intervención regional.</p>
+    </div>
+    <div class="cs-kpi-grid">
+      <article class="cs-kpi"><p class="cs-kpi__label">Región</p><p class="cs-kpi__value">Pendiente</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Sucursales</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Cumplimiento</p><p class="cs-kpi__value">--%</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Focos rojos</p><p class="cs-kpi__value">--</p></article>
+    </div>
+    <div class="cs-note">Pensado para regiones, comparativos y scorecards regionales.</div>
+  </section>
+
+  <section class="cs-panel" data-cs-panel="cooperativa">
+    <div class="cs-panel__header">
+      <h2 class="cs-panel__title">Seguimiento de la cooperativa</h2>
+      <p class="cs-panel__text">Tablero institucional para dirección con visión consolidada del estado operativo, estratégico y de cumplimiento.</p>
+    </div>
+    <div class="cs-kpi-grid">
+      <article class="cs-kpi"><p class="cs-kpi__label">Cumplimiento institucional</p><p class="cs-kpi__value">--%</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Objetivos críticos</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Alertas ejecutivas</p><p class="cs-kpi__value">--</p></article>
+      <article class="cs-kpi"><p class="cs-kpi__label">Seguimiento del consejo</p><p class="cs-kpi__value">--</p></article>
+    </div>
+    <div class="cs-note">Será la capa superior de consolidación para dirección general y consejo de administración.</div>
+  </section>
+
+  <script>
+    (function () {
+      var buttons = Array.from(document.querySelectorAll('[data-cs-target]'));
+      var panels = Array.from(document.querySelectorAll('[data-cs-panel]'));
+      if (!buttons.length || !panels.length) return;
+      function activate(target) {
+        buttons.forEach(function (btn) {
+          var active = btn.getAttribute('data-cs-target') === target;
+          btn.classList.toggle('is-active', active);
+          btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        panels.forEach(function (panel) {
+          panel.classList.toggle('is-active', panel.getAttribute('data-cs-panel') === target);
+        });
+      }
+      buttons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          activate(btn.getAttribute('data-cs-target') || 'persona');
+        });
+      });
+      activate('persona');
+    })();
+  </script>
+</section>

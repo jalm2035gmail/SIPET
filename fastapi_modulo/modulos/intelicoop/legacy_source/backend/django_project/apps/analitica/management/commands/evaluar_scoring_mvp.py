@@ -3,7 +3,7 @@ import pickle
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from .entrenar_scoring_mvp import (
     _accuracy,
@@ -46,7 +46,7 @@ def _segmentos(samples: list) -> list[tuple[str, str, list]]:
     ]
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Evalua el scoring MVP por segmentos y documenta seleccion de modelo."
 
     def add_arguments(self, parser):

@@ -1,4 +1,4 @@
-{% extends "base_django.html" %}
+{% extends "MAIN_django.html" %}
 
 {% block title %}{{ title|default:"Template Backend" }}{% endblock %}
 
@@ -50,7 +50,7 @@
   }
 
   .top-navbar-title-icon {
-    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    -backendkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
     mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
   }
 
@@ -76,7 +76,7 @@
   }
 
   .top-navbar-link-icon {
-    -webkit-mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+    -backendkit-mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
     mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
   }
 
@@ -91,7 +91,7 @@
     height: 20px;
     flex: 0 0 20px;
     background-color: var(--navbar-icon-color);
-    -webkit-mask: url('/static/iconos/usuario.svg') no-repeat center / contain;
+    -backendkit-mask: url('/static/iconos/usuario.svg') no-repeat center / contain;
     mask: url('/static/iconos/usuario.svg') no-repeat center / contain;
   }
 
@@ -269,12 +269,12 @@
   }
 
   .menu-label-icon {
-    -webkit-mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+    -backendkit-mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
     mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
   }
 
   .menu-label-icon-config {
-    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    -backendkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
     mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
   }
 
@@ -289,7 +289,7 @@
     user-select: none;
   }
 
-  .submenu-group > summary::-webkit-details-marker { display: none; }
+  .submenu-group > summary::-backendkit-details-marker { display: none; }
   .submenu-nested { list-style: none; margin: 0; padding: 0 0 8px; }
   .submenu-nested a {
     padding-left: 50px;
@@ -488,7 +488,7 @@
     height: 20px;
     flex: 0 0 20px;
     background-color: currentColor;
-    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    -backendkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
     mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
     opacity: 0.9;
   }
@@ -930,7 +930,7 @@
     <li id="frontendItem">
       <span class="menu-label">
         <span class="menu-label-icon" aria-hidden="true"></span>
-        Frontend Web
+        Frontend backend
       </span>
       <ul class="submenu">
         <li><a href="{{ frontend_home_path }}">Inicio</a></li>
@@ -1209,7 +1209,7 @@
   </section>
   {% else %}
   <h1>{{ page_heading|default:"Template Backend" }}</h1>
-  <p>{{ page_subtitle|default:"Base reutilizable para vistas administrativas." }}</p>
+  <p>{{ page_subtitle|default:"MAIN reutilizable para vistas administrativas." }}</p>
   <section class="backend-grid">
     <article class="backend-card">
       <h2>Encabezado</h2>
@@ -1309,8 +1309,8 @@
       const token = tokenValue.startsWith("Bearer ") ? tokenValue.slice(7) : tokenValue;
       const parts = token.split(".");
       if (parts.length < 2) return null;
-      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+      const MAIN64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = MAIN64 + "=".repeat((4 - (MAIN64.length % 4)) % 4);
       return JSON.parse(window.atob(padded));
     }
 

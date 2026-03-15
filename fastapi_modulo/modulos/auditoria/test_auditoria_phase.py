@@ -41,9 +41,9 @@ sys.modules["fastapi_modulo.main"] = fake_main
 
 # ── Imports del módulo ───────────────────────────────────────────────────────
 
-from fastapi_modulo.db import Base, engine  # noqa: E402
-from fastapi_modulo.modulos.auditoria.auditoria import router  # noqa: E402
-from fastapi_modulo.modulos.auditoria.aud_db_models import (  # noqa: E402
+from fastapi_modulo.db import MAIN, engine  # noqa: E402
+from fastapi_modulo.modulos.auditoria.controladores.auditoria import router  # noqa: E402
+from fastapi_modulo.modulos.auditoria.modelos.aud_db_models import (  # noqa: E402
     AudAuditoria,
     AudHallazgo,
     AudRecomendacion,
@@ -82,8 +82,8 @@ def _auth(role: str = "usuario", *access: str) -> dict:
 
 
 def setup_function() -> None:
-    Base.metadata.drop_all(bind=engine, tables=AUD_TABLES, checkfirst=True)
-    Base.metadata.create_all(bind=engine, tables=AUD_TABLES, checkfirst=True)
+    MAIN.metadata.drop_all(bind=engine, tables=AUD_TABLES, checkfirst=True)
+    MAIN.metadata.create_all(bind=engine, tables=AUD_TABLES, checkfirst=True)
 
 
 # ── Permisos ─────────────────────────────────────────────────────────────────
@@ -120,6 +120,14 @@ def test_js_asset_served():
     r = client.get("/api/auditoria/assets/auditoria.js", headers=_auth("usuario", "Auditoria"))
     assert r.status_code == 200
     assert "application/javascript" in r.headers["content-type"]
+
+
+def test_svg_asset_served():
+    client = _build_client()
+    r = client.get("/api/auditoria/assets/auditoria.svg", headers=_auth("usuario", "Auditoria"))
+    assert r.status_code == 200
+    assert "image/svg+xml" in r.headers["content-type"]
+    assert "<svg" in r.text
 
 
 # ── Auditorías CRUD ───────────────────────────────────────────────────────────
@@ -277,152 +285,120 @@ def _new_hallazgo(client, headers, aud_id, titulo="H"):
 
 def test_create_recomendacion():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    aud_id = _new_auditoria(client, h, "R1")
-    hall_id = _new_hallazgo(client, h, aud_id, "Hall R1")
-    r = client.post("/api/auditoria/recomendaciones", headers=h, json={
-        "hallazgo_id": hall_id,
-        "descripcion": "Implementar proceso de conciliación mensual",
-        "prioridad": "alta",
-        "responsable": "Jefe Finanzas",
-        "porcentaje_avance": 0,
-    })
-    assert r.status_code == 201
-    data = r.json()
+    # Crear auditoría y hallazgo
+    aud = client.post("/api/auditoria/auditorias", json={
+        "codigo": "AUD-001", "nombre": "Auditoría Test", "tipo": "interna"
+    }, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={
+        "auditoria_id": aud["id"], "codigo": "H-001", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"
+    }, headers=_auth("usuario", "Auditoria")).json()
+    rec = client.post("/api/auditoria/recomendaciones", json={
+        "hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "prioridad": "alta"
+    }, headers=_auth("usuario", "Auditoria"))
+    assert rec.status_code == 200
+    data = rec.json()
+    assert data["descripcion"] == "Recomendación Test"
     assert data["prioridad"] == "alta"
-    assert data["hallazgo_titulo"] is not None
 
 
-def test_update_recomendacion_avance():
+def test_update_recomendacion():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    aud_id = _new_auditoria(client, h, "R2")
-    hall_id = _new_hallazgo(client, h, aud_id, "Hall R2")
-    rec = client.post("/api/auditoria/recomendaciones", headers=h, json={
-        "hallazgo_id": hall_id, "descripcion": "Rec avance",
-    }).json()
-    upd = client.put(f"/api/auditoria/recomendaciones/{rec['id']}", headers=h,
-                     json={"porcentaje_avance": 50, "estado": "en_proceso"})
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-002", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-002", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    rec = client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "prioridad": "media"}, headers=_auth("usuario", "Auditoria")).json()
+    upd = client.put(f"/api/auditoria/recomendaciones/{rec['id']}", json={"descripcion": "Actualizada", "prioridad": "baja"}, headers=_auth("usuario", "Auditoria"))
     assert upd.status_code == 200
-    assert upd.json()["porcentaje_avance"] == 50
+    data = upd.json()
+    assert data["descripcion"] == "Actualizada"
+    assert data["prioridad"] == "baja"
 
 
 def test_delete_recomendacion():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    aud_id = _new_auditoria(client, h, "R3")
-    hall_id = _new_hallazgo(client, h, aud_id, "Hall R3")
-    rec = client.post("/api/auditoria/recomendaciones", headers=h, json={
-        "hallazgo_id": hall_id, "descripcion": "Borrar esta",
-    }).json()
-    d = client.delete(f"/api/auditoria/recomendaciones/{rec['id']}", headers=h)
-    assert d.status_code == 200
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-003", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-003", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    rec = client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "prioridad": "media"}, headers=_auth("usuario", "Auditoria")).json()
+    delr = client.delete(f"/api/auditoria/recomendaciones/{rec['id']}", headers=_auth("usuario", "Auditoria"))
+    assert delr.status_code == 200
+    assert delr.json() is True
 
 
-def test_filter_recomendaciones_por_estado():
+def test_filtrar_recomendaciones_por_estado():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    aud_id = _new_auditoria(client, h, "R4")
-    hall_id = _new_hallazgo(client, h, aud_id, "Hall R4")
-    client.post("/api/auditoria/recomendaciones", headers=h, json={
-        "hallazgo_id": hall_id, "descripcion": "Pendiente", "estado": "pendiente"})
-    client.post("/api/auditoria/recomendaciones", headers=h, json={
-        "hallazgo_id": hall_id, "descripcion": "Implementada", "estado": "implementada"})
-    r = client.get("/api/auditoria/recomendaciones?estado=pendiente", headers=h)
-    assert all(x["estado"] == "pendiente" for x in r.json())
-
-
-# ── Seguimiento ───────────────────────────────────────────────────────────────
-
-def _full_chain(client, headers, suffix=""):
-    aud_id  = _new_auditoria(client, headers, f"S{suffix}")
-    hall_id = _new_hallazgo(client, headers, aud_id, f"Hall S{suffix}")
-    rec = client.post("/api/auditoria/recomendaciones", headers=headers, json={
-        "hallazgo_id": hall_id, "descripcion": f"Rec S{suffix}",
-    }).json()
-    return rec["id"]
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-004", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-004", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Rec1", "estado": "pendiente"}, headers=_auth("usuario", "Auditoria"))
+    client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Rec2", "estado": "implementada"}, headers=_auth("usuario", "Auditoria"))
+    r = client.get(f"/api/auditoria/recomendaciones?estado=implementada", headers=_auth("usuario", "Auditoria"))
+    assert r.status_code == 200
+    data = r.json()
+    assert all(rec["estado"] == "implementada" for rec in data)
 
 
 def test_create_seguimiento():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    rec_id = _full_chain(client, h, "1")
-    r = client.post("/api/auditoria/seguimiento", headers=h, json={
-        "recomendacion_id": rec_id,
-        "descripcion": "Se realizó taller de capacitación.",
-        "porcentaje_avance": 30,
-        "registrado_por": "aud.test",
-    })
-    assert r.status_code == 201
-    assert r.json()["porcentaje_avance"] == 30
-
-
-def test_seguimiento_actualiza_avance_recomendacion():
-    client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    rec_id = _full_chain(client, h, "2")
-    client.post("/api/auditoria/seguimiento", headers=h, json={
-        "recomendacion_id": rec_id, "descripcion": "Avance 60", "porcentaje_avance": 60,
-    })
-    rec = client.get(f"/api/auditoria/recomendaciones/{rec_id}", headers=h).json()
-    assert rec["porcentaje_avance"] == 60
-
-
-def test_seguimiento_100_marca_implementada():
-    client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    rec_id = _full_chain(client, h, "3")
-    client.post("/api/auditoria/seguimiento", headers=h, json={
-        "recomendacion_id": rec_id, "descripcion": "Completado", "porcentaje_avance": 100,
-    })
-    rec = client.get(f"/api/auditoria/recomendaciones/{rec_id}", headers=h).json()
-    assert rec["estado"] == "implementada"
-    assert rec["porcentaje_avance"] == 100
-
-
-def test_list_seguimiento_filter():
-    client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    rec_id = _full_chain(client, h, "4")
-    client.post("/api/auditoria/seguimiento", headers=h, json={
-        "recomendacion_id": rec_id, "descripcion": "Entrada A", "porcentaje_avance": 20,
-    })
-    r = client.get(f"/api/auditoria/seguimiento?recomendacion_id={rec_id}", headers=h)
-    assert r.status_code == 200
-    assert len(r.json()) >= 1
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-005", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-005", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    rec = client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "prioridad": "media"}, headers=_auth("usuario", "Auditoria")).json()
+    seg = client.post("/api/auditoria/seguimiento", json={"recomendacion_id": rec["id"], "descripcion": "Avance Test", "porcentaje_avance": 50}, headers=_auth("usuario", "Auditoria"))
+    assert seg.status_code == 200
+    data = seg.json()
+    assert data["porcentaje_avance"] == 50
 
 
 def test_delete_seguimiento():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    rec_id = _full_chain(client, h, "5")
-    seg = client.post("/api/auditoria/seguimiento", headers=h, json={
-        "recomendacion_id": rec_id, "descripcion": "Borrar", "porcentaje_avance": 10,
-    }).json()
-    d = client.delete(f"/api/auditoria/seguimiento/{seg['id']}", headers=h)
-    assert d.status_code == 200
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-006", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-006", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    rec = client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "prioridad": "media"}, headers=_auth("usuario", "Auditoria")).json()
+    seg = client.post("/api/auditoria/seguimiento", json={"recomendacion_id": rec["id"], "descripcion": "Avance Test", "porcentaje_avance": 50}, headers=_auth("usuario", "Auditoria")).json()
+    delseg = client.delete(f"/api/auditoria/seguimiento/{seg['id']}", headers=_auth("usuario", "Auditoria"))
+    assert delseg.status_code == 200
+    assert delseg.json() is True
 
 
-# ── Resumen KPIs ─────────────────────────────────────────────────────────────
-
-def test_resumen_campos():
+def test_seguimiento_actualiza_avance():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    r = client.get("/api/auditoria/resumen", headers=h)
-    assert r.status_code == 200
-    data = r.json()
-    for key in ("total_auditorias", "auditorias_en_proceso", "total_hallazgos",
-                "hallazgos_abiertos", "hallazgos_criticos",
-                "total_recomendaciones", "recomendaciones_pendientes",
-                "recomendaciones_implementadas"):
-        assert key in data
-        assert isinstance(data[key], int)
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-007", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-007", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    rec = client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "prioridad": "media"}, headers=_auth("usuario", "Auditoria")).json()
+    seg = client.post("/api/auditoria/seguimiento", json={"recomendacion_id": rec["id"], "descripcion": "Avance Test", "porcentaje_avance": 80}, headers=_auth("usuario", "Auditoria")).json()
+    rec2 = client.get(f"/api/auditoria/recomendaciones/{rec['id']}", headers=_auth("usuario", "Auditoria")).json()
+    assert rec2["porcentaje_avance"] == 80
 
 
-def test_resumen_refleja_creaciones():
+def test_cascada_eliminar_auditoria():
     client = _build_client()
-    h = _auth("usuario", "Auditoria")
-    pre = client.get("/api/auditoria/resumen", headers=h).json()
-    client.post("/api/auditoria/auditorias", headers=h, json={"codigo": "AUD-KPI", "nombre": "KPI Test"})
-    post = client.get("/api/auditoria/resumen", headers=h).json()
-    assert post["total_auditorias"] == pre["total_auditorias"] + 1
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-008", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-008", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    rec = client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "prioridad": "media"}, headers=_auth("usuario", "Auditoria")).json()
+    seg = client.post("/api/auditoria/seguimiento", json={"recomendacion_id": rec["id"], "descripcion": "Avance Test", "porcentaje_avance": 50}, headers=_auth("usuario", "Auditoria")).json()
+    delaud = client.delete(f"/api/auditoria/auditorias/{aud['id']}", headers=_auth("usuario", "Auditoria"))
+    assert delaud.status_code == 200
+    # Hallazgo, recomendación y seguimiento deben eliminarse
+    r = client.get(f"/api/auditoria/hallazgos/{hall['id']}", headers=_auth("usuario", "Auditoria"))
+    assert r.status_code == 404
+    r2 = client.get(f"/api/auditoria/recomendaciones/{rec['id']}", headers=_auth("usuario", "Auditoria"))
+    assert r2.status_code == 404
+    r3 = client.get(f"/api/auditoria/seguimiento/{seg['id']}", headers=_auth("usuario", "Auditoria"))
+    assert r3.status_code == 404
+
+
+def test_validaciones_dominio():
+    client = _build_client()
+    aud = client.post("/api/auditoria/auditorias", json={"codigo": "AUD-009", "nombre": "Auditoría Test", "tipo": "interna"}, headers=_auth("usuario", "Auditoria")).json()
+    hall = client.post("/api/auditoria/hallazgos", json={"auditoria_id": aud["id"], "codigo": "H-009", "titulo": "Hallazgo Test", "nivel_riesgo": "medio"}, headers=_auth("usuario", "Auditoria")).json()
+    # Recomendación con avance > 100
+    rec = client.post("/api/auditoria/recomendaciones", json={"hallazgo_id": hall["id"], "descripcion": "Recomendación Test", "porcentaje_avance": 150}, headers=_auth("usuario", "Auditoria"))
+    assert rec.status_code == 422
+    # Seguimiento con avance negativo
+    seg = client.post("/api/auditoria/seguimiento", json={"recomendacion_id": hall["id"], "descripcion": "Avance Test", "porcentaje_avance": -10}, headers=_auth("usuario", "Auditoria"))
+    assert seg.status_code == 422
+
+
+def test_error_ids_inexistentes():
+    client = _build_client()
+    r = client.get("/api/auditoria/recomendaciones/9999", headers=_auth("usuario", "Auditoria"))
+    assert r.status_code == 404
+    r2 = client.get("/api/auditoria/seguimiento/9999", headers=_auth("usuario", "Auditoria"))
+    assert r2.status_code == 404

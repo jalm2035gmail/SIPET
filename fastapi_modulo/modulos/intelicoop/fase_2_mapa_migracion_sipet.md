@@ -49,7 +49,7 @@ Para no meter toda la complejidad en un solo archivo, `intelicoop` debe quedar a
 
 - `intelicoop_models.py`
   - modelos SQLAlchemy o estructuras persistentes equivalentes en SIPET
-  - entidades base del MVP: socios, creditos, pagos, cuentas, transacciones, campanas, prospectos, resultados de scoring
+  - entidades MAIN del MVP: socios, creditos, pagos, cuentas, transacciones, campanas, prospectos, resultados de scoring
 
 - `intelicoop_store.py`
   - funciones CRUD y consultas
@@ -147,7 +147,7 @@ Para no meter toda la complejidad en un solo archivo, `intelicoop` debe quedar a
 - `backend/fastapi_service/app/main.py`
   - no se migra como app separada
 - `backend/fastapi_service/tests/test_scoring_api.py`
-  - usar como base para nuevas pruebas SIPET
+  - usar como MAIN para nuevas pruebas SIPET
 
 ### Frontend React a vista SIPET
 
@@ -261,7 +261,7 @@ Crear esqueleto SIPET del modulo:
 
 ### Paso 2
 
-Migrar entidades base:
+Migrar entidades MAIN:
 
 - socios
 - creditos

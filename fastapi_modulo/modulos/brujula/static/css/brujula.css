@@ -1,0 +1,25 @@
+#brujula-indicadores-app .tab.active,
+#brujula-indicadores-app .tab.tab-active {
+  font-weight: 700;
+}
+
+#brujula-indicadores-app [data-brujula-ind-panel].hidden,
+#brujula-indicadores-app [data-analysis-mode-panel].hidden {
+  display: none;
+}
+
+#brujula-indicadores-app .stat-value {
+  word-break: break-word;
+}
+
+#brujula-indicadores-app .text-status-ok {
+  color: #166534;
+}
+
+#brujula-indicadores-app .text-status-fail {
+  color: #b91c1c;
+}
+
+#brujula-indicadores-app .text-status-na {
+  color: rgb(75 85 99 / 0.8);
+}

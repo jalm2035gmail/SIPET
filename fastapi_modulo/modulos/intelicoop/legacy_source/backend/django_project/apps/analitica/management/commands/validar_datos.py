@@ -2,7 +2,7 @@ import csv
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import F, Q
 
 from apps.ahorros.models import Cuenta, Transaccion
@@ -22,7 +22,7 @@ def _append_rule(rows: list[dict[str, str]], tabla: str, regla: str, violaciones
     )
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Valida reglas de calidad/consistencia y genera reporte de incumplimientos."
 
     def add_arguments(self, parser):

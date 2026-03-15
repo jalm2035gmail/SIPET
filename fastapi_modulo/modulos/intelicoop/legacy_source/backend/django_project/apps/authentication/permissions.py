@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import MAINPermission
 
 from .models import UserProfile
 
@@ -17,7 +17,7 @@ ROLE_LEVELS = {
 }
 
 
-class RolePermission(BasePermission):
+class RolePermission(MAINPermission):
     min_level = 1
 
     def has_permission(self, request, view):

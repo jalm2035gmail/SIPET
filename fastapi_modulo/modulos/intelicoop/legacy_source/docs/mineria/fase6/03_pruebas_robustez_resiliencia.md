@@ -13,7 +13,7 @@ Fecha ejecucion UTC: 2026-02-18T14:20:18.572997+00:00
 
 ## Estado
 - Punto 3 de 8 completado tecnicamente.
-- Robustez y resiliencia base validadas con escenarios reproducibles.
+- Robustez y resiliencia MAIN validadas con escenarios reproducibles.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase6/03_pruebas_robustez_resiliencia.csv`

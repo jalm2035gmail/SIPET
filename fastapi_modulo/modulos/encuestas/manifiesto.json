@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0.0",
+  "module": {
+    "key": "encuestas",
+    "label": "Encuestas",
+    "description": "Campanas, constructor, respuesta, automatizacion y resultados.",
+    "version": "1.0.0",
+    "owner_module": "encuestas",
+    "route": "/encuestas",
+    "icon_asset": "imagenes/encuestas.svg",
+    "entrypoints": {
+      "html": [
+        "/encuestas",
+        "/encuestas/dashboard",
+        "/encuestas/encuestas",
+        "/encuestas/constructor",
+        "/encuestas/resultados"
+      ],
+      "api_prefixes": [
+        "/api/encuestas",
+        "/api/public/encuestas"
+      ],
+      "assets": [
+        "/modulos/encuestas/encuesta.css",
+        "/modulos/encuestas/encuesta.js",
+        "/modulos/encuestas/encuesta_response.js",
+        "/modulos/encuestas/imagenes/encuestas.svg"
+      ]
+    }
+  },
+  "dependencies": {
+    "required_modules": [],
+    "optional_modules": [
+      {
+        "key": "capacitacion",
+        "reason": "vincular encuestas live a cursos y presentaciones",
+        "integration_mode": "api_or_store_adapter"
+      },
+      {
+        "key": "empleados",
+        "reason": "obtener usuarios asignables y contexto organizacional",
+        "integration_mode": "read_only_context"
+      }
+    ],
+    "required_services": [
+      "dataMAIN"
+    ],
+    "optional_services": [
+      "celery",
+      "redis",
+      "backendhooks"
+    ]
+  },
+  "exports": {
+    "features": [
+      "campaign_builder",
+      "public_response_flow",
+      "internal_response_flow",
+      "results_dashboard",
+      "template_catalog",
+      "automation_jobs"
+    ],
+    "api_endpoints": [
+      "/api/encuestas/templates",
+      "/api/encuestas/question-types",
+      "/api/encuestas/campanas",
+      "/api/encuestas/assignable-users",
+      "/api/encuestas/integration-sources",
+      "/api/encuestas/automation/run",
+      "/api/public/encuestas/{public_token}"
+    ],
+    "integration_points": [
+      {
+        "name": "course_live_surveys",
+        "used_by": [
+          "capacitacion"
+        ],
+        "description": "Expone encuestas live asociadas a cursos o presentaciones."
+      }
+    ]
+  },
+  "consumes": {
+    "modules": [
+      {
+        "key": "capacitacion",
+        "required": false,
+        "reason": "resolver contexto de cursos para encuestas live"
+      }
+    ],
+    "shared_resources": [
+      {
+        "name": "users_table",
+        "required": true,
+        "reason": "materializar asignaciones y directorio de usuarios"
+      }
+    ]
+  },
+  "cross_module_changes_allowed": [
+    {
+      "module": "capacitacion",
+      "scope": [
+        "integration_adapter",
+        "api_only"
+      ],
+      "reason": "sincronizar experiencias de encuestas live en cursos y presentaciones"
+    }
+  ],
+  "permissions": [
+    "view_module",
+    "manage_surveys",
+    "view_results_summary",
+    "view_sensitive_results",
+    "export_sensitive_results"
+  ],
+  "assets": {
+    "images": [
+      "imagenes/encuestas.svg"
+    ],
+    "templates": [
+      "vistas/encuesta.html",
+      "vistas/encuesta_response.html"
+    ],
+    "scripts": [
+      "static/js/encuesta.js",
+      "static/js/encuesta_response.js"
+    ],
+    "styles": [
+      "static/css/encuesta.css"
+    ]
+  },
+  "runtime_notes": {
+    "autonomous_module": true,
+    "shared_shell_dependency": false,
+    "notes": [
+      "El modulo renderiza su propio shell HTML.",
+      "Las integraciones externas deben declararse aqui antes de acoplar codigo."
+    ]
+  }
+}

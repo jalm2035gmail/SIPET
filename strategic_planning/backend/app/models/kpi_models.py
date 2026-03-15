@@ -282,12 +282,12 @@ class KPIMeasurement:
         unique = f"{self.kpi_id}_{self.measurement_date.isoformat()}"
         return hashlib.md5(unique.encode()).hexdigest()[:16]
     
-    def calculate_variance(self, baseline: float) -> None:
-        """Calcula varianza contra línea base"""
-        self.previous_value = baseline
-        self.variance = self.value - baseline
-        if baseline != 0:
-            self.variance_percentage = (self.variance / abs(baseline)) * 100
+    def calculate_variance(self, MAINline: float) -> None:
+        """Calcula varianza contra línea MAIN"""
+        self.previous_value = MAINline
+        self.variance = self.value - MAINline
+        if MAINline != 0:
+            self.variance_percentage = (self.variance / abs(MAINline)) * 100
     
     def validate(self, validator: str) -> None:
         """Marca la medición como validada"""
@@ -301,7 +301,7 @@ class KPIMeasurement:
 # ============================================
 
 class KPICalculator(ABC):
-    """Clase base abstracta para cálculos de KPIs"""
+    """Clase MAIN abstracta para cálculos de KPIs"""
     
     @abstractmethod
     def calculate(self, data: pd.DataFrame, **kwargs) -> float:
@@ -930,7 +930,7 @@ class KPIRepository:
     """Repositorio para persistencia de KPIs y mediciones"""
     
     def __init__(self):
-        # En producción, esto sería una base de datos real
+        # En producción, esto sería una MAIN de datos real
         self.kpis: Dict[str, KPI] = {}
         self.measurements: Dict[str, List[KPIMeasurement]] = {}
         self.alerts: List[Alert] = []

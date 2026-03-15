@@ -2,13 +2,13 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.serializers import ScoringEvaluateSerializer
 from apps.analitica.views import _call_fastapi_scoring
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Ejecuta pruebas de robustez/resiliencia con datos incompletos/extremos y fallas parciales simuladas."
 
     def add_arguments(self, parser):
@@ -129,7 +129,7 @@ class Command(BaseCommand):
             "",
             "## Estado",
             "- Punto 3 de 8 completado tecnicamente.",
-            "- Robustez y resiliencia base validadas con escenarios reproducibles.",
+            "- Robustez y resiliencia MAIN validadas con escenarios reproducibles.",
             "",
             "## Artefactos",
             f"- Reporte CSV: `{report_csv}`",

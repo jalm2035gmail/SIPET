@@ -13,7 +13,7 @@ Fecha ejecucion UTC: 2026-02-18T14:23:19.572742+00:00
 | cifrado_transito | https_redirect_global | En revision | SECURE_SSL_REDIRECT=no | Alta |
 | cifrado_transito | autenticacion_jwt_en_api | Cumple | auth_classes=1 | Alta |
 | cifrado_reposo | credenciales_hash_robusto | En revision | usuarios_hash_robusto=0/3 | Alta |
-| segregacion_rol | roles_base_definidos | Cumple | roles_detectados=4 | Alta |
+| segregacion_rol | roles_MAIN_definidos | Cumple | roles_detectados=4 | Alta |
 | segregacion_rol | endpoints_analitica_con_role_permission | Cumple | endpoints_protegidos=15 | Alta |
 | control_acceso | cobertura_2fa_en_perfiles_activos | En revision | 2fa_activos=0/3 (0.00%) | Media |
 | control_acceso | throttling_api_habilitado | Cumple | anon=60/min, user=300/min | Media |
@@ -27,7 +27,7 @@ Fecha ejecucion UTC: 2026-02-18T14:23:19.572742+00:00
 
 ## Estado
 - Punto 4 de 8 completado tecnicamente.
-- Matriz base de seguridad de la informacion generada con evidencia reproducible.
+- Matriz MAIN de seguridad de la informacion generada con evidencia reproducible.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase6/04_seguridad_informacion.csv`

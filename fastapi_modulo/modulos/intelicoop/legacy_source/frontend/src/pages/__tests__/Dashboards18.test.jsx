@@ -98,14 +98,14 @@ const { getMock } = vi.hoisted(() => ({
       })
     }
     const semaforo = config?.params?.semaforo
-    const baseRow = {
+    const MAINRow = {
       componente: 'cartera:imor',
       ambito: 'riesgo',
       semaforo: 'Rojo',
       estado: 'En revision',
       detalle: { valor: 21.4, umbral: 15.0, fecha_evento: '2026-02-18T10:00:00Z' }
     }
-    const rows = semaforo === 'Verde' ? [] : [baseRow]
+    const rows = semaforo === 'Verde' ? [] : [MAINRow]
     return Promise.resolve({
       data: {
         resumen: {

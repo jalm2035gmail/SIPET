@@ -1,0 +1,7 @@
+__turbopack_load_page_chunks__("/messages", [
+  "static/chunks/fe29c9806b535cd6.js",
+  "static/chunks/a07b3914771d2e00.js",
+  "static/chunks/6143f039bde2189b.js",
+  "static/chunks/7e2059b279e59c08.js",
+  "static/chunks/turbopack-d3473c61fd8b9292.js"
+])

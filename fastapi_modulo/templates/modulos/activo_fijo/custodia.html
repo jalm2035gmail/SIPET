@@ -1,0 +1,63 @@
+<section class="af-shell">
+  <style>
+    .af-shell{display:grid;gap:18px;color:var(--sidebar-bottom, #1f2940);}
+    .af-hero,.af-card{background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid var(--field-border, #e2eaf4);border-radius:24px;box-shadow:0 10px 24px rgba(31,41,64,.06);}
+    .af-hero{padding:24px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;}
+    .af-hero h1{margin:0;font-size:28px;line-height:1.05;letter-spacing:-.03em;}
+    .af-hero p{margin:10px 0 0;max-width:840px;font-size:16px;line-height:1.6;color:var(--text-muted, #667792);}
+    .af-pill{padding:10px 14px;border-radius:999px;background:color-mix(in srgb, var(--institutional-accent, #22b8cf) 12%, #ffffff);color:var(--sidebar-bottom, #1f2940);font-size:12px;font-weight:800;white-space:nowrap;}
+    .af-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+    .af-kpi{min-height:132px;padding:18px;border-radius:22px;color:#fff;box-shadow:0 12px 26px rgba(31,41,64,.10);}
+    .af-kpi.blue{background:linear-gradient(135deg,#63a5ff,#3b82f6);}
+    .af-kpi.teal{background:linear-gradient(135deg,#63d8cf,#22b8cf);}
+    .af-kpi.gold{background:linear-gradient(135deg,#ffd56a,#f2b035);}
+    .af-kpi.green{background:linear-gradient(135deg,#6bcf9b,#25b27f);}
+    .af-kpi__title{font-size:14px;font-weight:700;opacity:.94;}
+    .af-kpi__value{margin-top:10px;font-size:28px;font-weight:800;letter-spacing:-.03em;}
+    .af-kpi__meta{margin-top:8px;font-size:13px;font-weight:600;opacity:.92;}
+    .af-grid{display:grid;grid-template-columns:1.15fr .95fr;gap:16px;}
+    .af-card{padding:18px;}
+    .af-card__title{margin:0 0 14px;font-size:18px;font-weight:800;letter-spacing:-.02em;}
+    .af-list{display:grid;gap:12px;}
+    .af-item{padding:16px;border:1px solid var(--field-border, #e2eaf4);border-radius:20px;background:linear-gradient(180deg,#fbfdff,#f8fbff);}
+    .af-item__head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+    .af-item__title{font-size:15px;font-weight:800;}
+    .af-item__meta{font-size:13px;color:var(--text-muted, #667792);line-height:1.55;}
+    .af-badge{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;}
+    .af-badge.blue{background:#edf5ff;color:#3b82f6;}
+    .af-badge.gold{background:#fff6dd;color:#cb9224;}
+    .af-badge.green{background:#ebfbf3;color:#25a36c;}
+    @media (max-width:1180px){.af-kpis{grid-template-columns:repeat(2,1fr)}.af-grid{grid-template-columns:1fr}}
+    @media (max-width:640px){.af-hero{flex-direction:column}.af-kpis{grid-template-columns:1fr}}
+  </style>
+  <section class="af-hero">
+    <div>
+      <h1>Custodia</h1>
+      <p>Cascarón para préstamo y resguardo de activos fijos como proyectores, laptops, bocinas y equipo de apoyo institucional.</p>
+    </div>
+    <div class="af-pill">Préstamo de activos</div>
+  </section>
+  <section class="af-kpis">
+    <article class="af-kpi blue"><div class="af-kpi__title">Activos disponibles</div><div class="af-kpi__value">42</div><div class="af-kpi__meta">Inventario utilizable</div></article>
+    <article class="af-kpi teal"><div class="af-kpi__title">Préstamos activos</div><div class="af-kpi__value">11</div><div class="af-kpi__meta">En custodia</div></article>
+    <article class="af-kpi gold"><div class="af-kpi__title">Entregas hoy</div><div class="af-kpi__value">4</div><div class="af-kpi__meta">Programadas</div></article>
+    <article class="af-kpi green"><div class="af-kpi__title">Devolución puntual</div><div class="af-kpi__value">93%</div><div class="af-kpi__meta">Cumplimiento</div></article>
+  </section>
+  <section class="af-grid">
+    <article class="af-card">
+      <h3 class="af-card__title">Bandeja de custodia</h3>
+      <div class="af-list">
+        <div class="af-item"><div class="af-item__head"><div class="af-item__title">Solicitud de proyectores</div><span class="af-badge blue">Pendiente</span></div><div class="af-item__meta">Reserva, autorización, salida y devolución del equipo.</div></div>
+        <div class="af-item"><div class="af-item__head"><div class="af-item__title">Control de resguardos</div><span class="af-badge green">Activo</span></div><div class="af-item__meta">Responsable, fecha de entrega, estado físico y evidencia.</div></div>
+        <div class="af-item"><div class="af-item__head"><div class="af-item__title">Incidencias</div><span class="af-badge gold">Seguimiento</span></div><div class="af-item__meta">Daños, faltantes y observaciones por préstamo.</div></div>
+      </div>
+    </article>
+    <article class="af-card">
+      <h3 class="af-card__title">Próximos componentes</h3>
+      <div class="af-list">
+        <div class="af-item"><div class="af-item__head"><div class="af-item__title">Calendario de reservas</div><span class="af-badge blue">Pendiente</span></div><div class="af-item__meta">Disponibilidad por activo y conflicto de apartados.</div></div>
+        <div class="af-item"><div class="af-item__head"><div class="af-item__title">Check-in / check-out</div><span class="af-badge green">Diseño</span></div><div class="af-item__meta">Entrega y recepción con evidencia fotográfica.</div></div>
+      </div>
+    </article>
+  </section>
+</section>

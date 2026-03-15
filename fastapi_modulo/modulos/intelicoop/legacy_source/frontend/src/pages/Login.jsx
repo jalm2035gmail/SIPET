@@ -38,7 +38,7 @@ export default function Login() {
         setRequiresTwoFactor(false)
         setOtpCode('')
         setSuccess('Inicio de sesión correcto.')
-        navigate('/web')
+        navigate('/backend')
       })
       .catch((requestError) => {
         if (requestError?.response?.data?.two_factor_required) {
@@ -70,7 +70,7 @@ export default function Login() {
               <div className={styles.fieldGroup}>
                 <div className={styles.fieldHeader}>
                   <label htmlFor="identifier">Usuario o correo</label>
-                  <Link className={styles.inlineLink} to="/web/register">
+                  <Link className={styles.inlineLink} to="/backend/register">
                     Crear cuenta
                   </Link>
                 </div>
@@ -87,7 +87,7 @@ export default function Login() {
               <div className={styles.fieldGroup}>
                 <div className={styles.fieldHeader}>
                   <label htmlFor="password">Contraseña</label>
-                  <Link className={styles.inlineLink} to="/web/forgot-password">
+                  <Link className={styles.inlineLink} to="/backend/forgot-password">
                     Restablecer contraseña
                   </Link>
                 </div>

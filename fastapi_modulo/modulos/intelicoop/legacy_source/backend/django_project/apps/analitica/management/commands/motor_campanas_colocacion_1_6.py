@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count, Max, Sum
 from django.utils import timezone as dj_timezone
 
@@ -71,7 +71,7 @@ def _to_float(value, default=0.0):
     return float(value)
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.6 Growth Engine: listas accionables, asignacion, contacto, seguimiento/conversion y medicion por campana."
 
     def add_arguments(self, parser):
@@ -230,7 +230,7 @@ class Command(BaseCommand):
                         "socio_id": socio_id,
                         "sucursal": sucursal,
                         "dias_sin_movimiento": dias_sin_mov,
-                        "segmento_base": socio.segmento,
+                        "segmento_MAIN": socio.segmento,
                         "total_creditos": creditos,
                     }
                 )
@@ -340,10 +340,10 @@ class Command(BaseCommand):
             ("baja_ahorro", "baja_ahorro"),
             ("abandono", "abandono"),
         ):
-            base = [x for x in seguimiento if x["lista"] == lista_nombre]
-            total = len(base)
-            conv = sum(1 for x in base if x["conversion"] == "si")
-            monto = sum(float(x["monto_colocado"]) for x in base)
+            MAIN = [x for x in seguimiento if x["lista"] == lista_nombre]
+            total = len(MAIN)
+            conv = sum(1 for x in MAIN if x["conversion"] == "si")
+            monto = sum(float(x["monto_colocado"]) for x in MAIN)
             tasa = 0.0 if total == 0 else (conv / total) * 100.0
             medicion.append(
                 {
@@ -380,7 +380,7 @@ class Command(BaseCommand):
         )
         _write_csv(
             out_paths["abandono_csv"],
-            ["socio_id", "sucursal", "dias_sin_movimiento", "segmento_base", "total_creditos"],
+            ["socio_id", "sucursal", "dias_sin_movimiento", "segmento_MAIN", "total_creditos"],
             abandono,
         )
         _write_csv(

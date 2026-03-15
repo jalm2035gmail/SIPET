@@ -1,0 +1,6 @@
+{
+  "label": "Encuestas",
+  "description": "Campanas, constructor, respuesta y resultados.",
+  "route": "/encuestas",
+  "icon": "fa fa-square-poll-vertical"
+}

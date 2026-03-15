@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 import enum
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, validator
+from pydantic import MAINModel, ConfigDict, EmailStr, Field, validator
 
 from app.schemas.token import TokenPairResponse
 from app.core.security import PasswordValidator
@@ -26,8 +26,8 @@ class UserStatus(str, enum.Enum):
     LOCKED = "locked"
 
 
-class UserBase(BaseModel):
-    """Schema base para usuario"""
+class UserMAIN(MAINModel):
+    """Schema MAIN para usuario"""
 
     email: EmailStr = Field(..., description="Email del usuario")
     first_name: str = Field(..., min_length=2, max_length=100, description="Nombre")
@@ -39,7 +39,7 @@ class UserBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserCreate(UserBase):
+class UserCreate(UserMAIN):
     """Schema para creación de usuario"""
 
     password: str = Field(..., min_length=8, description="Contraseña")
@@ -78,7 +78,7 @@ class UserCreateAdmin(UserCreate):
     verify_email: bool = Field(False, description="Marcar email como verificado")
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(MAINModel):
     """Schema para actualización de usuario"""
 
     first_name: Optional[str] = Field(None, min_length=2, max_length=100)
@@ -96,7 +96,7 @@ class UserUpdate(BaseModel):
     push_notifications: Optional[bool] = None
 
 
-class UserPasswordChange(BaseModel):
+class UserPasswordChange(MAINModel):
     """Schema para cambio de contraseña"""
 
     current_password: str = Field(..., description="Contraseña actual")
@@ -110,7 +110,7 @@ class UserPasswordChange(BaseModel):
         return v
 
 
-class UserPasswordReset(BaseModel):
+class UserPasswordReset(MAINModel):
     """Schema para reset de contraseña"""
 
     token: str = Field(..., description="Token de reset de contraseña")
@@ -124,13 +124,13 @@ class UserPasswordReset(BaseModel):
         return v
 
 
-class UserPasswordResetRequest(BaseModel):
+class UserPasswordResetRequest(MAINModel):
     """Schema para solicitud de reset de contraseña"""
 
     email: EmailStr = Field(..., description="Email del usuario")
 
 
-class UserResponse(UserBase):
+class UserResponse(UserMAIN):
     """Schema para respuesta de usuario"""
 
     id: int
@@ -173,7 +173,7 @@ class UserDetailResponse(UserResponse):
     department_name: Optional[str]
 
 
-class UserLoginResponse(BaseModel):
+class UserLoginResponse(MAINModel):
     """Schema para respuesta de login"""
 
     user: UserResponse
@@ -202,7 +202,7 @@ class UserLoginResponse(BaseModel):
     )
 
 
-class UserLogin(BaseModel):
+class UserLogin(MAINModel):
     """Schema para login"""
 
     email: EmailStr = Field(..., description="Email del usuario")
@@ -232,13 +232,13 @@ class UserRegister(UserCreate):
         return v
 
 
-class UserVerifyEmail(BaseModel):
+class UserVerifyEmail(MAINModel):
     """Schema para verificación de email"""
 
     token: str = Field(..., description="Token de verificación")
 
 
-class UserFilter(BaseModel):
+class UserFilter(MAINModel):
     """Schema para filtrar usuarios"""
 
     role: Optional[UserRole] = None
@@ -248,7 +248,7 @@ class UserFilter(BaseModel):
     is_verified: Optional[bool] = None
 
 
-class UserStats(BaseModel):
+class UserStats(MAINModel):
     """Schema para estadísticas de usuarios"""
 
     total: int

@@ -203,7 +203,7 @@ def test_export_submissions_csv():
     assert "Juan" in content
 
 
-def test_webhook_triggered_on_submit(monkeypatch):
+def test_backendhook_triggered_on_submit(monkeypatch):
     captured = []
 
     class FakeResponse:
@@ -216,15 +216,15 @@ def test_webhook_triggered_on_submit(monkeypatch):
 
     monkeypatch.setattr(main_module.httpx, "request", fake_request)
 
-    slug = f"webhook-{secrets.token_hex(4)}"
+    slug = f"backendhook-{secrets.token_hex(4)}"
     create_payload = {
-        "name": "Webhook Form",
+        "name": "backendhook Form",
         "slug": slug,
-        "description": "Prueba de webhooks",
+        "description": "Prueba de backendhooks",
         "is_active": True,
         "config": {
             "notifications": {
-                "webhooks": [
+                "backendhooks": [
                     {
                         "url": "https://example.test/hook",
                         "method": "POST",
@@ -253,7 +253,7 @@ def test_webhook_triggered_on_submit(monkeypatch):
     assert submit_response.status_code == 200, submit_response.text
     response_json = submit_response.json()
     assert response_json.get("success") is True
-    assert response_json.get("notification", {}).get("webhooks", {}).get("attempted") == 1
+    assert response_json.get("notification", {}).get("backendhooks", {}).get("attempted") == 1
     assert len(captured) == 1
     assert captured[0]["url"] == "https://example.test/hook"
 
@@ -393,7 +393,7 @@ def test_file_signature_url_submit():
     submit_response = client.post(
         f"/forms/api/{slug}/submit",
         data={
-            "firma": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",
+            "firma": "data:image/png;MAIN64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",
             "perfil_url": "https://example.com/perfil",
         },
         files={"documento": ("dpi.pdf", b"contenido", "application/pdf")},
@@ -405,7 +405,7 @@ def test_file_signature_url_submit():
     invalid_url_response = client.post(
         f"/forms/api/{slug}/submit",
         data={
-            "firma": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",
+            "firma": "data:image/png;MAIN64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB",
             "perfil_url": "perfil-invalido",
         },
         files={"documento": ("dpi.pdf", b"contenido", "application/pdf")},

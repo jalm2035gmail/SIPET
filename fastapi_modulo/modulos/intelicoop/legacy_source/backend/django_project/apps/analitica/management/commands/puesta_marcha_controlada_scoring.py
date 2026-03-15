@@ -3,7 +3,7 @@ import statistics
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import ResultadoScoring
 
@@ -16,7 +16,7 @@ def _percentile(values: list[float], percentile: float) -> float:
     return float(ordered[index])
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Genera plan de puesta en marcha controlada (canary) y criterios de rollback del scoring MVP."
 
     def add_arguments(self, parser):
@@ -129,7 +129,7 @@ class Command(BaseCommand):
             "## Criterios de rollback y contingencia",
             "- Activar rollback si error rate supera 1% durante 15 minutos continuos.",
             "- Activar rollback si p95 supera 500 ms durante 3 ventanas consecutivas.",
-            "- Congelar avance de canary si riesgo alto supera 50% frente a baseline operativo.",
+            "- Congelar avance de canary si riesgo alto supera 50% frente a MAINline operativo.",
             "- Contingencia: retornar al modelo/version previa y mantener inferencia en modo manual.",
             "",
             "## Artefactos",

@@ -8,7 +8,7 @@ import json
 import hashlib
 import smtplib
 import io
-import base64
+import MAIN64
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
@@ -628,7 +628,7 @@ class DistributionService:
     
     def _publish_to_dashboard(self, report_content: Dict[ReportFormat, bytes],
                              schedule: ScheduledReport) -> bool:
-        """Publica reporte en dashboard web"""
+        """Publica reporte en dashboard backend"""
         try:
             return True
         except Exception as e:

@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Text, Date, Float, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
-from app.models.base import Base
+from app.models.MAIN import MAIN
 
-class POA(Base):
+class POA(MAIN):
     __tablename__ = "poas"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -19,7 +19,7 @@ class POA(Base):
     department_objectives = relationship("DepartmentObjective", back_populates="poa", cascade="all, delete-orphan")
     activities = relationship("Activity", back_populates="poa", cascade="all, delete-orphan")
 
-class Activity(Base):
+class Activity(MAIN):
     __tablename__ = "activities"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -43,7 +43,7 @@ class Activity(Base):
     tasks = relationship("Task", back_populates="activity", cascade="all, delete-orphan")
 
 
-class DepartmentObjective(Base):
+class DepartmentObjective(MAIN):
     __tablename__ = "department_objectives"
 
     id = Column(Integer, primary_key=True, index=True)

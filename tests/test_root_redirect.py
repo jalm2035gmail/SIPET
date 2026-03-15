@@ -19,8 +19,8 @@ from fastapi_modulo.main import app
 client = TestClient(app)
 
 
-def test_root_redirects_to_web_inicio() -> None:
+def test_root_redirects_to_backend_inicio() -> None:
     response = client.get("/", follow_redirects=False)
 
     assert response.status_code == 308
-    assert response.headers["location"] == "/web/inicio"
+    assert response.headers["location"] == "/backend/inicio"

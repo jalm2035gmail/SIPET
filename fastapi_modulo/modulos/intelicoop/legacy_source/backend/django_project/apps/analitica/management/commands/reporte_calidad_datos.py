@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.MAIN import MAINCommand, CommandError
 
 
 def _latest_profile_json(output_dir: Path) -> Path | None:
@@ -21,7 +21,7 @@ def _risk_level(item: dict) -> str:
     return "Bajo"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Genera reporte markdown de calidad de datos desde el ultimo perfilamiento."
 
     def add_arguments(self, parser):

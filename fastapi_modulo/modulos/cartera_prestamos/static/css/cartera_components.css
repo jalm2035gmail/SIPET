@@ -1,0 +1,141 @@
+.cp-ui-rail {
+    display: flex;
+    flex-direction: column;
+}
+
+.cp-ui-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cp-ui-brand-logo {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    flex: 0 0 46px;
+}
+
+.cp-ui-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cp-ui-nav-item {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    transition: 0.25s ease;
+}
+
+.cp-ui-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.cp-ui-topbar-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.cp-ui-btn {
+    border-radius: 14px;
+    font-weight: 700;
+    border: none;
+}
+
+.cp-ui-btn-primary,
+.cp-ui-btn-secondary,
+.cp-ui-btn-small {
+    border-radius: 14px;
+    font-weight: 700;
+}
+
+.cp-ui-btn-primary,
+.cp-ui-btn-secondary {
+    padding: 12px 18px;
+    font-size: 0.92rem;
+}
+
+.cp-ui-btn-small {
+    padding: 10px 14px;
+    font-size: 0.84rem;
+}
+
+.cp-ui-kpi-card,
+.cp-ui-panel,
+.cp-ui-mini-card {
+    border-radius: 20px;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.10);
+}
+
+.cp-ui-panel {
+    padding: 22px;
+}
+
+.cp-ui-panel-head,
+.cp-ui-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.cp-ui-panel-link {
+    font-weight: 700;
+    font-size: 0.9rem;
+    background: transparent;
+    padding: 0;
+}
+
+.cp-ui-table-wrap {
+    overflow: auto;
+    border-radius: 18px;
+}
+
+.cp-ui-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.cp-ui-table th,
+.cp-ui-table td {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 0.92rem;
+}
+
+.cp-ui-table th {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 980px) {
+    .cp-ui-topbar {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 640px) {
+    .cp-ui-topbar-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cp-ui-btn-primary,
+    .cp-ui-btn-secondary,
+    .cp-ui-btn-small {
+        width: 100%;
+    }
+}

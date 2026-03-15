@@ -13,14 +13,14 @@
   body {
     margin: 0; min-height: 100vh;
     font-family: ui-sans-serif, system-ui, sans-serif;
-    background: var(--color-base-200);
-    color: var(--color-base-content);
+    background: var(--color-MAIN-200);
+    color: var(--color-MAIN-content);
     display: flex; justify-content: center;
     padding: 40px 16px;
   }
   .wrap { width: 100%; max-width: 640px; }
   .card {
-    background: var(--color-base-100);
+    background: var(--color-MAIN-100);
     border-radius: 16px;
     padding: 36px;
     box-shadow: 0 4px 24px rgba(0,0,0,.07);
@@ -31,9 +31,9 @@
   .field label { font-size: .875rem; font-weight: 600; }
   .field input, .field select, .field textarea {
     padding: 9px 12px; border-radius: 8px; outline: none; width: 100%;
-    border: 1px solid var(--color-base-300);
-    background: var(--color-base-100);
-    color: var(--color-base-content); font-size: .95rem;
+    border: 1px solid var(--color-MAIN-300);
+    background: var(--color-MAIN-100);
+    color: var(--color-MAIN-content); font-size: .95rem;
   }
   .field input:focus, .field select:focus, .field textarea:focus {
     border-color: var(--color-primary);
@@ -44,27 +44,27 @@
   .check-wrap { display: flex; align-items: center; gap: 8px; font-size: .9rem; cursor: pointer; }
   .field-header h3 {
     font-size: 1rem; font-weight: 700; padding-top: 8px;
-    border-top: 1px solid var(--color-base-300); margin: 0;
+    border-top: 1px solid var(--color-MAIN-300); margin: 0;
   }
-  .field-divider hr { border: none; border-top: 1px solid var(--color-base-300); }
+  .field-divider hr { border: none; border-top: 1px solid var(--color-MAIN-300); }
   .field-paragraph p, .html-content { font-size: .9rem; opacity: .7; }
   .wizard-steps { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
   .wizard-step {
     padding: 4px 14px; border-radius: 999px; font-size: .78rem; font-weight: 600;
-    background: var(--color-base-200); color: var(--color-base-content); opacity: .45;
+    background: var(--color-MAIN-200); color: var(--color-MAIN-content); opacity: .45;
   }
   .wizard-step.active {
     background: var(--color-primary); color: var(--color-primary-content); opacity: 1;
   }
   .signature-canvas {
     width: 100%; height: 160px; border-radius: 8px; display: block;
-    border: 1px solid var(--color-base-300); background: var(--color-base-100); cursor: crosshair;
+    border: 1px solid var(--color-MAIN-300); background: var(--color-MAIN-100); cursor: crosshair;
   }
   .signature-actions { margin-top: 6px; }
   .signature-clear {
-    background: none; border: 1px solid var(--color-base-300);
+    background: none; border: 1px solid var(--color-MAIN-300);
     border-radius: 6px; padding: 4px 12px; font-size: .8rem;
-    cursor: pointer; color: var(--color-base-content);
+    cursor: pointer; color: var(--color-MAIN-content);
   }
   .actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
   .actions button {
@@ -75,8 +75,8 @@
   .actions button:hover { opacity: .87; }
   .actions button:disabled { opacity: .38; pointer-events: none; }
   #prev-btn, #next-btn {
-    background: var(--color-base-200); color: var(--color-base-content);
-    border: 1px solid var(--color-base-300);
+    background: var(--color-MAIN-200); color: var(--color-MAIN-content);
+    border: 1px solid var(--color-MAIN-300);
   }
   .message { margin-top: 16px; padding: 10px 14px; border-radius: 8px; font-size: .9rem; display: none; }
   .message.ok {
@@ -221,11 +221,11 @@
           input.required = false;
           return;
         }
-        const baseRequired = input.dataset.baseRequired === '1';
+        const MAINRequired = input.dataset.MAINRequired === '1';
         if (input.type === 'radio' || input.dataset.multiCheckbox === '1') {
           input.required = false;
         } else {
-          input.required = baseRequired;
+          input.required = MAINRequired;
         }
       });
       if (visible && state.required) {
@@ -285,7 +285,7 @@
         const signatureInputs = inputs.filter((input) => input.dataset.signatureField === '1');
         if (signatureInputs.length) {
           const signatureInput = signatureInputs[0];
-          const needsSignature = signatureInput.dataset.baseRequired === '1';
+          const needsSignature = signatureInput.dataset.MAINRequired === '1';
           const hasSignature = Boolean((signatureInput.value || '').trim());
           signatureInput.setCustomValidity(needsSignature && !hasSignature ? 'Firma requerida.' : '');
         }
@@ -493,7 +493,7 @@
           input.name = name;
           input.value = value;
           input.required = required && idx === 0;
-          input.dataset.baseRequired = required ? '1' : '0';
+          input.dataset.MAINRequired = required ? '1' : '0';
           input.checked = safeText(defaultValue) === value;
 
           const text = document.createElement('span');
@@ -525,7 +525,7 @@
           input.type = 'checkbox';
           input.name = name;
           input.value = value;
-          input.dataset.baseRequired = required ? '1' : '0';
+          input.dataset.MAINRequired = required ? '1' : '0';
           input.dataset.multiCheckbox = '1';
           input.checked = selectedValues.includes(value);
           const text = document.createElement('span');
@@ -554,7 +554,7 @@
           input.name = name;
           input.value = value;
           input.required = required && idx === 0;
-          input.dataset.baseRequired = required ? '1' : '0';
+          input.dataset.MAINRequired = required ? '1' : '0';
           input.checked = safeText(defaultValue) === value;
           const text = document.createElement('span');
           text.textContent = label;
@@ -576,13 +576,13 @@
         const start = document.createElement('input');
         start.type = 'date';
         start.name = name;
-        start.dataset.baseRequired = required ? '1' : '0';
+        start.dataset.MAINRequired = required ? '1' : '0';
         start.dataset.rangeField = '1';
         start.value = safeText(defaults[0] || '');
         const end = document.createElement('input');
         end.type = 'date';
         end.name = name;
-        end.dataset.baseRequired = required ? '1' : '0';
+        end.dataset.MAINRequired = required ? '1' : '0';
         end.dataset.rangeField = '1';
         end.value = safeText(defaults[1] || '');
         group.appendChild(start);
@@ -602,7 +602,7 @@
         hidden.type = 'text';
         hidden.name = name;
         hidden.dataset.signatureField = '1';
-        hidden.dataset.baseRequired = required ? '1' : '0';
+        hidden.dataset.MAINRequired = required ? '1' : '0';
         hidden.value = safeText(defaultValue);
         hidden.style.position = 'absolute';
         hidden.style.opacity = '0';
@@ -632,7 +632,7 @@
         input.type = 'checkbox';
         input.name = name;
         input.value = 'true';
-        input.dataset.baseRequired = required ? '1' : '0';
+        input.dataset.MAINRequired = required ? '1' : '0';
         input.checked = defaultValue === true || safeText(defaultValue).toLowerCase() === 'true';
 
         const text = document.createElement('span');
@@ -646,7 +646,7 @@
       const input = document.createElement('input');
       input.name = name;
       input.required = required;
-      input.dataset.baseRequired = required ? '1' : '0';
+      input.dataset.MAINRequired = required ? '1' : '0';
       input.placeholder = placeholder;
       input.value = safeText(defaultValue);
 

@@ -18,7 +18,7 @@ Dataset version: intake_v1
 
 ## Estado
 - Etapa 1 de 4 completada tecnicamente.
-- Cargadores base por fuente implementados con salida raw.
+- Cargadores MAIN por fuente implementados con salida raw.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/intake/01_cargadores_fuentes.csv`

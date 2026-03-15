@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Sum
 from django.utils import timezone as dj_timezone
 
@@ -10,7 +10,7 @@ from apps.analitica.models import ResultadoMoraTemprana, ResultadoScoring
 from apps.creditos.models import HistorialPago
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 3/4 de 1.3: calcula tiempo de respuesta de credito y eficiencia de cobranza."
 
     def add_arguments(self, parser):
@@ -90,7 +90,7 @@ class Command(BaseCommand):
             "",
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             "",
-            "## Base de calculo",
+            "## MAIN de calculo",
             f"- Fecha de corte: {hoy.isoformat()}",
             f"- Gestiones consideradas: {gestiones_total}",
             f"- Gestiones con recuperacion: {gestiones_recuperacion}",

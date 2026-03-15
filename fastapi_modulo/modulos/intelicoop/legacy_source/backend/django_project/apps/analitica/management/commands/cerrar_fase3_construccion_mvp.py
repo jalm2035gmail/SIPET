@@ -2,13 +2,13 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Count
 
 from apps.analitica.models import ResultadoScoring
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Consolida entregables obligatorios de Fase 3 y genera acta de cierre tecnico."
 
     def add_arguments(self, parser):
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                 "estado": "Cumplido" if total_scoring >= 0 else "Condicionado",
             },
             {
-                "entregable": "Documento de validacion de modelo y baseline de metricas",
+                "entregable": "Documento de validacion de modelo y MAINline de metricas",
                 "evidencia": "04_evaluacion_seleccion_modelo.*",
                 "estado": "Cumplido" if required_files[0].exists() else "Condicionado",
             },

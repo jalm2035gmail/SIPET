@@ -1,0 +1,223 @@
+<style>
+  .vf-shell {
+    padding: 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .vf-header {
+    text-align: center;
+    padding: 32px 20px 24px;
+  }
+  .vf-header-icon { font-size: 48px; margin-bottom: 12px; }
+  .vf-header h2 { font-size: 24px; font-weight: 700; margin: 0 0 6px; }
+  .vf-header p  { font-size: 14px; color: #64748b; margin: 0; }
+
+  /* Caja de búsqueda */
+  .vf-search-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .vf-search-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .vf-input {
+    flex: 1;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .vf-input:focus { border-color: #4f46e5; }
+  .vf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+    text-decoration: none;
+  }
+  .vf-btn:hover { opacity: .85; }
+  .vf-btn.is-primary { background: #4f46e5; color: #fff; }
+  .vf-btn.is-outline { background: transparent; color: #475569; border: 1.5px solid #cbd5e1; }
+
+  /* Resultado */
+  .vf-result-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .vf-result-header {
+    background: linear-gradient(135deg, #14532d 0%, #16a34a 100%);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .vf-result-header-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .vf-result-header h3 { margin: 0 0 2px; font-size: 16px; font-weight: 700; color: #fff; }
+  .vf-result-header p  { margin: 0; font-size: 13px; color: rgba(255,255,255,.8); }
+  .vf-result-body { padding: 20px 24px; }
+  .vf-result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+  }
+  .vf-result-row:last-child { border-bottom: none; }
+  .vf-result-label { color: #64748b; }
+  .vf-result-value { font-weight: 600; color: #1e293b; }
+  .vf-folio-badge {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    background: #f1f5f9;
+    padding: 3px 10px;
+    border-radius: 6px;
+    letter-spacing: 1.5px;
+    color: #475569;
+  }
+  .vf-actions { padding: 16px 24px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* Error / no encontrado */
+  .vf-not-found {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 12px;
+    padding: 20px 24px;
+    text-align: center;
+    color: #b91c1c;
+    font-size: 14px;
+  }
+
+  /* Loading */
+  .vf-status { text-align: center; padding: 32px; color: #64748b; font-size: 14px; }
+  .vf-loading {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: vf-spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes vf-spin { to { transform: rotate(360deg); } }
+</style>
+
+<div id="vf-root" class="vf-shell"
+     data-js-url="/capacitacion/assets/js/capacitacion_verificar.js?v=20260309">
+
+  <!-- Header -->
+  <div class="vf-header">
+    <div class="vf-header-icon">🔐</div>
+    <h2>Verificación de certificado</h2>
+    <p>Ingresa el folio para confirmar la autenticidad del certificado.</p>
+  </div>
+
+  <!-- Búsqueda -->
+  <div class="vf-search-card">
+    <div class="vf-search-row">
+      <input id="vf-folio-input" class="vf-input" type="text" placeholder="FOLIO12AB…" maxlength="20" autocomplete="off" />
+      <button id="vf-btn-buscar" class="vf-btn is-primary">Verificar</button>
+    </div>
+  </div>
+
+  <!-- Estado -->
+  <div id="vf-status" class="vf-status" style="display:none;">
+    <span class="vf-loading"></span> Verificando…
+  </div>
+
+  <!-- Resultado válido -->
+  <div id="vf-result" style="display:none;">
+    <div class="vf-result-card">
+      <div class="vf-result-header">
+        <div class="vf-result-header-icon">✓</div>
+        <div>
+          <h3>Certificado válido</h3>
+          <p id="vf-result-subtitle">Emitido por SIPET</p>
+        </div>
+      </div>
+      <div class="vf-result-body">
+        <div class="vf-result-row">
+          <span class="vf-result-label">Colaborador</span>
+          <span id="vf-r-nombre" class="vf-result-value"></span>
+        </div>
+        <div class="vf-result-row">
+          <span class="vf-result-label">Curso</span>
+          <span id="vf-r-curso" class="vf-result-value"></span>
+        </div>
+        <div class="vf-result-row">
+          <span class="vf-result-label">Puntaje</span>
+          <span id="vf-r-puntaje" class="vf-result-value" style="color:#16a34a;"></span>
+        </div>
+        <div class="vf-result-row">
+          <span class="vf-result-label">Fecha de emisión</span>
+          <span id="vf-r-fecha" class="vf-result-value"></span>
+        </div>
+        <div class="vf-result-row">
+          <span class="vf-result-label">Folio</span>
+          <span id="vf-r-folio" class="vf-folio-badge"></span>
+        </div>
+      </div>
+      <div class="vf-actions">
+        <a id="vf-link-cert" href="#" target="_blank" class="vf-btn is-primary">Ver certificado completo</a>
+        <a href="/capacitacion" class="vf-btn is-outline">Ir al catálogo</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- No encontrado -->
+  <div id="vf-not-found" style="display:none;">
+    <div class="vf-not-found">
+      <strong>❌ Certificado no encontrado.</strong><br>
+      El folio ingresado no corresponde a ningún certificado emitido.
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var root  = document.getElementById('vf-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  // Extraer folio de la URL si viene precargado: /capacitacion/verificar/FOLIO
+  var pathMatch = window.location.pathname.match(/\/capacitacion\/verificar\/([A-Za-z0-9]+)$/);
+  var folioFromUrl = pathMatch ? pathMatch[1].toUpperCase() : '';
+  if (root) root.setAttribute('data-folio', folioFromUrl);
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

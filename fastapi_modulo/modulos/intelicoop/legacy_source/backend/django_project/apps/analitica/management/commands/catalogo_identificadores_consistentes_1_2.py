@@ -2,20 +2,20 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.ahorros.models import Cuenta
 from apps.creditos.models import Credito
 from apps.socios.models import Socio
 
 
-SUCURSALES_BASE = [
+SUCURSALES_MAIN = [
     {"sucursal_id": "SUC-YUR", "nombre_sucursal": "Yuriria"},
     {"sucursal_id": "SUC-CUI", "nombre_sucursal": "Cuitzeo"},
     {"sucursal_id": "SUC-SAM", "nombre_sucursal": "Santa Ana Maya"},
 ]
 
-PRODUCTOS_BASE = [
+PRODUCTOS_MAIN = [
     {"producto_id": "PRD-CREDITO", "descripcion": "Credito cooperativo"},
     {"producto_id": "PRD-AHORRO", "descripcion": "Cuenta de ahorro"},
     {"producto_id": "PRD-APORTACION", "descripcion": "Cuenta de aportacion"},
@@ -41,7 +41,7 @@ def _producto_id_cuenta(tipo: str) -> str:
     return "PRD-APORTACION" if (tipo or "").lower() == "aportacion" else "PRD-AHORRO"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 4/4 de 1.2: valida consistencia de IDs maestros (socio/credito/sucursal/producto)."
 
     def add_arguments(self, parser):
@@ -132,7 +132,7 @@ class Command(BaseCommand):
                 "estado": "Cumple" if sucursal_cobertura == 100.0 else "En revision",
             },
             {
-                "control": "producto_id_cobertura_base",
+                "control": "producto_id_cobertura_MAIN",
                 "valor": f"{len(producto_ids_presentes)}/3",
                 "criterio": "3/3",
                 "estado": "Cumple" if producto_cobertura_ok else "En revision",
@@ -154,17 +154,17 @@ class Command(BaseCommand):
             writer.writeheader()
             writer.writerows(controles)
 
-        sucursales_csv = report_csv.with_name("04_catalogo_sucursales_base.csv")
+        sucursales_csv = report_csv.with_name("04_catalogo_sucursales_MAIN.csv")
         with sucursales_csv.open("w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=["sucursal_id", "nombre_sucursal"])
             writer.writeheader()
-            writer.writerows(SUCURSALES_BASE)
+            writer.writerows(SUCURSALES_MAIN)
 
-        productos_csv = report_csv.with_name("04_catalogo_productos_base.csv")
+        productos_csv = report_csv.with_name("04_catalogo_productos_MAIN.csv")
         with productos_csv.open("w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=["producto_id", "descripcion"])
             writer.writeheader()
-            writer.writerows(PRODUCTOS_BASE)
+            writer.writerows(PRODUCTOS_MAIN)
 
         cumple = sum(1 for c in controles if c["estado"] == "Cumple")
         total_controles = len(controles)

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from statistics import pstdev
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count, Sum
 from django.utils import timezone as dj_timezone
 
@@ -155,7 +155,7 @@ def _segmento_reglas(row, thresholds):
         and row["total_creditos"] <= int(t_jovenes["max_total_creditos"])
     ):
         return "Jovenes digitales"
-    return "Base general"
+    return "MAIN general"
 
 
 def _label_cluster(centroid):
@@ -176,7 +176,7 @@ def _label_cluster(centroid):
     return max(scores.items(), key=lambda x: x[1])[0]
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.4 Segmentacion inteligente de socios: reglas por umbrales y segmentacion estadistica (clustering)."
 
     def add_arguments(self, parser):
@@ -296,7 +296,7 @@ class Command(BaseCommand):
             label_map = {idx: _label_cluster(center) for idx, center in centroid_map.items()}
             for row, label in zip(rows, labels):
                 row["cluster_id"] = int(label)
-                row["segmento"] = label_map.get(label, "Base general")
+                row["segmento"] = label_map.get(label, "MAIN general")
         else:
             for row in rows:
                 row["cluster_id"] = -1

@@ -1,0 +1,43 @@
+  <article class="card ci-section-card ci-panel bg-MAIN-100 border border-MAIN-300 shadow-sm">
+    <div class="card-body p-4">
+      <div class="ci-toolbar flex flex-wrap gap-3 items-end">
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Nivel de riesgo</span></div>
+          <select id="hz-filtro-riesgo" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Bajo</option>
+            <option>Medio</option>
+            <option>Alto</option>
+            <option>Crítico</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Estado</span></div>
+          <select id="hz-filtro-estado" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Abierto</option>
+            <option>En atención</option>
+            <option>Subsanado</option>
+            <option>Cerrado</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Componente COSO</span></div>
+          <select id="hz-filtro-coso" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Entorno de control</option>
+            <option>Evaluación de riesgos</option>
+            <option>Actividades de control</option>
+            <option>Información y comunicación</option>
+            <option>Monitoreo</option>
+          </select>
+        </label>
+        <label class="form-control flex-1 min-w-[180px]">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Buscar</span></div>
+          <input type="text" id="hz-filtro-q" placeholder="Código, título, responsable…" class="input input-bordered input-sm w-full">
+        </label>
+        <button type="button" id="hz-btn-filtrar" class="btn btn-sm btn-neutral self-end">Filtrar</button>
+        <button type="button" id="hz-btn-limpiar" class="btn btn-sm btn-ghost self-end">Limpiar</button>
+      </div>
+    </div>
+  </article>

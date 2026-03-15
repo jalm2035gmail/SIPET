@@ -4,11 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.initial_data import seed_superadmin_role_and_user
-from app.database import engine, Base
+from app.dataMAIN import engine, MAIN
 from app.security.auth import security_middleware
 
 # Crear tablas
-Base.metadata.create_all(bind=engine)
+MAIN.metadata.create_all(bind=engine)
 seed_superadmin_role_and_user()
 
 app = FastAPI(

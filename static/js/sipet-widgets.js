@@ -20,7 +20,7 @@ window.sipetWidgets = function sipetWidgets(editor, opts) {
     }
   }
 
-  // ============ Base CSS (premium SaaS) ============
+  // ============ MAIN CSS (premium SaaS) ============
   addStyle([
     ':root{',
     '  --sipet-bg:#0b1220;',
@@ -209,7 +209,7 @@ window.sipetWidgets = function sipetWidgets(editor, opts) {
   // ============ 4) PROGRESS BARS ============
   addStyle([
     '.sipet-progress{margin-top:12px;}',
-    '.sipet-progress__row{display:flex; justify-content:space-between; gap:12px; align-items:baseline;}',
+    '.sipet-progress__row{display:flex; justify-content:space-between; gap:12px; align-items:MAINline;}',
     '.sipet-progress__bar{height:10px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; border:1px solid var(--sipet-border);}',
     '.sipet-progress__fill{height:100%; width:0%; background:rgba(79,142,247,.55); transition:width 900ms ease;}',
   ].join('\n'));

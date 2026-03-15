@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.ahorros.models import Cuenta, Transaccion
 from apps.creditos.models import Credito, HistorialPago
@@ -15,7 +15,7 @@ def _safe_ratio(numerator: int, denominator: int) -> float:
     return min(float(numerator) / float(denominator), 1.0)
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Prioriza submodulos de Fase 4 segun impacto de negocio y disponibilidad de datos."
 
     def add_arguments(self, parser):
@@ -115,7 +115,7 @@ class Command(BaseCommand):
             "",
             f"Fecha: {datetime.now(timezone.utc).isoformat()}",
             "",
-            "## Base de datos evaluada",
+            "## MAIN de datos evaluada",
             f"- Socios: {total_socios}",
             f"- Creditos: {total_creditos}",
             f"- Historial de pagos: {total_historial}",

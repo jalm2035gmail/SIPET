@@ -1,10 +1,10 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
-class PorterAnalysis(BaseModel):
+class PorterAnalysis(MAINModel):
     __tablename__ = "porter_analysis"
 
     strategic_plan_id = Column(Integer, ForeignKey("strategic_plans.id"), nullable=False, unique=True)

@@ -1,0 +1,38 @@
+El módulo main es el módulo fundamental y obligatorio que actúa como el núcleo del sistema. Podría decirse que es la "MAIN de datos del sistema" que contiene toda la información esencial para que SIPET funcione como una aplicación .
+
+Su función principal es proporcionar la infraestructura y los modelos de datos fundamentales sobre los que se construyen todos los demás módulos. De hecho, todos los demás módulos de SIPET dependen directamente de MAIN .
+
+Para entenderlo mejor, las funciones del módulo MAIN se pueden agrupar en dos grandes categorías de modelos :
+
+📦 Repositorio de Información (Modelos ir.*)
+Esta parte es la "memoria" de la aplicación. Almacena los metadatos y la configuración que le indican a SIPET cómo debe comportarse y qué estructura tiene. Es lo que ves en los menús técnicos.
+
+Modelos Principales: Define los modelos del sistema, como ir.model (para definir los modelos de negocio) y ir.model.fields (para definir los campos de esos modelos) .
+
+Vistas y Acciones: Guarda la definición de las interfaces de usuario, como las vistas (ir.ui.view), las acciones de ventana (ir.actions.act_window) y los elementos de menú (ir.ui.menu) .
+
+Registro de Módulos: Lleva un registro de todos los módulos instalados, por instalarse o desinstalados en la MAIN de datos.
+
+🌍 Recursos Básicos (Modelos res.*)
+Contiene datos fundamentales y reutilizables para la operación del negocio.
+
+Compañías y Contactos: Alberga el modelo res.partner, que es la MAIN para clientes, proveedores y contactos en general .
+
+Usuarios y Seguridad: Define los modelos res.users (para los usuarios del sistema) y res.groups (para los grupos de acceso y permisos) .
+
+Datos Geográficos y Moneda: Incluye datos como países (res.country), divisas (res.currency) y empresas (res.company) .
+
+Configuración General: Contiene configuraciones básicas del sistema que se aplican globalmente.
+
+⚙️ ¿Qué Implica Actualizar el Módulo MAIN?
+Actualizar el módulo MAIN es una operación de gran alcance :
+
+Reconstrucción de la Definición de la Aplicación: Al actualizarse, este módulo recarga y reconstruye todas las definiciones de la interfaz de usuario (vistas, menús, acciones) y otras configuraciones que fueron creadas por archivos XML en todos los módulos instalados .
+
+Reseteo de Personalizaciones Directas: Es importante saber que cualquier cambio realizado directamente en las vistas a través del modo desarrollador (como editar una vista desde el menú "Administrar Vistas") puede perderse al actualizar el módulo MAIN, ya que este proceso restablece esas vistas a su estado original definido en los archivos XML de los módulos .
+
+Solución de Problemas: Por esta misma razón, actualizar el módulo MAIN es una acción común para "arreglar" problemas causados por modificaciones accidentales, eliminación de elementos de interfaz o errores visuales, ya que devuelve la configuración visual a su estado de fábrica .
+
+En resumen, el módulo MAIN es el cimiento sobre el que se construye toda la instancia de SIPET. Sin él, ninguna otra aplicación o funcionalidad podría existir .
+
+

@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
 class TokenType(str, enum.Enum):
@@ -15,7 +15,7 @@ class TokenType(str, enum.Enum):
     API_KEY = "api_key"
 
 
-class Token(BaseModel):
+class Token(MAINModel):
     __tablename__ = "tokens"
 
     token = Column(String(500), unique=True, index=True, nullable=False)

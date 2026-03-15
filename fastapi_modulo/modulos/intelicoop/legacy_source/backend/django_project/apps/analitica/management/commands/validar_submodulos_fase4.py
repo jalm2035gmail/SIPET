@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count
 
 from apps.analitica.models import ReglaAsociacionProducto, ResultadoMoraTemprana, ResultadoSegmentacionSocio
@@ -13,7 +13,7 @@ def _estado(valor: float, umbral: float) -> str:
     return "Cumple" if valor >= umbral else "En revision"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Ejecuta validacion funcional y tecnica de submodulos de Fase 4 y genera acta de evidencia."
 
     def add_arguments(self, parser):

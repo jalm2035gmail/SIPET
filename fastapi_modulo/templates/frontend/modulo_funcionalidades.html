@@ -52,7 +52,7 @@
   <!-- Topbar -->
   <header class="topbar" role="banner">
     <div class="wrap topbar__inner">
-      <a class="brand" href="/web" aria-label="SIPET - Inicio">
+      <a class="brand" href="/backend" aria-label="SIPET - Inicio">
         <span class="brand__mark" aria-hidden="true">
           <img
             class="brand__logo"
@@ -67,8 +67,8 @@
       </a>
 
       <nav class="topbar__actions" aria-label="Acciones">
-        <a class="btn btn--ghost" href="/web/login">Ingresar</a>
-        <a class="btn btn--ghost" href="/web/login?usuario=demo&contrasena=demodemo">Ingresar como demo</a>
+        <a class="btn btn--ghost" href="/backend/login">Ingresar</a>
+        <a class="btn btn--ghost" href="/backend/login?usuario=demo&contrasena=demodemo">Ingresar como demo</a>
         <a class="btn btn--wa" href="https://wa.me/523327633869?text=Necesito%20m%C3%A1s%20informaci%C3%B3n%20de%20SIPET%20y%20como%20mi%20cooperativs%20se%20beneficia%2C%20por%20favor%20ponerse%20en%20contacto" target="_blank" rel="noopener">WhatsApp</a>
         <a class="btn btn--primary" href="#solicitar-info">Solicitar información</a>
       </nav>
@@ -257,8 +257,8 @@
               <p>Entrada segura, experiencia moderna y segmentación fina para cooperativas multiárea y multiregión.</p>
             </div>
             <ul class="bullets" role="list">
-              <li>Autenticación web con usuario/contraseña.</li>
-              <li>Inicio de sesión biométrico (WebAuthn), con restricciones para usuario demo.</li>
+              <li>Autenticación backend con usuario/contraseña.</li>
+              <li>Inicio de sesión biométrico (backendAuthn), con restricciones para usuario demo.</li>
               <li>Soporte móvil en login: flujo vertical, Enter/Ir y formulario adaptado.</li>
               <li>Gestión de usuarios: alta/edición y control por rol.</li>
               <li>Roles y permisos: superadministrador, administrador, departamento y usuario.</li>
@@ -455,7 +455,7 @@
           </div>
         </div>
 
-        <form class="form card" id="lead-form" method="post" action="/web/lead" autocomplete="on">
+        <form class="form card" id="lead-form" method="post" action="/backend/lead" autocomplete="on">
           <div class="form__row">
             <label class="field">
               <span>Nombre</span>
@@ -659,9 +659,9 @@
         </div>
 
         <div class="footer__right">
-          <a href="/web/funcionalidades" class="footer__link">Funcionalidades</a>
-          <a href="/web/login" class="footer__link">Ingresar</a>
-          <a href="/web/login?usuario=demo&contrasena=demodemo" class="footer__link">Demo</a>
+          <a href="/backend/funcionalidades" class="footer__link">Funcionalidades</a>
+          <a href="/backend/login" class="footer__link">Ingresar</a>
+          <a href="/backend/login?usuario=demo&contrasena=demodemo" class="footer__link">Demo</a>
           <a href="https://wa.me/523327633869?text=Necesito%20m%C3%A1s%20informaci%C3%B3n%20de%20SIPET%20y%20como%20mi%20cooperativs%20se%20beneficia%2C%20por%20favor%20ponerse%20en%20contacto" target="_blank" rel="noopener" class="footer__link">WhatsApp</a>
           <a href="mailto:contacto@avancoop.org" class="footer__link">Correo</a>
         </div>
@@ -856,7 +856,7 @@
     </div>
     <script>
     (function(){
-      fetch('/api/web/me',{credentials:'include'})
+      fetch('/api/backend/me',{credentials:'include'})
         .then(function(r){return r.ok?r.json():null;})
         .then(function(d){
           if(!d||!d.authenticated) return;
@@ -865,7 +865,7 @@
           bar.style.background=d.bar_color||'#0f172a';
           bar.style.display='flex';
           var rl=document.getElementById('sab-role');
-          if(rl) rl.textContent=d.is_superadmin?'Superadministrador':(d.web_roles||[]).join(' · ');
+          if(rl) rl.textContent=d.is_superadmin?'Superadministrador':(d.backend_roles||[]).join(' · ');
           document.body.style.paddingTop='44px';
         })
         .catch(function(){});
@@ -873,10 +873,10 @@
   </script>
   {% if menu_position == 'abajo' %}
   <nav class="sipet-mobile-bottom-nav" aria-label="Menú móvil inferior">
-    <a href="/web/inicio"><span class="sipet-mobile-bottom-nav__icon">🏠</span><span class="sipet-mobile-bottom-nav__label">Inicio</span></a>
-    <a href="/web/funcionalidades" class="is-active"><span class="sipet-mobile-bottom-nav__icon">💳</span><span class="sipet-mobile-bottom-nav__label">Servicios</span></a>
-    <a href="/web/descripcion"><span class="sipet-mobile-bottom-nav__icon">🔍</span><span class="sipet-mobile-bottom-nav__label">Buscar</span></a>
-    <a href="/web/login"><span class="sipet-mobile-bottom-nav__icon">👤</span><span class="sipet-mobile-bottom-nav__label">Perfil</span></a>
+    <a href="/backend/inicio"><span class="sipet-mobile-bottom-nav__icon">🏠</span><span class="sipet-mobile-bottom-nav__label">Inicio</span></a>
+    <a href="/backend/funcionalidades" class="is-active"><span class="sipet-mobile-bottom-nav__icon">💳</span><span class="sipet-mobile-bottom-nav__label">Servicios</span></a>
+    <a href="/backend/descripcion"><span class="sipet-mobile-bottom-nav__icon">🔍</span><span class="sipet-mobile-bottom-nav__label">Buscar</span></a>
+    <a href="/backend/login"><span class="sipet-mobile-bottom-nav__icon">👤</span><span class="sipet-mobile-bottom-nav__label">Perfil</span></a>
   </nav>
   {% endif %}
 </body>

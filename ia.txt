@@ -20,7 +20,7 @@ Qué hace: Subes un PDF con el acta de la asamblea o un informe largo, y la IA g
 Valor: Ahorra horas de lectura a directivos y consejos.
 
 📈 Nivel 2: Análisis Predictivo y Prescriptivo
-Estas funcionalidades aprovechan los datos históricos que ya tienes en tu base de datos SQLite para hacer proyecciones.
+Estas funcionalidades aprovechan los datos históricos que ya tienes en tu MAIN de datos SQLite para hacer proyecciones.
 
 Predicción de Morosidad (Riesgo Crediticio)
 
@@ -38,7 +38,7 @@ Detección de Patrones de Fuga de Socios (Churn Prediction)
 
 Qué hace: Identifica qué socios tienen alta probabilidad de dejar de operar con la cooperativa o de no renovar su membresía. Permite activar campañas de retención preventivas.
 
-Valor: Fortalece la base social (Eje 1).
+Valor: Fortalece la MAIN social (Eje 1).
 
 🗣️ Nivel 3: Interacción y Experiencia del Usuario
 Para mejorar el frontend y la interacción con los usuarios (socios y empleados).

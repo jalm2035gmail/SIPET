@@ -5,7 +5,7 @@
 - Creditos vigentes.
 - Historial de creditos cerrados (pagados/rechazados/incumplidos).
 
-## Entidades base
+## Entidades MAIN
 - Socio
 - Credito
 - HistorialPago

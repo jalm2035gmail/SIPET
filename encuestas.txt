@@ -1,0 +1,7653 @@
+encuestas.txt
+
+Avance desarrollo: 100%
+
+
+
+BACKLOG TÉCNICO INICIAL
+
+Objetivo
+
+Convertir el roadmap funcional del módulo de encuestas en trabajo implementable, priorizado y ejecutable dentro de `fastapi_modulo/modulos/encuestas`, dejando `main.py` y `MAIN.html` solo como lanzadores.
+
+
+EPIC 1. Estructura MAIN del módulo
+
+Prioridad: Alta
+
+- [x] Registrar router del módulo desde `encuesta.py` para futura integración en `main.py`
+- [x] Crear layout MAIN del módulo en `encuesta.html`
+- [x] Crear stylesheet MAIN del módulo en `encuesta.css`
+- [x] Crear bootstrap JS del módulo en `encuesta.js`
+- [x] Definir navegación interna mínima: `Dashboard`, `Encuestas`, `Constructor`, `Resultados`
+- [x] Definir convención de ids, clases y hooks JS propios del módulo
+
+
+EPIC 2. Modelo de datos
+
+Prioridad: Alta
+
+- [x] Crear modelos o tablas para `survey_templates`
+- [x] Crear modelos o tablas para `survey_instances`
+- [x] Crear modelos o tablas para `survey_sections`
+- [x] Crear modelos o tablas para `survey_questions`
+- [x] Crear modelos o tablas para `survey_options`
+- [x] Crear modelos o tablas para `survey_assignments`
+- [x] Crear modelos o tablas para `survey_responses`
+- [x] Crear modelos o tablas para `survey_response_items`
+- [x] Crear modelos o tablas para `survey_results`
+- [x] Crear modelos o tablas para `survey_attempts`
+- [x] Crear modelos o tablas para `survey_audience_groups`
+- [x] Crear modelos o tablas para `survey_audience_group_members`
+- [x] Crear estructura para `survey_evaluations_360`
+- [x] Agregar campos `source_app`, `external_entity_type`, `external_entity_id`
+- [x] Agregar campos snapshot para nombre, rol, área, puesto y empresa
+- [x] Definir índices mínimos para consultas por encuesta, asignación y respuesta
+
+
+EPIC 3. API MAIN del módulo
+
+Prioridad: Alta
+
+- [x] Crear endpoint HTML principal `/encuestas`
+- [x] Crear endpoint para listar plantillas
+- [x] Crear endpoint para crear encuesta
+- [x] Crear endpoint para editar borrador
+- [x] Crear endpoint para obtener detalle de encuesta
+- [x] Crear endpoint para publicar encuesta
+- [x] Crear endpoint para cerrar encuesta
+- [x] Crear endpoint para listar campañas
+- [x] Crear endpoint para eliminar o archivar encuesta
+
+
+EPIC 4. Constructor de encuestas
+
+Prioridad: Alta
+
+- [x] Construir vista `Datos generales`
+- [x] Construir vista `Estructura`
+- [x] Construir vista `Audiencia`
+- [x] Construir vista `Reglas`
+- [x] Construir vista `Publicación`
+- [x] Implementar alta de secciones
+- [x] Implementar alta de preguntas
+- [x] Implementar edición de preguntas
+- [x] Implementar reordenamiento de preguntas y secciones
+- [x] Implementar duplicado de preguntas
+- [x] Implementar validaciones previas a publicación
+- [x] Implementar vista previa reutilizando el render del módulo de respuesta
+
+
+EPIC 5. Catálogo MVP de preguntas
+
+Prioridad: Alta
+
+- [x] Implementar `short_text`
+- [x] Implementar `long_text`
+- [x] Implementar `single_choice`
+- [x] Implementar `multiple_choice`
+- [x] Implementar `yes_no`
+- [x] Implementar `scale_1_5`
+- [x] Implementar `nps_0_10`
+- [x] Implementar `quiz_single_choice`
+- [x] Definir configuración editable por tipo
+- [x] Definir serialización de respuesta por tipo
+- [x] Definir validación por tipo
+
+
+EPIC 6. Publicación y asignación
+
+Prioridad: Alta
+
+- [x] Implementar publicación inmediata
+- [x] Implementar publicación programada
+- [x] Implementar cierre manual
+- [x] Implementar cierre automático por fecha
+- [x] Implementar asignación por usuario
+- [x] Implementar asignación por rol
+- [x] Implementar asignación por departamento
+- [x] Implementar asignación por puesto
+- [x] Implementar grupos manuales
+- [x] Implementar enlace público básico
+- [x] Materializar asignaciones en MAIN local del módulo
+- [x] Guardar snapshots de destinatarios al asignar
+
+EPIC 7. Módulo de respuesta
+
+Prioridad: Alta
+
+- [x] Crear pantalla de inicio de encuesta
+- [x] Crear render por secciones o pasos
+- [x] Implementar navegación `anterior/siguiente`
+- [x] Implementar validaciones de captura
+- [x] Implementar guardado parcial
+- [x] Implementar envío final
+- [x] Implementar pantalla de cierre
+- [x] Soportar acceso autenticado interno
+- [x] Soportar acceso externo por enlace o token
+- [x] Soportar recuperación de borrador
+
+
+EPIC 8. Scoring y resultados básicos
+
+Prioridad: Alta
+
+- [x] Implementar score por opción
+- [x] Implementar score por pregunta
+- [x] Implementar score total por respuesta
+- [x] Implementar porcentaje de aprobación en quizzes
+- [x] Implementar cálculo MAIN de NPS
+- [x] Implementar cálculo MAIN de CSAT
+- [x] Implementar cálculo MAIN de CES
+- [x] Implementar consolidado mínimo por secciones
+- [x] Guardar score en respuestas y resultados
+
+
+EPIC 9. Analítica y reportes MVP
+
+Prioridad: Alta
+
+- [x] Crear dashboard básico del módulo
+- [x] Crear resumen por encuesta
+- [x] Crear reporte por pregunta
+- [x] Crear reporte por segmento
+- [x] Crear vista tabular de respuestas
+- [x] Implementar exportación CSV
+- [x] Implementar exportación Excel con `openpyxl`
+- [x] Implementar gráficas básicas con `Chart.js`
+
+
+EPIC 10. Seguridad, permisos y anonimato
+
+Prioridad: Alta
+
+- [x] Definir permisos granulares del módulo
+- [x] Implementar validación backend por acción
+- [x] Implementar modos `identificada`, `restringida`, `anónima`
+- [x] Bloquear detalle individual donde no corresponda
+- [x] Bloquear exportación sensible sin permiso
+- [x] Aplicar umbral mínimo para segmentos sensibles
+- [x] Asegurar 360 con anonimato restringido por defecto
+
+
+EPIC 11. Plantillas iniciales
+
+Prioridad: Media
+
+- [x] Crear plantilla `Encuesta general`
+- [x] Crear plantilla `Satisfacción del cliente`
+- [x] Crear plantilla `NPS`
+- [x] Crear plantilla `Clima laboral corto`
+- [x] Crear plantilla `Evaluación 360 básica`
+- [x] Crear plantilla `Quiz de capacitación`
+- [x] Crear plantilla `Encuesta post evento`
+- [x] Implementar flujo `usar plantilla`
+- [x] Implementar flujo `guardar como plantilla`
+
+
+EPIC 12. Integraciones prioritarias
+
+Prioridad: Media
+
+- [x] Integrar audiencias desde `empleados`
+- [x] Integrar jerarquía para `360` desde `empleados`
+- [x] Integrar quizzes con `capacitacion` cuando aplique
+- [x] Integrar notificaciones internas para invitaciones y recordatorios
+- [x] Integrar campañas externas o contexto desde `crm` si ya está disponible
+
+
+EPIC 13. Gamificación MVP
+
+Prioridad: Media
+
+- [x] Implementar ranking individual de quiz
+- [x] Implementar control de intentos
+- [x] Implementar temporizador básico
+- [x] Implementar criterio `mejor intento`
+- [x] Implementar estado `aprobado/reprobado`
+
+
+EPIC 14. Automatización MVP
+
+Prioridad: Media
+
+- [x] Implementar invitación inicial
+- [x] Implementar recordatorio simple
+- [x] Implementar aviso de cierre próximo
+- [x] Implementar cierre automático
+- [x] Registrar trazabilidad de envíos
+- [x] Preparar integración futura con `Celery` y `Redis`
+
+
+EPIC 15. Evaluación 360
+
+Prioridad: Media
+
+- [x] Implementar relación evaluado/evaluador
+- [x] Implementar asignación por relación
+- [x] Implementar captura 360
+- [x] Implementar consolidado por competencia
+- [x] Implementar reporte 360 básico
+- [x] Asegurar visibilidad restringida
+
+
+EPIC 16. Pruebas y hardening
+
+Prioridad: Alta
+
+- [ ] Crear matriz de pruebas funcionales
+- [ ] Crear pruebas de validación de builder
+- [ ] Crear pruebas de publicación y asignación
+- [ ] Crear pruebas de respuesta
+- [ ] Crear pruebas de scoring
+- [ ] Crear pruebas de anonimato y permisos
+- [ ] Crear pruebas de exportación
+- [ ] Crear pruebas de integración con módulos prioritarios
+
+
+ORDEN DE IMPLEMENTACIÓN RECOMENDADO
+
+Sprint 1
+
+- Estructura MAIN del módulo
+- Modelo de datos
+- API MAIN
+
+Sprint 2
+
+- Constructor de encuestas
+- Catálogo MVP de preguntas
+
+Sprint 3
+
+- Publicación y asignación
+- Módulo de respuesta
+
+Sprint 4
+
+- Scoring
+- Reportes básicos
+- Seguridad y anonimato
+
+Sprint 5
+
+- Plantillas iniciales
+- Integraciones prioritarias
+- Automatización MVP
+
+Sprint 6
+
+- Quizzes y gamificación
+- Evaluación 360
+- Hardening y pruebas
+
+
+MVP REAL DE IMPLEMENTACIÓN
+
+Primera entrega recomendada
+
+- creación de encuesta
+- catálogo MVP de preguntas
+- publicación básica
+- asignación interna simple
+- respuesta
+- scoring básico
+- resultados básicos
+- exportación CSV/Excel
+- plantilla de satisfacción
+- plantilla de quiz
+
+
+1. Problema que resuelve el módulo
+
+El módulo de encuestas permitirá crear, publicar, responder y analizar instrumentos de levantamiento de información para distintos contextos de SIPET.
+
+El problema que resuelve es la dispersión de formularios, evaluaciones y mediciones en procesos separados.
+
+Debe unificar en un solo módulo:
+
+- encuestas internas
+- encuestas externas
+- evaluación de personas
+- quizzes
+- dinámicas de capacitación
+- mediciones de satisfacción
+- votaciones o sondeos rápidos
+
+
+2. Objetivos funcionales del módulo
+
+Objetivos principales
+
+- crear encuestas reutilizables por plantilla o desde cero
+- asignarlas a personas, grupos o audiencias
+- recolectar respuestas de forma controlada
+- permitir instrumentos anónimos o identificados
+- calificar automáticamente cuando aplique
+- mostrar reportes y resultados
+- soportar distintos formatos: encuesta, evaluación, quiz y dinámica
+
+Objetivos secundarios
+
+- reutilizar bancos de preguntas
+- automatizar recordatorios
+- permitir campañas recurrentes
+- servir como MAIN para capacitación y clima laboral
+- integrarse con empleados, clientes, capacitaciones y reportes
+
+
+3. Tipos de instrumentos que manejará el módulo
+
+Tipos incluidos en la primera versión
+
+1. Encuestas generales
+- formularios internos
+- opinión de colaboradores
+- sondeos de clima rápidos
+- encuestas de eventos
+- diagnósticos simples
+
+2. Satisfacción del cliente
+- NPS
+- CSAT
+- CES
+- encuestas post servicio
+- encuestas post compra
+- retroalimentación de atención
+
+3. Evaluación 360 para empleados
+- autoevaluación
+- evaluación por jefe
+- evaluación por pares
+- evaluación por subordinados
+- evaluación por competencias
+
+4. Quizzes
+- preguntas con respuesta correcta
+- puntaje por acierto
+- tiempo límite opcional
+- intentos configurables
+
+5. Juegos en capacitaciones
+- trivia individual
+- reto por equipos
+- ranking
+- insignias o puntos
+
+Tipos opcionales para fase posterior
+
+- votaciones
+- pulse surveys
+- entrevistas de salida
+- onboarding
+- auditorías checklist
+- assessment psicométrico
+
+
+4. Casos de uso prioritarios
+
+Caso de uso 1. Recursos Humanos
+- crear evaluación 360
+- asignar evaluadores
+- recibir respuestas
+- ver resultados agregados por competencia
+
+Caso de uso 2. Servicio al cliente
+- enviar encuesta de satisfacción después de atención
+- medir NPS o CSAT
+- ver resultados por canal, agencia o ejecutivo
+
+Caso de uso 3. Capacitación
+- crear quiz posterior a curso
+- calcular nota
+- mostrar ranking
+- registrar aprobados y reprobados
+
+Caso de uso 4. Administración general
+- crear sondeos internos
+- encuestas de clima
+- encuestas por área o empresa
+
+
+5. Actores del módulo
+
+Actor 1. Administrador del módulo
+- crea plantillas
+- configura tipos de encuesta
+- publica
+- reasigna
+- cierra campañas
+- ve todos los resultados según permisos
+
+Actor 2. Creador o analista
+- diseña encuestas
+- arma preguntas
+- define audiencia
+- revisa respuestas y reportes de sus campañas
+
+Actor 3. Evaluador / respondente interno
+- responde encuestas asignadas
+- puede ser empleado, jefe, par, subordinado o equipo
+
+Actor 4. Respondente externo
+- responde por enlace o campaña
+- puede ser cliente, proveedor, invitado o asistente a evento
+
+Actor 5. Revisor de resultados
+- consulta reportes
+- exporta datos
+- no necesariamente crea encuestas
+
+
+6. Segmentación de audiencias
+
+La primera versión debe contemplar estas formas de asignación:
+
+- por usuario
+- por empresa
+- por departamento
+- por puesto
+- por rol
+- por grupo definido manualmente
+- por relación organizacional en 360
+
+Para encuestas externas:
+
+- por enlace público
+- por token único
+- por campaña
+
+
+7. Reglas de identificación y anonimato
+
+El módulo debe soportar tres modos:
+
+1. Identificada
+- el sistema guarda quién respondió
+- se puede ver respuesta por persona si el permiso lo permite
+
+2. Seudónima o restringida
+- el sistema conoce al respondente
+- el reporte no muestra identidad al analista común
+- solo administradores o perfiles especiales podrían auditar
+
+3. Anónima
+- no se muestra identidad del respondente en resultados
+- ideal para clima laboral, ética, cultura y denuncias
+
+Reglas de negocio iniciales
+
+- satisfacción del cliente puede ser identificada o anónima según campaña
+- evaluación 360 no debe mostrar identidad individual de evaluadores en reportes normales
+- quizzes normalmente serán identificados
+- juegos de capacitación serán identificados
+- clima laboral debe soportar anonimato real
+
+
+8. Reglas de respuesta
+
+El sistema debe permitir configurar:
+
+- una sola respuesta por persona
+- múltiples intentos
+- borrador parcial
+- fecha de inicio
+- fecha de cierre
+- límite de tiempo para quizzes
+- respuesta obligatoria o voluntaria
+- acceso por enlace
+- acceso autenticado
+
+Decisiones iniciales para MVP
+
+- soportar una respuesta por usuario por instancia
+- permitir borrador para encuestas largas
+- permitir múltiples intentos solo en quizzes
+- soportar fechas de apertura y cierre
+- soportar estado borrador, publicada, cerrada y archivada
+
+
+9. Reglas de scoring
+
+No todos los instrumentos tendrán puntaje.
+
+Primera decisión funcional:
+
+- encuestas generales: sin scoring por defecto
+- satisfacción del cliente: métricas NPS, CSAT o CES
+- evaluación 360: promedio ponderado por competencia
+- quizzes: scoring obligatorio
+- juegos de capacitación: scoring, ranking y puntos
+
+El motor debe permitir:
+
+- respuestas correctas
+- pesos por pregunta
+- pesos por sección
+- ponderación por tipo de evaluador en 360
+
+
+10. Resultados y reportes esperados
+
+El módulo debe entregar al menos:
+
+- porcentaje de respuesta
+- cantidad de asignados
+- cantidad de completados
+- resultados por pregunta
+- resultados por segmento
+- exportación de respuestas
+- resultado agregado por encuesta
+
+Reportes mínimos por tipo
+
+Encuestas generales
+- resumen de respuestas
+- respuestas abiertas
+- distribución por opción
+
+Satisfacción del cliente
+- NPS
+- CSAT
+- CES
+- resultados por canal o área
+
+Evaluación 360
+- promedio por competencia
+- comparativo autoevaluación vs evaluadores
+- consolidado por persona evaluada
+
+Quizzes
+- nota
+- aciertos y errores
+- ranking
+
+Juegos
+- puntos
+- tabla de posiciones
+- insignias o niveles en fase posterior
+
+
+11. Catálogo inicial de preguntas para la primera versión
+
+Tipos mínimos aprobados para MVP
+
+- texto corto
+- texto largo
+- opción única
+- opción múltiple
+- sí/no
+- escala 1 a 5
+- NPS 0 a 10
+- respuesta correcta/incorrecta para quizzes
+
+Tipos para segunda fase
+
+- ranking
+- matriz
+- fecha
+- archivo
+- porcentaje
+- condicional avanzada
+
+
+12. Alcance del MVP inicial
+
+Incluido en MVP
+
+- crear encuestas desde cero
+- crear por plantilla simple
+- secciones y preguntas
+- asignación a usuarios internos
+- enlace para externos en modo simple
+- encuestas identificadas y anónimas
+- quiz básico con puntaje
+- satisfacción del cliente tipo NPS/CSAT
+- evaluación 360 básica
+- panel de respuestas
+- reportes básicos
+- exportación CSV
+
+No incluido en MVP
+
+- gamificación avanzada
+- badges e insignias
+- banco avanzado de preguntas
+- lógica condicional compleja
+- auditoría detallada por versión
+- dashboards ejecutivos avanzados
+- análisis IA de respuestas abiertas
+- marketplace de plantillas
+
+
+13. Plantillas iniciales recomendadas para arrancar
+
+Plantillas que deben existir desde la primera versión
+
+- encuesta general
+- satisfacción del cliente
+- NPS
+- clima laboral corto
+- evaluación 360 básica
+- quiz de capacitación
+- encuesta post evento
+
+
+14. Reglas clave de seguridad y permisos
+
+Se deben definir desde esta fase:
+
+- quién puede crear encuestas
+- quién puede publicar
+- quién puede cerrar
+- quién puede ver respuestas individuales
+- quién puede ver solo resultados agregados
+- quién puede exportar
+
+Primera regla recomendada
+
+- administrador: control total
+- analista: crea y administra sus encuestas
+- supervisor: ve resultados de sus campañas o área
+- respondente: solo responde
+
+
+15. Decisiones funcionales cerradas para pasar a Fase 2
+
+Decisión 1
+- el módulo será multipropósito: encuestas, satisfacción, 360, quizzes y juegos
+
+Decisión 2
+- el MVP incluirá encuestas generales, satisfacción, 360 y quizzes
+
+Decisión 3
+- juegos de capacitación entran en modo básico dentro del mismo motor de quizzes
+
+Decisión 4
+- se soportará anonimato, identificación y modo restringido
+
+Decisión 5
+- se soportará asignación por usuario, rol, puesto, área y relación 360
+
+Decisión 6
+- reportes avanzados y gamificación completa se dejan para fases posteriores
+
+
+16. Entregables de la fase
+
+La Fase 1 queda completa cuando existan estos entregables:
+
+- ✅ lista final de tipos de instrumento
+- ✅ definición de actores
+- ✅ definición del MVP
+- ✅ reglas de anonimato
+- ✅ reglas de scoring
+- ✅ reglas de asignación
+- ✅ lista de plantillas iniciales
+- ✅ lista de permisos
+- ✅ backlog funcional inicial
+
+
+Pendiente al cerrar Fase 1
+
+⏳ Siguiente fase: Diseño del modelo de datos
+
+
+✅ FASE 2. DISEÑO DEL MODELO DE DATOS
+
+Objetivo de la fase
+
+Diseñar la estructura de datos del módulo de encuestas para soportar creación, publicación, asignación, respuestas, scoring y reportes, considerando que existen 3 apps en desarrollo y cada una tiene su propia MAIN de datos.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- modelo lógico del módulo
+- tablas principales
+- relaciones entre tablas
+- estrategia multi app / multi MAIN de datos
+- claves funcionales
+- campos mínimos por entidad
+- reglas de versionado
+- reglas de integridad
+
+
+1. Consideración principal de arquitectura de datos
+
+Restricción actual
+
+SIPET trabaja con 3 apps en desarrollo y cada una tiene su propia MAIN de datos.
+
+Implicación
+
+El módulo de encuestas no debe depender de joins físicos entre MAINs distintas para operar.
+
+Decisión de diseño
+
+El módulo de encuestas debe guardar su propia estructura de datos y solo referenciar entidades externas mediante identificadores.
+
+Eso implica usar:
+
+- `source_app`
+- `external_entity_type`
+- `external_entity_id`
+- snapshots de nombre, rol, área o puesto cuando sea necesario
+
+
+2. Estrategia multi MAIN de datos
+
+Regla general
+
+La MAIN de datos del módulo de encuestas será autónoma para:
+
+- plantillas
+- instancias publicadas
+- preguntas
+- opciones
+- asignaciones
+- respuestas
+- resultados
+
+Y se integrará con otras apps por referencia, no por llave foránea física.
+
+Ejemplos de referencia
+
+- empleado de app RH
+- cliente de app CRM
+- alumno o participante de app capacitación
+
+Campos de referencia sugeridos
+
+- `source_app`
+- `external_entity_type`
+- `external_entity_id`
+- `username`
+- `display_name_snapshot`
+- `role_snapshot`
+- `area_snapshot`
+- `position_snapshot`
+
+
+3. Regla de snapshot histórico
+
+Problema a evitar
+
+Si cambia el nombre, área o puesto en otra app, no deben alterarse reportes históricos ya respondidos.
+
+Decisión
+
+Al asignar y al responder se debe guardar snapshot de identidad y contexto organizacional.
+
+Snapshots mínimos sugeridos
+
+- nombre visible
+- username
+- rol
+- área
+- puesto
+- empresa
+
+
+4. Entidades principales del módulo
+
+Entidades núcleo
+
+1. `survey_templates`
+2. `survey_instances`
+3. `survey_sections`
+4. `survey_questions`
+5. `survey_options`
+6. `survey_assignments`
+7. `survey_responses`
+8. `survey_response_items`
+9. `survey_results`
+10. `survey_attempts`
+11. `survey_audience_groups`
+12. `survey_audience_group_members`
+13. `survey_evaluations_360`
+
+
+5. Definición funcional de cada entidad
+
+5.1 `survey_templates`
+
+Uso
+
+Plantillas reutilizables.
+
+Campos mínimos
+
+- `id`
+- `uuid`
+- `code`
+- `name`
+- `description`
+- `survey_type`
+- `category`
+- `is_active`
+- `is_system`
+- `created_by`
+- `created_at`
+- `updated_at`
+
+
+5.2 `survey_instances`
+
+Uso
+
+Encuesta concreta publicada o en borrador.
+
+Campos mínimos
+
+- `id`
+- `uuid`
+- `template_id`
+- `source_app`
+- `company_id`
+- `name`
+- `description`
+- `survey_type`
+- `status`
+- `audience_type`
+- `is_anonymous`
+- `is_restricted_identity`
+- `allow_draft`
+- `allow_multiple_attempts`
+- `max_attempts`
+- `scoring_enabled`
+- `time_limit_seconds`
+- `start_at`
+- `end_at`
+- `published_at`
+- `closed_at`
+- `created_by`
+- `created_at`
+- `updated_at`
+- `version`
+
+Estados sugeridos
+
+- `draft`
+- `published`
+- `in_progress`
+- `closed`
+- `archived`
+
+
+5.3 `survey_sections`
+
+Uso
+
+Agrupar preguntas por bloques.
+
+Campos mínimos
+
+- `id`
+- `survey_instance_id`
+- `section_key`
+- `title`
+- `description`
+- `position`
+- `weight`
+- `is_scored`
+
+
+5.4 `survey_questions`
+
+Uso
+
+Definir las preguntas.
+
+Campos mínimos
+
+- `id`
+- `survey_instance_id`
+- `section_id`
+- `question_key`
+- `question_type`
+- `title`
+- `help_text`
+- `placeholder`
+- `is_required`
+- `is_scored`
+- `weight`
+- `correct_answer_config`
+- `validation_config`
+- `visibility_rules`
+- `position`
+
+
+5.5 `survey_options`
+
+Uso
+
+Opciones para preguntas cerradas.
+
+Campos mínimos
+
+- `id`
+- `question_id`
+- `option_key`
+- `label`
+- `value`
+- `score_value`
+- `position`
+- `is_correct`
+
+
+5.6 `survey_assignments`
+
+Uso
+
+Registrar a quién se asignó una encuesta.
+
+Campos mínimos
+
+- `id`
+- `survey_instance_id`
+- `assignment_type`
+- `source_app`
+- `external_entity_type`
+- `external_entity_id`
+- `username`
+- `email`
+- `display_name_snapshot`
+- `role_snapshot`
+- `area_snapshot`
+- `position_snapshot`
+- `token`
+- `status`
+- `assigned_at`
+- `opened_at`
+- `completed_at`
+
+
+5.7 `survey_responses`
+
+Uso
+
+Cabecera de una respuesta.
+
+Campos mínimos
+
+- `id`
+- `survey_instance_id`
+- `assignment_id`
+- `attempt_number`
+- `respondent_source_app`
+- `respondent_external_id`
+- `respondent_username`
+- `respondent_name_snapshot`
+- `respondent_role_snapshot`
+- `respondent_area_snapshot`
+- `respondent_position_snapshot`
+- `is_anonymous_effective`
+- `status`
+- `started_at`
+- `submitted_at`
+- `duration_seconds`
+- `total_score`
+- `percentage_score`
+
+
+5.8 `survey_response_items`
+
+Uso
+
+Detalle de respuestas por pregunta.
+
+Campos mínimos
+
+- `id`
+- `response_id`
+- `question_id`
+- `question_key`
+- `answer_text`
+- `answer_json`
+- `selected_option_ids`
+- `score_obtained`
+- `is_correct`
+- `answered_at`
+
+
+5.9 `survey_results`
+
+Uso
+
+Resumen o métricas calculadas.
+
+Campos mínimos
+
+- `id`
+- `survey_instance_id`
+- `result_scope`
+- `scope_key`
+- `metric_key`
+- `metric_label`
+- `metric_value_number`
+- `metric_value_text`
+- `metric_json`
+- `calculated_at`
+
+
+5.10 `survey_attempts`
+
+Uso
+
+Control de intentos, principalmente para quizzes.
+
+Campos mínimos
+
+- `id`
+- `survey_instance_id`
+- `assignment_id`
+- `attempt_number`
+- `started_at`
+- `submitted_at`
+- `score`
+- `status`
+
+
+5.11 `survey_audience_groups`
+
+Uso
+
+Grupos reutilizables para asignación.
+
+Campos mínimos
+
+- `id`
+- `uuid`
+- `name`
+- `description`
+- `source_app`
+- `created_by`
+- `created_at`
+
+
+5.12 `survey_audience_group_members`
+
+Uso
+
+Miembros de grupos.
+
+Campos mínimos
+
+- `id`
+- `group_id`
+- `source_app`
+- `external_entity_type`
+- `external_entity_id`
+- `username`
+- `display_name_snapshot`
+- `email_snapshot`
+
+
+5.13 `survey_evaluations_360`
+
+Uso
+
+Resolver relaciones de evaluación 360.
+
+Campos mínimos
+
+- `id`
+- `survey_instance_id`
+- `evaluated_external_id`
+- `evaluated_username`
+- `evaluator_external_id`
+- `evaluator_username`
+- `relation_type`
+- `weight`
+- `is_anonymous_to_subject`
+
+
+6. Relaciones principales
+
+- una plantilla puede generar muchas instancias
+- una instancia tiene muchas secciones
+- una sección tiene muchas preguntas
+- una pregunta tiene muchas opciones
+- una instancia tiene muchas asignaciones
+- una asignación puede tener una o varias respuestas según configuración
+- una respuesta tiene muchos items
+- una instancia puede tener muchos resultados agregados
+
+
+7. Tipos iniciales de pregunta soportados por el modelo
+
+- `short_text`
+- `long_text`
+- `single_choice`
+- `multiple_choice`
+- `yes_no`
+- `scale_1_5`
+- `nps_0_10`
+- `quiz_single_choice`
+
+
+8. Reglas de anonimato en el modelo
+
+El modelo debe separar:
+
+- identidad técnica
+- identidad visible
+
+Por eso, aunque una encuesta sea anónima, puede existir identificación técnica controlada por permisos internos.
+
+Campos importantes
+
+- `is_anonymous`
+- `is_restricted_identity`
+- `is_anonymous_effective`
+
+
+9. Reglas de scoring en el modelo
+
+Debe soportar:
+
+- score por opción
+- score por pregunta
+- score total por respuesta
+- porcentaje final
+- ponderación por sección
+- ponderación por tipo de evaluador en 360
+
+
+10. Reglas de versionado
+
+Decisión
+
+Una encuesta en `draft` puede editarse libremente.
+
+Una encuesta publicada debe congelar estructura para no romper respuestas ni reportes.
+
+Recomendación
+
+- editar libremente en borrador
+- al publicar, fijar versión
+- si cambia estructura, crear nueva versión o nueva instancia
+
+
+11. Índices sugeridos
+
+- por `survey_instance_id`
+- por `assignment_id`
+- por `respondent_external_id`
+- por `status`
+- por `submitted_at`
+- por `source_app + external_entity_id`
+- por `question_id`
+
+
+12. Riesgos a evitar
+
+- acoplar el módulo a una sola app
+- depender de joins entre MAINs distintas
+- no guardar snapshots históricos
+- mezclar plantilla con encuesta publicada
+- no modelar anonimato desde el inicio
+- no contemplar scoring en la estructura MAIN
+
+
+13. Decisiones cerradas de fase 2
+
+- el módulo usará referencias externas en vez de foreign keys hacia otras apps
+- se guardarán snapshots históricos de identidad y contexto
+- plantillas e instancias serán entidades separadas
+- respuestas y detalle de respuestas serán entidades separadas
+- 360 tendrá estructura específica complementaria
+- quizzes y juegos compartirán el mismo motor MAIN de scoring
+
+
+14. Entregables de la fase
+
+La Fase 2 queda completa cuando existan:
+
+- ✅ modelo lógico de entidades
+- ✅ lista de tablas
+- ✅ lista de campos mínimos
+- ✅ relaciones entre tablas
+- ✅ estrategia multi MAIN de datos
+- ✅ estrategia de snapshots
+- ✅ reglas de anonimato en modelo
+- ✅ reglas de scoring en modelo
+- ✅ reglas de versionado
+
+
+Pendiente al cerrar Fase 2
+
+⏳ Siguiente fase: Arquitectura del módulo
+
+
+✅ FASE 3. ARQUITECTURA DEL MÓDULO
+
+Objetivo de la fase
+
+Definir cómo se organizará técnicamente el módulo de encuestas dentro de SIPET, separando responsabilidades entre backend, frontend, servicios, persistencia, integración con otras apps y reportes.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar claro:
+
+- qué archivos forman el módulo
+- qué responsabilidad tiene cada archivo
+- cómo se dividirá el backend
+- cómo se dividirá el frontend
+- qué endpoints existirán por grupo funcional
+- cómo se integrará con otras apps
+- cómo crecerá el módulo sin volverse monolítico
+
+
+1. Principio arquitectónico
+
+El módulo de encuestas debe construirse como un módulo funcional completo, pero internamente desacoplado por dominios.
+
+No conviene meter toda la lógica en:
+
+- un solo `encuesta.py`
+- un solo `encuesta.js`
+- un solo HTML enorme
+
+La primera versión puede arrancar con esos archivos MAIN, pero la arquitectura debe prever la división posterior.
+
+
+2. Estructura MAIN inicial
+
+Directorio actual
+
+- `fastapi_modulo/modulos/encuestas/encuesta.py`
+- `fastapi_modulo/modulos/encuestas/encuesta.html`
+- `fastapi_modulo/modulos/encuestas/encuesta.css`
+- `fastapi_modulo/modulos/encuestas/encuesta.js`
+
+Uso inicial de cada archivo
+
+`encuesta.py`
+- rutas del módulo
+- composición de respuestas HTML/JSON
+- conexión con servicios
+- validaciones de acceso
+
+`encuesta.html`
+- layout general del módulo
+- vistas contenedoras
+- placeholders de tabs, builder, bandeja y reportes
+
+`encuesta.css`
+- estilos propios del módulo
+- sistema visual de builder, runner y analytics
+
+`encuesta.js`
+- navegación interna entre vistas
+- render dinámico
+- llamadas API
+- interacción del builder y formularios
+
+
+3. Submódulos internos recomendados
+
+Aunque el archivo inicial sea uno, el diseño debe dividirse en capas lógicas.
+
+Capas recomendadas
+
+1. `builder`
+- creación de encuestas
+- secciones
+- preguntas
+- plantillas
+
+2. `runner`
+- responder encuesta
+- guardar borradores
+- validar
+- enviar respuestas
+
+3. `assignments`
+- asignaciones
+- audiencias
+- campañas
+- enlaces públicos
+
+4. `analytics`
+- resultados
+- reportes
+- exportaciones
+- dashboards
+
+5. `gamification`
+- scoring
+- ranking
+- intentos
+- quizzes y juegos
+
+6. `permissions`
+- permisos por rol
+- anonimato
+- visibilidad de resultados
+
+7. `integrations`
+- empleados
+- clientes
+- capacitación
+- CRM
+- otras apps
+
+
+4. Arquitectura backend recomendada
+
+4.1 Capa de rutas
+
+Responsabilidad
+
+- recibir requests
+- validar payloads básicos
+- resolver permisos
+- delegar a servicios
+
+Rutas sugeridas por grupo
+
+`/encuestas`
+- pantalla principal del módulo
+
+`/api/encuestas/templates`
+- CRUD de plantillas
+
+`/api/encuestas/instances`
+- CRUD de encuestas
+
+`/api/encuestas/questions`
+- operaciones sobre preguntas
+
+`/api/encuestas/assignments`
+- asignación de audiencias
+
+`/api/encuestas/respond`
+- captura de respuestas
+
+`/api/encuestas/results`
+- resultados agregados
+
+`/api/encuestas/reports`
+- reportes y exportaciones
+
+`/api/encuestas/quizzes`
+- scoring, intentos, ranking
+
+`/api/encuestas/360`
+- relaciones y consolidado 360
+
+
+4.2 Capa de servicios
+
+Responsabilidad
+
+- aplicar reglas de negocio
+- resolver cálculos
+- validar estructura
+- consolidar reportes
+- orquestar integraciones
+
+Servicios sugeridos
+
+- `encuesta_builder_service`
+- `encuesta_assignment_service`
+- `encuesta_response_service`
+- `encuesta_scoring_service`
+- `encuesta_reporting_service`
+- `encuesta_360_service`
+- `encuesta_template_service`
+
+
+4.3 Capa de repositorio o acceso a datos
+
+Responsabilidad
+
+- insertar
+- actualizar
+- buscar
+- consolidar
+- aislar SQL del resto del módulo
+
+Repositorios sugeridos
+
+- `survey_template_repo`
+- `survey_instance_repo`
+- `survey_assignment_repo`
+- `survey_response_repo`
+- `survey_results_repo`
+
+
+5. Arquitectura frontend recomendada
+
+La interfaz debe separarse en vistas funcionales, aunque inicialmente todo viva en `encuesta.html` y `encuesta.js`.
+
+Vistas principales del módulo
+
+1. `Inicio / Dashboard`
+- resumen del módulo
+- campañas activas
+- pendientes
+- métricas rápidas
+
+2. `Plantillas`
+- catálogo de plantillas
+- duplicar
+- editar
+- activar/desactivar
+
+3. `Constructor`
+- datos generales
+- secciones
+- preguntas
+- preview
+- configuración
+
+4. `Publicación / Asignación`
+- audiencias
+- filtros
+- fechas
+- anonimato
+- publicación
+
+5. `Responder`
+- ejecución del instrumento
+- guardado parcial
+- navegación por pasos
+
+6. `Resultados`
+- analítica
+- filtros
+- exportación
+
+7. `Quizzes y juegos`
+- ranking
+- intentos
+- puntajes
+
+8. `360`
+- evaluados
+- evaluadores
+- consolidado
+
+
+6. Navegación interna sugerida
+
+Tabs o vistas del módulo
+
+- `Dashboard`
+- `Plantillas`
+- `Constructor`
+- `Asignación`
+- `Responder`
+- `Resultados`
+- `Quizzes`
+- `Evaluación 360`
+
+Para MVP se puede reducir a:
+
+- `Dashboard`
+- `Encuestas`
+- `Constructor`
+- `Resultados`
+
+
+7. Contrato entre frontend y backend
+
+El frontend no debe depender de HTML renderizado desde el backend para cada subproceso.
+
+Regla recomendada
+
+- HTML MAIN para la carcasa del módulo
+- JSON APIs para datos
+- render en frontend para listas, formularios y reportes
+
+Ventajas
+
+- más flexible
+- más fácil de mantener
+- permite reutilizar endpoints
+- reduce acoplamiento entre vistas y lógica
+
+
+8. Estrategia de crecimiento del archivo inicial
+
+Primera etapa
+
+Se puede trabajar con los 4 archivos actuales.
+
+Segunda etapa recomendada
+
+Dividir en:
+
+- `encuesta.py`
+- `encuesta_routes_templates.py`
+- `encuesta_routes_instances.py`
+- `encuesta_routes_responses.py`
+- `encuesta_routes_reports.py`
+
+y en frontend:
+
+- `encuesta_builder.js`
+- `encuesta_runner.js`
+- `encuesta_reports.js`
+- `encuesta_360.js`
+- `encuesta_quiz.js`
+
+No hace falta hacerlo hoy, pero la fase deja el camino trazado.
+
+
+9. Integración con las otras apps
+
+Patrón recomendado
+
+El módulo de encuestas no consulta directamente tablas remotas como parte de su flujo crítico.
+
+Debe integrarse por:
+
+- API
+- snapshots
+- procesos de sincronización
+
+Integraciones principales
+
+`empleados`
+- audiencia interna
+- áreas
+- puestos
+- jerarquía para 360
+
+`clientes o CRM`
+- campañas de satisfacción
+- NPS
+- post servicio
+
+`capacitacion`
+- quizzes
+- juegos
+- desempeño en cursos
+
+
+10. Arquitectura por tipo de proceso
+
+Proceso 1. Diseño
+- plantilla
+- instancia
+- secciones
+- preguntas
+
+Proceso 2. Publicación
+- asignaciones
+- reglas
+- apertura/cierre
+
+Proceso 3. Respuesta
+- captura
+- borrador
+- envío final
+
+Proceso 4. Cálculo
+- scoring
+- métricas
+- consolidación
+
+Proceso 5. Explotación
+- reportes
+- exportación
+- dashboards
+
+Cada proceso debe poder evolucionar sin romper el resto.
+
+
+11. Permisos y seguridad en arquitectura
+
+La arquitectura debe contemplar permisos desde rutas y desde la UI.
+
+Capas de control
+
+Backend
+- quién puede crear
+- quién puede publicar
+- quién puede ver resultados
+- quién puede ver respuestas individuales
+
+Frontend
+- ocultar acciones no permitidas
+- no depender solo de eso
+
+Regla
+
+La seguridad real siempre se valida en backend.
+
+
+12. Manejo de anonimato en arquitectura
+
+No basta con una bandera visual.
+
+Debe existir lógica en:
+
+- captura de respuestas
+- consulta de resultados
+- exportación
+- vistas analíticas
+
+El frontend no debe recibir identidad real si el usuario no tiene permiso para verla.
+
+
+13. Exportaciones y reportes
+
+La arquitectura debe dejar previsto:
+
+- exportación CSV
+- exportación Excel
+- PDF en etapa posterior
+
+El backend debe generar datasets limpios y el frontend solo consumirlos.
+
+
+14. Observabilidad y trazabilidad
+
+Desde esta fase conviene prever:
+
+- logs de publicación
+- logs de respuesta
+- logs de cierres
+- logs de exportación
+- trazabilidad de versión de encuesta
+
+Especialmente importante para:
+
+- 360
+- satisfacción del cliente
+- quizzes calificables
+
+
+15. Decisiones cerradas de fase 3
+
+- el módulo tendrá una carcasa única con varias vistas internas
+- el backend se organizará por dominios y servicios
+- el frontend consumirá APIs JSON
+- builder, runner, analytics y 360 serán subdominios lógicos del módulo
+- el módulo crecerá sin acoplarse a otras MAINs de datos
+- el sistema de permisos se validará en backend y se reflejará en UI
+
+
+16. Entregables de la fase
+
+La Fase 3 queda completa cuando existan:
+
+- ✅ mapa de archivos del módulo
+- ✅ separación backend/frontend
+- ✅ lista de vistas internas
+- ✅ lista de grupos de endpoints
+- ✅ división por servicios
+- ✅ estrategia de integración con otras apps
+- ✅ reglas de seguridad y anonimato por capa
+
+
+Pendiente al cerrar Fase 3
+
+⏳ Siguiente fase: Catálogo de tipos de pregunta
+
+
+✅ FASE 4. CATÁLOGO DE TIPOS DE PREGUNTA
+
+Objetivo de la fase
+
+Definir el catálogo oficial de tipos de pregunta que soportará el módulo de encuestas, junto con sus reglas de validación, render, almacenamiento, scoring y uso visual dentro del sistema.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- tipos de pregunta del MVP
+- tipos de pregunta posteriores
+- reglas de validación por tipo
+- forma de almacenamiento por tipo
+- compatibilidad con scoring
+- compatibilidad con anonimato
+- componentes visuales a reutilizar
+
+
+1. Regla MAIN de implementación
+
+El módulo de encuestas será independiente funcionalmente, pero no debe inventar su propio sistema visual.
+
+Debe usar:
+
+- CSS oficial del sistema
+- clases oficiales existentes
+- componentes visuales ya usados en otros módulos
+- patrones de formularios y cards consistentes con SIPET
+
+Eso implica que cada tipo de pregunta debe diseñarse en dos capas:
+
+1. capa funcional
+- qué pregunta hace
+- cómo valida
+- cómo guarda
+
+2. capa visual
+- qué clases oficiales usa
+- qué componente del sistema reutiliza
+- cómo se ve en desktop y móvil
+
+
+2. Principios del catálogo de preguntas
+
+Cada tipo de pregunta debe definir:
+
+- `type_key`
+- `label`
+- `description`
+- `input_mode`
+- `supports_required`
+- `supports_scoring`
+- `supports_multiple_attempts`
+- `supports_anonymous`
+- `storage_format`
+- `validation_rules`
+- `ui_component`
+
+Cada tipo no debe depender de HTML improvisado.
+
+Debe mapearse a componentes oficiales como:
+
+- `input`
+- `textarea`
+- `select`
+- `radio`
+- `checkbox`
+- `range`
+- `card`
+- `tabs`
+- `progress`
+- `badge`
+
+
+3. Tipos de pregunta aprobados para MVP
+
+3.1 `short_text`
+
+Uso
+
+Respuesta breve libre.
+
+Casos
+
+- nombre
+- comentario corto
+- observación puntual
+
+UI oficial sugerida
+
+- `input`
+- `input-bordered`
+- contenedor de campo oficial del sistema
+
+Validaciones
+
+- longitud mínima
+- longitud máxima
+- obligatorio opcional
+
+Almacenamiento
+
+- `answer_text`
+
+Scoring
+
+- no aplica por defecto
+
+
+3.2 `long_text`
+
+Uso
+
+Respuesta abierta extensa.
+
+Casos
+
+- opinión
+- explicación
+- retroalimentación cualitativa
+
+UI oficial sugerida
+
+- `textarea`
+- `textarea-bordered`
+
+Validaciones
+
+- longitud mínima
+- longitud máxima
+- obligatorio opcional
+
+Almacenamiento
+
+- `answer_text`
+
+Scoring
+
+- no aplica por defecto
+
+
+3.3 `single_choice`
+
+Uso
+
+Seleccionar una sola opción.
+
+Casos
+
+- satisfacción
+- preferencia
+- clasificación única
+
+UI oficial sugerida
+
+- `radio`
+- lista oficial con card ligera o fila oficial
+
+Validaciones
+
+- una sola opción
+- obligatorio opcional
+
+Almacenamiento
+
+- `selected_option_ids`
+- `answer_json`
+
+Scoring
+
+- sí, si la opción tiene valor de score
+
+
+3.4 `multiple_choice`
+
+Uso
+
+Seleccionar varias opciones.
+
+Casos
+
+- intereses
+- causas
+- selección múltiple
+
+UI oficial sugerida
+
+- `checkbox`
+- lista oficial de opciones con clases del sistema
+
+Validaciones
+
+- mínimo seleccionado
+- máximo seleccionado
+- obligatorio opcional
+
+Almacenamiento
+
+- `selected_option_ids`
+- `answer_json`
+
+Scoring
+
+- sí, si se define por opción o combinación
+
+
+3.5 `yes_no`
+
+Uso
+
+Respuesta binaria.
+
+Casos
+
+- confirmación
+- validación rápida
+- diagnóstico simple
+
+UI oficial sugerida
+
+- `radio`
+- o `toggle` solo si el sistema ya lo usa oficialmente en este contexto
+
+Validaciones
+
+- obligatorio opcional
+
+Almacenamiento
+
+- `answer_json`
+- `selected_option_ids`
+
+Scoring
+
+- sí
+
+
+3.6 `scale_1_5`
+
+Uso
+
+Escala Likert o valoración simple.
+
+Casos
+
+- satisfacción
+- percepción
+- clima laboral
+- servicio
+
+UI oficial sugerida
+
+- radios horizontales
+- botones tipo escala con clases oficiales
+
+Variantes
+
+- 1 a 5 acuerdo/desacuerdo
+- 1 a 5 satisfacción
+- 1 a 5 desempeño
+
+Validaciones
+
+- una opción obligatoria o no
+
+Almacenamiento
+
+- `answer_json`
+- `selected_option_ids`
+
+Scoring
+
+- sí
+
+
+3.7 `nps_0_10`
+
+Uso
+
+Net Promoter Score.
+
+Casos
+
+- satisfacción del cliente
+- recomendación de servicio
+
+UI oficial sugerida
+
+- botones o radios horizontales del 0 al 10
+- componente responsivo que no rompa en móvil
+
+Validaciones
+
+- una sola opción
+
+Almacenamiento
+
+- `answer_json`
+- `selected_option_ids`
+- valor numérico derivado
+
+Scoring
+
+- sí, pero como métrica especial NPS
+
+
+3.8 `quiz_single_choice`
+
+Uso
+
+Pregunta de quiz con una respuesta correcta.
+
+Casos
+
+- capacitación
+- evaluaciones
+- certificación
+
+UI oficial sugerida
+
+- radios
+- tarjeta de pregunta oficial
+
+Validaciones
+
+- una respuesta
+- obligatorio
+
+Almacenamiento
+
+- `selected_option_ids`
+- `is_correct`
+- `score_obtained`
+
+Scoring
+
+- obligatorio
+
+
+4. Tipos aprobados para fase posterior
+
+- `ranking`
+- `matrix`
+- `date`
+- `file_upload`
+- `percentage`
+- `numeric`
+- `net_emotional_score`
+- `pairwise_choice`
+- `drag_drop_order`
+- `image_choice`
+
+
+5. Estructura funcional común por tipo
+
+Cada tipo de pregunta debe registrar:
+
+- nombre funcional
+- ícono oficial del módulo
+- configuración editable
+- JSON de definición
+- componente de render en respuesta
+- componente de render en builder
+- serialización de respuesta
+- función de validación
+- función de scoring
+
+
+6. Contrato de almacenamiento por tipo
+
+Regla general
+
+No crear columnas distintas por cada tipo de pregunta.
+
+Usar estructura común:
+
+- `answer_text`
+- `answer_json`
+- `selected_option_ids`
+- `score_obtained`
+- `is_correct`
+
+Ejemplos
+
+`short_text`
+- usa `answer_text`
+
+`multiple_choice`
+- usa `selected_option_ids` y `answer_json`
+
+`scale_1_5`
+- usa `selected_option_ids` y valor numérico en `answer_json`
+
+`quiz_single_choice`
+- usa `selected_option_ids`, `is_correct` y `score_obtained`
+
+
+7. Reglas de validación por tipo
+
+Validaciones globales
+
+- obligatorio
+- encuesta abierta
+- intento permitido
+- fecha vigente
+
+Validaciones específicas
+
+`short_text`
+- min/max length
+
+`long_text`
+- min/max length
+
+`single_choice`
+- una sola respuesta válida
+
+`multiple_choice`
+- min/max de opciones
+
+`scale_1_5`
+- valor dentro del rango
+
+`nps_0_10`
+- valor entre 0 y 10
+
+`quiz_single_choice`
+- respuesta obligatoria y opción válida
+
+
+8. Compatibilidad con scoring
+
+Tipos con scoring nativo
+
+- `single_choice`
+- `multiple_choice`
+- `yes_no`
+- `scale_1_5`
+- `nps_0_10`
+- `quiz_single_choice`
+
+Tipos sin scoring por defecto
+
+- `short_text`
+- `long_text`
+
+Regla
+
+El scoring debe ser configurable, no automático en todos los instrumentos.
+
+
+9. Compatibilidad con anonimato
+
+Todos los tipos deben ser compatibles con encuestas anónimas.
+
+Regla
+
+El anonimato no cambia el tipo de pregunta, cambia la forma en que se expone el respondente.
+
+Excepción funcional
+
+En quizzes o juegos identificados, normalmente no se usa anonimato porque hay ranking o nota individual.
+
+
+10. Uso de librerías y componentes existentes
+
+Dado que el sistema ya tiene librerías y componentes oficiales, el catálogo debe aprovecharlos al máximo.
+
+Uso recomendado por capa
+
+UI del módulo
+
+- `Tailwind`
+- `DaisyUI`
+
+Para formularios
+
+- clases oficiales de `input`, `textarea`, `select`, `radio`, `checkbox`, `toggle`
+
+Para métricas y resultados
+
+- `Chart.js`
+
+Para juegos o quizzes simples
+
+- reutilizar patrones de `capacitacion`
+
+Para exportación de resultados
+
+- `openpyxl`
+- `reportlab`
+
+Regla visual
+
+El módulo no debe crear una biblioteca visual paralela.
+
+
+11. Componentes visuales reutilizables del módulo
+
+Para no duplicar trabajo, conviene que el módulo de encuestas cree sus propios wrappers, pero montados sobre clases oficiales.
+
+Wrappers sugeridos
+
+- `survey-field`
+- `survey-field__label`
+- `survey-field__help`
+- `survey-option-list`
+- `survey-option-item`
+- `survey-question-card`
+- `survey-question-scale`
+- `survey-progress`
+- `survey-result-card`
+
+Importante
+
+Estos wrappers deben usar por debajo clases oficiales del sistema, no reemplazarlas.
+
+
+12. Catálogo de uso por tipo de instrumento
+
+Encuestas generales
+
+- `short_text`
+- `long_text`
+- `single_choice`
+- `multiple_choice`
+- `yes_no`
+- `scale_1_5`
+
+Satisfacción del cliente
+
+- `single_choice`
+- `scale_1_5`
+- `nps_0_10`
+- `long_text`
+
+Evaluación 360
+
+- `scale_1_5`
+- `single_choice`
+- `long_text`
+
+Quizzes
+
+- `quiz_single_choice`
+- `single_choice`
+- `yes_no`
+
+Juegos de capacitación
+
+- `quiz_single_choice`
+- `single_choice`
+- `multiple_choice`
+
+
+13. Catálogo mínimo para el builder
+
+El constructor de encuestas debe ofrecer inicialmente solo estos bloques:
+
+- texto corto
+- texto largo
+- opción única
+- opción múltiple
+- sí/no
+- escala 1-5
+- NPS 0-10
+- quiz opción única
+
+Razón
+
+Es mejor lanzar pocos tipos bien hechos y consistentes con el sistema que muchos tipos incompletos.
+
+
+14. Riesgos a evitar en esta fase
+
+- crear tipos de pregunta sin definir almacenamiento
+- usar HTML distinto para cada pregunta sin patrón oficial
+- meter demasiados tipos en el MVP
+- depender de una librería nueva sin necesidad
+- mezclar comportamiento de encuesta y quiz sin distinguir scoring
+
+
+15. Decisiones cerradas de fase 4
+
+- el MVP tendrá 8 tipos de pregunta oficiales
+- el módulo reutilizará CSS y clases oficiales del sistema
+- `Tailwind` y `DaisyUI` serán la MAIN visual
+- `Chart.js` será la MAIN de resultados gráficos
+- quizzes y juegos básicos reutilizarán lógica de capacitación cuando convenga
+- los tipos avanzados se moverán a fases posteriores
+
+
+16. Entregables de la fase
+
+La Fase 4 queda completa cuando existan:
+
+- ✅ catálogo oficial de tipos de pregunta
+- ✅ reglas de validación por tipo
+- ✅ reglas de almacenamiento por tipo
+- ✅ reglas de scoring por tipo
+- ✅ mapeo visual a componentes oficiales
+- ✅ listado de tipos MVP y tipos posteriores
+
+
+Pendiente al cerrar Fase 4
+
+⏳ Siguiente fase: Constructor de encuestas
+
+
+✅ FASE 5. CONSTRUCTOR DE ENCUESTAS
+
+Objetivo de la fase
+
+Definir cómo funcionará el constructor de encuestas para que un usuario pueda crear instrumentos desde cero o desde plantilla, organizar secciones, agregar preguntas, configurar reglas y publicar sin depender de procesos técnicos.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- estructura del constructor
+- pantallas o vistas del builder
+- flujo de creación
+- bloques configurables
+- comportamiento de preguntas y secciones
+- validaciones del builder
+- acciones disponibles
+- alcance del constructor para MVP
+
+
+1. Propósito del constructor
+
+El constructor será la herramienta principal del módulo.
+
+Debe permitir:
+
+- crear una encuesta nueva
+- partir de una plantilla
+- editar en borrador
+- organizar preguntas y secciones
+- configurar reglas generales
+- previsualizar
+- publicar
+
+No debe requerir conocimientos técnicos.
+
+
+2. Principio de diseño
+
+El constructor debe ser visual, ordenado y modular.
+
+Pero debe mantener coherencia con el sistema, por lo que debe usar:
+
+- clases oficiales
+- componentes oficiales
+- estilos oficiales del proyecto
+
+No debe parecer una app externa metida dentro de SIPET.
+
+
+3. Estructura funcional del constructor
+
+El constructor debe dividirse en 5 bloques principales:
+
+1. Datos generales
+2. Estructura
+3. Audiencia
+4. Reglas
+5. Publicación
+
+Para el MVP esto puede verse como tabs, pasos o un notebook.
+
+
+4. Vista 1. Datos generales
+
+Propósito
+
+Capturar la identidad de la encuesta.
+
+Campos mínimos
+
+- nombre
+- descripción
+- tipo de instrumento
+- categoría
+- plantilla MAIN opcional
+- empresa
+- estado
+
+Campos recomendados
+
+- objetivo
+- instrucciones para respondente
+- mensaje final
+- si es interna o externa
+
+Validaciones
+
+- nombre obligatorio
+- tipo obligatorio
+- plantilla opcional
+
+
+5. Vista 2. Estructura
+
+Propósito
+
+Diseñar la encuesta.
+
+Debe permitir:
+
+- agregar sección
+- editar sección
+- cambiar orden de secciones
+- agregar preguntas dentro de sección
+- duplicar preguntas
+- eliminar preguntas
+- mover preguntas
+- colapsar/expandir bloques
+
+Elementos principales
+
+- lista de secciones
+- lista de preguntas por sección
+- panel de configuración de pregunta
+- barra para agregar tipo de pregunta
+
+
+6. Vista 3. Audiencia
+
+Propósito
+
+Definir quién responderá.
+
+Debe soportar:
+
+- por usuario
+- por rol
+- por departamento
+- por puesto
+- por grupo
+- por campaña
+- por enlace público
+- por relación 360
+
+Campos mínimos
+
+- tipo de audiencia
+- origen de audiencia
+- cantidad estimada
+- modo de acceso
+
+
+7. Vista 4. Reglas
+
+Propósito
+
+Configurar comportamiento de la encuesta.
+
+Debe permitir:
+
+- anónima / identificada / restringida
+- una sola respuesta o múltiples intentos
+- permitir borrador
+- activar scoring
+- tiempo límite
+- fecha de inicio
+- fecha de cierre
+- visibilidad de resultados
+
+Reglas especiales
+
+- si es quiz, mostrar scoring e intentos
+- si es 360, mostrar lógica de evaluadores
+- si es satisfacción, permitir NPS/CSAT/CES
+
+
+8. Vista 5. Publicación
+
+Propósito
+
+Cerrar el proceso y dejar la encuesta operativa.
+
+Debe mostrar:
+
+- resumen general
+- total de secciones
+- total de preguntas
+- tipo de audiencia
+- fechas
+- modo de anonimato
+- si hay scoring
+
+Acciones
+
+- guardar borrador
+- vista previa
+- publicar
+- duplicar encuesta
+- archivar
+
+
+9. Flujo principal del usuario
+
+Flujo ideal
+
+1. crear encuesta
+2. elegir tipo o plantilla
+3. capturar datos generales
+4. construir estructura
+5. configurar audiencia
+6. definir reglas
+7. previsualizar
+8. guardar borrador
+9. publicar
+
+Flujo alterno
+
+1. duplicar encuesta existente
+2. ajustar preguntas
+3. republicar como nueva versión o nueva campaña
+
+
+10. Componentes del constructor
+
+Componentes que debe tener el builder
+
+`survey-builder-shell`
+- carcasa general del constructor
+
+`survey-builder-toolbar`
+- botones de guardar, vista previa, publicar
+
+`survey-section-card`
+- tarjeta de sección
+
+`survey-question-card`
+- tarjeta de pregunta
+
+`survey-question-editor`
+- panel de edición de pregunta
+
+`survey-builder-sidebar`
+- paleta de tipos de pregunta
+
+`survey-builder-summary`
+- panel de resumen y validaciones
+
+Todos deben usar clases oficiales y estilos del sistema.
+
+
+11. Acciones del constructor
+
+Acciones sobre encuesta
+
+- crear
+- editar
+- guardar borrador
+- duplicar
+- archivar
+
+Acciones sobre sección
+
+- agregar
+- editar
+- mover
+- duplicar
+- eliminar
+
+Acciones sobre pregunta
+
+- agregar
+- editar
+- mover
+- duplicar
+- eliminar
+- cambiar tipo si aún no tiene respuestas
+
+
+12. Configuración de preguntas dentro del builder
+
+Cada pregunta debe poder configurar:
+
+- tipo
+- título
+- ayuda o descripción
+- placeholder
+- obligatorio
+- scoring
+- peso
+- opciones
+- reglas de visibilidad
+
+Campos variables según tipo
+
+`short_text`
+- min/max
+
+`single_choice`
+- opciones
+- valor por opción
+
+`multiple_choice`
+- opciones
+- min/max de selección
+
+`quiz_single_choice`
+- respuesta correcta
+- puntaje
+
+`scale_1_5`
+- etiquetas de extremos
+
+`nps_0_10`
+- texto de la pregunta
+
+
+13. Configuración de secciones
+
+Cada sección debe permitir:
+
+- título
+- descripción
+- orden
+- peso opcional
+- si puntúa o no
+- si se muestra numeración
+
+Uso
+
+Sirve para agrupar preguntas por tema, competencia, bloque o etapa.
+
+
+14. Vista previa del constructor
+
+El constructor debe incluir preview antes de publicar.
+
+La vista previa debe mostrar:
+
+- cómo verá la encuesta el respondente
+- validaciones básicas
+- progreso
+- estructura real
+
+La vista previa no debe ser una maqueta; debe reutilizar el render del módulo de respuesta siempre que sea posible.
+
+
+15. Validaciones del constructor
+
+No debe permitirse publicar si:
+
+- no tiene nombre
+- no tiene tipo
+- no tiene preguntas
+- existen preguntas inválidas
+- una pregunta cerrada no tiene opciones
+- un quiz no tiene respuesta correcta
+- fechas son inconsistentes
+- audiencia requerida está vacía
+
+Debe existir un resumen de errores antes de publicar.
+
+
+16. Guardado del constructor
+
+El builder debe soportar:
+
+- guardado manual
+- guardado de borrador
+- restauración de trabajo
+
+Recomendación para MVP
+
+- guardado manual claro
+- estado `draft`
+- sin autosave agresivo en la primera versión
+
+
+17. Relación con librerías existentes
+
+Como el sistema ya tiene librerías oficiales, el constructor debe aprovecharlas.
+
+Uso recomendado
+
+UI
+
+- `Tailwind`
+- `DaisyUI`
+
+Tabs, cards, forms, toggles y botones
+
+- clases oficiales del sistema
+
+Si se reutiliza experiencia de builder existente
+
+- solo tomar patrones útiles de `frontend/GrapesJS`
+- no forzar GrapesJS para preguntas si agrega complejidad innecesaria
+
+Decisión sugerida para MVP
+
+No usar GrapesJS como motor principal del constructor de encuestas.
+
+Razón
+
+El constructor de encuestas necesita estructura de negocio, no libertad total de layout.
+
+Conviene un builder guiado por formularios y tarjetas.
+
+
+18. Salida esperada del constructor
+
+El constructor no genera HTML libre.
+
+Debe generar una estructura de definición de encuesta como:
+
+- metadatos generales
+- secciones
+- preguntas
+- opciones
+- reglas
+- configuración de scoring
+- configuración de audiencia
+
+Es decir, genera configuración estructurada, no maquetación arbitraria.
+
+
+19. Alcance del constructor en el MVP
+
+Incluido
+
+- crear desde cero
+- crear desde plantilla
+- agregar secciones
+- agregar preguntas del catálogo MVP
+- reordenar preguntas
+- configurar reglas básicas
+- previsualizar
+- guardar borrador
+- publicar
+
+No incluido
+
+- lógica condicional avanzada
+- branching complejo
+- banco global avanzado de preguntas
+- diseñador visual libre
+- colaboración en tiempo real
+- historial avanzado por cambio
+
+
+20. Riesgos a evitar
+
+- convertir el builder en un CMS libre
+- usar demasiada flexibilidad en la primera versión
+- no validar antes de publicar
+- acoplar el constructor al render del reporte
+- crear componentes visuales fuera del sistema oficial
+
+
+21. Decisiones cerradas de fase 5
+
+- el constructor será guiado, no libre
+- estará dividido en 5 bloques funcionales
+- generará definición estructurada, no HTML arbitrario
+- usará clases y componentes oficiales del sistema
+- para MVP no usará GrapesJS como motor principal
+- la vista previa reutilizará el render de respuesta cuando sea posible
+
+
+22. Entregables de la fase
+
+La Fase 5 queda completa cuando existan:
+
+- ✅ mapa funcional del constructor
+- ✅ lista de vistas internas
+- ✅ acciones sobre encuestas, secciones y preguntas
+- ✅ configuración permitida por tipo de pregunta
+- ✅ validaciones previas a publicación
+- ✅ definición del alcance MVP del builder
+
+
+Pendiente al cerrar Fase 5
+
+⏳ Siguiente fase: Motor de publicación y asignación
+
+
+✅ FASE 6. MOTOR DE PUBLICACIÓN Y ASIGNACIÓN
+
+Objetivo de la fase
+
+Definir cómo una encuesta pasa de borrador a operativa y cómo se asigna a personas, grupos o audiencias, asegurando control de fechas, permisos, anonimato, intentos y trazabilidad.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- flujo de publicación
+- reglas de asignación
+- tipos de audiencia soportados
+- reglas para audiencias internas y externas
+- comportamiento para 360
+- comportamiento para quizzes
+- estados de campaña
+- validaciones antes de publicar
+
+
+1. Propósito del motor de publicación y asignación
+
+Este motor conecta el builder con la ejecución real.
+
+Debe resolver:
+
+- cuándo una encuesta está lista para publicarse
+- a quién se le asigna
+- cómo se distribuye
+- cómo se controla acceso
+- cómo se habilita o bloquea la respuesta
+
+
+2. Momento de entrada al motor
+
+Una encuesta entra a esta fase cuando:
+
+- ya existe una estructura válida
+- tiene preguntas configuradas
+- tiene reglas mínimas completas
+- el usuario decide publicarla o preparar asignación
+
+Estados previos posibles
+
+- `draft`
+- `ready_to_publish`
+
+
+3. Estados operativos de una encuesta
+
+Estados del ciclo de vida
+
+- `draft`
+  Aún editable sin restricciones.
+
+- `scheduled`
+  Publicada pero programada para abrir en una fecha futura.
+
+- `published`
+  Disponible para responder.
+
+- `in_progress`
+  Ya tiene respuestas en curso.
+
+- `closed`
+  Ya no recibe respuestas.
+
+- `archived`
+  Solo consulta histórica.
+
+Regla
+
+Una vez publicada, la encuesta no debe permitir cambios estructurales que rompan respuestas existentes.
+
+
+4. Requisitos previos para publicar
+
+No se debe permitir publicación si falta alguno de estos puntos:
+
+- nombre
+- tipo de instrumento
+- al menos una pregunta
+- preguntas válidas
+- opciones válidas en preguntas cerradas
+- respuesta correcta en quizzes
+- audiencia definida si no es pública
+- fechas válidas si se configuraron
+
+Chequeos adicionales por tipo
+
+`360`
+- debe tener definición de evaluados y evaluadores
+
+`quiz`
+- debe tener scoring activado
+- debe tener intentos definidos
+
+`satisfacción`
+- debe definir métrica principal si aplica
+
+
+5. Tipos de asignación soportados
+
+El motor debe soportar estos modos:
+
+1. Asignación por usuario
+- interna
+- directa
+
+2. Asignación por rol
+- todos los usuarios que pertenezcan a un rol
+
+3. Asignación por departamento
+- todos los usuarios de un área
+
+4. Asignación por puesto
+- todos los usuarios de un puesto
+
+5. Asignación por grupo manual
+- grupo definido dentro del módulo
+
+6. Asignación por campaña
+- lote operativo definido para una encuesta
+
+7. Enlace público
+- sin lista previa de usuarios
+
+8. Evaluación 360
+- generado desde relaciones organizacionales
+
+
+6. Audiencias internas
+
+Uso
+
+Para empleados, jefes, pares, supervisores y usuarios autenticados del ecosistema.
+
+Origen
+
+Se obtienen desde otras apps por referencia:
+
+- app de empleados
+- app de usuarios
+- otras apps internas
+
+Regla
+
+Al momento de asignar se debe guardar snapshot mínimo del destinatario.
+
+Datos snapshot sugeridos
+
+- nombre
+- username
+- rol
+- área
+- puesto
+- empresa
+
+
+7. Audiencias externas
+
+Uso
+
+Para clientes, proveedores, asistentes a eventos u otros participantes no necesariamente autenticados.
+
+Modos de acceso
+
+- enlace público
+- enlace con token
+- correo con token
+- campaña externa
+
+Campos recomendados
+
+- correo
+- nombre visible
+- token único
+- estado de uso del token
+
+Regla
+
+Para encuestas públicas el sistema debe poder aceptar respuestas sin depender de una cuenta local.
+
+
+8. Asignación individual
+
+Flujo
+
+1. seleccionar usuarios
+2. generar registros de `survey_assignments`
+3. marcar fecha de asignación
+4. dejar listo el acceso
+
+Reglas
+
+- evitar duplicados
+- evitar asignar encuesta cerrada
+- si ya respondió y no hay múltiples intentos, no reasignar como nueva respuesta
+
+
+9. Asignación masiva por filtros
+
+El motor debe permitir generar audiencia por:
+
+- empresa
+- departamento
+- puesto
+- rol
+- combinación de filtros
+
+Regla
+
+La lista final de asignados debe materializarse en `survey_assignments`, no quedarse como filtro abstracto solamente.
+
+Razón
+
+Se necesita trazabilidad exacta de quién quedó asignado en ese momento histórico.
+
+
+10. Grupos manuales
+
+Uso
+
+Cuando se necesite una audiencia repetible o transversal.
+
+Ejemplos
+
+- comité gerencial
+- clientes premium
+- participantes de una cohorte
+- personal de una sede temporal
+
+Regla
+
+Un grupo puede reutilizarse en varias encuestas, pero la asignación final siempre debe generar registros concretos en la instancia.
+
+
+11. Publicación con programación
+
+El motor debe soportar:
+
+- publicación inmediata
+- publicación programada
+- cierre manual
+- cierre automático por fecha
+
+Campos clave
+
+- `start_at`
+- `end_at`
+- `published_at`
+- `closed_at`
+
+Regla
+
+Si `start_at` está en el futuro:
+
+- estado `scheduled`
+
+Si la fecha actual está entre inicio y cierre:
+
+- estado `published` o `in_progress`
+
+Si ya venció:
+
+- estado `closed`
+
+
+12. Reglas de acceso al responder
+
+El motor debe validar si una persona puede abrir una encuesta.
+
+Validaciones mínimas
+
+- existe asignación o token válido
+- la encuesta está activa
+- no está cerrada
+- no superó intentos permitidos
+- tiene permiso por tipo de acceso
+
+Reglas por modo
+
+Interno autenticado
+- valida contra `assignment_id` o identidad autenticada
+
+Externo por enlace
+- valida token o enlace público
+
+Quiz
+- además valida intentos y tiempo
+
+
+13. Motor específico para evaluación 360
+
+La evaluación 360 no se comporta como una encuesta simple.
+
+Debe soportar:
+
+- sujeto evaluado
+- evaluador
+- tipo de relación
+- peso por relación
+
+Relaciones mínimas
+
+- autoevaluación
+- jefe
+- pares
+- subordinados
+
+Reglas funcionales
+
+- una misma persona puede recibir múltiples formularios relacionados con distintos evaluados
+- la asignación debe registrar quién evalúa a quién
+- el resultado final se consolida por evaluado
+
+
+14. Motor específico para quizzes
+
+Debe contemplar:
+
+- intentos
+- puntaje
+- tiempo límite
+- bloqueo posterior a completar
+- ranking posterior
+
+Reglas
+
+- si `allow_multiple_attempts = false`, solo una respuesta final
+- si hay múltiples intentos, debe registrarse `attempt_number`
+- el intento vigente debe abrir en estado controlado
+
+
+15. Notificaciones y comunicación
+
+Aunque la automatización completa puede ir en fase posterior, el motor debe quedar preparado para disparar:
+
+- invitación inicial
+- recordatorio
+- aviso de cierre próximo
+- cierre de encuesta
+- resultado disponible
+
+Canales posibles
+
+- notificación interna
+- correo
+- enlace compartible
+
+
+16. Reasignación y republicación
+
+Casos a soportar
+
+- agregar nuevos participantes después de publicar
+- extender fecha de cierre
+- reabrir encuesta cerrada en casos permitidos
+- duplicar campaña con misma estructura
+
+Regla
+
+No debe confundirse:
+
+- editar encuesta
+- reasignar audiencia
+- crear nueva campaña
+
+
+17. Trazabilidad de publicación
+
+El sistema debe registrar:
+
+- quién publicó
+- cuándo publicó
+- cuántos asignados generó
+- qué reglas aplicó
+- si fue por filtro, grupo o enlace
+
+Especialmente importante para:
+
+- 360
+- satisfacción del cliente
+- campañas masivas
+
+
+18. Validaciones de asignación
+
+No se debe permitir:
+
+- publicar sin audiencia cuando la encuesta no es pública
+- asignar destinatarios repetidos
+- asignar usuarios inexistentes
+- mezclar reglas incompatibles
+- dejar una encuesta activa sin acceso real
+
+Validaciones recomendadas
+
+- conteo final de asignados
+- advertencia si audiencia es 0
+- advertencia si hay usuarios inválidos
+
+
+19. Interfaz del motor de publicación
+
+La vista del módulo debe mostrar claramente:
+
+- resumen de encuesta
+- resumen de audiencia
+- tipo de acceso
+- fechas
+- anonimato
+- scoring
+- total de asignados
+
+Acciones visibles
+
+- guardar configuración
+- previsualizar
+- publicar
+- programar
+- cerrar
+- duplicar campaña
+
+
+20. Relación con otras apps
+
+Como el ecosistema tiene varias MAINs de datos, la asignación debe resolver audiencia por integración controlada.
+
+Patrón recomendado
+
+- consulta origen
+- materialización local en asignaciones
+- snapshot del destinatario
+
+Nunca depender solo de la consulta externa en tiempo real para saber quién estaba asignado.
+
+
+21. Alcance del MVP de publicación y asignación
+
+Incluido
+
+- publicar inmediata o programada
+- asignación por usuario
+- asignación por rol
+- asignación por departamento
+- asignación por puesto
+- grupo manual
+- enlace público simple
+- soporte básico para 360
+- soporte básico para quiz
+
+No incluido
+
+- campañas omnicanal avanzadas
+- automatizaciones complejas
+- reglas condicionales de audiencia muy avanzadas
+- redistribución inteligente automática
+
+
+22. Riesgos a evitar
+
+- depender de filtros vivos en vez de materializar asignados
+- permitir cambios estructurales después de publicar
+- no separar campaña de plantilla
+- no distinguir asignación interna, externa, 360 y quiz
+- no registrar trazabilidad de publicación
+
+
+23. Decisiones cerradas de fase 6
+
+- la publicación genera una campaña operativa concreta
+- la audiencia siempre debe materializarse en asignaciones
+- las integraciones con otras apps se resolverán por referencia y snapshot
+- 360 y quiz tendrán reglas especiales dentro del mismo motor
+- el acceso a responder dependerá de asignación, token o modo público
+
+
+24. Entregables de la fase
+
+La Fase 6 queda completa cuando existan:
+
+- ✅ estados operativos definidos
+- ✅ reglas previas de publicación
+- ✅ catálogo de tipos de asignación
+- ✅ reglas de acceso a respuesta
+- ✅ flujo de 360
+- ✅ flujo de quizzes
+- ✅ reglas para audiencias internas y externas
+- ✅ validaciones de publicación y asignación
+
+
+Pendiente al cerrar Fase 6
+
+⏳ Siguiente fase: Módulo de respuesta
+
+
+✅ FASE 7. MÓDULO DE RESPUESTA
+
+Objetivo de la fase
+
+Definir cómo se ejecuta una encuesta desde la perspectiva del respondente, incluyendo acceso, navegación, guardado parcial, validaciones, envío final y reglas especiales para quizzes, encuestas anónimas y evaluación 360.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- flujo de respuesta
+- vistas del respondente
+- reglas de acceso
+- validaciones de captura
+- guardado de borrador
+- envío final
+- reglas especiales por tipo de instrumento
+- experiencia móvil y escritorio
+
+
+1. Propósito del módulo de respuesta
+
+El módulo de respuesta es la capa donde el usuario contesta realmente la encuesta.
+
+Debe ser:
+
+- claro
+- rápido
+- consistente con SIPET
+- tolerante a interrupciones
+- usable en móvil
+
+No debe parecer un constructor ni un reporte; debe ser una experiencia enfocada en responder.
+
+
+2. Tipos de respondente que debe soportar
+
+Debe soportar:
+
+- usuario interno autenticado
+- usuario externo por enlace o token
+- evaluador en 360
+- participante de quiz
+- usuario que responde encuesta anónima
+
+
+3. Reglas de acceso a la encuesta
+
+Antes de abrir la encuesta el módulo debe validar:
+
+- la encuesta existe
+- está publicada o activa
+- no está cerrada
+- el usuario o token tiene acceso
+- no excedió intentos
+- la fecha actual está dentro del rango permitido
+
+Si falla una validación, debe mostrarse una vista clara:
+
+- no disponible
+- ya respondida
+- cerrada
+- sin autorización
+- vínculo vencido
+
+
+4. Estructura de la experiencia de respuesta
+
+La experiencia debe dividirse en 4 bloques:
+
+1. pantalla de inicio
+2. flujo de preguntas
+3. confirmación de envío
+4. pantalla final
+
+
+5. Pantalla de inicio
+
+Debe mostrar:
+
+- nombre de la encuesta
+- descripción
+- tiempo estimado
+- cantidad de preguntas
+- si es anónima o identificada
+- fecha límite si aplica
+- instrucciones
+
+Acción principal
+
+- `Comenzar`
+
+Acciones secundarias según caso
+
+- `Continuar borrador`
+- `Ver intento anterior` si aplica
+
+
+6. Flujo de preguntas
+
+Debe poder renderizar:
+
+- preguntas por sección
+- navegación paso a paso o continua
+- indicadores de avance
+- ayudas o textos de apoyo
+
+Modelos de navegación posibles
+
+1. lineal por pasos
+- una sección a la vez
+
+2. scroll continuo
+- toda la encuesta en una sola vista
+
+Decisión recomendada para MVP
+
+Usar navegación por secciones o pasos.
+
+Razones
+
+- mejora usabilidad
+- facilita validaciones
+- ayuda en móvil
+- reduce fatiga visual
+
+
+7. Navegación dentro de la encuesta
+
+Debe soportar:
+
+- siguiente
+- anterior
+- guardar borrador
+- enviar
+
+Reglas
+
+- no enviar si hay errores obligatorios
+- permitir moverse entre secciones si la encuesta lo permite
+- mostrar progreso general
+
+Componente visual sugerido
+
+- barra de progreso oficial
+- stepper o tabs simples con clases del sistema
+
+
+8. Render de preguntas
+
+Cada tipo de pregunta debe tener un render oficial y consistente.
+
+Tipos MVP
+
+- texto corto
+- texto largo
+- opción única
+- opción múltiple
+- sí/no
+- escala 1 a 5
+- NPS 0 a 10
+- quiz opción única
+
+Regla visual
+
+Todos deben renderizarse usando:
+
+- clases oficiales
+- componentes oficiales
+- separación uniforme
+- cards o bloques estándar
+
+
+9. Guardado de borrador
+
+El módulo debe permitir guardado parcial cuando la encuesta lo soporte.
+
+Uso recomendado
+
+- encuestas largas
+- 360
+- clima laboral
+
+No es obligatorio en todos los casos
+
+- quizzes pueden bloquear borrador si se requiere control
+
+Requisitos funcionales
+
+- guardar respuesta parcial
+- recuperar en siguiente ingreso
+- mostrar estado de avance
+
+
+10. Validaciones durante la respuesta
+
+Validaciones mínimas
+
+- preguntas obligatorias
+- selección válida
+- longitud mínima o máxima
+- número permitido de opciones
+- rango permitido
+
+Validaciones por tipo
+
+`short_text`
+- min/max
+
+`multiple_choice`
+- mínimo/máximo de opciones
+
+`scale_1_5`
+- un valor dentro del rango
+
+`nps_0_10`
+- valor válido de 0 a 10
+
+`quiz_single_choice`
+- solo una respuesta correcta seleccionable
+
+Regla UX
+
+La validación debe ser clara y cercana al campo.
+
+
+11. Envío final
+
+El envío final debe hacer esto:
+
+- validar respuestas obligatorias
+- validar estado de encuesta
+- cerrar intento si aplica
+- calcular puntaje inicial si corresponde
+- registrar fecha/hora de envío
+- bloquear edición posterior si no se permiten cambios
+
+Recomendación
+
+Antes de enviar, mostrar confirmación:
+
+- `¿Deseas enviar tus respuestas?`
+
+
+12. Pantalla final
+
+Debe mostrar un cierre claro según tipo de encuesta.
+
+Ejemplos
+
+Encuesta general
+- gracias por responder
+
+Satisfacción del cliente
+- agradecimiento y confirmación
+
+Quiz
+- puntaje
+- resultado aprobado/no aprobado si aplica
+
+360
+- confirmación de envío sin mostrar datos sensibles si no corresponde
+
+
+13. Reglas para encuestas anónimas
+
+La experiencia debe comunicar claramente si la encuesta es:
+
+- anónima
+- identificada
+- restringida
+
+En encuestas anónimas:
+
+- no mostrar identificadores innecesarios
+- no exponer nombre de respondente en UI final
+- mantener consistencia con las reglas del backend
+
+
+14. Reglas para evaluación 360
+
+La experiencia 360 debe contemplar:
+
+- quién está siendo evaluado
+- tipo de relación del evaluador
+- secciones por competencia
+- posible guardado parcial
+
+Regla importante
+
+La UI no debe romper anonimato si la evaluación fue configurada como restringida.
+
+
+15. Reglas para quizzes
+
+El modo quiz requiere componentes y controles adicionales.
+
+Debe soportar:
+
+- tiempo límite
+- intentos
+- score
+- bloqueo al finalizar
+- mensaje de resultado
+
+Elementos de UI recomendados
+
+- contador de tiempo
+- barra de progreso
+- total de preguntas
+- estado de intento
+
+
+16. Modo juegos de capacitación
+
+En primera versión puede operar sobre la MAIN del quiz.
+
+Debe soportar al menos:
+
+- puntaje
+- progreso
+- ranking posterior
+
+Lo avanzado queda para fases posteriores:
+
+- insignias
+- niveles
+- competencias por equipo
+
+
+17. Reglas de persistencia durante la respuesta
+
+El módulo debe distinguir:
+
+- respuesta en progreso
+- respuesta enviada
+- intento expirado
+- intento cancelado
+
+Cada guardado parcial debe escribir:
+
+- respuesta parcial
+- timestamp
+- sección o paso actual
+
+
+18. Soporte móvil
+
+La experiencia de respuesta debe ser móvil primero.
+
+Reglas mínimas
+
+- inputs de ancho completo
+- escalas responsivas
+- botones grandes
+- navegación clara
+- evitar tablas complejas en móvil
+
+Especial atención
+
+- NPS 0 a 10
+- escalas
+- quizzes con tiempo
+
+
+19. Accesibilidad y claridad
+
+El módulo debe ser usable sin ambigüedad.
+
+Puntos mínimos
+
+- labels visibles
+- mensajes de error claros
+- contraste adecuado
+- estados de foco
+- jerarquía visual limpia
+
+
+20. Integración visual con el sistema
+
+Aunque este módulo es independiente, debe usar:
+
+- CSS oficial
+- clases oficiales
+- componentes oficiales del proyecto
+
+Por ello el módulo de respuesta debe basarse en:
+
+- `input`
+- `textarea`
+- `radio`
+- `checkbox`
+- `select`
+- `progress`
+- `card`
+- `badge`
+- botones oficiales
+
+
+21. Flujo técnico de una respuesta
+
+Secuencia sugerida
+
+1. validar acceso
+2. cargar definición de encuesta
+3. cargar borrador si existe
+4. renderizar secciones y preguntas
+5. guardar parcial cuando aplique
+6. validar envío
+7. persistir respuesta final
+8. calcular resultados iniciales si corresponde
+9. mostrar pantalla final
+
+
+22. Alcance MVP del módulo de respuesta
+
+Incluido
+
+- acceso autenticado o por enlace
+- pantalla de inicio
+- flujo por secciones
+- validaciones básicas
+- guardado de borrador cuando aplique
+- envío final
+- cierre de encuesta
+- soporte para quizzes básicos
+- soporte para 360 básico
+
+No incluido
+
+- branching complejo
+- feedback dinámico en tiempo real por respuesta
+- colaboración multiusuario
+- modo offline
+- multimedia avanzada
+
+
+23. Riesgos a evitar
+
+- mezclar builder con responder
+- no guardar borradores en encuestas largas
+- no manejar intentos en quizzes
+- no separar experiencia de 360 y quiz de una encuesta normal
+- no pensar en móvil desde el inicio
+
+
+24. Decisiones cerradas de fase 7
+
+- el flujo de respuesta será guiado por secciones o pasos
+- el módulo soportará guardado parcial cuando la encuesta lo permita
+- quizzes tendrán reglas especiales de tiempo, intentos y score
+- 360 tendrá flujo específico sin romper anonimato
+- la experiencia utilizará componentes visuales oficiales del sistema
+
+
+25. Entregables de la fase
+
+La Fase 7 queda completa cuando existan:
+
+- ✅ flujo funcional del respondente
+- ✅ reglas de acceso
+- ✅ reglas de guardado parcial
+- ✅ reglas de envío final
+- ✅ reglas especiales para quiz y 360
+- ✅ lineamientos móviles
+- ✅ lineamientos visuales consistentes con el sistema
+
+
+Pendiente al cerrar Fase 7
+
+⏳ Siguiente fase: Scoring y reglas
+
+
+✅ FASE 8. SCORING Y REGLAS
+
+Objetivo de la fase
+
+Definir cómo se calcularán puntajes, métricas, ponderaciones y reglas de negocio para los distintos tipos de instrumentos del módulo de encuestas.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- cuándo aplica scoring
+- cómo se calcula por pregunta
+- cómo se calcula por sección
+- cómo se calcula por encuesta
+- reglas especiales por tipo de instrumento
+- fórmulas mínimas para NPS, CSAT, CES, 360 y quizzes
+- cómo se almacenan los resultados
+
+
+1. Principio general del scoring
+
+No todos los instrumentos tienen puntaje.
+
+El sistema debe separar:
+
+- captura de respuesta
+- cálculo de score
+- métricas de reporte
+
+Decisión funcional
+
+El scoring será opcional a nivel de encuesta, pero obligatorio en tipos que lo necesiten como:
+
+- quizzes
+- juegos de capacitación
+- evaluaciones calificables
+
+
+2. Capas de cálculo
+
+El motor de scoring debe poder calcular en 4 niveles:
+
+1. nivel opción
+2. nivel pregunta
+3. nivel sección
+4. nivel encuesta
+
+Y en casos especiales:
+
+5. nivel relación evaluador/evaluado en 360
+6. nivel métrica especializada en satisfacción
+
+
+3. Reglas MAIN por tipo de pregunta
+
+`short_text`
+- sin score por defecto
+- se almacena como respuesta cualitativa
+
+`long_text`
+- sin score por defecto
+- útil para análisis cualitativo posterior
+
+`single_choice`
+- puede tener score por opción
+
+`multiple_choice`
+- puede sumar score por opción
+- puede aplicar límites o penalización si se selecciona mal
+
+`yes_no`
+- puede mapear a score binario
+
+`scale_1_5`
+- score directo 1 a 5
+- o score ponderado
+
+`nps_0_10`
+- no debe tratarse como score común
+- debe alimentar métrica NPS especializada
+
+`quiz_single_choice`
+- score obligatorio
+- usa opción correcta
+
+
+4. Reglas de scoring por pregunta
+
+Cada pregunta puede tener:
+
+- `is_scored`
+- `weight`
+- `score_mode`
+- `max_score`
+
+Modos sugeridos
+
+- `direct`
+- `option_sum`
+- `correct_incorrect`
+- `special_metric`
+
+Ejemplos
+
+`scale_1_5`
+- score directo = valor elegido
+
+`single_choice`
+- score = score de la opción elegida
+
+`quiz_single_choice`
+- score = puntaje completo si es correcta, cero si no
+
+
+5. Reglas de scoring por sección
+
+Cada sección puede definir:
+
+- si puntúa
+- su peso relativo
+- si se promedia o se suma
+
+Modos recomendados
+
+- suma total
+- promedio simple
+- promedio ponderado
+
+Uso
+
+En 360 y evaluaciones por competencias esto es especialmente importante.
+
+
+6. Reglas de scoring por encuesta
+
+El score total debe poder calcularse como:
+
+- suma de preguntas
+- suma por sección
+- promedio general
+- promedio ponderado
+
+Campos derivados recomendados
+
+- `total_score`
+- `percentage_score`
+- `section_scores`
+- `result_level`
+
+
+7. Escalas de resultado
+
+Además del puntaje numérico, conviene soportar niveles interpretativos.
+
+Ejemplos
+
+- `Bajo`
+- `Medio`
+- `Alto`
+
+o
+
+- `Reprobado`
+- `Aprobado`
+- `Sobresaliente`
+
+Regla
+
+Las escalas deben ser configurables por tipo de encuesta.
+
+
+8. Fórmula para quizzes
+
+Cálculo mínimo
+
+- total de preguntas
+- total correctas
+- total incorrectas
+- score acumulado
+- porcentaje de aprobación
+
+Regla sugerida
+
+- `percentage_score = (score_obtained / score_maximo) * 100`
+
+Campos adicionales útiles
+
+- `approved`
+- `passing_score`
+- `attempt_number`
+- `ranking_score`
+
+
+9. Fórmula para juegos de capacitación
+
+En MVP puede reutilizar scoring de quiz.
+
+Elementos MAIN
+
+- puntaje total
+- tiempo usado
+- posición en ranking
+
+Para fases posteriores
+
+- multiplicadores
+- bonus por velocidad
+- insignias
+- nivel
+
+
+10. Fórmula para satisfacción del cliente
+
+No todo debe reducirse a score general.
+
+Métricas mínimas
+
+NPS
+- promotores: respuestas 9 y 10
+- pasivos: respuestas 7 y 8
+- detractores: respuestas 0 a 6
+- `NPS = %promotores - %detractores`
+
+CSAT
+- promedio de respuestas de satisfacción
+- o porcentaje de respuestas positivas definidas
+
+CES
+- promedio de esfuerzo percibido
+
+Regla
+
+Estas métricas deben registrarse como `survey_results`, no como simple score bruto.
+
+
+11. Fórmula para evaluación 360
+
+La evaluación 360 requiere consolidación por relación.
+
+Elementos mínimos
+
+- score por competencia
+- score por sección
+- score por tipo de evaluador
+- score consolidado del evaluado
+
+Relaciones
+
+- autoevaluación
+- jefe
+- pares
+- subordinados
+
+Regla recomendada
+
+Permitir peso por relación.
+
+Ejemplo
+
+- autoevaluación: 10%
+- jefe: 40%
+- pares: 30%
+- subordinados: 20%
+
+El consolidado final debe salir de esos pesos.
+
+
+12. Scoring en encuestas no calificables
+
+En encuestas generales o clima laboral puede no existir score clásico.
+
+En esos casos el motor debe calcular:
+
+- promedio por pregunta
+- distribución por opción
+- índice por dimensión
+- porcentaje por segmento
+
+Es decir, no todo produce una nota individual.
+
+
+13. Reglas de intentos y scoring
+
+Cuando existen múltiples intentos:
+
+- cada intento debe almacenar su score
+- el sistema debe definir qué score vale oficialmente
+
+Modos posibles
+
+- último intento
+- mejor intento
+- promedio de intentos
+
+Decisión sugerida para MVP
+
+- quizzes: usar mejor intento o último intento configurable
+
+
+14. Reglas de tiempo y scoring
+
+En quizzes o juegos puede influir el tiempo.
+
+Para MVP
+
+- el tiempo se registra
+- no afecta score salvo que se configure después
+
+Para fase posterior
+
+- bonus por rapidez
+- penalización por tiempo excedido
+
+
+15. Reglas de preguntas abiertas
+
+Las preguntas abiertas no deben forzarse a score artificial.
+
+Deben quedar para:
+
+- análisis cualitativo
+- clasificación posterior
+- minería de texto o IA en fase futura
+
+
+16. Almacenamiento de scoring
+
+El sistema debe almacenar:
+
+En `survey_response_items`
+- `score_obtained`
+- `is_correct`
+
+En `survey_responses`
+- `total_score`
+- `percentage_score`
+
+En `survey_results`
+- métricas agregadas
+- promedios
+- índices
+- NPS, CSAT, CES
+- resultados por competencia
+
+
+17. Reglas de recalculo
+
+Debe definirse cuándo recalcular:
+
+- al guardar respuesta final
+- al cerrar encuesta
+- al consultar reporte
+
+Decisión sugerida
+
+- cálculo básico inmediato al enviar
+- consolidado agregado al cierre o bajo demanda
+
+
+18. Transparencia del scoring
+
+El sistema debe saber si el score es visible al respondente o solo al administrador.
+
+Configuraciones posibles
+
+- mostrar puntaje al enviar
+- ocultar puntaje
+- mostrar solo aprobado/reprobado
+- mostrar resultado al cierre de campaña
+
+Esto aplica mucho en:
+
+- quizzes
+- evaluaciones internas
+
+
+19. Reglas de negocio por tipo de instrumento
+
+Encuesta general
+- sin score obligatorio
+- métricas agregadas
+
+Satisfacción del cliente
+- métricas especializadas
+- sin nota tipo examen
+
+360
+- score ponderado por relación y competencia
+
+Quiz
+- score obligatorio
+- resultado individual
+
+Juego de capacitación
+- score y ranking
+
+
+20. Configuración visible en el builder
+
+El constructor debe permitir configurar:
+
+- si puntúa o no
+- peso de pregunta
+- peso de sección
+- respuesta correcta
+- score por opción
+- score de aprobación
+- visibilidad del score
+
+No todo debe mostrarse en todos los tipos.
+
+Regla
+
+La UI de scoring debe ser contextual según tipo de instrumento.
+
+
+21. Riesgos a evitar
+
+- tratar NPS como score normal
+- mezclar promedio con suma sin control
+- no separar score individual de métrica agregada
+- asignar score a preguntas abiertas sin criterio
+- no definir qué pasa con múltiples intentos
+
+
+22. Decisiones cerradas de fase 8
+
+- el scoring será opcional por encuesta, obligatorio en quiz y juegos
+- NPS, CSAT y CES se manejarán como métricas especializadas
+- 360 tendrá consolidación ponderada por relación
+- el sistema soportará score por pregunta, sección y encuesta
+- las preguntas abiertas no tendrán score por defecto
+- el resultado podrá ser visible o no según configuración
+
+
+23. Entregables de la fase
+
+La Fase 8 queda completa cuando existan:
+
+- ✅ reglas de scoring por tipo de pregunta
+- ✅ reglas de scoring por sección
+- ✅ reglas de scoring por encuesta
+- ✅ fórmula mínima para quiz
+- ✅ fórmula mínima para NPS/CSAT/CES
+- ✅ fórmula mínima para 360
+- ✅ reglas de intentos y visibilidad
+- ✅ definición de almacenamiento del score
+
+
+Pendiente al cerrar Fase 8
+
+⏳ Siguiente fase: Analítica y reportes
+
+
+FASE 9. ANALÍTICA Y REPORTES
+
+Objetivo de la fase
+
+Definir cómo se consultarán, interpretarán, filtrarán y exportarán los resultados de las encuestas, quizzes, satisfacción y evaluaciones 360 dentro del módulo.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- vistas analíticas del módulo
+- métricas mínimas por tipo de instrumento
+- estructura de dashboards
+- filtros
+- reportes tabulares
+- exportaciones
+- reglas de anonimato en analítica
+- librerías oficiales a utilizar
+
+
+1. Propósito de la analítica
+
+La analítica convierte respuestas en información útil.
+
+Debe servir para:
+
+- ver participación
+- medir resultados
+- detectar tendencias
+- comparar segmentos
+- exportar evidencia
+- apoyar decisiones
+
+No debe limitarse a listar respuestas crudas.
+
+
+2. Niveles de reporte
+
+El módulo debe soportar al menos 4 niveles:
+
+1. Resumen general de encuesta
+2. Resultado por pregunta
+3. Resultado por segmento
+4. Respuesta individual cuando el permiso lo permita
+
+Y en casos especiales:
+
+5. Consolidado por evaluado en 360
+6. Ranking en quizzes o juegos
+
+
+3. Vistas analíticas principales
+
+El módulo debe contar con estas vistas:
+
+1. `Dashboard general`
+- resumen del módulo
+- campañas activas
+- tasas de respuesta
+- resultados rápidos
+
+2. `Reporte de encuesta`
+- resultados de una encuesta específica
+
+3. `Reporte por pregunta`
+- distribución de respuestas
+- promedio o score por pregunta
+
+4. `Reporte por segmento`
+- área
+- rol
+- puesto
+- empresa
+- campaña
+
+5. `Detalle de respuestas`
+- listado tabular
+- solo cuando la configuración y permisos lo permitan
+
+6. `Reporte especializado`
+- NPS
+- 360
+- quiz
+
+
+4. Dashboard general del módulo
+
+Debe mostrar indicadores rápidos como:
+
+- total de encuestas
+- publicadas
+- en borrador
+- cerradas
+- total de respuestas
+- tasa general de participación
+- quizzes ejecutados
+- evaluaciones 360 activas
+
+También puede incluir:
+
+- encuestas más respondidas
+- encuestas con menor participación
+- próximas a vencer
+
+
+5. Reporte MAIN por encuesta
+
+Toda encuesta debe tener un reporte MAIN estándar.
+
+Campos mínimos
+
+- nombre
+- tipo
+- estado
+- fechas
+- creador
+- total asignados
+- total respondidos
+- total pendientes
+- porcentaje de respuesta
+
+Métricas básicas
+
+- avance
+- promedio general si aplica
+- distribución de respuestas
+
+
+6. Reporte por pregunta
+
+Cada pregunta debe poder mostrar:
+
+- total de respuestas
+- porcentaje de respuesta
+- distribución por opción
+- promedio si es escala
+- score si aplica
+- respuestas abiertas si corresponde
+
+Visualizaciones recomendadas
+
+- barras
+- dona/pie cuando tenga sentido
+- tabla simple
+
+Regla
+
+No usar visualizaciones complejas si una tabla o barra basta.
+
+
+7. Reporte por segmento
+
+Debe poder filtrar por:
+
+- empresa
+- área
+- puesto
+- rol
+- sede
+- grupo
+- campaña
+- relación 360
+
+Objetivo
+
+Comparar diferencias entre segmentos sin alterar el histórico.
+
+Esto requiere usar snapshots guardados en asignación/respuesta.
+
+
+8. Reporte de respuestas abiertas
+
+Las respuestas abiertas requieren una vista específica.
+
+Debe permitir:
+
+- listado
+- búsqueda
+- filtro por encuesta
+- filtro por segmento
+- exportación
+
+En fase posterior
+
+- análisis semántico
+- clustering
+- resumen con IA
+
+
+9. Reporte para satisfacción del cliente
+
+Debe incluir métricas especializadas:
+
+- NPS
+- CSAT
+- CES
+- promedio por canal
+- promedio por agencia
+- promedio por ejecutivo
+
+Visualizaciones recomendadas
+
+- tarjeta principal de métrica
+- barras comparativas
+- evolución temporal
+
+
+10. Reporte para evaluación 360
+
+Debe enfocarse en el evaluado, no solo en respuestas crudas.
+
+Debe mostrar:
+
+- promedio global
+- promedio por competencia
+- comparativo por relación
+- comparativo autoevaluación vs externos
+- fortalezas
+- áreas de mejora
+
+Regla crítica
+
+La identidad de evaluadores no debe exponerse si el modelo es anónimo o restringido.
+
+
+11. Reporte para quizzes
+
+Debe mostrar:
+
+- score promedio
+- score máximo
+- score mínimo
+- porcentaje de aprobación
+- total de intentos
+- ranking
+- preguntas más falladas
+
+Visualizaciones recomendadas
+
+- barras
+- tabla ranking
+- heatmap simple en fase posterior
+
+
+12. Reporte para juegos de capacitación
+
+En MVP puede reaprovechar el reporte de quiz.
+
+Debe incluir:
+
+- ranking
+- puntajes
+- intentos
+- avance
+
+Para fases posteriores
+
+- niveles
+- badges
+- comparación por equipos
+
+
+13. Filtros mínimos
+
+Todos los reportes deben soportar filtros básicos.
+
+Filtros recomendados
+
+- encuesta
+- estado
+- fecha
+- empresa
+- área
+- puesto
+- rol
+- grupo
+- tipo de instrumento
+
+Filtros especializados
+
+- evaluado en 360
+- tipo de relación
+- campaña
+- resultado aprobado/reprobado
+
+
+14. Exportaciones
+
+El módulo debe permitir exportar:
+
+- CSV
+- Excel
+
+Y dejar listo para:
+
+- PDF en fase posterior
+
+Usos recomendados
+
+CSV
+- respuestas crudas
+- listados
+
+Excel
+- reportes tabulares
+- consolidados por segmento
+- rankings
+
+PDF
+- informes ejecutivos
+- resultados 360
+
+
+15. Librerías a usar
+
+Como el sistema ya tiene librerías oficiales, la analítica debe aprovecharlas.
+
+Frontend
+
+- `Chart.js`
+- `chartjs-plugin-datalabels`
+- `chartjs-plugin-annotation`
+
+Backend
+
+- `pandas`
+- `openpyxl`
+- `reportlab`
+
+Regla
+
+No introducir nuevas librerías si las existentes cubren el caso.
+
+
+16. Componentes visuales para reportes
+
+Deben montarse sobre clases oficiales del sistema.
+
+Componentes recomendados
+
+- `survey-report-card`
+- `survey-metric-card`
+- `survey-chart-card`
+- `survey-table-wrap`
+- `survey-filter-bar`
+- `survey-export-actions`
+
+Estos wrappers deben usar:
+
+- cards oficiales
+- tablas oficiales
+- botones oficiales
+- filtros oficiales
+
+
+17. Reglas de anonimato en reportes
+
+El motor analítico debe respetar siempre:
+
+- anonimato total
+- identidad restringida
+- visibilidad por permiso
+
+Reglas mínimas
+
+- no mostrar nombres si la encuesta es anónima
+- no mostrar detalle individual en 360 restringido
+- no exportar identidad si el perfil no tiene permiso
+- aplicar umbral mínimo para reportes agregados sensibles cuando sea necesario
+
+
+18. Umbrales mínimos para proteger anonimato
+
+En reportes sensibles conviene definir un umbral mínimo de respuestas agregadas.
+
+Ejemplo
+
+- no mostrar corte por segmento si solo hay 1 o 2 respuestas
+
+Esto aplica especialmente en:
+
+- clima laboral
+- ética
+- 360
+
+
+19. Reportes históricos y comparativos
+
+El módulo debe permitir comparar:
+
+- campañas distintas
+- periodos distintos
+- áreas distintas
+- versiones de encuesta cuando aplique
+
+Comparativos iniciales recomendados
+
+- antes vs después
+- área A vs área B
+- mes actual vs mes anterior
+
+
+20. Indicadores clave del módulo
+
+KPI mínimos globales
+
+- tasa de respuesta
+- tiempo promedio de respuesta
+- score promedio
+- NPS promedio
+- tasa de aprobación de quizzes
+- cantidad de evaluaciones 360 completadas
+
+
+21. Rendimiento y escalabilidad analítica
+
+No todos los cálculos deben hacerse en vivo cada vez.
+
+Decisión recomendada
+
+- cálculo inmediato para métricas básicas
+- consolidado agregado por lote o bajo demanda para reportes más pesados
+
+Esto ayuda cuando haya:
+
+- muchas respuestas
+- múltiples segmentos
+- dashboards repetitivos
+
+
+22. Acciones disponibles desde reportes
+
+Los reportes deben permitir:
+
+- exportar
+- filtrar
+- cambiar visualización
+- abrir detalle
+- volver a encuesta
+
+Acciones adicionales futuras
+
+- compartir reporte
+- programar envío
+- generar informe PDF automático
+
+
+23. Alcance MVP de analítica y reportes
+
+Incluido
+
+- dashboard básico
+- resumen por encuesta
+- resultados por pregunta
+- resultados por segmento
+- detalle tabular
+- NPS/CSAT/CES básicos
+- reporte 360 básico
+- ranking de quizzes
+- exportación CSV y Excel
+
+No incluido
+
+- BI avanzado
+- cubos analíticos
+- análisis predictivo
+- IA sobre texto abierto
+- programador de reportes
+
+
+24. Riesgos a evitar
+
+- mostrar respuestas individuales sin permiso
+- usar gráficas innecesarias
+- recalcular todo siempre en vivo
+- no distinguir score de métrica especializada
+- no usar snapshots históricos en segmentación
+
+
+25. Decisiones cerradas de fase 9
+
+- la analítica tendrá dashboard, reporte MAIN, reporte por pregunta, por segmento y especializado
+- `Chart.js` será la MAIN de visualización
+- `pandas` y `openpyxl` serán la MAIN de exportación tabular
+- el anonimato se respetará también en exportaciones y filtros
+- 360, satisfacción y quizzes tendrán vistas analíticas especializadas
+
+
+26. Entregables de la fase
+
+La Fase 9 queda completa cuando existan:
+
+- catálogo de vistas analíticas
+- métricas mínimas por tipo de instrumento
+- filtros mínimos
+- reglas de anonimato en reportes
+- reglas de exportación
+- estructura del dashboard
+- definición de reportes especializados
+
+
+Pendiente al cerrar Fase 9
+
+⏳ Siguiente fase: Anonimato, permisos y seguridad
+
+
+FASE 10. ANONIMATO, PERMISOS Y SEGURIDAD
+
+Objetivo de la fase
+
+Definir las reglas de acceso, anonimato, visibilidad, protección de datos y control de operaciones del módulo de encuestas, de forma que el sistema sea confiable y no exponga información sensible.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- modelo de permisos
+- niveles de acceso
+- reglas de anonimato
+- reglas de visibilidad de respuestas
+- reglas de exportación segura
+- seguridad para encuestas internas y externas
+- reglas especiales para 360 y clima laboral
+
+
+1. Principio rector
+
+El módulo debe operar bajo el principio de mínimo privilegio.
+
+Eso significa:
+
+- cada usuario ve solo lo necesario
+- cada rol ejecuta solo lo que le corresponde
+- los datos sensibles se ocultan por defecto
+
+
+2. Tipos de acceso dentro del módulo
+
+El sistema debe distinguir al menos estos roles funcionales:
+
+1. `Administrador del módulo`
+- control total
+
+2. `Analista o creador`
+- crea y gestiona sus encuestas
+
+3. `Supervisor o revisor`
+- consulta resultados permitidos
+
+4. `Respondente interno`
+- responde sus instrumentos
+
+5. `Respondente externo`
+- responde por enlace o token
+
+
+3. Acciones a controlar por permiso
+
+Las acciones deben separarse explícitamente.
+
+Permisos mínimos
+
+- crear encuesta
+- editar borrador
+- publicar encuesta
+- cerrar encuesta
+- archivar encuesta
+- asignar audiencia
+- ver respuestas individuales
+- ver respuestas agregadas
+- exportar resultados
+- administrar plantillas
+- administrar configuraciones de scoring
+- administrar visibilidad de identidad
+
+
+4. Niveles de visibilidad de identidad
+
+El sistema debe soportar tres niveles:
+
+1. `Identificada`
+- la identidad del respondente puede verse según permisos
+
+2. `Restringida`
+- el sistema conoce al respondente
+- los reportes normales no muestran identidad
+- solo perfiles especiales pueden auditar si aplica
+
+3. `Anónima`
+- la identidad no debe ser visible en reportes
+- la exposición de identidad debe quedar bloqueada para operación normal
+
+
+5. Regla de anonimato por tipo de instrumento
+
+Encuestas generales
+- pueden ser identificadas, restringidas o anónimas
+
+Satisfacción del cliente
+- pueden ser identificadas o anónimas según campaña
+
+Clima laboral
+- debe soportar anonimato real o restringido
+
+Evaluación 360
+- debe ser restringida por defecto
+- nunca mostrar evaluadores individuales en reporte estándar
+
+Quizzes
+- normalmente identificados
+
+Juegos de capacitación
+- identificados
+
+
+6. Reglas para respuestas individuales
+
+No toda encuesta debe permitir ver respuestas individuales.
+
+Reglas sugeridas
+
+- si la encuesta es anónima, no mostrar identidad del respondente
+- si es restringida, solo perfiles autorizados pueden auditar
+- si es 360, no mostrar identidad del evaluador al evaluado
+- si es clima laboral, bloquear detalle identificable en reportes normales
+
+
+7. Umbrales mínimos para proteger identidad
+
+En reportes segmentados, incluso sin mostrar nombres, puede deducirse identidad si el grupo es muy pequeño.
+
+Regla recomendada
+
+No mostrar cortes sensibles cuando el grupo tenga menos de un umbral mínimo.
+
+Ejemplo sugerido
+
+- mínimo 3 o 5 respuestas para mostrar un segmento
+
+Esto aplica especialmente en:
+
+- clima laboral
+- ética
+- 360
+- encuestas internas sensibles
+
+
+8. Seguridad de acceso a encuestas
+
+El módulo debe validar acceso al momento de responder.
+
+Casos
+
+Interno autenticado
+- por usuario y asignación
+
+Externo por enlace
+- por token o enlace público controlado
+
+Quiz
+- por intento permitido
+
+360
+- por relación evaluador/evaluado válida
+
+Regla
+
+No basta con ocultar botones en UI; el backend debe validar siempre.
+
+
+9. Seguridad de enlaces externos
+
+Para encuestas externas o públicas se debe definir el nivel de protección.
+
+Modos recomendados
+
+1. público abierto
+- cualquiera con enlace responde
+
+2. token único
+- un enlace por destinatario
+
+3. token reutilizable controlado
+- válido hasta fecha de cierre
+
+Reglas mínimas
+
+- tokens suficientemente aleatorios
+- posibilidad de expiración
+- invalidación al completar si aplica
+
+
+10. Permisos sobre plantillas y campañas
+
+Las plantillas y las campañas no deben tener exactamente la misma visibilidad.
+
+Regla sugerida
+
+Plantillas
+- administradores o analistas autorizados
+
+Campañas
+- creador
+- administradores
+- revisores autorizados
+
+
+11. Permisos sobre resultados
+
+Debe existir diferencia clara entre:
+
+- ver dashboard general
+- ver métricas agregadas
+- ver resultados segmentados
+- ver respuestas individuales
+- exportar detalle
+
+Regla
+
+El permiso para ver agregado no implica permiso para ver detalle individual.
+
+
+12. Permisos sobre exportaciones
+
+Exportar es una acción sensible.
+
+Tipos de exportación
+
+- agregado
+- detalle sin identidad
+- detalle con identidad
+
+Regla de seguridad
+
+- no todos los usuarios pueden exportar
+- el tipo de exportación depende del permiso
+- exportaciones sensibles deben respetar anonimato y segmentación mínima
+
+
+13. Seguridad para evaluación 360
+
+La 360 es uno de los casos más sensibles del módulo.
+
+Reglas mínimas obligatorias
+
+- el evaluado no ve identidad de evaluadores individuales
+- el reporte estándar consolida por relación o competencia
+- solo perfiles muy autorizados podrían auditar trazabilidad técnica
+- no exportar detalle nominativo salvo permiso explícito
+
+
+14. Seguridad para clima laboral y encuestas sensibles
+
+Encuestas sensibles incluyen:
+
+- clima laboral
+- ética
+- integridad
+- cultura
+- acoso o denuncias internas
+
+Reglas sugeridas
+
+- anonimato por defecto
+- umbral mínimo para segmentación
+- bloqueo de detalle individual
+- exportación limitada
+
+
+15. Seguridad del almacenamiento
+
+Aunque el diseño sea independiente por módulo, debe proteger:
+
+- identidad técnica
+- respuestas
+- scores
+- metadatos de campaña
+
+Reglas recomendadas
+
+- no exponer ids internos innecesarios
+- usar UUID o tokens hacia frontend
+- registrar acciones sensibles
+- minimizar datos visibles en APIs
+
+
+16. Seguridad del backend
+
+El backend debe controlar:
+
+- autenticación
+- autorización por rol
+- autorización por encuesta
+- autorización por respuesta
+- autorización por exportación
+
+No confiar en:
+
+- ocultar botones
+- estados del frontend
+- filtros del cliente
+
+
+17. Seguridad del frontend
+
+El frontend debe reflejar permisos, pero no reemplazarlos.
+
+Debe:
+
+- ocultar acciones no autorizadas
+- deshabilitar opciones inválidas
+- no mostrar datos que backend no envíe
+
+Regla
+
+La UI ayuda a la experiencia, pero la seguridad real está en backend.
+
+
+18. Auditoría y trazabilidad
+
+El módulo debe dejar registro de acciones sensibles.
+
+Eventos a registrar
+
+- publicación de encuesta
+- cambio de reglas de anonimato
+- exportación de resultados
+- cierre o reapertura
+- acceso a detalle individual
+- administración de plantillas
+
+
+19. Visibilidad por ámbito organizacional
+
+Además del rol general, puede existir restricción por ámbito.
+
+Ejemplos
+
+- un supervisor solo ve resultados de su área
+- un analista solo ve campañas que creó
+- un gerente solo ve reportes agregados de su empresa
+
+Esto debe convivir con la política de anonimato.
+
+
+20. Reglas para combinación de permisos
+
+Casos importantes
+
+Puede haber usuario que:
+
+- crea pero no exporta
+- ve agregado pero no detalle
+- administra plantillas pero no campañas
+- responde pero no consulta resultados
+
+Por eso los permisos deben ser granulares y no solo por rol general.
+
+
+21. Reglas sobre borradores y edición
+
+No cualquiera debe editar una encuesta.
+
+Reglas sugeridas
+
+- solo creador o administrador edita borradores
+- encuestas publicadas no se editan estructuralmente
+- cambios sensibles deben quedar auditados
+
+
+22. Reglas de confidencialidad por tipo de reporte
+
+Reporte agregado
+- menos sensible
+
+Reporte segmentado
+- sensibilidad media o alta
+
+Reporte individual
+- altamente sensible
+
+Exportación detallada
+- crítica
+
+Cada uno debe requerir permiso distinto.
+
+
+23. Alcance MVP de seguridad
+
+Incluido
+
+- control por rol funcional
+- anonimato por encuesta
+- visibilidad diferenciada entre agregado y detalle
+- reglas especiales para 360
+- reglas especiales para encuestas sensibles
+- exportación controlada
+- validación backend de acceso y respuesta
+
+No incluido
+
+- cifrado de campo a campo avanzado
+- DLP avanzado
+- políticas de retención automáticas complejas
+- SIEM o monitoreo externo
+
+
+24. Riesgos a evitar
+
+- asumir que anonimato es solo ocultar nombre en pantalla
+- mostrar segmentos con muy pocas respuestas
+- permitir exportar identidad sin control
+- no separar agregado de detalle
+- dejar seguridad en frontend
+
+
+25. Decisiones cerradas de fase 10
+
+- el módulo operará con permisos granulares
+- anonimato, restringido e identificado serán modos distintos
+- 360 será restringida por defecto
+- clima laboral y encuestas sensibles tendrán protección reforzada
+- backend validará toda acción crítica
+- exportaciones tendrán control por nivel de sensibilidad
+
+
+26. Entregables de la fase
+
+La Fase 10 queda completa cuando existan:
+
+- matriz de permisos
+- reglas de anonimato por tipo de encuesta
+- reglas de acceso a respuestas
+- reglas de visibilidad de reportes
+- reglas de exportación segura
+- reglas especiales para 360 y clima laboral
+- lineamientos de auditoría
+
+
+Pendiente al cerrar Fase 10
+
+⏳ Siguiente fase: Gamificación
+
+
+FASE 11. GAMIFICACIÓN
+
+Objetivo de la fase
+
+Definir cómo el módulo de encuestas incorporará mecánicas de juego para quizzes, capacitaciones y dinámicas internas, sin perder estructura, control ni consistencia con el sistema.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- alcance real de la gamificación
+- mecánicas mínimas del MVP
+- relación entre encuesta, quiz y juego
+- reglas de puntaje competitivo
+- ranking
+- niveles futuros
+- relación con capacitación
+
+
+1. Propósito de la gamificación
+
+La gamificación no debe ser un adorno visual.
+
+Debe servir para:
+
+- aumentar participación
+- mejorar retención en capacitación
+- motivar respuestas completas
+- generar competencia sana
+- hacer más atractivos quizzes y dinámicas
+
+
+2. Alcance de gamificación dentro del módulo
+
+La gamificación no aplica a todas las encuestas.
+
+Aplica principalmente a:
+
+- quizzes
+- juegos de capacitación
+- dinámicas internas
+- campañas de aprendizaje
+
+No debe aplicarse por defecto a:
+
+- clima laboral
+- satisfacción del cliente
+- 360
+- encuestas sensibles
+
+
+3. Nivel de madurez gamificada por fases
+
+MVP
+
+- score
+- ranking
+- intentos
+- temporizador
+- mensaje de resultado
+
+Fase posterior
+
+- insignias
+- niveles
+- retos por equipos
+- logros
+- streaks
+- recompensas
+
+
+4. Componentes MAIN de gamificación
+
+El sistema debe poder manejar al menos estos conceptos:
+
+- `points`
+- `score`
+- `attempts`
+- `time_spent`
+- `ranking_position`
+- `approved`
+- `result_level`
+
+Componentes futuros
+
+- `badges`
+- `levels`
+- `milestones`
+- `team_score`
+- `seasonal_events`
+
+
+5. Relación con el motor de scoring
+
+La gamificación debe montarse sobre el scoring ya definido.
+
+Regla
+
+- no crear un motor nuevo separado
+- reutilizar score, intentos y tiempos del módulo
+
+Ejemplo
+
+Quiz
+- score final
+- tiempo usado
+- ranking
+
+Juego de capacitación
+- score final
+- posición
+- estado aprobado
+
+
+6. Mecánicas del MVP
+
+Mecánicas incluidas
+
+1. Puntaje total
+2. Porcentaje de aciertos
+3. Tiempo utilizado
+4. Ranking individual
+5. Aprobado / no aprobado
+
+Mecánicas excluidas por ahora
+
+- puntos por racha
+- monedas o créditos
+- recompensas configurables
+- avatars y perfiles de juego
+
+
+7. Ranking
+
+El ranking es una de las salidas principales del modo gamificado.
+
+Debe poder ordenarse por:
+
+- score
+- porcentaje
+- tiempo
+- intento válido
+
+Regla recomendada
+
+Orden principal:
+
+- mayor score
+
+Desempate:
+
+- menor tiempo
+
+Segundo desempate:
+
+- intento más temprano o más reciente según política definida
+
+
+8. Reglas de intentos en gamificación
+
+Debe definirse claramente qué vale en ranking cuando hay varios intentos.
+
+Opciones
+
+- mejor intento
+- último intento
+- promedio
+
+Decisión sugerida para MVP
+
+- usar `mejor intento`
+
+Razón
+
+Es más intuitivo en capacitación y competencias.
+
+
+9. Temporizador
+
+Debe existir cuando el instrumento sea quiz o juego.
+
+Funciones mínimas
+
+- mostrar tiempo restante
+- registrar tiempo usado
+- finalizar al vencer
+
+Uso del tiempo en MVP
+
+- se registra
+- puede desempatar ranking
+
+No se requiere aún
+
+- bonus por velocidad complejos
+
+
+10. Estado de resultado
+
+El usuario debe recibir una salida clara.
+
+Estados posibles
+
+- completado
+- aprobado
+- no aprobado
+- top score
+
+Mensajes sugeridos
+
+- `Completaste el quiz`
+- `Aprobaste`
+- `Necesitas reforzar algunos temas`
+- `Tu posición actual es X`
+
+
+11. Insignias y badges
+
+No forman parte del MVP obligatorio, pero deben quedar modeladas conceptualmente.
+
+Tipos futuros sugeridos
+
+- primer intento aprobado
+- score perfecto
+- top 3
+- participación continua
+- finalización rápida
+
+Regla
+
+Se diseñan como extensión del sistema, no como pieza obligatoria de la primera entrega.
+
+
+12. Niveles
+
+También quedan para fase posterior.
+
+Posibles niveles
+
+- básico
+- intermedio
+- avanzado
+- experto
+
+Pueden derivarse de:
+
+- score acumulado
+- cursos aprobados
+- desafíos completados
+
+
+13. Equipos y competencias grupales
+
+No se recomienda meterlos en el MVP, pero deben preverse.
+
+Casos futuros
+
+- competencias por departamento
+- cohortes de capacitación
+- sucursales
+- equipos temporales
+
+Esto implicaría:
+
+- score por equipo
+- ranking grupal
+- consolidado por campaña
+
+
+14. Visibilidad del ranking
+
+Debe poder configurarse.
+
+Opciones
+
+- visible para todos
+- visible solo para administrador
+- visible solo para el participante con su posición
+
+Regla importante
+
+No todo ranking debe ser público, especialmente si hay implicaciones internas sensibles.
+
+
+15. Relación con permisos y seguridad
+
+La gamificación debe respetar las reglas del módulo.
+
+Ejemplos
+
+- no exponer ranking nominativo si no está permitido
+- no usar gamificación en encuestas anónimas sensibles
+- no mezclar juegos con evaluaciones 360
+
+
+16. Interfaz visual de gamificación
+
+Debe usar componentes oficiales del sistema.
+
+Componentes sugeridos
+
+- `badge`
+- `progress`
+- `stat card`
+- `table`
+- `ranking card`
+- `countdown`
+
+No debe parecer una interfaz de videojuego fuera de contexto.
+
+
+17. Integración con capacitación
+
+Esta fase debe quedar alineada con el módulo de capacitación.
+
+Reutilización recomendada
+
+- lógica de quizzes
+- progreso
+- gamificación existente
+- ranking o resultados
+
+Regla
+
+No duplicar motores si ya hay lógica reusable en capacitación.
+
+
+18. Métricas del modo gamificado
+
+Indicadores mínimos
+
+- score promedio
+- mejor score
+- tiempo promedio
+- porcentaje de aprobación
+- top participantes
+- preguntas más falladas
+
+
+19. Casos de uso gamificados
+
+Caso 1
+
+Quiz posterior a capacitación
+- intenta, responde, puntúa, se ubica en ranking
+
+Caso 2
+
+Reto interno entre áreas
+- misma encuesta tipo quiz
+- ranking por usuario en primera fase
+
+Caso 3
+
+Evaluación de repaso
+- sin ranking público
+- con score y aprobado
+
+
+20. Alcance MVP de gamificación
+
+Incluido
+
+- score
+- ranking individual
+- tiempo
+- intentos
+- estado aprobado/reprobado
+
+No incluido
+
+- insignias operativas
+- niveles persistentes
+- retos por equipos
+- recompensas materiales
+- temporadas o campañas gamificadas complejas
+
+
+21. Riesgos a evitar
+
+- gamificar encuestas sensibles
+- exponer rankings donde no corresponde
+- crear un motor paralelo al scoring
+- introducir demasiada complejidad antes de estabilizar quizzes
+
+
+22. Decisiones cerradas de fase 11
+
+- la gamificación del MVP se limitará a quizzes y capacitación
+- score, tiempo, intentos y ranking serán la MAIN
+- el ranking usará mejor score como criterio principal
+- insignias y niveles quedan para fases posteriores
+- se reutilizarán componentes y lógica del ecosistema cuando ya existan
+
+
+23. Entregables de la fase
+
+La Fase 11 queda completa cuando existan:
+
+- catálogo de mecánicas del MVP
+- reglas de ranking
+- reglas de intentos
+- reglas de visibilidad del ranking
+- lineamientos de integración con capacitación
+- límites claros de qué sí y qué no se gamifica
+
+
+Pendiente al cerrar Fase 11
+
+⏳ Siguiente fase: Notificaciones y automatización
+
+
+FASE 12. NOTIFICACIONES Y AUTOMATIZACIÓN
+
+Objetivo de la fase
+
+Definir cómo el módulo de encuestas enviará invitaciones, recordatorios, avisos de cierre y eventos automáticos, para reducir seguimiento manual y mejorar la tasa de respuesta.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- eventos automáticos del módulo
+- tipos de notificación
+- canales permitidos
+- reglas de disparo
+- frecuencia de recordatorios
+- relación con estado de encuesta y asignaciones
+- alcance del MVP de automatización
+
+
+1. Propósito de esta fase
+
+El módulo no debe depender solo de que el usuario entre por iniciativa propia.
+
+Debe poder:
+
+- invitar
+- recordar
+- cerrar
+- notificar resultados o estados
+
+Esto aplica especialmente a:
+
+- campañas de satisfacción
+- quizzes
+- evaluaciones 360
+- encuestas internas con fecha límite
+
+
+2. Tipos de eventos que debe soportar
+
+Eventos mínimos
+
+1. publicación de encuesta
+2. asignación de audiencia
+3. recordatorio de pendiente
+4. aviso de cierre próximo
+5. cierre automático
+6. confirmación de respuesta enviada
+7. resultado disponible cuando aplique
+
+
+3. Tipos de notificación del módulo
+
+Tipos funcionales
+
+- invitación inicial
+- recordatorio
+- aviso de vencimiento
+- cierre
+- confirmación de recepción
+- resultado o calificación
+
+No todas aplican a todos los instrumentos.
+
+
+4. Canales de notificación permitidos
+
+Canales recomendados para MVP
+
+- notificación interna
+- correo electrónico
+
+Canales futuros
+
+- WhatsApp
+- SMS
+- backendhook
+- integración con CRM
+
+Regla
+
+Usar primero los canales que ya existen o son más sencillos de integrar.
+
+
+5. Relación con el módulo de notificaciones existente
+
+Como SIPET ya tiene un módulo de notificaciones internas, el sistema de encuestas debe reutilizarlo cuando aplique.
+
+Casos ideales
+
+- invitación a usuario interno
+- recordatorio de encuesta pendiente
+- quiz asignado
+- evaluación 360 pendiente
+
+Ventaja
+
+- no duplicar infraestructura
+
+
+6. Notificación de invitación inicial
+
+Debe dispararse cuando:
+
+- la encuesta se publica
+- o cuando se completa una asignación posterior a publicación
+
+Contenido mínimo
+
+- nombre de la encuesta
+- objetivo o descripción breve
+- fecha límite
+- enlace o acceso
+- si es anónima o identificada, cuando convenga comunicarlo
+
+
+7. Recordatorios
+
+El sistema debe soportar recordatorios automáticos.
+
+Casos recomendados
+
+- usuario asignado que no ha respondido
+- evaluador 360 pendiente
+- participante de quiz pendiente
+
+Configuraciones mínimas
+
+- recordatorio activo o no
+- frecuencia
+- cantidad máxima
+- último recordatorio enviado
+
+
+8. Aviso de cierre próximo
+
+Debe existir un evento antes del vencimiento.
+
+Ejemplos
+
+- 72 horas antes
+- 24 horas antes
+
+Uso
+
+- aumentar tasa de respuesta
+- alertar sobre quiz pendiente
+- recordar evaluación 360
+
+
+9. Cierre automático
+
+El módulo debe poder cerrar automáticamente una encuesta cuando llega la fecha de vencimiento.
+
+Acciones del cierre
+
+- cambiar estado a `closed`
+- bloquear nuevas respuestas
+- congelar intentos
+- disparar consolidado si aplica
+
+
+10. Confirmación de respuesta enviada
+
+Debe existir una respuesta final o confirmación.
+
+Interno
+
+- puede ser pantalla final suficiente
+
+Externo
+
+- puede incluir confirmación visual y opcionalmente correo
+
+Quiz
+
+- puede mostrar score o mensaje de resultado
+
+
+11. Resultado disponible
+
+Solo aplica en ciertos casos.
+
+Ejemplos
+
+- quiz con score visible
+- evaluación o encuesta con retroalimentación posterior
+
+Configuración recomendada
+
+- mostrar inmediato
+- mostrar al cierre
+- no mostrar
+
+
+12. Reglas por tipo de instrumento
+
+Encuesta general
+- invitación
+- recordatorio
+- aviso de cierre
+
+Satisfacción del cliente
+- invitación inmediata post evento o post servicio
+- opcionalmente sin recordatorio si es de una sola vez
+
+360
+- invitación al evaluador
+- recordatorios pendientes
+- aviso de cierre
+
+Quiz
+- invitación
+- recordatorio
+- score al finalizar si está habilitado
+
+Juego de capacitación
+- igual que quiz, con ranking si aplica
+
+
+13. Reglas de automatización por audiencia
+
+Internos
+
+- usar notificación interna y correo si se configura
+
+Externos
+
+- correo o enlace tokenizado
+
+Públicos
+
+- no hay asignación individual, por lo tanto no hay recordatorio nominal salvo integración externa
+
+
+14. Motor de automatización
+
+El sistema debe poder evaluar periódicamente:
+
+- encuestas por abrir
+- encuestas activas con pendientes
+- encuestas próximas a vencer
+- encuestas que deben cerrarse
+
+Esto puede ejecutarse por:
+
+- tarea programada
+- job recurrente
+- proceso batch
+
+Dado que el proyecto ya tiene `Celery` y `Redis`, esta fase debe considerar su reutilización futura.
+
+
+15. Reutilización de infraestructura existente
+
+Backend
+
+- `Celery`
+- `Redis`
+
+Módulo interno
+
+- notificaciones internas de SIPET
+
+Regla
+
+No construir una automatización paralela si ya existe infraestructura en el proyecto para tareas y notificaciones.
+
+
+16. Configuración mínima por encuesta
+
+Cada encuesta debe poder definir:
+
+- si envía invitación
+- si envía recordatorios
+- frecuencia de recordatorio
+- aviso de cierre
+- mostrar resultado al final o no
+
+Configuraciones futuras
+
+- reglas avanzadas por canal
+- horarios de envío
+- plantillas de mensaje
+
+
+17. Trazabilidad de envíos
+
+Se debe registrar:
+
+- cuándo se envió invitación
+- a quién se envió
+- tipo de notificación
+- canal usado
+- estado del envío
+
+Esto es clave para:
+
+- campañas masivas
+- auditoría
+- soporte
+
+
+18. Prevención de ruido y duplicados
+
+El sistema no debe enviar notificaciones repetidas sin control.
+
+Reglas mínimas
+
+- no reenviar invitación inicial duplicada
+- no recordar a quien ya respondió
+- no recordar después de cierre
+- respetar frecuencia configurada
+
+
+19. Reglas de seguridad y anonimato
+
+Las notificaciones no deben exponer información sensible.
+
+Ejemplos
+
+- no incluir detalle de respuestas
+- no revelar identidad de evaluadores en 360
+- no exponer datos internos de una encuesta sensible
+
+
+20. Alcance MVP de notificaciones y automatización
+
+Incluido
+
+- invitación inicial
+- recordatorio simple
+- aviso de cierre próximo
+- cierre automático
+- confirmación de respuesta enviada
+
+No incluido
+
+- orquestación omnicanal avanzada
+- segmentación avanzada por comportamiento
+- campañas inteligentes
+- mensajes altamente personalizables por plantilla
+
+
+21. Riesgos a evitar
+
+- crear duplicados de notificación
+- no registrar envíos
+- notificar después del cierre
+- exponer datos sensibles en mensajes
+- automatizar demasiado sin reglas claras
+
+
+22. Decisiones cerradas de fase 12
+
+- el módulo soportará invitaciones, recordatorios, aviso de cierre y cierre automático
+- el MVP se apoyará en notificaciones internas y correo
+- la automatización debe poder montarse sobre `Celery` y `Redis`
+- no se notificará a usuarios que ya completaron la encuesta
+- la trazabilidad de envíos será parte del diseño funcional
+
+
+23. Entregables de la fase
+
+La Fase 12 queda completa cuando existan:
+
+- catálogo de eventos automáticos
+- tipos de notificación definidos
+- canales MVP definidos
+- reglas de disparo
+- reglas de recordatorio
+- reglas de cierre automático
+- lineamientos de trazabilidad
+
+
+Pendiente al cerrar Fase 12
+
+⏳ Siguiente fase: Plantillas por caso de uso
+
+
+FASE 13. PLANTILLAS POR CASO DE USO
+
+Objetivo de la fase
+
+Definir el catálogo inicial de plantillas reutilizables que traerá el módulo de encuestas para acelerar adopción, estandarizar instrumentos y evitar que cada usuario tenga que construir todo desde cero.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- catálogo inicial de plantillas
+- agrupación por caso de uso
+- estructura mínima de cada plantilla
+- qué plantillas entran al MVP
+- qué plantillas quedan para después
+
+
+1. Propósito de las plantillas
+
+Las plantillas reducen tiempo de configuración y elevan calidad funcional.
+
+Deben servir para:
+
+- arrancar rápido
+- estandarizar prácticas
+- evitar errores de diseño
+- reutilizar encuestas frecuentes
+
+No deben ser solo ejemplos decorativos; deben ser instrumentos útiles desde el primer día.
+
+
+2. Clasificación general de plantillas
+
+El módulo debe agrupar las plantillas por familia funcional.
+
+Familias recomendadas
+
+- encuestas generales
+- satisfacción del cliente
+- recursos humanos
+- capacitación
+- eventos
+- evaluaciones
+- diagnósticos
+
+
+3. Plantillas mínimas del MVP
+
+Estas deben existir desde la primera versión:
+
+1. Encuesta general
+2. Satisfacción del cliente
+3. NPS
+4. Clima laboral corto
+5. Evaluación 360 básica
+6. Quiz de capacitación
+7. Encuesta post evento
+
+
+4. Plantilla: Encuesta general
+
+Uso
+
+Encuestas simples internas o externas.
+
+Estructura recomendada
+
+- datos generales
+- 5 a 10 preguntas variadas
+- texto abierto final
+
+Tipos de pregunta sugeridos
+
+- opción única
+- opción múltiple
+- sí/no
+- texto largo
+
+Objetivo
+
+Ser la plantilla MAIN más flexible del sistema.
+
+
+5. Plantilla: Satisfacción del cliente
+
+Uso
+
+Medir experiencia posterior a servicio, compra o atención.
+
+Estructura recomendada
+
+- pregunta principal de satisfacción
+- preguntas por atributos
+- comentario final
+
+Tipos de pregunta sugeridos
+
+- escala 1 a 5
+- opción única
+- texto largo
+
+Campos funcionales sugeridos
+
+- canal
+- ejecutivo
+- sucursal
+
+
+6. Plantilla: NPS
+
+Uso
+
+Medir recomendación del servicio o marca.
+
+Estructura mínima
+
+- pregunta NPS 0-10
+- razón de la calificación
+
+Tipos de pregunta sugeridos
+
+- `nps_0_10`
+- `long_text`
+
+Objetivo
+
+Ser la plantilla más rápida para campañas de experiencia del cliente.
+
+
+7. Plantilla: Clima laboral corto
+
+Uso
+
+Pulse survey o encuesta corta de clima interno.
+
+Estructura recomendada
+
+- percepción de liderazgo
+- comunicación
+- bienestar
+- carga laboral
+- comentario abierto
+
+Tipos de pregunta sugeridos
+
+- escala 1 a 5
+- opción única
+- texto largo
+
+Regla importante
+
+Debe venir preparada para anonimato.
+
+
+8. Plantilla: Evaluación 360 básica
+
+Uso
+
+Evaluar competencias de colaboradores.
+
+Estructura recomendada
+
+- bloque de competencias
+- varias preguntas por competencia
+- comentarios abiertos
+
+Tipos de pregunta sugeridos
+
+- escala 1 a 5
+- texto largo
+
+Configuración especial
+
+- modo restringido por defecto
+- preparada para relaciones `self`, `manager`, `peer`, `subordinate`
+
+
+9. Plantilla: Quiz de capacitación
+
+Uso
+
+Evaluar aprendizaje al final de una sesión o curso.
+
+Estructura recomendada
+
+- 5 a 20 preguntas
+- score
+- intento
+- aprobación
+
+Tipos de pregunta sugeridos
+
+- `quiz_single_choice`
+- `single_choice`
+- `yes_no`
+
+Configuración especial
+
+- scoring activo
+- score mínimo de aprobación
+- tiempo límite opcional
+
+
+10. Plantilla: Encuesta post evento
+
+Uso
+
+Medir calidad de un taller, conferencia, backendinar o actividad.
+
+Estructura recomendada
+
+- satisfacción general
+- utilidad del contenido
+- calidad del facilitador
+- logística
+- comentario abierto
+
+Tipos de pregunta sugeridos
+
+- escala 1 a 5
+- opción única
+- texto largo
+
+
+11. Plantillas recomendadas para fase posterior
+
+Estas no tienen que entrar al MVP, pero conviene dejarlas identificadas:
+
+- onboarding
+- salida de personal
+- encuesta de ética
+- encuesta de cultura
+- auditoría checklist
+- evaluación de proveedor
+- encuesta de producto
+- encuesta de investigación de mercado
+- assessment de competencias
+- votación interna
+
+
+12. Metadatos de plantilla
+
+Cada plantilla debe guardar:
+
+- nombre
+- categoría
+- descripción
+- tipo de instrumento
+- cantidad recomendada de preguntas
+- si usa scoring
+- si recomienda anonimato
+- si es interna o externa
+- tags de búsqueda
+
+
+13. Personalización de plantillas
+
+Una plantilla no debe ser rígida.
+
+Debe permitir:
+
+- duplicar
+- editar nombre
+- agregar o quitar preguntas
+- cambiar reglas
+- publicar como nueva instancia
+
+Regla
+
+La plantilla sirve de MAIN; la campaña final puede adaptarse.
+
+
+14. Recomendaciones por tipo de uso
+
+Uso rápido
+
+- NPS
+- encuesta general
+- post evento
+
+Uso interno sensible
+
+- clima laboral
+- 360
+
+Uso formativo
+
+- quiz de capacitación
+
+Uso cliente
+
+- satisfacción del cliente
+
+
+15. Interfaz del catálogo de plantillas
+
+La vista de plantillas debe permitir:
+
+- ver cards por plantilla
+- filtrar por categoría
+- buscar por nombre o caso de uso
+- previsualizar
+- duplicar para nueva encuesta
+
+Componentes visuales sugeridos
+
+- cards oficiales
+- badges
+- filtros oficiales
+- botón `Usar plantilla`
+
+
+16. Plantillas del sistema vs plantillas del usuario
+
+Debe distinguirse entre:
+
+Plantillas del sistema
+- entregadas por SIPET
+- MAIN oficial
+
+Plantillas personalizadas
+- creadas por usuarios o empresas
+
+Regla
+
+Las plantillas del sistema pueden venir marcadas como:
+
+- `is_system = true`
+
+
+17. Reglas de seguridad sobre plantillas
+
+No todos deben administrar plantillas.
+
+Permisos sugeridos
+
+- administrador: crea y gestiona todo
+- analista: puede crear sus plantillas
+- respondente: no administra plantillas
+
+
+18. Integración con el constructor
+
+Las plantillas deben conectarse naturalmente con el builder.
+
+Flujos permitidos
+
+- crear desde plantilla
+- guardar encuesta como nueva plantilla
+- duplicar plantilla
+
+Esto acelera repetición de campañas.
+
+
+19. Riesgos a evitar
+
+- crear demasiadas plantillas en el MVP
+- hacer plantillas demasiado rígidas
+- no diferenciar sistema vs personalizadas
+- meter plantillas complejas antes de estabilizar el builder
+
+
+20. Decisiones cerradas de fase 13
+
+- el MVP tendrá 7 plantillas oficiales
+- las plantillas se agruparán por familia funcional
+- el usuario podrá partir de plantilla o desde cero
+- clima laboral y 360 vendrán preconfiguradas para mayor sensibilidad
+- el catálogo visual usará componentes oficiales del sistema
+
+
+21. Entregables de la fase
+
+La Fase 13 queda completa cuando existan:
+
+- catálogo inicial de plantillas
+- definición de cada plantilla MVP
+- lista de plantillas posteriores
+- metadatos mínimos de plantilla
+- reglas de uso y personalización
+- integración conceptual con el constructor
+
+
+Pendiente al cerrar Fase 13
+
+⏳ Siguiente fase: Integración con otros módulos
+
+
+FASE 14. INTEGRACIÓN CON OTROS MÓDULOS
+
+Objetivo de la fase
+
+Definir cómo el módulo de encuestas se conectará con el resto del ecosistema SIPET sin perder independencia funcional, manteniendo todo su código dentro del propio módulo y usando `main.py` y `MAIN.html` solo como puntos de entrada o lanzadores.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- qué módulos se integran con encuestas
+- qué tipo de integración tendrá cada uno
+- qué datos entran y salen
+- qué archivos externos solo lanzan o enrutan
+- qué lógica debe permanecer dentro de `fastapi_modulo/modulos/encuestas`
+
+
+1. Regla arquitectónica principal
+
+Decisión cerrada
+
+`main.py` y `MAIN.html` serán únicamente lanzadores del módulo.
+
+Eso significa:
+
+- pueden registrar rutas
+- pueden cargar el módulo en navegación
+- pueden servir de punto de montaje visual
+
+Pero no deben contener:
+
+- lógica de negocio de encuestas
+- lógica de builder
+- lógica de scoring
+- lógica de publicación
+- lógica de reportes
+- lógica de integración con audiencias
+
+Todo eso debe vivir en:
+
+- `fastapi_modulo/modulos/encuestas/encuesta.py`
+- `fastapi_modulo/modulos/encuestas/encuesta.html`
+- `fastapi_modulo/modulos/encuestas/encuesta.css`
+- `fastapi_modulo/modulos/encuestas/encuesta.js`
+
+Y, cuando crezca el módulo, en archivos internos del mismo directorio.
+
+
+2. Principio de integración
+
+El módulo de encuestas debe integrarse con otros módulos sin dispersar su código.
+
+Regla
+
+Las integraciones se consumen desde `encuestas`, no se implementan repartiendo lógica de encuestas en otros módulos.
+
+Patrón recomendado
+
+- otros módulos exponen datos o endpoints
+- encuestas consume esos datos
+- encuestas procesa, asigna, muestra y reporta desde su propio código
+
+
+3. Tipos de integración permitidos
+
+Las integraciones entre módulos deben caer en estas categorías:
+
+1. integración de audiencias
+2. integración de contexto
+3. integración de resultados
+4. integración de notificaciones
+5. integración de trazabilidad o reporting
+
+
+4. Integración con `empleados`
+
+Uso principal
+
+- audiencias internas
+- jerarquías para 360
+- segmentación por área, puesto, empresa y rol
+
+Qué toma encuestas de este módulo
+
+- usuarios o colaboradores
+- departamento
+- puesto
+- empresa
+- relación jerárquica
+
+Qué no debe hacer
+
+- meter lógica de encuestas dentro de `empleados`
+
+Regla
+
+Si se necesita una integración, `encuestas` debe consultar o sincronizar datos de `empleados`, pero resolver su comportamiento internamente.
+
+
+5. Integración con `capacitacion`
+
+Uso principal
+
+- quizzes
+- juegos de capacitación
+- campañas de aprendizaje
+
+Qué puede reutilizar encuestas
+
+- patrones de quiz
+- scoring educativo
+- ranking
+- progreso
+- gamificación simple
+
+Qué no debe pasar
+
+- copiar y pegar lógica de capacitación dentro de archivos ajenos al módulo
+
+Regla
+
+Si se reutiliza lógica, debe abstraerse o consumirse desde `encuestas`, manteniendo el punto de control dentro del módulo.
+
+
+6. Integración con `crm` o módulos de clientes
+
+Uso principal
+
+- satisfacción del cliente
+- campañas posteriores a servicio
+- NPS
+- CSAT
+- CES
+
+Qué toma encuestas
+
+- cliente
+- canal
+- ejecutivo
+- sucursal
+- campaña comercial
+
+Qué entrega encuestas
+
+- resultados agregados
+- métricas por cliente, canal o campaña
+
+
+7. Integración con `notificaciones`
+
+Uso principal
+
+- invitaciones
+- recordatorios
+- avisos de cierre
+
+Regla
+
+La lógica de qué se envía, cuándo se envía y a quién se envía debe seguir definida en `encuestas`.
+
+El módulo de notificaciones solo provee el canal o infraestructura.
+
+
+8. Integración con `reportes`
+
+Uso principal
+
+- exportación
+- dashboards consolidados
+- reportes corporativos
+
+Regla
+
+Los cálculos del módulo de encuestas deben originarse en `encuestas`.
+
+Otros módulos o vistas globales solo consumen los resultados ya preparados.
+
+
+9. Integración con `ia`
+
+Uso futuro o complementario
+
+- análisis de respuestas abiertas
+- resumen automático
+- clasificación temática
+- sugerencias de mejora
+
+Regla
+
+La IA complementa el módulo, pero no define su funcionamiento MAIN.
+
+La lógica principal del ciclo de encuesta sigue siendo propia de `encuestas`.
+
+
+10. Integración con multiempresa
+
+Uso principal
+
+- segmentación por empresa
+- plantillas por empresa
+- campañas por empresa
+- resultados por empresa
+
+Regla
+
+La integración debe respetar el modelo de snapshots y referencias externas definido en fases anteriores.
+
+
+11. Integración con `main.py`
+
+`main.py` solo debe encargarse de:
+
+- importar router del módulo
+- registrar rutas
+- exponer el acceso general del módulo
+
+No debe contener:
+
+- HTML del módulo
+- JS del módulo
+- lógica de negocio
+- consultas propias de encuestas
+
+
+12. Integración con `MAIN.html`
+
+`MAIN.html` solo debe actuar como carcasa o punto de montaje visual general del sistema.
+
+Puede aportar:
+
+- navbar
+- sidebar
+- shell MAIN
+- layout general
+
+Pero no debe mezclar:
+
+- componentes funcionales del módulo
+- lógica de constructor
+- lógica de ejecución de encuesta
+- tablas o reportes específicos de encuestas
+
+
+13. Regla de encapsulamiento del módulo
+
+Todo código específico de encuestas debe vivir en el directorio del módulo.
+
+Esto incluye:
+
+- rutas
+- templates
+- estilos
+- scripts
+- lógica de integración
+- rendering
+- utilitarios propios
+
+Si después se divide, debe seguir quedando bajo:
+
+- `fastapi_modulo/modulos/encuestas/`
+
+
+14. Contratos de integración
+
+Para que el módulo permanezca limpio, cada integración debería definirse por contrato.
+
+Ejemplos
+
+Contrato con empleados
+- obtener audiencia por filtros
+- obtener jerarquía 360
+
+Contrato con capacitación
+- consumir o sincronizar resultados de quiz
+
+Contrato con notificaciones
+- enviar invitación
+- enviar recordatorio
+
+Contrato con CRM
+- resolver campañas o destinatarios externos
+
+
+15. Flujo recomendado de integración
+
+Patrón sugerido
+
+1. otro módulo expone datos
+2. encuestas los consulta o sincroniza
+3. encuestas materializa asignaciones o contexto
+4. encuestas ejecuta la operación
+5. encuestas genera resultados
+6. otros módulos pueden consumir resultados si hace falta
+
+
+16. Qué evitar
+
+No hacer esto:
+
+- meter lógica de encuestas en `main.py`
+- poner HTML de encuestas en `MAIN.html`
+- repartir JS del módulo en archivos globales
+- resolver scoring desde otros módulos
+- dejar reglas de publicación fuera de `encuestas`
+
+
+17. Integraciones prioritarias del MVP
+
+Para primera versión, las más importantes son:
+
+- `empleados`
+- `capacitacion`
+- `notificaciones`
+- `crm` o fuente de clientes si ya existe
+
+Integraciones posteriores
+
+- `ia`
+- dashboards corporativos globales
+- automatizaciones avanzadas entre apps
+
+
+18. Seguridad en integraciones
+
+Regla
+
+El módulo de encuestas no debe asumir que los datos externos ya vienen autorizados.
+
+Siempre debe validar:
+
+- contexto del usuario
+- alcance por empresa
+- permisos de acceso
+- visibilidad de resultados
+
+
+19. Trazabilidad de integraciones
+
+Conviene registrar:
+
+- de qué app provino la audiencia
+- cuándo se sincronizó
+- qué snapshot se guardó
+- qué integración generó la campaña
+
+
+20. Decisiones cerradas de fase 14
+
+- `main.py` y `MAIN.html` serán solo lanzadores
+- toda la lógica del módulo quedará dentro de `fastapi_modulo/modulos/encuestas`
+- las integraciones se consumirán desde `encuestas`
+- otros módulos no cargarán lógica funcional de encuestas
+- `empleados`, `capacitacion`, `notificaciones` y `crm` serán integraciones prioritarias
+
+
+21. Entregables de la fase
+
+La Fase 14 queda completa cuando existan:
+
+- mapa de módulos integrados
+- contratos funcionales de integración
+- reglas de encapsulamiento del módulo
+- definición de `main.py` y `MAIN.html` como lanzadores
+- lista de integraciones prioritarias del MVP
+- lista de integraciones posteriores
+
+
+Pendiente al cerrar Fase 14
+
+⏳ Siguiente fase: Fase de pruebas
+
+
+FASE 15. FASE DE PRUEBAS
+
+Objetivo de la fase
+
+Definir el plan de validación funcional, técnica y operativa del módulo de encuestas para asegurar que builder, publicación, respuestas, scoring, reportes, anonimato e integraciones funcionen de forma consistente antes de liberarlo.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- qué tipos de pruebas se harán
+- qué escenarios mínimos deben validarse
+- qué riesgos deben cubrirse
+- qué se considera aprobado para pasar a despliegue
+
+
+1. Propósito de la fase de pruebas
+
+El módulo de encuestas toca procesos sensibles:
+
+- datos personales
+- anonimato
+- evaluaciones 360
+- scoring
+- reportes
+- integraciones entre apps
+
+Por eso no basta con probar que “se ve bien”.
+
+Debe probarse:
+
+- lógica
+- permisos
+- integridad de datos
+- comportamiento por tipo de encuesta
+- rendimiento básico
+
+
+2. Capas de prueba
+
+El plan debe cubrir al menos estas capas:
+
+1. pruebas funcionales
+2. pruebas de backend
+3. pruebas de frontend
+4. pruebas de integración
+5. pruebas de seguridad
+6. pruebas de anonimato
+7. pruebas de reportes y exportación
+8. pruebas de rendimiento básico
+
+
+3. Pruebas funcionales del módulo
+
+Deben validar el flujo completo de negocio.
+
+Casos mínimos
+
+- crear encuesta
+- guardar borrador
+- editar borrador
+- publicar encuesta
+- asignar audiencia
+- responder encuesta
+- guardar borrador parcial
+- enviar respuesta final
+- cerrar encuesta
+- ver resultados
+
+
+4. Pruebas del constructor
+
+Debe probarse:
+
+- creación desde cero
+- creación desde plantilla
+- agregar sección
+- agregar pregunta
+- mover preguntas
+- editar pregunta
+- duplicar pregunta
+- eliminar pregunta
+- validación de publicación
+
+Casos negativos
+
+- encuesta sin preguntas
+- opción cerrada sin alternativas
+- quiz sin respuesta correcta
+- fechas inválidas
+
+
+5. Pruebas del motor de publicación y asignación
+
+Debe probarse:
+
+- asignación por usuario
+- asignación por rol
+- asignación por departamento
+- asignación por puesto
+- grupo manual
+- enlace público
+- asignación 360
+
+Casos negativos
+
+- audiencia vacía
+- usuarios inválidos
+- asignados duplicados
+- publicación sin condiciones mínimas
+
+
+6. Pruebas del módulo de respuesta
+
+Debe probarse:
+
+- acceso válido
+- acceso denegado
+- encuesta cerrada
+- borrador recuperable
+- validación de obligatorios
+- envío final exitoso
+- bloqueo posterior al envío
+
+También
+
+- experiencia en móvil
+- navegación por secciones
+- comportamiento con diferentes tipos de pregunta
+
+
+7. Pruebas de scoring
+
+Debe probarse:
+
+- scoring por opción
+- scoring por pregunta
+- scoring por sección
+- score total
+- porcentaje
+- aprobado/reprobado
+
+Casos especializados
+
+- NPS
+- CSAT
+- CES
+- 360
+- quiz con múltiples intentos
+
+
+8. Pruebas de analítica y reportes
+
+Debe probarse:
+
+- dashboard general
+- métricas por encuesta
+- reporte por pregunta
+- reporte por segmento
+- ranking de quiz
+- consolidado de 360
+- respuestas abiertas
+
+Exportaciones
+
+- CSV
+- Excel
+- coherencia entre reporte en pantalla y exportado
+
+
+9. Pruebas de anonimato
+
+Críticas para el módulo.
+
+Debe probarse:
+
+- encuesta anónima
+- encuesta restringida
+- encuesta identificada
+
+Escenarios sensibles
+
+- no mostrar identidad en reporte anónimo
+- no mostrar detalle nominativo en 360
+- bloquear segmentos pequeños
+- no exportar identidad si no corresponde
+
+
+10. Pruebas de permisos y seguridad
+
+Debe probarse cada acción crítica con distintos perfiles.
+
+Acciones
+
+- crear
+- editar
+- publicar
+- cerrar
+- ver resultados agregados
+- ver respuestas individuales
+- exportar
+
+Regla
+
+Toda acción negada en backend debe verificarse explícitamente.
+
+
+11. Pruebas de integración con otros módulos
+
+Debe probarse la relación con:
+
+- empleados
+- capacitación
+- notificaciones
+- CRM o fuente de clientes
+
+Escenarios mínimos
+
+- traer audiencia interna
+- traer relación 360
+- lanzar invitaciones
+- recuperar contexto externo
+
+
+12. Pruebas de notificaciones y automatización
+
+Debe probarse:
+
+- invitación inicial
+- recordatorio
+- aviso de cierre
+- cierre automático
+- no enviar duplicados
+- no recordar a quien ya respondió
+
+
+13. Pruebas de quizzes y gamificación
+
+Debe probarse:
+
+- score
+- intentos
+- tiempo
+- ranking
+- mejor intento o regla configurada
+
+Casos negativos
+
+- intento fuera de tiempo
+- intento adicional no permitido
+- score mal consolidado
+
+
+14. Pruebas de evaluación 360
+
+Debe probarse:
+
+- asignación correcta por relación
+- captura por evaluador
+- consolidado por evaluado
+- anonimato restringido
+- pesos por relación
+
+Casos críticos
+
+- evaluador ve solo lo que le corresponde
+- evaluado no ve identidad del evaluador
+
+
+15. Pruebas de rendimiento básico
+
+No se necesita una fase de performance extrema en MVP, pero sí validación mínima.
+
+Escenarios sugeridos
+
+- encuesta con muchas preguntas
+- encuesta con muchas respuestas
+- reporte segmentado con volumen medio
+- exportación de dataset amplio
+
+
+16. Pruebas de regresión
+
+Cada cambio importante del módulo debe volver a validar:
+
+- builder
+- respuesta
+- scoring
+- reportes
+- anonimato
+
+Razón
+
+Es un módulo transversal; cualquier cambio puede romper otra parte.
+
+
+17. Ambientes de prueba recomendados
+
+Se recomienda validar al menos en:
+
+- entorno local
+- entorno de staging o prueba
+
+Y con perfiles distintos:
+
+- administrador
+- analista
+- respondente interno
+- respondente externo
+
+
+18. Datos de prueba necesarios
+
+Debe existir un set controlado de datos para probar:
+
+- empleados
+- jerarquías para 360
+- clientes o participantes externos
+- quizzes con respuestas correctas
+- encuestas anónimas
+
+
+19. Criterios mínimos de aprobación
+
+El módulo puede considerarse listo para despliegue cuando:
+
+- flujos principales funcionan
+- scoring es consistente
+- anonimato está protegido
+- reportes exportan correctamente
+- permisos se respetan en backend
+- integraciones críticas responden bien
+
+
+20. Qué no debe quedar sin probar
+
+Especialmente no omitir:
+
+- 360
+- anonimato
+- exportación
+- cierre automático
+- múltiples intentos
+- filtros de segmentación
+
+
+21. Decisiones cerradas de fase 15
+
+- el módulo se probará por capas
+- anonimato y seguridad son ejes de prueba obligatorios
+- 360, quizzes y exportaciones son escenarios críticos
+- se harán pruebas funcionales, de integración y de permisos antes de liberar
+
+
+22. Entregables de la fase
+
+La Fase 15 queda completa cuando existan:
+
+- matriz de escenarios de prueba
+- lista de casos críticos
+- lista de pruebas por capa
+- criterios mínimos de aprobación
+- cobertura mínima para anonimato, scoring, reportes e integraciones
+
+
+Pendiente al cerrar Fase 15
+
+⏳ Siguiente fase: Despliegue por etapas
+
+
+FASE 16. DESPLIEGUE POR ETAPAS
+
+Objetivo de la fase
+
+Definir cómo se liberará el módulo de encuestas de manera progresiva, reduciendo riesgo operativo, validando adopción real y evitando desplegar todo el alcance en una sola entrega.
+
+Resultado esperado
+
+Al terminar esta fase debe quedar definido:
+
+- estrategia de salida por etapas
+- contenido de cada etapa
+- criterios para avanzar de etapa
+- prioridades del MVP
+- alcance posterior
+
+
+1. Principio de despliegue
+
+El módulo no debe salir completo en una sola liberación.
+
+Razón
+
+- toca varias áreas del negocio
+- integra distintas apps
+- mezcla builder, respuesta, scoring, reportes y seguridad
+- tiene casos sensibles como 360 y anonimato
+
+Decisión
+
+El despliegue debe hacerse por incrementos funcionales.
+
+
+2. Estrategia general
+
+Se recomienda una salida en 5 etapas:
+
+1. MVP MAIN
+2. medición externa y satisfacción
+3. quizzes y evaluación formativa
+4. evaluación 360
+5. automatización, plantillas avanzadas e integración ampliada
+
+
+3. Etapa 1. MVP MAIN
+
+Objetivo
+
+Liberar la columna vertebral del módulo.
+
+Incluye
+
+- estructura del módulo
+- builder básico
+- catálogo MVP de preguntas
+- creación desde cero
+- plantillas MAIN
+- publicación básica
+- asignación interna simple
+- respuesta básica
+- reportes básicos
+- exportación CSV y Excel
+
+Tipos de instrumento incluidos
+
+- encuesta general
+- clima laboral corto
+- post evento simple
+
+Objetivo operativo
+
+Probar estabilidad del flujo extremo a extremo.
+
+
+4. Etapa 2. Satisfacción y campañas externas
+
+Objetivo
+
+Extender el módulo a medición de clientes o externos.
+
+Incluye
+
+- NPS
+- CSAT
+- CES
+- enlaces públicos o tokenizados
+- campañas de satisfacción
+- reportes por canal o campaña
+- invitaciones y recordatorios básicos
+
+Objetivo operativo
+
+Validar encuestas externas y experiencia de cliente.
+
+
+5. Etapa 3. Quizzes y evaluación formativa
+
+Objetivo
+
+Activar el modo de evaluación con score.
+
+Incluye
+
+- quizzes
+- intentos
+- tiempo límite
+- aprobación/reprobación
+- ranking básico
+- gamificación mínima
+
+Objetivo operativo
+
+Conectar el módulo con procesos de capacitación y aprendizaje.
+
+
+6. Etapa 4. Evaluación 360
+
+Objetivo
+
+Habilitar el flujo más sensible del módulo con reglas de seguridad maduras.
+
+Incluye
+
+- asignación por relación
+- evaluación por competencias
+- consolidado por evaluado
+- anonimato restringido
+- reportes 360
+
+Condición previa recomendada
+
+- builder estable
+- scoring estable
+- permisos y anonimato ya validados
+
+
+7. Etapa 5. Automatización e integración ampliada
+
+Objetivo
+
+Completar madurez operativa del módulo.
+
+Incluye
+
+- automatización más robusta
+- plantillas ampliadas
+- integración más profunda con otros módulos
+- mejoras de gamificación
+- análisis adicional de respuestas abiertas
+
+
+8. Criterios para pasar de una etapa a otra
+
+No debe avanzarse solo por calendario.
+
+Condiciones mínimas
+
+- estabilidad funcional
+- errores críticos resueltos
+- validación de permisos
+- exportaciones correctas
+- adopción básica por usuarios piloto
+
+
+9. Despliegue por tipo de usuario
+
+También conviene liberar por perfiles.
+
+Orden sugerido
+
+1. administradores
+2. analistas internos
+3. áreas piloto
+4. usuarios generales
+5. campañas externas
+
+
+10. Despliegue por caso de uso
+
+Otra forma útil de liberar es por caso real.
+
+Orden recomendado
+
+1. encuesta general interna
+2. satisfacción del cliente
+3. quiz de capacitación
+4. evaluación 360
+
+
+11. Feature flags y activación gradual
+
+Si el proyecto lo permite, conviene usar activación gradual.
+
+Ejemplos
+
+- activar builder solo para admins
+- activar quizzes solo en capacitación
+- activar 360 solo para RRHH
+- activar satisfacción externa solo para áreas piloto
+
+
+12. Validación post despliegue
+
+Después de cada etapa se debe revisar:
+
+- tasa de uso
+- errores reportados
+- estabilidad
+- calidad de respuestas
+- precisión de reportes
+- carga operativa
+
+
+13. Riesgos del despliegue
+
+Riesgos a controlar
+
+- liberar 360 demasiado pronto
+- abrir encuestas externas sin flujo estable
+- mezclar demasiados casos en la primera etapa
+- subestimar anonimato y exportaciones
+
+
+14. Roadmap resumido
+
+Etapa 1
+- encuestas internas MAIN
+
+Etapa 2
+- satisfacción y campañas externas
+
+Etapa 3
+- quizzes y evaluación formativa
+
+Etapa 4
+- 360
+
+Etapa 5
+- automatización e integración ampliada
+
+
+15. Decisiones cerradas de fase 16
+
+- el módulo se desplegará por etapas
+- la primera salida será el MVP MAIN
+- satisfacción, quizzes y 360 no saldrán todos juntos
+- 360 solo entrará cuando permisos, anonimato y scoring estén maduros
+- la liberación podrá hacerse por perfil, por caso de uso y por feature flag
+
+
+16. Entregables de la fase
+
+La Fase 16 queda completa cuando existan:
+
+- plan de despliegue por etapas
+- alcance de cada etapa
+- orden recomendado de liberación
+- criterios de avance entre etapas
+- riesgos de despliegue identificados
+
+
+Pendiente al cerrar Fase 16
+
+✅ Roadmap funcional del módulo de encuestas completo
+
+
+Definición funcional
+Define qué resolverá el módulo y qué instrumentos incluirá en la primera versión.
+Debes cerrar alcance de:
+
+encuestas generales
+satisfacción del cliente
+evaluación 360
+quizzes
+juegos de capacitación
+votaciones o pulse surveys si entran desde inicio
+También hay que definir:
+
+usuarios que crean encuestas
+usuarios que responden
+anonimato o identificación
+si habrá puntajes, lógica condicional y fechas límite
+si las respuestas serán por empresa, área, puesto o campaña
+Diseño del modelo de datos
+Aquí se estructura la MAIN del módulo.
+Entidades mínimas:
+
+survey_templates
+survey_instances
+survey_sections
+survey_questions
+survey_options
+survey_assignments
+survey_responses
+survey_response_items
+survey_results
+survey_attempts
+survey_audience_groups
+Campos clave:
+
+tipo de encuesta
+estado
+anonimato
+versión
+fechas de apertura/cierre
+ponderación
+configuración de scoring
+reglas de visibilidad
+lógica condicional
+metadatos para reportes
+Arquitectura del módulo
+Define la separación técnica.
+Archivos MAIN:
+
+encuesta.py para rutas y servicios
+encuesta.html para UI
+encuesta.css para estilos
+encuesta.js para builder, ejecución y reportes
+Submódulos sugeridos después:
+
+builder
+runner
+analytics
+assignments
+gamification
+permissions
+Catálogo de tipos de pregunta
+Crea primero un motor genérico de preguntas.
+Tipos recomendados:
+
+texto corto
+texto largo
+opción única
+opción múltiple
+escala 1-5
+NPS 0-10
+sí/no
+ranking
+matriz
+fecha
+archivo o evidencia
+porcentaje
+pregunta correcta/incorrecta para quizzes
+Cada tipo debe definir:
+
+validación
+render
+almacenamiento
+exportación
+compatibilidad con scoring
+Constructor de encuestas
+Esta es la primera gran pieza visible.
+Debe permitir:
+
+crear encuesta desde cero
+usar plantillas
+ordenar secciones y preguntas
+duplicar preguntas
+configurar obligatoriedad
+configurar visibilidad condicional
+definir mensajes inicial/final
+vista previa
+Conviene hacerlo por bloques:
+
+datos generales
+estructura
+audiencia
+reglas
+publicación
+Motor de publicación y asignación
+Aquí decides quién responde qué.
+Modos de asignación:
+
+manual por usuarios
+por rol
+por departamento
+por puesto
+por grupo
+por campaña
+por relación organizacional para 360
+Casos especiales:
+
+autoevaluación
+evaluación jefe-subordinado
+evaluación entre pares
+encuestas públicas por enlace
+encuestas anónimas
+Módulo de respuesta
+Pantalla limpia para contestar.
+Debe soportar:
+
+guardado parcial
+navegación por pasos
+validaciones
+barra de progreso
+temporizador para quizzes
+randomización si aplica
+responsive móvil
+bloqueo al vencer fecha o intento
+Scoring y reglas
+No todas las encuestas puntúan, así que el motor debe ser opcional.
+Implementa:
+
+puntaje por respuesta
+pesos por pregunta
+pesos por sección
+respuestas correctas en quizzes
+cálculo NPS/CSAT/CES
+consolidación 360
+clasificación por niveles
+badges o ranking para juegos
+Analítica y reportes
+Segunda gran pieza del módulo.
+Reportes mínimos:
+
+tasa de respuesta
+respuestas por área/rol/sede
+promedio por pregunta
+distribución de respuestas
+NPS
+comparativos entre periodos
+resultados por competencia en 360
+ranking de quizzes
+exportación a Excel/PDF/CSV
+También conviene incluir:
+
+filtros
+dashboards
+tablas dinámicas básicas
+respuestas abiertas con búsqueda
+Anonimato, permisos y seguridad
+Esto hay que diseñarlo temprano.
+Define:
+
+quién crea
+quién publica
+quién responde
+quién ve resultados
+quién puede ver respuestas individuales
+qué reportes son anónimos
+qué campos se enmascaran
+Reglas sensibles:
+
+360 debe proteger identidad de evaluadores
+clima laboral puede ser anónimo total
+quizzes pueden ser nominales
+resultados agregados requieren umbral mínimo de respuestas
+Gamificación
+Para capacitación y dinámicas internas.
+Componentes:
+puntos
+niveles
+insignias
+ranking
+cronómetro
+intentos
+retos por equipos
+desbloqueo por módulos
+recompensas simbólicas
+Notificaciones y automatización
+Automatiza el ciclo de la encuesta.
+Eventos:
+invitación a responder
+recordatorio
+encuesta próxima a vencer
+cierre
+resultados disponibles
+encuesta recurrente
+evaluación pendiente en 360
+Plantillas por caso de uso
+Muy importante para adopción.
+Entrega plantillas listas para:
+satisfacción del cliente
+NPS
+clima laboral
+evaluación 360
+onboarding
+salida de personal
+quiz de capacitación
+encuesta post evento
+auditoría checklist
+Integración con otros módulos
+Este módulo gana mucho valor si se conecta.
+Integraciones recomendadas:
+empleados para audiencias y 360
+capacitacion para quizzes/juegos
+crm/clientes para satisfacción del cliente
+notificaciones para invitaciones
+ia para analizar respuestas abiertas
+reportes para dashboards globales
+Fase de pruebas
+Divide pruebas en:
+unitarias para validaciones y scoring
+integración para publicación y respuestas
+permisos y anonimato
+carga en encuestas grandes
+UX móvil
+exportaciones
+casos de edición de encuesta publicada
+Despliegue por etapas
+No conviene soltar todo de una vez.
+Orden recomendado:
+MVP 1: encuestas generales + builder + respuestas + reportes básicos
+MVP 2: satisfacción cliente + NPS + automatización
+MVP 3: quizzes + scoring + ranking
+MVP 4: evaluación 360 + anonimato avanzado
+MVP 5: gamificación + IA + comparativos históricos
+Orden recomendado de implementación
+
+modelo de datos
+CRUD de encuestas
+builder de preguntas
+asignación y publicación
+pantalla de respuesta
+reportes básicos
+quizzes/scoring
+360 y anonimato
+gamificación
+automatización e integraciones
+MVP inicial
+Si quieres empezar bien sin inflar el alcance, el MVP debería incluir solo:
+
+creación de encuesta
+preguntas básicas
+asignación a usuarios
+respuesta por formulario
+cierre y resultados básicos
+exportación CSV
+una plantilla de satisfacción
+una plantilla de quiz
+
+
+
+Puedes agrupar el módulo en varios tipos de instrumentos, no solo “encuestas” clásicas. Una estructura útil sería esta:
+
+Encuestas generales
+Para formularios libres, sondeos internos, opinión rápida, clima, diagnóstico.
+Satisfacción del cliente
+NPS, CSAT, CES, post-servicio, post-compra, calidad de atención, seguimiento de reclamos.
+Evaluación 360
+Autoevaluación, jefe, pares, subordinados, cultura, liderazgo, competencias.
+Quizzes
+Evaluaciones con respuestas correctas, puntaje, tiempo, intentos y ranking.
+Capacitación y gamificación
+trivias, retos por niveles, preguntas por tiempo, competencias entre equipos, insignias.
+Otros tipos que conviene incluir:
+
+Clima laboral
+ambiente, comunicación, liderazgo, bienestar, carga laboral.
+Evaluación de desempeño
+metas, competencias, KPI, revisión semestral o anual.
+Onboarding
+experiencia de ingreso, claridad del puesto, adaptación y soporte inicial.
+Salida de personal
+entrevistas de salida, causas de renuncia, percepción de jefaturas.
+Investigación de mercado
+hábitos de consumo, preferencia de marca, segmentación, pricing.
+Validación de productos o servicios
+pruebas piloto, feedback sobre nuevas funciones, experiencia de uso.
+Diagnóstico organizacional
+procesos, madurez digital, cumplimiento, riesgos, cultura.
+Eventos
+satisfacción de asistentes, logística, contenido, speakers.
+Auditoría o checklist
+formularios con cumplimiento, evidencia, observaciones y semáforos.
+Encuestas anónimas
+denuncias, integridad, acoso, ética, cumplimiento sensible.
+Votaciones
+elecciones internas, priorización de ideas, decisiones de equipo.
+Pulse surveys
+microencuestas de 1 a 5 preguntas para seguimiento continuo.
+Assessment psicométrico o de perfil
+estilos de trabajo, personalidad laboral, motivadores.
+Formulario con branching
+preguntas condicionales según respuestas.
+Encuestas con evidencia
+permite adjuntar foto, documento, audio o ubicación.
+Si quieres, el siguiente paso es definir el modelo del módulo con:
+
+tipos de encuesta
+constructor de preguntas
+lógica de respuestas y puntajes
+reportes y dashboards
+permisos por rol y anonimato.

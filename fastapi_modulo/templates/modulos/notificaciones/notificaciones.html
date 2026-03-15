@@ -1,4 +1,344 @@
 <section class="wa-page">
+  <style>
+    .wa-shell {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 18px;
+      min-height: 72vh;
+    }
+
+    .wa-sidebar,
+    .wa-chat,
+    .wa-modal {
+      background: #fff;
+      border: 1px solid #d7e0dc;
+      border-radius: 24px;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06);
+    }
+
+    .wa-sidebar,
+    .wa-chat {
+      min-height: 0;
+    }
+
+    .wa-sidebar {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .wa-sidebar-head,
+    .wa-chat-head,
+    .wa-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .wa-profile,
+    .wa-chat-contact {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .wa-profile img,
+    .wa-chat-avatar img,
+    .wa-modal-avatar img,
+    .wa-item-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+
+    .wa-profile img {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+    }
+
+    .wa-head-actions,
+    .wa-chat-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wa-icon-btn,
+    .wa-send-btn {
+      border: 1px solid #ccd8d2;
+      background: #f7fbf9;
+      color: #13203a;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .wa-icon-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
+    }
+
+    .wa-icon-btn:hover,
+    .wa-send-btn:hover,
+    .wa-modal-user:hover,
+    .wa-item:hover {
+      border-color: #8aa69a;
+      background: #eef6f2;
+    }
+
+    .wa-index-status,
+    .wa-empty,
+    .wa-item-msg,
+    .wa-msg-meta,
+    .wa-modal-info small {
+      color: #667085;
+    }
+
+    .wa-search-wrap input,
+    .wa-input input,
+    .wa-modal-search-wrap input,
+    #wa-topk {
+      width: 100%;
+      border: 1px solid #d7e0dc;
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #13203a;
+      outline: none;
+    }
+
+    .wa-list,
+    .wa-messages,
+    .wa-modal-list {
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .wa-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .wa-item {
+      width: 100%;
+      border: 1px solid #d7e0dc;
+      background: #fff;
+      border-radius: 18px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .wa-item.active {
+      border-color: #89a9a0;
+      background: #edf7f3;
+    }
+
+    .wa-item-avatar,
+    .wa-chat-avatar,
+    .wa-modal-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: #edf7f3;
+      color: #13203a;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      flex: 0 0 44px;
+      overflow: hidden;
+    }
+
+    .wa-item-main,
+    .wa-modal-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .wa-item-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .wa-item-name {
+      font-weight: 700;
+      color: #13203a;
+    }
+
+    .wa-item-time {
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .wa-unread-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #163f74;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .wa-chat {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .wa-chat-head,
+    .wa-input,
+    .wa-modal {
+      padding: 18px;
+    }
+
+    .wa-messages {
+      flex: 1;
+      padding: 0 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .wa-msg {
+      max-width: min(78%, 680px);
+      border-radius: 18px;
+      padding: 12px 14px;
+      border: 1px solid #d7e0dc;
+      background: #fff;
+    }
+
+    .wa-msg--out {
+      align-self: flex-end;
+      background: #eef7f3;
+    }
+
+    .wa-input {
+      display: flex;
+      gap: 10px;
+      border-top: 1px solid #e2ebe6;
+    }
+
+    .wa-send-btn {
+      padding: 0 18px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .wa-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.28);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 20;
+    }
+
+    .wa-modal {
+      width: min(520px, 100%);
+      max-height: 72vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .wa-modal-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .wa-modal-user {
+      border: 1px solid #d7e0dc;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .wa-modal-user input {
+      margin-left: auto;
+    }
+
+    .wa-empty-state {
+      border: 1px dashed #c8d8d1;
+      border-radius: 24px;
+      padding: 32px;
+      text-align: center;
+      color: #5c6d66;
+      background: #f7fbf9;
+    }
+
+    #wa-floating-stack {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .wa-floating-note {
+      width: min(360px, calc(100vw - 32px));
+      background: #13203a;
+      color: #fff;
+      border-radius: 18px;
+      padding: 14px 16px;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, 0.25);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: auto;
+    }
+
+    .wa-floating-note.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .wa-floating-note strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    @media (max-width: 1180px) {
+      .wa-shell {
+        grid-template-columns: 290px minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 860px) {
+      .wa-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
   <article class="content-section">
     <header class="content-section-head">
       <h2 class="content-section-title">Conversaciones</h2>
@@ -17,6 +357,7 @@
           </div>
           <div class="wa-head-actions">
             <button id="wa-new-btn" class="wa-icon-btn" title="Nueva conversación">+</button>
+            <button id="wa-new-group-btn" class="wa-icon-btn" title="Nuevo grupo" style="display:none">👥</button>
             <button id="wa-index-btn" class="wa-icon-btn" title="Indexar documentos para AVAN">↻</button>
           </div>
         </div>
@@ -50,6 +391,7 @@
               <option value="8">8</option>
             </select>
           </div>
+          <button id="wa-notify-btn" class="wa-icon-btn" title="Enviar notificación" style="display:none">🔔</button>
           <button id="wa-del-conv" class="wa-icon-btn" title="Eliminar conversación" style="display:none">🗑</button>
         </header>
 
@@ -65,6 +407,7 @@
           <button type="submit" class="wa-send-btn" id="wa-send-btn">Enviar</button>
         </form>
       </section>
+
     </div>
   </article>
 
@@ -84,70 +427,153 @@
     </div>
   </div>
 
+  <div id="wa-group-modal" class="wa-modal-backdrop" style="display:none" role="dialog" aria-modal="true">
+    <div class="wa-modal">
+      <header class="wa-modal-head">
+        <span>Nuevo grupo</span>
+        <button id="wa-group-modal-close" class="wa-icon-btn" type="button">✕</button>
+      </header>
+      <div class="wa-modal-search-wrap">
+        <input type="text" id="wa-group-name" placeholder="Nombre del grupo">
+      </div>
+      <div class="wa-modal-search-wrap">
+        <input type="text" id="wa-group-search" placeholder="Buscar usuario…">
+      </div>
+      <ul class="wa-modal-list" id="wa-group-list">
+        <li class="wa-empty">Cargando usuarios…</li>
+      </ul>
+      <div class="wa-modal-head">
+        <span id="wa-group-selected">0 seleccionados</span>
+        <button id="wa-group-create" class="wa-send-btn" type="button">Crear grupo</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="wa-floating-stack" aria-live="polite"></div>
+
   <!-- =================== STYLES =================== -->
 <!-- =================== SCRIPT =================== -->
   <script>
   (() => {
     "use strict";
-    const $  = (s) => document.querySelector(s);
-    const listEl         = $("#wa-list");
-    const searchEl       = $("#wa-search");
-    const messagesEl     = $("#wa-messages");
-    const formEl         = $("#wa-form");
-    const inputEl        = $("#wa-input");
-    const topkEl         = $("#wa-topk");
-    const topkWrap       = $("#wa-topk-wrap");
-    const chatTitleEl    = $("#wa-chat-title");
+    const $ = (s) => document.querySelector(s);
+    const shellEl = $(".wa-shell");
+    const listEl = $("#wa-list");
+    const searchEl = $("#wa-search");
+    const messagesEl = $("#wa-messages");
+    const formEl = $("#wa-form");
+    const inputEl = $("#wa-input");
+    const topkEl = $("#wa-topk");
+    const topkWrap = $("#wa-topk-wrap");
+    const chatTitleEl = $("#wa-chat-title");
     const chatSubtitleEl = $("#wa-chat-subtitle");
-    const chatAvatarEl   = $("#wa-chat-avatar-el");
-    const indexBtn       = $("#wa-index-btn");
-    const newBtn         = $("#wa-new-btn");
-    const indexStatusEl  = $("#wa-index-status");
-    const delBtn         = $("#wa-del-conv");
-    const modal          = $("#wa-modal");
-    const modalClose     = $("#wa-modal-close");
-    const modalSearch    = $("#wa-modal-search");
-    const modalList      = $("#wa-modal-list");
-    const sendBtn        = $("#wa-send-btn");
+    const chatAvatarEl = $("#wa-chat-avatar-el");
+    const indexBtn = $("#wa-index-btn");
+    const newBtn = $("#wa-new-btn");
+    const newGroupBtn = $("#wa-new-group-btn");
+    const notifyBtn = $("#wa-notify-btn");
+    const indexStatusEl = $("#wa-index-status");
+    const delBtn = $("#wa-del-conv");
+    const modal = $("#wa-modal");
+    const modalClose = $("#wa-modal-close");
+    const modalSearch = $("#wa-modal-search");
+    const modalList = $("#wa-modal-list");
+    const groupModal = $("#wa-group-modal");
+    const groupModalClose = $("#wa-group-modal-close");
+    const groupNameEl = $("#wa-group-name");
+    const groupSearchEl = $("#wa-group-search");
+    const groupListEl = $("#wa-group-list");
+    const groupCreateBtn = $("#wa-group-create");
+    const groupSelectedEl = $("#wa-group-selected");
+    const floatingStack = $("#wa-floating-stack");
+    const sendBtn = $("#wa-send-btn");
 
-    let currentConvId    = "";
-    let currentConvType  = "";
-    let avanConvs        = [];
-    let dmConvs          = [];
-    let allUsers         = [];
-    let sending          = false;
+    let currentConvId = "";
+    let currentConvType = "";
+    let avanConvs = [];
+    let dmConvs = [];
+    let groupConvs = [];
+    let allUsers = [];
+    let sending = false;
+    let moduleAccess = null;
+    let hasInternalConversationAccess = false;
+    let selectedGroupUsers = new Set();
+
+    const getCookieValue = (name) => {
+      const prefix = `${name}=`;
+      const found = String(document.cookie || "")
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) => part.startsWith(prefix));
+      return found ? decodeURIComponent(found.slice(prefix.length)) : "";
+    };
+
+    const currentUsername = String(getCookieValue("user_name") || "").trim().toLowerCase();
 
     const esc = (s) => String(s ?? "")
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
     const initials = (s) => {
       const t = String(s ?? "").trim();
       if (!t) return "??";
       const p = t.split(/\s+/).filter(Boolean);
-      return p.length === 1 ? p[0].slice(0,2).toUpperCase() : (p[0][0]+p[1][0]).toUpperCase();
+      return p.length === 1 ? p[0].slice(0, 2).toUpperCase() : (p[0][0] + p[1][0]).toUpperCase();
     };
 
     const avatarHtml = (label, imgUrl) => imgUrl
       ? `<img src="${esc(imgUrl)}" alt="${esc(label)}" loading="lazy" onerror="this.style.display='none'">`
       : esc(initials(label));
 
+    const cleanAssistantText = (value) => String(value ?? "")
+      .replace(/\s*\[S\d+\]/gi, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
     const fmtTime = (iso) => {
       if (!iso) return "";
       try {
         const d = new Date(iso);
         const now = new Date();
-        if (d.toDateString() === now.toDateString())
-          return d.toLocaleTimeString("es", {hour:"2-digit", minute:"2-digit"});
-        return d.toLocaleDateString("es", {day:"2-digit", month:"2-digit"});
-      } catch { return String(iso).slice(0,10); }
+        if (d.toDateString() === now.toDateString()) {
+          return d.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" });
+        }
+        return d.toLocaleDateString("es", { day: "2-digit", month: "2-digit" });
+      } catch {
+        return String(iso).slice(0, 10);
+      }
     };
 
-    const showIndexStatus = (text, isErr = false) => {
+    const dmConversationId = (otherUsername) => {
+      const other = String(otherUsername || "").trim().toLowerCase();
+      if (!other || !currentUsername) return "";
+      const pair = [currentUsername, other].sort((a, b) => a.localeCompare(b));
+      return `dm-${pair[0]}_${pair[1]}`;
+    };
+
+    const showIndexStatus = (text, isErr) => {
       if (!indexStatusEl) return;
       indexStatusEl.style.display = "block";
-      indexStatusEl.textContent = String(text ?? "");
+      indexStatusEl.textContent = String(text || "");
       indexStatusEl.style.color = isErr ? "#b42318" : "#54656f";
+    };
+
+    const showFloatingNotification = (title, message) => {
+      if (!floatingStack) return;
+      const card = document.createElement("article");
+      card.className = "wa-floating-note";
+      card.innerHTML = `<strong>${esc(title || "Notificación")}</strong><div>${esc(message || "")}</div>`;
+      floatingStack.appendChild(card);
+      requestAnimationFrame(() => card.classList.add("show"));
+      window.setTimeout(() => {
+        card.classList.remove("show");
+        window.setTimeout(() => card.remove(), 220);
+      }, 4200);
+    };
+
+    const renderNoAccess = (message) => {
+      if (!shellEl) return;
+      shellEl.innerHTML = `<article class="wa-empty-state">${esc(message || "Sin acceso a Conversaciones.")}</article>`;
     };
 
     const getUnifiedConversations = () => {
@@ -161,24 +587,23 @@
         last_message: latestAvan?.last_message || "Nueva conversación con AVAN",
         unread: 0,
       };
-      return [avanEntry].concat(dmConvs);
+      return [avanEntry].concat(groupConvs).concat(dmConvs);
     };
 
-    // ── Render sidebar ──────────────────────────────────────────────────
     const renderList = () => {
       const term = (searchEl?.value ?? "").trim().toLowerCase();
-      const source = getUnifiedConversations();
-      const filtered = source.filter((c) => {
+      const filtered = getUnifiedConversations().filter((c) => {
         if (!term) return true;
-        return `${c.label??""} ${c.last_message??""} ${c.conv_id??""}`.toLowerCase().includes(term);
+        return `${c.label || ""} ${c.last_message || ""} ${c.conv_id || ""}`.toLowerCase().includes(term);
       });
       if (!filtered.length) {
-        listEl.innerHTML = `<div class="wa-empty">Sin conversaciones. Presiona + para iniciar una.</div>`;
+        listEl.innerHTML = `<div class="wa-empty">Sin conversaciones. Usa + o 👥 para iniciar una.</div>`;
         return;
       }
       listEl.innerHTML = filtered.map((c) => {
         const active = currentConvId === c.conv_id ? "active" : "";
-        const badge  = c.unread > 0 ? `<span class="wa-unread-badge">${c.unread}</span>` : "";
+        const badge = c.unread > 0 ? `<span class="wa-unread-badge">${c.unread}</span>` : "";
+        const subtitle = c.type === "group" ? "Grupo" : c.type === "dm" ? "Directo" : "IA";
         return `
           <button type="button" class="wa-item ${active}" data-id="${esc(c.conv_id)}" data-type="${esc(c.type)}">
             <div class="wa-item-avatar">${avatarHtml(c.label, c.img)}</div>
@@ -187,7 +612,7 @@
                 <div class="wa-item-name">${esc(c.label)}</div>
                 <div class="wa-item-time">${esc(fmtTime(c.last_at))} ${badge}</div>
               </div>
-              <div class="wa-item-msg">${esc(c.last_message || "Sin mensajes")}</div>
+              <div class="wa-item-msg">${esc(c.last_message || subtitle)}</div>
             </div>
           </button>`;
       }).join("");
@@ -196,248 +621,424 @@
       });
     };
 
-    // ── Load conversations ──────────────────────────────────────────────
+    const refreshModuleAccess = async () => {
+      const res = await fetch("/api/v1/conversaciones/access");
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        if (res.status === 403) {
+          hasInternalConversationAccess = false;
+          moduleAccess = {
+            role: "",
+            can_create_groups: false,
+            can_send_notifications: false,
+            can_access_ai: true,
+          };
+          if (newGroupBtn) newGroupBtn.style.display = "none";
+          return moduleAccess;
+        }
+        throw new Error((data && (data.error || data.detail)) || "Sin acceso");
+      }
+      moduleAccess = data.data || {};
+      moduleAccess.can_access_ai = true;
+      hasInternalConversationAccess = true;
+      if (newGroupBtn) {
+        newGroupBtn.style.display = moduleAccess.can_create_groups ? "inline-flex" : "none";
+      }
+      return moduleAccess;
+    };
+
+    const loadModuleUsers = async () => {
+      if (!hasInternalConversationAccess) {
+        allUsers = [];
+        return;
+      }
+      const res = await fetch("/api/v1/conversaciones/users");
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        throw new Error((data && (data.error || data.detail)) || "No se pudieron cargar usuarios");
+      }
+      allUsers = Array.isArray(data.data) ? data.data : [];
+    };
+
     const loadAvanConvs = async () => {
       try {
         const res = await fetch("/api/v1/ia/rag/conversations?limit=80");
-        const d = await res.json();
-        if (!d?.success) { avanConvs = []; return; }
-        avanConvs = (d.data ?? []).map((c) => ({
-          conv_id: c.conversation_id, type: "avan", label: "AVAN",
+        const data = await res.json();
+        if (!data?.success) {
+          avanConvs = [];
+          return;
+        }
+        avanConvs = (data.data || []).map((item) => ({
+          conv_id: item.conversation_id,
+          type: "avan",
+          label: "AVAN",
           img: "/templates/imagenes/lobo.jpg",
-          last_at: c.last_at, last_message: c.last_answer || c.last_question || "", unread: 0,
+          last_at: item.last_at,
+          last_message: item.last_answer || item.last_question || "",
+          unread: 0,
         }));
-      } catch { avanConvs = []; }
+      } catch {
+        avanConvs = [];
+      }
     };
 
     const loadDmConvs = async () => {
-      try {
-        const res = await fetch("/api/v1/conversaciones/direct");
-        const d = await res.json();
-        if (!d?.success) { dmConvs = []; return; }
-        dmConvs = (d.data ?? []).map((c) => {
-          const user = allUsers.find((u) => u.username === c.other_user);
-          return {
-            conv_id: c.conversation_id, type: "dm",
-            label: user?.full_name || c.other_user || "Usuario",
-            img: user?.imagen || "",
-            last_at: c.last_at, last_message: c.last_message || "", unread: c.unread || 0,
-          };
-        });
-      } catch { dmConvs = []; }
+      if (!hasInternalConversationAccess) {
+        dmConvs = [];
+        return;
+      }
+      const res = await fetch("/api/v1/conversaciones/direct");
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        throw new Error((data && (data.error || data.detail)) || "No se pudieron cargar conversaciones directas");
+      }
+      dmConvs = (data.data || []).map((item) => {
+        const user = allUsers.find((entry) => entry.username === item.other_user);
+        return {
+          conv_id: item.conversation_id,
+          type: "dm",
+          label: user?.full_name || item.other_user || "Usuario",
+          img: user?.imagen || "",
+          last_at: item.last_at,
+          last_message: item.last_message || "",
+          unread: item.unread || 0,
+        };
+      });
+    };
+
+    const loadGroupConvs = async () => {
+      if (!hasInternalConversationAccess) {
+        groupConvs = [];
+        return;
+      }
+      const res = await fetch("/api/v1/conversaciones/groups");
+      const data = await res.json();
+      if (!res.ok || !data?.success) {
+        throw new Error((data && (data.error || data.detail)) || "No se pudieron cargar grupos");
+      }
+      groupConvs = (data.data || []).map((item) => ({
+        conv_id: item.conversation_id,
+        type: "group",
+        label: item.group_name || "Grupo",
+        img: "",
+        last_at: item.last_at,
+        last_message: item.last_message || "",
+        unread: item.unread || 0,
+        members: item.member_usernames || [],
+      }));
     };
 
     const loadAll = async () => {
-      await Promise.all([loadAvanConvs(), loadDmConvs()]);
+      await Promise.all([loadAvanConvs(), loadDmConvs(), loadGroupConvs()]);
       renderList();
     };
 
-    // ── Render messages ─────────────────────────────────────────────────
     const renderMessages = (rows, type) => {
       if (!rows?.length) {
         messagesEl.innerHTML = '<div class="wa-empty">No hay mensajes aún. Escribe el primero.</div>';
         return;
       }
-      messagesEl.innerHTML = rows.map((m) => {
-        const isMine = type === "avan"
-          ? String(m.message_type ?? "").toLowerCase() === "user"
-          : m.is_mine === true;
-        const css  = isMine ? "wa-msg wa-msg--out" : "wa-msg wa-msg--in";
+      messagesEl.innerHTML = rows.map((row) => {
+        const isMine = type === "avan" ? String(row.message_type || "").toLowerCase() === "user" : row.is_mine === true;
+        const css = isMine ? "wa-msg wa-msg--out" : "wa-msg wa-msg--in";
         const meta = isMine
-          ? (fmtTime(m.created_at) || "Tú")
-          : (type === "avan" ? "AVAN" : esc(m.from_username || ""));
-        const citations = Array.isArray(m.citations) ? m.citations : [];
-        const citHtml = (!isMine && citations.length) ? `
-          <div class="wa-citations">
-            ${citations.map((c) => `<div class="wa-citation">[${esc(c.source_tag??"")}] · ${esc(c.title??"")}</div>`).join("")}
-          </div>` : "";
-        return `
-          <div class="${css}">
-            <div class="wa-msg-body">${esc(m.message_text ?? m.message ?? "")}</div>
-            ${citHtml}
-            <div class="wa-msg-meta">${meta}</div>
-          </div>`;
+          ? (fmtTime(row.created_at) || "Tú")
+          : (type === "avan" ? "AVAN" : esc(row.from_username || ""));
+        const body = !isMine && type === "avan"
+          ? cleanAssistantText(row.message_text ?? row.message ?? "")
+          : String(row.message_text ?? row.message ?? "");
+        return `<div class="${css}"><div class="wa-msg-body">${esc(body)}</div><div class="wa-msg-meta">${meta}</div></div>`;
       }).join("");
       messagesEl.scrollTop = messagesEl.scrollHeight;
     };
 
-    // ── Open conversation ───────────────────────────────────────────────
-    const openConv = async (convId, type) => {
-      currentConvId = convId; currentConvType = type;
-      renderList();
-      let label = convId, img = "";
-      if (type === "avan") { label = "AVAN"; img = "/templates/imagenes/lobo.jpg"; }
-      else {
-        const c = dmConvs.find((x) => x.conv_id === convId);
-        if (c) { label = c.label; img = c.img; }
-        else {
-          const parts = convId.replace("dm-","").split("_");
-          label = parts.find(Boolean) || convId;
-        }
+    const updateHeaderActions = () => {
+      topkWrap.style.display = currentConvType === "avan" ? "flex" : "none";
+      delBtn.style.display = hasInternalConversationAccess && (currentConvType === "dm" || currentConvType === "group") ? "inline-flex" : "none";
+      notifyBtn.style.display = moduleAccess?.can_send_notifications && hasInternalConversationAccess && (currentConvType === "dm" || currentConvType === "group")
+        ? "inline-flex" : "none";
+      if (newBtn) {
+        newBtn.style.display = hasInternalConversationAccess ? "inline-flex" : "none";
       }
-      chatTitleEl.textContent    = label;
-      chatSubtitleEl.textContent = type === "avan" ? "Agente IA AVAN" : "Mensaje directo";
-      chatAvatarEl.innerHTML     = avatarHtml(label, img);
-      topkWrap.style.display     = type === "avan" ? "flex" : "none";
-      delBtn.style.display       = type === "dm"   ? "inline-flex" : "none";
+    };
+
+    const startDmWithUser = (username) => {
+      const user = allUsers.find((item) => item.username === username);
+      const convId = dmConversationId(username);
+      if (!convId) return;
+      if (!dmConvs.find((item) => item.conv_id === convId)) {
+        dmConvs.unshift({
+          conv_id: convId,
+          type: "dm",
+          label: user?.full_name || username,
+          img: user?.imagen || "",
+          last_at: "",
+          last_message: "",
+          unread: 0,
+        });
+      }
+      currentConvId = convId;
+      currentConvType = "dm";
+      chatTitleEl.textContent = user?.full_name || username;
+      chatSubtitleEl.textContent = "Mensaje directo";
+      chatAvatarEl.innerHTML = avatarHtml(user?.full_name || username, user?.imagen || "");
+      updateHeaderActions();
+      renderMessages([], "dm");
+      renderList();
+    };
+
+    const openConv = async (convId, type) => {
+      currentConvId = convId || "";
+      currentConvType = type || "";
+      renderList();
+      updateHeaderActions();
+      let label = convId;
+      let img = "";
+      if (type === "avan") {
+        label = "AVAN";
+        img = "/templates/imagenes/lobo.jpg";
+      } else if (type === "group") {
+        const group = groupConvs.find((item) => item.conv_id === convId);
+        label = group?.label || "Grupo";
+      } else {
+        const direct = dmConvs.find((item) => item.conv_id === convId);
+        label = direct?.label || convId;
+        img = direct?.img || "";
+      }
+      chatTitleEl.textContent = label || "Conversación";
+      chatSubtitleEl.textContent = type === "avan" ? "Agente IA AVAN" : type === "group" ? "Grupo" : "Mensaje directo";
+      chatAvatarEl.innerHTML = avatarHtml(label, img);
       if (type === "avan" && !avanConvs.find((item) => item.conv_id === convId)) {
-        renderMessages([{message_text:"Conversación iniciada. Escribe tu mensaje.", is_mine:false, created_at:""}], "avan");
+        renderMessages([{ message_text: "Conversación iniciada. Escribe tu mensaje.", is_mine: false, created_at: "" }], "avan");
         return;
       }
       try {
         const url = type === "avan"
           ? `/api/v1/ia/rag/conversations/${encodeURIComponent(convId)}`
-          : `/api/v1/conversaciones/direct/${encodeURIComponent(convId)}`;
+          : type === "group"
+            ? `/api/v1/conversaciones/groups/${encodeURIComponent(convId)}`
+            : `/api/v1/conversaciones/direct/${encodeURIComponent(convId)}`;
         const res = await fetch(url);
-        const d   = await res.json();
-        if (!d?.success) throw new Error(d?.error || "Error");
-        renderMessages(d.data ?? [], type);
-      } catch (err) {
-        renderMessages([{message_text: err?.message || "No se pudo cargar.", is_mine:false, created_at:""}], type);
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error((data && (data.error || data.detail)) || "No se pudo cargar la conversación");
+        }
+        renderMessages(data.data || [], type);
+      } catch (error) {
+        renderMessages([{ message_text: error?.message || "No se pudo cargar.", is_mine: false, created_at: "" }], type);
       }
       await loadAll();
     };
 
-    // ── Send message ────────────────────────────────────────────────────
-    const sendMsg = async (ev) => {
-      ev.preventDefault();
-      const txt = (inputEl?.value ?? "").trim();
+    const sendMsg = async (event) => {
+      event.preventDefault();
+      const txt = String(inputEl?.value || "").trim();
       if (!txt || sending) return;
-      if (!currentConvId) { alert("Selecciona una conversación primero."); return; }
-      sending = true; sendBtn.disabled = true;
+      if (!currentConvId) {
+        window.alert("Selecciona una conversación primero.");
+        return;
+      }
+      sending = true;
+      sendBtn.disabled = true;
       inputEl.value = "";
-      const prevHtml = messagesEl.innerHTML;
-      messagesEl.insertAdjacentHTML("beforeend", `
-        <div class="wa-msg wa-msg--out">
-          <div class="wa-msg-body">${esc(txt)}</div>
-          <div class="wa-msg-meta">Enviando…</div>
-        </div>`);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
       try {
         if (currentConvType === "avan") {
           const res = await fetch("/api/v1/ia/rag/chat", {
-            method:"POST", headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ conversation_id: currentConvId, message: txt, top_k: Number(topkEl?.value ?? 6) }),
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversation_id: currentConvId, message: txt, top_k: Number(topkEl?.value || 6) }),
           });
-          const d = await res.json();
-          if (!d?.success) throw new Error(d?.error || "Error");
-          currentConvId = d.data?.conversation_id || currentConvId;
+          const data = await res.json();
+          if (!res.ok || !data?.success) throw new Error((data && (data.error || data.detail)) || "No se pudo enviar");
+          currentConvId = data.data?.conversation_id || currentConvId;
+        } else if (currentConvType === "group") {
+          const res = await fetch(`/api/v1/conversaciones/groups/${encodeURIComponent(currentConvId)}/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: txt }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data?.success) throw new Error((data && (data.error || data.detail)) || "No se pudo enviar");
         } else {
           const res = await fetch("/api/v1/conversaciones/direct/send", {
-            method:"POST", headers:{"Content-Type":"application/json"},
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ conversation_id: currentConvId, message: txt }),
           });
-          const d = await res.json();
-          if (!d?.success) throw new Error(d?.error || "Error");
+          const data = await res.json();
+          if (!res.ok || !data?.success) throw new Error((data && (data.error || data.detail)) || "No se pudo enviar");
+          currentConvId = data.data?.conversation_id || currentConvId;
         }
         await openConv(currentConvId, currentConvType);
-      } catch (err) {
-        messagesEl.innerHTML = prevHtml;
-        messagesEl.insertAdjacentHTML("beforeend", `
-          <div class="wa-msg wa-msg--in wa-msg--typing">
-            <div class="wa-msg-body">Error: ${esc(err?.message || "No se pudo enviar")}</div>
-            <div class="wa-msg-meta">Sistema</div>
-          </div>`);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+      } catch (error) {
+        window.alert(error?.message || "No se pudo enviar");
         inputEl.value = txt;
       } finally {
-        sending = false; sendBtn.disabled = false; inputEl.focus();
+        sending = false;
+        sendBtn.disabled = false;
+        inputEl.focus();
       }
     };
 
-    // ── New conversation ────────────────────────────────────────────────
-    const startNew = () => {
-      if (currentConvType === "avan" || !currentConvType) {
-        currentConvId = `conv-${Date.now()}`; currentConvType = "avan";
-        chatTitleEl.textContent = "AVAN"; chatSubtitleEl.textContent = "Nueva conversación con AVAN";
-        chatAvatarEl.innerHTML = `<img src="/templates/imagenes/lobo.jpg" alt="AVAN">`;
-        topkWrap.style.display = "flex"; delBtn.style.display = "none";
-        renderMessages([{message_text:"Conversación iniciada. Escribe tu mensaje.", is_mine:false, created_at:""}], "avan");
-        renderList();
-      } else {
-        openUserModal();
-      }
-    };
-
-    // ── Delete conversation ─────────────────────────────────────────────
     const deleteConv = async () => {
-      if (!currentConvId || currentConvType !== "dm") return;
-      if (!confirm("¿Eliminar esta conversación?")) return;
+      if (!currentConvId || (currentConvType !== "dm" && currentConvType !== "group")) return;
+      if (!window.confirm("¿Eliminar esta conversación?")) return;
       try {
-        await fetch(`/api/v1/conversaciones/direct/${encodeURIComponent(currentConvId)}`, { method:"DELETE" });
-        currentConvId = ""; currentConvType = "";
+        const url = currentConvType === "group"
+          ? `/api/v1/conversaciones/groups/${encodeURIComponent(currentConvId)}`
+          : `/api/v1/conversaciones/direct/${encodeURIComponent(currentConvId)}`;
+        const res = await fetch(url, { method: "DELETE" });
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error((data && (data.error || data.detail)) || "No se pudo eliminar");
+        }
+        currentConvId = "";
+        currentConvType = "";
         chatTitleEl.textContent = "Selecciona una conversación";
         chatSubtitleEl.textContent = "—";
-        chatAvatarEl.innerHTML = "AV"; delBtn.style.display = "none";
+        chatAvatarEl.innerHTML = "AV";
+        updateHeaderActions();
         messagesEl.innerHTML = '<div class="wa-empty">Conversación eliminada.</div>';
         await loadAll();
-      } catch (err) { alert("No se pudo eliminar: " + (err?.message || "Error")); }
+      } catch (error) {
+        window.alert(error?.message || "No se pudo eliminar");
+      }
     };
 
-    // ── User modal ──────────────────────────────────────────────────────
-    const openUserModal = async () => {
+    const openUserModal = () => {
       modal.style.display = "flex";
       modalSearch.value = "";
-      modalList.innerHTML = '<li class="wa-empty">Cargando usuarios…</li>';
-      if (!allUsers.length) {
-        try {
-          const res = await fetch("/api/v1/conversaciones/users");
-          const d = await res.json();
-          if (d?.success) allUsers = d.data ?? [];
-        } catch { allUsers = []; }
-      }
       renderModalList();
       modalSearch.focus();
     };
 
     const renderModalList = () => {
-      const term = (modalSearch?.value ?? "").trim().toLowerCase();
-      const filtered = allUsers.filter((u) =>
-        !term || `${u.full_name} ${u.username}`.toLowerCase().includes(term)
-      );
-      if (!filtered.length) { modalList.innerHTML = '<li class="wa-empty">Sin usuarios encontrados.</li>'; return; }
-      modalList.innerHTML = filtered.map((u) => `
-        <li class="wa-modal-user" data-username="${esc(u.username)}">
-          <div class="wa-modal-avatar">${avatarHtml(u.full_name || u.username, u.imagen)}</div>
+      const term = String(modalSearch?.value || "").trim().toLowerCase();
+      const filtered = allUsers.filter((user) => !term || `${user.full_name} ${user.username}`.toLowerCase().includes(term));
+      if (!filtered.length) {
+        modalList.innerHTML = '<li class="wa-empty">Sin usuarios encontrados.</li>';
+        return;
+      }
+      modalList.innerHTML = filtered.map((user) => `
+        <li class="wa-modal-user" data-username="${esc(user.username)}">
+          <div class="wa-modal-avatar">${avatarHtml(user.full_name || user.username, user.imagen)}</div>
           <div class="wa-modal-info">
-            <strong>${esc(u.full_name || u.username)}</strong>
-            <small>${esc(u.role || u.username)}</small>
+            <strong>${esc(user.full_name || user.username)}</strong>
+            <small>${esc(user.conversation_access?.role || user.role || user.username)}</small>
           </div>
         </li>`).join("");
-      modalList.querySelectorAll(".wa-modal-user").forEach((li) => {
-        li.addEventListener("click", () => {
-          const username = li.getAttribute("data-username");
-          if (!username) return;
+      modalList.querySelectorAll(".wa-modal-user").forEach((item) => {
+        item.addEventListener("click", () => {
+          const username = item.getAttribute("data-username");
           modal.style.display = "none";
-          const user = allUsers.find((u) => u.username === username);
-          // Build a temporary conv_id; server will compute canonical on first send
-          const convId = `dm-${username}`;
-          if (!dmConvs.find((c) => c.conv_id === convId)) {
-            dmConvs.unshift({ conv_id:convId, type:"dm",
-              label: user?.full_name || username, img: user?.imagen || "",
-              last_at:"", last_message:"", unread:0 });
-          }
-          currentConvId = convId; currentConvType = "dm";
-          chatTitleEl.textContent    = user?.full_name || username;
-          chatSubtitleEl.textContent = "Mensaje directo";
-          chatAvatarEl.innerHTML     = avatarHtml(user?.full_name || username, user?.imagen || "");
-          topkWrap.style.display     = "none";
-          delBtn.style.display       = "inline-flex";
-          renderMessages([], "dm");
-          renderList();
+          if (username) startDmWithUser(username);
         });
       });
     };
 
-    // ── Index ───────────────────────────────────────────────────────────
+    const openGroupModal = () => {
+      if (!moduleAccess?.can_create_groups) return;
+      selectedGroupUsers = new Set();
+      groupModal.style.display = "flex";
+      groupNameEl.value = "";
+      groupSearchEl.value = "";
+      renderGroupList();
+      groupNameEl.focus();
+    };
+
+    const renderGroupList = () => {
+      const term = String(groupSearchEl?.value || "").trim().toLowerCase();
+      const filtered = allUsers.filter((user) => !term || `${user.full_name} ${user.username}`.toLowerCase().includes(term));
+      if (!filtered.length) {
+        groupListEl.innerHTML = '<li class="wa-empty">Sin usuarios encontrados.</li>';
+        return;
+      }
+      groupListEl.innerHTML = filtered.map((user) => `
+        <li class="wa-modal-user">
+          <div class="wa-modal-avatar">${avatarHtml(user.full_name || user.username, user.imagen)}</div>
+          <div class="wa-modal-info">
+            <strong>${esc(user.full_name || user.username)}</strong>
+            <small>${esc(user.username)}</small>
+          </div>
+          <input type="checkbox" data-group-user="${esc(user.username)}" ${selectedGroupUsers.has(user.username) ? "checked" : ""}>
+        </li>`).join("");
+      groupListEl.querySelectorAll("input[type='checkbox'][data-group-user]").forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+          const username = checkbox.getAttribute("data-group-user");
+          if (!username) return;
+          if (checkbox.checked) selectedGroupUsers.add(username);
+          else selectedGroupUsers.delete(username);
+          groupSelectedEl.textContent = `${selectedGroupUsers.size} seleccionados`;
+        });
+      });
+      groupSelectedEl.textContent = `${selectedGroupUsers.size} seleccionados`;
+    };
+
+    const createGroup = async () => {
+      const groupName = String(groupNameEl?.value || "").trim();
+      const memberUsernames = Array.from(selectedGroupUsers);
+      if (!groupName) {
+        window.alert("Escribe un nombre para el grupo.");
+        return;
+      }
+      if (!memberUsernames.length) {
+        window.alert("Selecciona al menos un usuario.");
+        return;
+      }
+      groupCreateBtn.disabled = true;
+      try {
+        const res = await fetch("/api/v1/conversaciones/groups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ group_name: groupName, member_usernames: memberUsernames }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error((data && (data.error || data.detail)) || "No se pudo crear el grupo");
+        }
+        groupModal.style.display = "none";
+        await loadAll();
+        await openConv(data.data?.conversation_id, "group");
+      } catch (error) {
+        window.alert(error?.message || "No se pudo crear el grupo");
+      } finally {
+        groupCreateBtn.disabled = false;
+      }
+    };
+
+    const sendModuleNotification = async () => {
+      if (!moduleAccess?.can_send_notifications || !currentConvId || (currentConvType !== "dm" && currentConvType !== "group")) return;
+      const message = window.prompt("Mensaje de notificación");
+      if (!message || !message.trim()) return;
+      try {
+        const res = await fetch("/api/v1/conversaciones/notifications/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ conversation_id: currentConvId, message: message.trim() }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error((data && (data.error || data.detail)) || "No se pudo enviar la notificación");
+        }
+        showFloatingNotification("Notificación enviada", message.trim());
+      } catch (error) {
+        window.alert(error?.message || "No se pudo enviar la notificación");
+      }
+    };
+
     const refreshIndexStatus = async () => {
       try {
         const res = await fetch("/api/v1/ia/rag/index-status");
-        const d = await res.json();
-        if (!d?.success) { if (res.status===403) indexBtn.disabled=true; return; }
-        const x = d.data ?? {};
-        showIndexStatus(`Índice: ${x.documents??0} docs · ${x.chunks??0} chunks`);
-      } catch (err) { showIndexStatus(err?.message||"Error índice", true); }
+        const data = await res.json();
+        if (!data?.success) {
+          if (res.status === 403) indexBtn.disabled = true;
+          return;
+        }
+        const info = data.data || {};
+        showIndexStatus(`Índice: ${info.documents ?? 0} docs · ${info.chunks ?? 0} chunks`);
+      } catch (error) {
+        showIndexStatus(error?.message || "Error índice", true);
+      }
     };
 
     const runIndex = async () => {
@@ -445,68 +1046,105 @@
       showIndexStatus("Indexando documentos…");
       try {
         const res = await fetch("/api/v1/ia/rag/index-documents", {
-          method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({limit:500}),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ limit: 500 }),
         });
-        const d = await res.json();
-        if (!d?.success) throw new Error(d?.error||"Error");
-        const x = d.data ?? {};
-        showIndexStatus(`Indexación lista: ${x.indexed_documents??0} docs, ${x.indexed_chunks??0} chunks`);
+        const data = await res.json();
+        if (!res.ok || !data?.success) throw new Error((data && (data.error || data.detail)) || "Error");
+        const info = data.data || {};
+        showIndexStatus(`Indexación lista: ${info.indexed_documents ?? 0} docs, ${info.indexed_chunks ?? 0} chunks`);
         await loadAll();
-      } catch (err) { showIndexStatus(err?.message||"Error", true); }
-      finally { indexBtn.disabled=false; refreshIndexStatus(); }
+      } catch (error) {
+        showIndexStatus(error?.message || "Error", true);
+      } finally {
+        indexBtn.disabled = false;
+        refreshIndexStatus();
+      }
     };
 
-    // ── Unread counter in tab ───────────────────────────────────────────
     const refreshUnread = async () => {
+      if (!hasInternalConversationAccess) return;
       try {
         const res = await fetch("/api/v1/conversaciones/unread-count");
-        const d = await res.json();
-        const n = d?.data?.count ?? 0;
-        newBtn?.setAttribute("title", n > 0 ? `Nueva conversación · ${n} mensajes no leídos` : "Nueva conversación");
-      } catch { /* ignore */ }
+        const data = await res.json();
+        const n = data?.data?.count ?? 0;
+        if (newBtn) {
+          newBtn.setAttribute("title", n > 0 ? `Nueva conversación · ${n} pendientes` : "Nueva conversación");
+        }
+      } catch {}
     };
 
-    // ── Auto-poll DM ────────────────────────────────────────────────────
-    const pollDm = async () => {
-      if (!currentConvId || currentConvType !== "dm") return;
+    const pollCurrentConversation = async () => {
+      if (!hasInternalConversationAccess) return;
+      if (!currentConvId || (currentConvType !== "dm" && currentConvType !== "group")) return;
       try {
-        const res = await fetch(`/api/v1/conversaciones/direct/${encodeURIComponent(currentConvId)}`);
-        const d = await res.json();
-        if (d?.success) renderMessages(d.data ?? [], "dm");
-      } catch { /* ignore */ }
+        const url = currentConvType === "group"
+          ? `/api/v1/conversaciones/groups/${encodeURIComponent(currentConvId)}`
+          : `/api/v1/conversaciones/direct/${encodeURIComponent(currentConvId)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data?.success) renderMessages(data.data || [], currentConvType);
+      } catch {}
     };
 
-    // ── Events ──────────────────────────────────────────────────────────
+    const pollFloatingNotifications = async () => {
+      if (!hasInternalConversationAccess) return;
+      try {
+        const res = await fetch("/api/v1/conversaciones/notifications/inbox");
+        const data = await res.json();
+        if (!res.ok || !data?.success) return;
+        (data.data || []).forEach((item) => {
+          showFloatingNotification(`Mensaje de ${item.from_username || "Sistema"}`, item.message_text || "");
+        });
+      } catch {}
+    };
+
     searchEl?.addEventListener("input", renderList);
     formEl?.addEventListener("submit", sendMsg);
     indexBtn?.addEventListener("click", runIndex);
-    newBtn?.addEventListener("click", startNew);
+    newBtn?.addEventListener("click", openUserModal);
+    newGroupBtn?.addEventListener("click", openGroupModal);
+    notifyBtn?.addEventListener("click", sendModuleNotification);
     delBtn?.addEventListener("click", deleteConv);
     modalClose?.addEventListener("click", () => { modal.style.display = "none"; });
-    modal?.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
+    modal?.addEventListener("click", (event) => { if (event.target === modal) modal.style.display = "none"; });
     modalSearch?.addEventListener("input", renderModalList);
+    groupModalClose?.addEventListener("click", () => { groupModal.style.display = "none"; });
+    groupModal?.addEventListener("click", (event) => { if (event.target === groupModal) groupModal.style.display = "none"; });
+    groupSearchEl?.addEventListener("input", renderGroupList);
+    groupCreateBtn?.addEventListener("click", createGroup);
 
-    // ── Boot ────────────────────────────────────────────────────────────
     (async () => {
       try {
-        const res = await fetch("/api/v1/conversaciones/users");
-        const d = await res.json();
-        if (d?.success) allUsers = d.data ?? [];
-      } catch { /* ok */ }
+        await refreshModuleAccess();
+        await loadModuleUsers();
+      } catch (error) {
+        renderNoAccess(error?.message || "Sin acceso a Conversaciones.");
+        return;
+      }
+
       await loadAll();
       refreshIndexStatus();
       refreshUnread();
+      if (hasInternalConversationAccess) {
+        await pollFloatingNotifications();
+      }
+
       if (!currentConvId) {
         const first = getUnifiedConversations()[0];
         if (first?.conv_id) {
           await openConv(first.conv_id, first.type);
         }
       }
-      setInterval(loadAll, 12000);
-      setInterval(refreshUnread, 15000);
-      setInterval(refreshIndexStatus, 30000);
-      setInterval(pollDm, 8000);
+
+      if (hasInternalConversationAccess) {
+        window.setInterval(loadAll, 12000);
+        window.setInterval(refreshUnread, 15000);
+        window.setInterval(pollCurrentConversation, 8000);
+        window.setInterval(pollFloatingNotifications, 10000);
+      }
+      window.setInterval(refreshIndexStatus, 30000);
     })();
   })();
   </script>

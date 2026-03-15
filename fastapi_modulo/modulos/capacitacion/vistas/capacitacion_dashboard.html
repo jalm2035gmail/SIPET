@@ -1,0 +1,104 @@
+<link rel="stylesheet" href="/capacitacion/assets/css/capacitacion_dashboard.css?v=20260314b">
+
+<div id="db-root" class="db-shell" data-js-url="/capacitacion/assets/js/capacitacion_dashboard.js?v=20260314">
+  {{> partials/dashboard_header.html }}
+
+  <div id="db-kpi-grid" class="db-kpi-grid">
+    <div class="db-status"><span class="db-loading"></span> Cargando...</div>
+  </div>
+
+  <div class="db-row db-row-3">
+    <div class="db-card">
+      <p class="db-card-title">Estados de inscripcion</p>
+      <div id="db-chart-estados"></div>
+    </div>
+    <div class="db-card">
+      <p class="db-card-title">Avance por departamento</p>
+      <div id="db-chart-depts"></div>
+    </div>
+    <div class="db-card">
+      <p class="db-card-title">Inscripciones por curso</p>
+      <div id="db-chart-top-cursos"></div>
+    </div>
+  </div>
+
+  <div class="db-row">
+    <div class="db-card">
+      <p class="db-card-title">Top cursos completados</p>
+      <div id="db-chart-completados"></div>
+    </div>
+    <div class="db-card">
+      <p class="db-card-title">Top cursos abandonados</p>
+      <div id="db-chart-abandonados"></div>
+    </div>
+  </div>
+
+  <div class="db-row">
+    <div class="db-card">
+      <p class="db-card-title">Certificados por periodo</p>
+      <div id="db-chart-certificados"></div>
+    </div>
+    <div class="db-card">
+      <p class="db-card-title">Cursos con peor desempeno</p>
+      <div id="db-chart-peor-desempeno"></div>
+    </div>
+  </div>
+
+  <div class="db-row">
+    <div class="db-card">
+      <p class="db-card-title">Cursos obligatorios vencidos</p>
+      <div id="db-overdue-list" class="db-inline-list"></div>
+    </div>
+    <div class="db-card">
+      <p class="db-card-title">Colaboradores sin avance</p>
+      <div id="db-zero-list" class="db-inline-list"></div>
+    </div>
+  </div>
+
+  <div class="db-card">
+    <p class="db-card-title" style="margin-bottom:16px;">Inscripciones</p>
+    {{> partials/dashboard_filters.html }}
+
+    <div id="db-table-status" class="db-status" style="display:none;">
+      <span class="db-loading"></span> Cargando...
+    </div>
+    <div id="db-table-wrap" class="db-table-wrap" style="display:none;">
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Colaborador</th>
+            <th>Departamento</th>
+            <th>Curso</th>
+            <th>Estado</th>
+            <th>Avance</th>
+            <th>Puntaje</th>
+            <th>Inscrito</th>
+            <th>Completado</th>
+          </tr>
+        </thead>
+        <tbody id="db-table-body"></tbody>
+      </table>
+    </div>
+    <div id="db-table-empty" style="display:none;text-align:center;padding:24px;font-size:14px;color:#94a3b8;">
+      Sin resultados.
+    </div>
+    <div id="db-pagination" class="db-pagination" style="display:none;">
+      <button id="db-btn-prev-page" class="db-page-btn" disabled>Anterior</button>
+      <span id="db-page-info"></span>
+      <button id="db-btn-next-page" class="db-page-btn">Siguiente</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var root = document.getElementById('db-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

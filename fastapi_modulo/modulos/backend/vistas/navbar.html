@@ -1,0 +1,46 @@
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="navbar-left">
+            <button class="navbar-hamburger is-open" aria-label="Mostrar u ocultar menú" aria-expanded="true" aria-controls="sidebar">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <div class="navbar-title">
+                <span class="navbar-menu-name">{{ page_title or title or "BSC" }}</span>
+            </div>
+            <div class="navbar-section-menu" id="navbar-section-menu" style="display:none;">
+                <button class="navbar-section-btn" id="navbar-section-btn" type="button"
+                        aria-haspopup="true" aria-expanded="false" aria-label="Menú de sección">
+                    <span class="navbar-section-btn-label" id="navbar-section-btn-label"></span>
+                    <span class="navbar-section-caret" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </span>
+                </button>
+                <div class="navbar-section-dropdown" id="navbar-section-dropdown" role="menu"></div>
+            </div>
+        </div>
+        <div class="navbar-user-menu">
+            <button class="navbar-ia-btn" id="navbar-ia-status-btn" aria-label="Estado de IA" title="Estado de IA">
+                <i class="navbar-ia-icon fa-solid fa-robot" aria-hidden="true"></i>
+                <span class="navbar-ia-x" id="navbar-ia-status-x" aria-hidden="true">X</span>
+            </button>
+            <button class="navbar-notifications-btn" id="navbar-notifications-trigger" aria-label="Notificaciones" aria-expanded="false">
+                <i class="navbar-notifications-icon fa-regular fa-envelope" aria-hidden="true"></i>
+                <span class="navbar-notifications-badge" id="navbar-notifications-badge">0</span>
+            </button>
+            <button class="navbar-avatar" id="navbar-avatar-btn" aria-label="Menú de usuario" aria-expanded="false">
+                <img
+                    id="navbar-avatar-img"
+                    src="{{ login_logo_url | default('/templates/icon/usuario.png', true) }}"
+                    data-default="{{ login_logo_url | default('/templates/icon/usuario.png', true) }}"
+                    alt="Usuario"
+                />
+            </button>
+            <div class="user-dropdown" id="user-dropdown">
+                <a href="/perfil" id="profile-link">Perfil</a>
+                <a href="/logout" id="logout-link">Salir</a>
+            </div>
+        </div>
+    </div>
+</div>

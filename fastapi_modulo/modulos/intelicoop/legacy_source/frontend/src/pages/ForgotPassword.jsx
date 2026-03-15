@@ -28,7 +28,7 @@ export default function ForgotPassword() {
             <Button type="submit" variant="primary">
               Enviar enlace
             </Button>
-            <Link to="/web/login">Volver a login</Link>
+            <Link to="/backend/login">Volver a login</Link>
           </div>
         </form>
       </Card>

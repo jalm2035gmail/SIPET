@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, validator
+from pydantic import MAINModel, ConfigDict, Field, validator
 
 
 # ========== SWOT ITEM SCHEMA ==========
-class SWOTItem(BaseModel):
+class SWOTItem(MAINModel):
     """Item individual para análisis FODA"""
     description: str = Field(..., min_length=5, max_length=500, description="Descripción del factor")
     impact: str = Field("medium", description="Impacto: low, medium, high")
@@ -21,7 +21,7 @@ class SWOTItem(BaseModel):
 
 
 # ========== PESTEL ITEM SCHEMA ==========
-class PESTELItem(BaseModel):
+class PESTELItem(MAINModel):
     """Item individual para análisis PESTEL"""
     factor: str = Field(..., min_length=5, max_length=500, description="Factor identificado")
     trend: str = Field("neutral", description="Tendencia: positive, negative, neutral")
@@ -42,7 +42,7 @@ class PESTELItem(BaseModel):
 
 
 # ========== CREATE SCHEMA ==========
-class DiagnosticAnalysisCreate(BaseModel):
+class DiagnosticAnalysisCreate(MAINModel):
     """Schema para creación de Análisis de Diagnóstico"""
     swot_strengths: Optional[List[SWOTItem]] = Field(None, description="Fortalezas")
     swot_weaknesses: Optional[List[SWOTItem]] = Field(None, description="Debilidades")
@@ -87,7 +87,7 @@ class DiagnosticAnalysisCreate(BaseModel):
 
 
 # ========== UPDATE SCHEMA ==========
-class DiagnosticAnalysisUpdate(BaseModel):
+class DiagnosticAnalysisUpdate(MAINModel):
     """Schema para actualización de Análisis de Diagnóstico"""
     swot_strengths: Optional[List[SWOTItem]] = None
     swot_weaknesses: Optional[List[SWOTItem]] = None
@@ -125,7 +125,7 @@ class DiagnosticAnalysisUpdate(BaseModel):
 
 
 # ========== RESPONSE SCHEMA ==========
-class DiagnosticAnalysisResponse(BaseModel):
+class DiagnosticAnalysisResponse(MAINModel):
     """Schema para respuesta de Análisis de Diagnóstico"""
     id: int
     strategic_plan_id: int
@@ -145,7 +145,7 @@ class DiagnosticAnalysisResponse(BaseModel):
 
 
 # ========== SUMMARY SCHEMA ==========
-class DiagnosticSummary(BaseModel):
+class DiagnosticSummary(MAINModel):
     """Resumen del diagnóstico"""
     total_swot_items: int
     total_pestel_items: int

@@ -1,0 +1,16 @@
+  <div class="flex flex-col lg:flex-row gap-5">
+{{ include:componentes/programa/sidebar.html }}
+
+    <div class="flex-1 grid gap-4">
+{{ include:componentes/programa/placeholder.html }}
+
+      <div id="pa-programa-activo" style="display:none;" class="grid gap-4">
+{{ include:componentes/programa/kpis.html }}
+{{ include:componentes/programa/progress.html }}
+{{ include:componentes/programa/filters.html }}
+{{ include:componentes/programa/table.html }}
+      </div>
+    </div>
+  </div>
+
+{{ include:componentes/programa/toast.html }}

@@ -1,0 +1,263 @@
+<link rel="stylesheet" href="/modulos/proyectando/proyectando.css">
+<section class="proyectando-scope proy-shell">
+  <style>
+    #dp-if-catalog-tbody tr.dp-if-level-1 > td{
+      background:color-mix(in srgb, var(--institutional-accent, #166534) 18%, var(--field-color, #ffffff) 82%);
+    }
+    #dp-if-catalog-tbody tr.dp-if-level-3 > td{
+      background:color-mix(in srgb, var(--institutional-accent-contrast, #2563eb) 18%, var(--field-color, #ffffff) 82%);
+    }
+    #dp-if-catalog-table thead tr:nth-child(2) th:nth-child(2),
+    #dp-if-catalog-tbody td:nth-child(2){
+      font-size:70%;
+    }
+    #dp-if-catalog-table thead tr:nth-child(2) th:nth-child(3),
+    #dp-if-catalog-tbody td:nth-child(3){
+      position:sticky;
+      left:0;
+      z-index:2;
+      min-width:320px;
+      background:var(--fallback-b1, oklch(var(--b1)/1));
+      box-shadow:12px 0 18px -16px color-mix(in srgb, var(--sidebar-bottom, #0f172a) 24%, transparent);
+    }
+    #dp-if-catalog-table thead tr:nth-child(1) th:nth-child(3),
+    #dp-if-catalog-table thead tr:nth-child(2) th:nth-child(3){
+      z-index:4;
+      background:var(--fallback-b2, oklch(var(--b2)/1));
+    }
+    #dp-if-catalog-tbody tr.dp-if-level-1 > td:nth-child(3){
+      background:color-mix(in srgb, var(--institutional-accent, #166534) 18%, var(--field-color, #ffffff) 82%);
+    }
+    #dp-if-catalog-tbody tr.dp-if-level-3 > td:nth-child(3){
+      background:color-mix(in srgb, var(--institutional-accent-contrast, #2563eb) 18%, var(--field-color, #ffffff) 82%);
+    }
+  </style>
+  <div class="titulo proy-title-card">
+    <div class="proy-title-layout">
+      <img
+        src="/icon/proyectando.svg"
+        alt="Icono datos financieros"
+        width="96"
+        height="96"
+        class="proy-title-icon"
+      />
+      <div class="proy-title-copy">
+        <div class="proy-title-heading">Datos preliminares</div>
+        <div class="proy-title-description">MAIN de datos para proyecciones financieras y supuestos iniciales.</div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs tabs-lifted proy-tabs" role="tablist" aria-label="Datos preliminares">
+    <button type="button" class="tab tab-active gap-2 rounded-t-lg whitespace-nowrap" data-tab="datos-generales"><img src="/templates/icon/datos_generales.svg" alt="" class="w-5 h-5 shrink-0">Datos generales</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="macroeconomia"><img src="/templates/icon/macroeconomia.svg" alt="" class="w-5 h-5 shrink-0">Macroeconomía</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="sucursales"><img src="/templates/icon/sucursales.svg" alt="" class="w-5 h-5 shrink-0">Sucursales</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="informacion-financiera"><img src="/templates/icon/informacion_financiera.svg" alt="" class="w-5 h-5 shrink-0">Información financiera</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="activo-fijo"><img src="/templates/icon/activo_fijo.svg" alt="" class="w-5 h-5 shrink-0">Activo fijo</button>
+    <button type="button" class="tab gap-2 rounded-t-lg whitespace-nowrap" data-tab="gastos"><img src="/templates/icon/gastos.svg" alt="" class="w-5 h-5 shrink-0">Gastos</button>
+  </div>
+
+  <div class="proy-notebook-body w-full space-y-4">
+    <section class="tab-panel card bg-MAIN-100 border border-MAIN-300 p-4 dp-general-panel" data-panel="datos-generales">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 dp-general-grid">
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-responsable-general"><span class="label-text font-semibold text-MAIN-content/80">Responsable general</span></label>
+          <input id="dp-responsable-general" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-primer-anio"><span class="label-text font-semibold text-MAIN-content/80">Primer año de proyección</span></label>
+          <input id="dp-primer-anio" class="input input-bordered campo w-full text-right" type="number">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-anios"><span class="label-text font-semibold text-MAIN-content/80">Años de proyección</span></label>
+          <input id="dp-anios" class="input input-bordered campo w-full text-right" type="number">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-moneda"><span class="label-text font-semibold text-MAIN-content/80">Moneda</span></label>
+          <input id="dp-moneda" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-tasa"><span class="label-text font-semibold text-MAIN-content/80">Tasa de crecimiento (%)</span></label>
+          <input id="dp-tasa" class="input input-bordered campo w-full text-right" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-observaciones"><span class="label-text font-semibold text-MAIN-content/80">Observaciones</span></label>
+          <input id="dp-observaciones" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-sociedad"><span class="label-text font-semibold text-MAIN-content/80">Sociedad</span></label>
+          <input id="dp-sociedad" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-figura-juridica"><span class="label-text font-semibold text-MAIN-content/80">Figura jurídica</span></label>
+          <input id="dp-figura-juridica" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-calle"><span class="label-text font-semibold text-MAIN-content/80">Calle</span></label>
+          <input id="dp-calle" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-numero-exterior"><span class="label-text font-semibold text-MAIN-content/80">Número exterior</span></label>
+          <input id="dp-numero-exterior" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-numero-interior"><span class="label-text font-semibold text-MAIN-content/80">Número interior</span></label>
+          <input id="dp-numero-interior" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-colonia"><span class="label-text font-semibold text-MAIN-content/80">Colonia</span></label>
+          <input id="dp-colonia" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-ciudad"><span class="label-text font-semibold text-MAIN-content/80">Ciudad</span></label>
+          <input id="dp-ciudad" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-municipio"><span class="label-text font-semibold text-MAIN-content/80">Municipio</span></label>
+          <input id="dp-municipio" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-estado"><span class="label-text font-semibold text-MAIN-content/80">Estado</span></label>
+          <input id="dp-estado" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-cp"><span class="label-text font-semibold text-MAIN-content/80">CP</span></label>
+          <input id="dp-cp" class="input input-bordered campo w-full" type="text">
+        </div>
+        <div class="form-control dp-general-field">
+          <label class="label pb-1" for="dp-pais"><span class="label-text font-semibold text-MAIN-content/80">País</span></label>
+          <input id="dp-pais" class="input input-bordered campo w-full" type="text">
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel card bg-MAIN-100 border border-MAIN-300 p-4" data-panel="macroeconomia" hidden>
+      <input id="dp-macro-inflacion-json" type="hidden">
+      <input id="dp-macro-udi-json" type="hidden">
+      <div class="overflow-x-auto rounded-box border border-MAIN-300 bg-MAIN-100">
+        <table id="dp-macro-table" class="table table-zebra w-full text-sm">
+          <thead id="dp-macro-thead"></thead>
+          <tbody id="dp-macro-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tab-panel card bg-MAIN-100 border border-MAIN-300 p-4" data-panel="sucursales" hidden>
+      <p>Las sucursales se guardan en su propio store de sucursales.</p>
+    </section>
+
+    <section class="tab-panel card bg-MAIN-100 border border-MAIN-300 p-4" data-panel="informacion-financiera" hidden>
+      <input id="dp-ifb-rows-json" type="hidden">
+      <div class="grid gap-4">
+        <div class="botones_accion flex flex-wrap items-center gap-2">
+          <button type="button" id="dp-if-download-template" class="boton_vista boton_vista-eliptico">Descargar plantilla</button>
+          <button type="button" id="dp-if-upload-data" class="boton_vista boton_vista-eliptico">Subir datos</button>
+          <input id="dp-if-upload-file" type="file" accept=".csv,text/csv" class="hidden">
+          <span id="dp-if-upload-msg" class="text-sm text-MAIN-content/70"></span>
+        </div>
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
+          <label class="form-control">
+            <span class="label pb-1"><span class="label-text font-semibold text-MAIN-content/80">Buscar cuenta o descripción</span></span>
+            <input id="dp-if-search" class="input input-bordered campo w-full" type="search" placeholder="Ej. 104-00 o CARTERA">
+          </label>
+          <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+            <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Total de cuentas</div>
+            <div id="dp-if-total" class="mt-1 text-2xl font-extrabold text-MAIN-content">0</div>
+          </div>
+          <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+            <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Niveles</div>
+            <div id="dp-if-levels" class="mt-1 text-sm font-semibold text-MAIN-content/80">—</div>
+          </div>
+        </div>
+
+        <div id="dp-if-catalog-wrap" class="dp-if-wrap overflow-x-auto rounded-box border border-MAIN-300 bg-MAIN-100">
+          <table class="table table-zebra w-full text-sm dp-if-table" id="dp-if-catalog-table">
+            <thead id="dp-if-catalog-thead"></thead>
+            <tbody id="dp-if-catalog-tbody">
+              <tr><td colspan="3" class="text-MAIN-content/60">Cargando catálogo financiero...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-sm text-MAIN-content/60">
+          La información financiera ahora usa el catálogo importado desde la nueva hoja de Excel. Esta vista es la MAIN de referencia para las siguientes pantallas financieras.
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel card bg-MAIN-100 border border-MAIN-300 p-4" data-panel="activo-fijo" hidden>
+      <input id="dp-activo-fijo-json" type="hidden">
+      <div class="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+          <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Rubros</div>
+          <div id="dp-af-total" class="mt-1 text-2xl font-extrabold text-MAIN-content">0</div>
+        </div>
+        <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+          <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Depreciables</div>
+          <div id="dp-af-depreciables" class="mt-1 text-2xl font-extrabold text-MAIN-content">0</div>
+        </div>
+        <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+          <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Vida útil promedio</div>
+          <div id="dp-af-promedio" class="mt-1 text-2xl font-extrabold text-MAIN-content">—</div>
+        </div>
+      </div>
+      <div class="overflow-x-auto rounded-box border border-MAIN-300 bg-MAIN-100">
+        <table class="table table-zebra w-full text-sm" id="dp-activo-fijo-table">
+          <thead>
+            <tr>
+              <th>Rubro</th>
+              <th>Años</th>
+              <th>Depreciable</th>
+            </tr>
+          </thead>
+          <tbody id="dp-activo-fijo-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tab-panel card bg-MAIN-100 border border-MAIN-300 p-4" data-panel="gastos" hidden>
+      <input id="dp-gastos-rows-json" type="hidden">
+      <div class="grid gap-4">
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px_220px_220px]">
+          <label class="form-control">
+            <span class="label pb-1"><span class="label-text font-semibold text-MAIN-content/80">Buscar código o rubro</span></span>
+            <input id="dp-gastos-search" class="input input-bordered campo w-full" type="search" placeholder="Ej. 604.01 o Sueldo">
+          </label>
+          <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+            <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Rubros</div>
+            <div id="dp-gastos-total" class="mt-1 text-2xl font-extrabold text-MAIN-content">0</div>
+          </div>
+          <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+            <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Niveles</div>
+            <div id="dp-gastos-levels" class="mt-1 text-sm font-semibold text-MAIN-content/80">—</div>
+          </div>
+          <div class="rounded-box border border-MAIN-300 bg-MAIN-200 px-4 py-3">
+            <div class="text-xs font-bold uppercase tracking-[0.12em] text-MAIN-content/50">Capturados</div>
+            <div id="dp-gastos-captured" class="mt-1 text-2xl font-extrabold text-MAIN-content">0</div>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-box border border-MAIN-300 bg-MAIN-100">
+          <table class="table table-zebra w-full text-sm" id="dp-gastos-table">
+            <thead id="dp-gastos-thead"></thead>
+            <tbody id="dp-gastos-tbody">
+              <tr><td class="text-MAIN-content/60">Cargando gastos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="botones_accion mt-3 flex flex-wrap items-center gap-2">
+    <button type="button" id="dp-save-btn" class="boton_vista boton_vista-eliptico active">
+      <i class="boton_vista-icono view-pill-fa fa-solid fa-floppy-disk" aria-hidden="true"></i>
+      <span class="boton_vista-label">Guardar</span>
+    </button>
+    <button type="button" id="dp-clear-btn" class="boton_vista boton_vista-eliptico">
+      <i class="boton_vista-icono view-pill-fa fa-solid fa-eraser" aria-hidden="true"></i>
+      <span class="boton_vista-label">Limpiar</span>
+    </button>
+    <span id="dp-msg" class="text-sm text-MAIN-content/70"></span>
+  </div>
+</section>
+
+<script src="/modulos/proyectando/datos_preliminares.js"></script>

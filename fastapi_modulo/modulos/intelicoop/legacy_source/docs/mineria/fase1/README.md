@@ -1,6 +1,6 @@
 # Fase 1 - Definicion y Alcance
 
-Este directorio contiene los entregables base de la Fase 1 para el modulo de Mineria de Datos:
+Este directorio contiene los entregables MAIN de la Fase 1 para el modulo de Mineria de Datos:
 
 - `01_documento_alcance.md`
 - `02_casos_uso_kpis.md`

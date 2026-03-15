@@ -4,14 +4,14 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg
 from django.utils import timezone as dj_timezone
 
 from apps.analitica.models import ResultadoScoring
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Detecta drift, recalibra umbrales de scoring y dispara reentrenamiento segun metricas (Fase 7)."
 
     def add_arguments(self, parser):
@@ -58,7 +58,7 @@ class Command(BaseCommand):
         )
         risk_too_high = high_risk_rate > float(options["max_high_risk_rate"])
 
-        # Umbrales base: score >= 0.80 aprobar, < 0.60 rechazar.
+        # Umbrales MAIN: score >= 0.80 aprobar, < 0.60 rechazar.
         threshold_approve = 0.80
         threshold_reject = 0.60
         recalibration_reason = []

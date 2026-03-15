@@ -69,7 +69,7 @@ class StrategicPlanTemplate:
         status = plan.get("status", "draft")
         plan_id = plan.get("id")
 
-        base_actions = [
+        MAIN_actions = [
             ButtonTemplate.primary("Ver Detalles", url=f"/strategic/plans/{plan_id}"),
             ButtonTemplate.secondary("Editar", url=f"/strategic/plans/{plan_id}/edit"),
         ]
@@ -98,7 +98,7 @@ class StrategicPlanTemplate:
             ],
         }
 
-        return base_actions + status_actions.get(status, [])
+        return MAIN_actions + status_actions.get(status, [])
 
     @staticmethod
     def _get_progress_color(progress: float) -> str:

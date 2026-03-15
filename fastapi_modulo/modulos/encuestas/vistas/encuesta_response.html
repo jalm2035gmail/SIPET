@@ -1,0 +1,80 @@
+<section
+  id="enc-response-root"
+  class="enc-response-shell"
+  data-enc-response-js-url="/api/public/encuestas/assets/encuesta_response.js"
+  data-enc-response-bootstrap='__ENCUESTA_RESPONSE_BOOTSTRAP__'
+>
+  <div class="enc-response-hero">
+    <p class="enc-response-kicker">SIPET · Respuesta</p>
+    <h1 id="enc-response-title" class="enc-response-title">Encuesta</h1>
+    <p id="enc-response-description" class="enc-response-description"></p>
+  </div>
+
+  <div class="enc-response-layout">
+    <aside class="enc-response-sidebar">
+      <div class="enc-response-card">
+        <p class="enc-response-sidebar-label">Progreso</p>
+        <div class="enc-response-progress">
+          <div class="enc-progress"><span id="enc-response-progress-bar" style="width: 0%"></span></div>
+          <strong id="enc-response-progress-text">0%</strong>
+        </div>
+      </div>
+      <div id="enc-response-quiz-card" class="enc-response-card" style="display:none;">
+        <p class="enc-response-sidebar-label">Quiz</p>
+        <div class="enc-response-meta">
+          <div id="enc-response-attempts-meta"></div>
+          <div id="enc-response-timer-wrap" style="display:none;"><strong>Tiempo restante:</strong> <span id="enc-response-timer">00:00</span></div>
+        </div>
+      </div>
+      <div class="enc-response-card">
+        <p class="enc-response-sidebar-label">Pasos</p>
+        <div id="enc-response-steps" class="enc-response-steps"></div>
+      </div>
+    </aside>
+
+    <main class="enc-response-main">
+      <section id="enc-response-start" class="enc-response-screen is-active">
+        <article class="enc-card enc-response-card">
+          <h2>Antes de comenzar</h2>
+          <p id="enc-response-start-copy"></p>
+          <div id="enc-response-start-meta" class="enc-response-meta"></div>
+          <div id="enc-response-360-meta" class="enc-response-meta" style="display:none;"></div>
+          <div class="enc-form-actions">
+            <button type="button" id="enc-response-start-btn" class="enc-button enc-button-primary">Comenzar</button>
+          </div>
+        </article>
+      </section>
+
+      <section id="enc-response-form-screen" class="enc-response-screen">
+        <article class="enc-card enc-response-card">
+          <header class="enc-response-section-head">
+            <div>
+              <p id="enc-response-step-label" class="enc-response-step-label"></p>
+              <h2 id="enc-response-section-title"></h2>
+              <p id="enc-response-section-description" class="enc-response-section-description"></p>
+            </div>
+          </header>
+
+          <div id="enc-response-message" class="enc-inline-msg" aria-live="polite"></div>
+          <form id="enc-response-form">
+            <div id="enc-response-questions" class="enc-response-questions"></div>
+            <div class="enc-form-actions enc-response-actions">
+              <button type="button" id="enc-response-prev" class="enc-button enc-button-secondary">Anterior</button>
+              <button type="button" id="enc-response-save" class="enc-button enc-button-secondary">Guardar progreso</button>
+              <button type="button" id="enc-response-next" class="enc-button enc-button-primary">Siguiente</button>
+              <button type="submit" id="enc-response-submit" class="enc-button enc-button-primary">Enviar encuesta</button>
+            </div>
+          </form>
+        </article>
+      </section>
+
+      <section id="enc-response-closed" class="enc-response-screen">
+        <article class="enc-card enc-response-card">
+          <h2>Encuesta finalizada</h2>
+          <p id="enc-response-closed-copy"></p>
+          <p id="enc-response-closed-score" class="enc-response-closed-score"></p>
+        </article>
+      </section>
+    </main>
+  </div>
+</section>

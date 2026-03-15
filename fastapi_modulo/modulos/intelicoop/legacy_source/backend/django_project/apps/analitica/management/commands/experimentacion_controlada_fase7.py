@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import ResultadoScoring
 
@@ -19,7 +19,7 @@ def _recomendacion(score: float) -> str:
     return "rechazar"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Ejecuta ciclo de experimentacion controlada (A/B + shadow), compara impacto y define rollback/promocion."
 
     def add_arguments(self, parser):
@@ -36,7 +36,7 @@ class Command(BaseCommand):
         scoring = list(ResultadoScoring.objects.order_by("-id")[:300])
         total = len(scoring)
 
-        baseline_scores = []
+        MAINline_scores = []
         candidate_ab_scores = []
         candidate_shadow_scores = []
         for idx, item in enumerate(scoring):
@@ -45,18 +45,18 @@ class Command(BaseCommand):
             antig = float(item.antiguedad_meses or 0.0)
             dti = _clamp(deuda / max(ingreso, 1.0))
             antig_norm = _clamp(antig / 60.0)
-            base = _clamp(0.70 - (0.55 * dti) + (0.25 * antig_norm))
+            MAIN = _clamp(0.70 - (0.55 * dti) + (0.25 * antig_norm))
 
             # Variante A/B: ajuste conservador (menos riesgo de sobre-aprobacion).
-            candidate_ab = _clamp(base + 0.015 - (0.02 * dti))
+            candidate_ab = _clamp(MAIN + 0.015 - (0.02 * dti))
             # Shadow mode: mas agresivo en aprobacion para evaluar impacto potencial.
-            candidate_shadow = _clamp(base + 0.03)
+            candidate_shadow = _clamp(MAIN + 0.03)
 
-            baseline_scores.append(base)
+            MAINline_scores.append(MAIN)
             if idx % 2 == 0:
                 candidate_ab_scores.append(candidate_ab)
             else:
-                candidate_ab_scores.append(base)
+                candidate_ab_scores.append(MAIN)
             candidate_shadow_scores.append(candidate_shadow)
 
         def summarize(name: str, scores: list[float]) -> dict[str, float]:
@@ -86,14 +86,14 @@ class Command(BaseCommand):
                 "impacto_compuesto": impacto_compuesto,
             }
 
-        baseline = summarize("baseline_control", baseline_scores)
+        MAINline = summarize("MAINline_control", MAINline_scores)
         ab = summarize("ab_candidate", candidate_ab_scores)
         shadow = summarize("shadow_candidate", candidate_shadow_scores)
 
-        delta_ab_impacto = ab["impacto_compuesto"] - baseline["impacto_compuesto"]
-        delta_ab_riesgo = ab["riesgo_alto_pct"] - baseline["riesgo_alto_pct"]
-        delta_shadow_impacto = shadow["impacto_compuesto"] - baseline["impacto_compuesto"]
-        delta_shadow_riesgo = shadow["riesgo_alto_pct"] - baseline["riesgo_alto_pct"]
+        delta_ab_impacto = ab["impacto_compuesto"] - MAINline["impacto_compuesto"]
+        delta_ab_riesgo = ab["riesgo_alto_pct"] - MAINline["riesgo_alto_pct"]
+        delta_shadow_impacto = shadow["impacto_compuesto"] - MAINline["impacto_compuesto"]
+        delta_shadow_riesgo = shadow["riesgo_alto_pct"] - MAINline["riesgo_alto_pct"]
 
         guardrail_riesgo_max = 2.0
         guardrail_impacto_min = 0.0
@@ -101,7 +101,7 @@ class Command(BaseCommand):
         shadow_pass = delta_shadow_riesgo <= guardrail_riesgo_max and delta_shadow_impacto >= guardrail_impacto_min
 
         if total == 0:
-            decision = "mantener_baseline_sin_muestras"
+            decision = "mantener_MAINline_sin_muestras"
         else:
             decision = "promover_candidate_ab" if ab_pass else "rollback_inmediato"
             if ab_pass and shadow_pass and shadow["impacto_compuesto"] > ab["impacto_compuesto"]:
@@ -119,28 +119,28 @@ class Command(BaseCommand):
             },
             {
                 "dimension": "ab_test",
-                "metrica": "delta_impacto_vs_baseline",
+                "metrica": "delta_impacto_vs_MAINline",
                 "valor": f"{delta_ab_impacto:.2f}",
                 "umbral": ">=0.00",
                 "estado": "Cumple" if delta_ab_impacto >= 0.0 else "En revision",
             },
             {
                 "dimension": "ab_test",
-                "metrica": "delta_riesgo_alto_vs_baseline_pct",
+                "metrica": "delta_riesgo_alto_vs_MAINline_pct",
                 "valor": f"{delta_ab_riesgo:.2f}",
                 "umbral": "<=2.00",
                 "estado": "Cumple" if delta_ab_riesgo <= guardrail_riesgo_max else "En revision",
             },
             {
                 "dimension": "shadow_mode",
-                "metrica": "delta_impacto_vs_baseline",
+                "metrica": "delta_impacto_vs_MAINline",
                 "valor": f"{delta_shadow_impacto:.2f}",
                 "umbral": ">=0.00",
                 "estado": "Cumple" if delta_shadow_impacto >= 0.0 else "En revision",
             },
             {
                 "dimension": "shadow_mode",
-                "metrica": "delta_riesgo_alto_vs_baseline_pct",
+                "metrica": "delta_riesgo_alto_vs_MAINline_pct",
                 "valor": f"{delta_shadow_riesgo:.2f}",
                 "umbral": "<=2.00",
                 "estado": "Cumple" if delta_shadow_riesgo <= guardrail_riesgo_max else "En revision",
@@ -173,20 +173,20 @@ class Command(BaseCommand):
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             "",
             "## Esquema de prueba",
-            "- A/B: baseline vs candidate_ab (50/50 logico).",
+            "- A/B: MAINline vs candidate_ab (50/50 logico).",
             "- Shadow mode: candidate_shadow evaluado en paralelo sin impacto operativo.",
             "",
             "## Comparativo",
             "| Grupo | Muestras | Score promedio | Aprobacion % | Riesgo alto % | Impacto compuesto |",
             "|---|---:|---:|---:|---:|---:|",
-            f"| baseline_control | {int(baseline['muestras'])} | {baseline['score_promedio']:.4f} | {baseline['aprobacion_pct']:.2f} | {baseline['riesgo_alto_pct']:.2f} | {baseline['impacto_compuesto']:.2f} |",
+            f"| MAINline_control | {int(MAINline['muestras'])} | {MAINline['score_promedio']:.4f} | {MAINline['aprobacion_pct']:.2f} | {MAINline['riesgo_alto_pct']:.2f} | {MAINline['impacto_compuesto']:.2f} |",
             f"| ab_candidate | {int(ab['muestras'])} | {ab['score_promedio']:.4f} | {ab['aprobacion_pct']:.2f} | {ab['riesgo_alto_pct']:.2f} | {ab['impacto_compuesto']:.2f} |",
             f"| shadow_candidate | {int(shadow['muestras'])} | {shadow['score_promedio']:.4f} | {shadow['aprobacion_pct']:.2f} | {shadow['riesgo_alto_pct']:.2f} | {shadow['impacto_compuesto']:.2f} |",
             "",
             "## Decision operacional",
             f"- Decision: `{decision}`",
             "- Guardrail de riesgo alto: delta <= 2.00 puntos porcentuales.",
-            "- Guardrail de impacto: no degradar impacto compuesto vs baseline.",
+            "- Guardrail de impacto: no degradar impacto compuesto vs MAINline.",
             f"- Rollback inmediato: {'habilitado' if rollback_ready else 'listo si candidato cae bajo guardrails'}",
             "",
             "## Estado",

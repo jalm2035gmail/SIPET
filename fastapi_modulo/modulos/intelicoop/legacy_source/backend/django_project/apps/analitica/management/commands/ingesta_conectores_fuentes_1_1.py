@@ -4,10 +4,10 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Etapa 2/4 de Data Intake: diagnostico de conectores (PostgreSQL/MySQL/APIs/SFTP/archivos)."
 
     def add_arguments(self, parser):
@@ -41,13 +41,13 @@ class Command(BaseCommand):
         postgres_ready = bool(os.getenv("POSTGRES_HOST")) and bool(os.getenv("POSTGRES_DB"))
         mysql_ready = bool(os.getenv("MYSQL_HOST")) and bool(os.getenv("MYSQL_DB"))
         sftp_ready = bool(os.getenv("SFTP_HOST")) and bool(os.getenv("SFTP_USER"))
-        api_ready = bool(os.getenv("EXTERNAL_API_BASE_URL")) or bool(os.getenv("DJANGO_BASE_URL"))
+        api_ready = bool(os.getenv("EXTERNAL_API_MAIN_URL")) or bool(os.getenv("DJANGO_MAIN_URL"))
         files_ready = input_dir.exists()
 
         connectors = [
             {
                 "conector": "postgresql",
-                "tipo": "database",
+                "tipo": "dataMAIN",
                 "estado": "Configurado" if postgres_ready else "Pendiente",
                 "detalle": (
                     f"host={os.getenv('POSTGRES_HOST', 'N/A')};db={os.getenv('POSTGRES_DB', 'N/A')}"
@@ -57,7 +57,7 @@ class Command(BaseCommand):
             },
             {
                 "conector": "mysql",
-                "tipo": "database",
+                "tipo": "dataMAIN",
                 "estado": "Configurado" if mysql_ready else "Pendiente",
                 "detalle": (
                     f"host={os.getenv('MYSQL_HOST', 'N/A')};db={os.getenv('MYSQL_DB', 'N/A')}"
@@ -70,9 +70,9 @@ class Command(BaseCommand):
                 "tipo": "api",
                 "estado": "Configurado" if api_ready else "Pendiente",
                 "detalle": (
-                    f"base={os.getenv('EXTERNAL_API_BASE_URL', os.getenv('DJANGO_BASE_URL', 'N/A'))}"
+                    f"MAIN={os.getenv('EXTERNAL_API_MAIN_URL', os.getenv('DJANGO_MAIN_URL', 'N/A'))}"
                     if api_ready
-                    else "configurar EXTERNAL_API_BASE_URL"
+                    else "configurar EXTERNAL_API_MAIN_URL"
                 ),
             },
             {
@@ -118,7 +118,7 @@ class Command(BaseCommand):
             f"Fecha ejecucion UTC: {ts}",
             "",
             "## Cobertura",
-            "- PostgreSQL/MySQL (bases de datos).",
+            "- PostgreSQL/MySQL (MAINs de datos).",
             "- API REST (servicios internos/externos).",
             "- SFTP (transferencia de archivos).",
             "- Archivos locales (CSV/Excel/PDF).",
@@ -138,7 +138,7 @@ class Command(BaseCommand):
                 "",
                 "## Estado",
                 "- Etapa 2 de 4 completada tecnicamente.",
-                "- Diagnostico base de conectores generado.",
+                "- Diagnostico MAIN de conectores generado.",
                 "",
                 "## Artefactos",
                 f"- Reporte CSV: `{report_csv}`",

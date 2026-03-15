@@ -1,6 +1,6 @@
 conector,tipo,estado,detalle
-postgresql,database,Pendiente,configurar POSTGRES_HOST y POSTGRES_DB
-mysql,database,Pendiente,configurar MYSQL_HOST y MYSQL_DB
-api_rest,api,Pendiente,configurar EXTERNAL_API_BASE_URL
+postgresql,dataMAIN,Pendiente,configurar POSTGRES_HOST y POSTGRES_DB
+mysql,dataMAIN,Pendiente,configurar MYSQL_HOST y MYSQL_DB
+api_rest,api,Pendiente,configurar EXTERNAL_API_MAIN_URL
 sftp,file_transfer,Pendiente,configurar SFTP_HOST y SFTP_USER
 archivos,file,Pendiente,input_dir=/Users/jalm/Dropbox/Apps/intelicoop/.run/mineria/intake/incoming

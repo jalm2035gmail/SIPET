@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-02-18T17:37:50.042607+00:00",
-  "database": {
+  "dataMAIN": {
     "alias": "default",
     "vendor": "sqlite"
   },

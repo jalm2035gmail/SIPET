@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.authentication.models import UserProfile
 
@@ -17,7 +17,7 @@ def _detalle_bool(nombre: str, condicion: bool) -> str:
     return f"{nombre}={'si' if condicion else 'no'}"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Evalua controles de seguridad de la informacion para Fase 6 (cifrado, roles, acceso y credenciales)."
 
     def add_arguments(self, parser):
@@ -89,7 +89,7 @@ class Command(BaseCommand):
             },
             {
                 "dimension": "segregacion_rol",
-                "control": "roles_base_definidos",
+                "control": "roles_MAIN_definidos",
                 "estado": _estado(roles_definidos),
                 "detalle": f"roles_detectados={len(UserProfile.ROL_CHOICES)}",
                 "severidad": "Alta",
@@ -134,7 +134,7 @@ class Command(BaseCommand):
         total = len(rows)
         cumple = sum(1 for row in rows if row["estado"] == "Cumple")
         en_revision = total - cumple
-        estado_global = "Seguridad base aceptable" if en_revision <= 2 else "Seguridad con brechas por remediar"
+        estado_global = "Seguridad MAIN aceptable" if en_revision <= 2 else "Seguridad con brechas por remediar"
 
         report_csv.parent.mkdir(parents=True, exist_ok=True)
         with report_csv.open("w", newline="", encoding="utf-8") as file:
@@ -170,7 +170,7 @@ class Command(BaseCommand):
                 "",
                 "## Estado",
                 "- Punto 4 de 8 completado tecnicamente.",
-                "- Matriz base de seguridad de la informacion generada con evidencia reproducible.",
+                "- Matriz MAIN de seguridad de la informacion generada con evidencia reproducible.",
                 "",
                 "## Artefactos",
                 f"- Reporte CSV: `{report_csv}`",

@@ -1,0 +1,129 @@
+  <section class="card rounded-box border border-MAIN-300 bg-MAIN-100 shadow-sm hidden" data-brujula-ind-panel="analysis">
+    <div class="card-body gap-4">
+      <div>
+        <h2 class="card-title">Analisis</h2>
+        <p class="text-MAIN-content/70">Elige el tipo de analisis y revisa cumplimiento por periodo o comparacion entre indicadores.</p>
+      </div>
+      <label class="form-control w-full max-w-sm">
+        <div class="label"><span class="label-text font-semibold">Tipo de analisis</span></div>
+        <select id="brujula-analysis-mode" class="select select-bordered w-full">
+          <option value="summary">Resumen por periodo</option>
+          <option value="compare">Comparacion de indicadores</option>
+          <option value="scenario">Escenario</option>
+        </select>
+      </label>
+      <section data-analysis-mode-panel="summary" class="grid gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">Periodo</span></div>
+            <select id="brujula-analysis-period" class="select select-bordered w-full"></select>
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">Estado</span></div>
+            <select id="brujula-analysis-status" class="select select-bordered w-full">
+              <option value="all">Todos</option>
+              <option value="ok">Cumplen</option>
+              <option value="fail">No cumplen</option>
+              <option value="na">Sin evaluacion</option>
+            </select>
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">Buscar</span></div>
+            <input id="brujula-analysis-query" class="input input-bordered w-full" type="text" placeholder="C2, liquidez, socios...">
+          </label>
+        </div>
+        <div id="brujula-analysis-msg" class="text-sm text-MAIN-content/70 min-h-[1.25rem]" aria-live="polite"></div>
+        <div class="overflow-x-auto rounded-box border border-MAIN-300">
+          <table class="table table-zebra w-full text-sm">
+            <thead>
+              <tr>
+                <th>Indicador</th>
+                <th class="text-right">Valor</th>
+                <th class="text-right">Meta</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="brujula-analysis-list"></tbody>
+          </table>
+        </div>
+      </section>
+      <section data-analysis-mode-panel="compare" class="hidden grid gap-4">
+        <div>
+          <h3 class="text-lg font-semibold text-[color:var(--sidebar-bottom)]">Comparacion de indicadores</h3>
+          <p class="text-sm text-MAIN-content/70">Selecciona varios indicadores y varios periodos para compararlos en una sola matriz.</p>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-[minmax(280px,360px)_1fr] gap-4 items-start">
+          <div class="grid gap-3">
+            <div class="form-control">
+              <div class="label"><span class="label-text font-semibold">Indicadores a comparar</span></div>
+              <div id="brujula-compare-indicators" class="max-h-72 overflow-auto rounded-box border border-MAIN-300 bg-MAIN-200/30 p-3"></div>
+            </div>
+            <div class="form-control">
+              <div class="label"><span class="label-text font-semibold">Periodos a comparar</span></div>
+              <div id="brujula-compare-periods" class="flex flex-wrap gap-2 rounded-box border border-MAIN-300 bg-MAIN-200/30 p-3"></div>
+            </div>
+          </div>
+          <div class="overflow-x-auto rounded-box border border-MAIN-300">
+            <table class="table table-zebra w-full text-sm">
+              <thead id="brujula-compare-thead"></thead>
+              <tbody id="brujula-compare-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section data-analysis-mode-panel="scenario" class="hidden grid gap-4">
+        <div>
+          <h3 class="text-lg font-semibold text-[color:var(--sidebar-bottom)]">Escenario</h3>
+          <p class="text-sm text-MAIN-content/70">Selecciona un indicador, ajusta sus insumos y revisa el resultado esperado para acercarte a la meta.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">Indicador</span></div>
+            <select id="brujula-scenario-indicator" class="select select-bordered w-full"></select>
+          </label>
+          <label class="form-control w-full">
+            <div class="label"><span class="label-text font-semibold">Periodo</span></div>
+            <select id="brujula-scenario-period" class="select select-bordered w-full"></select>
+          </label>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-[minmax(300px,360px)_1fr] gap-4 items-start">
+          <div class="rounded-box border border-MAIN-300 bg-MAIN-200/30 p-4">
+            <div class="text-sm font-semibold text-MAIN-content/70 mb-2">Resultado deseado</div>
+            <input id="brujula-scenario-target" class="input input-bordered w-full text-right" type="text" placeholder=">=12%">
+            <div class="text-xs text-MAIN-content/60 mt-2">Se carga la meta actual del indicador. Puedes modificarla para probar otro objetivo.</div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="stat rounded-box border border-MAIN-300 bg-MAIN-100">
+              <div class="stat-title">Resultado actual</div>
+              <div id="brujula-scenario-current" class="stat-value text-2xl text-MAIN-content">-</div>
+            </div>
+            <div class="stat rounded-box border border-MAIN-300 bg-MAIN-100">
+              <div class="stat-title">Resultado escenario</div>
+              <div id="brujula-scenario-result" class="stat-value text-2xl text-[color:var(--sidebar-bottom)]">-</div>
+            </div>
+            <div class="stat rounded-box border border-MAIN-300 bg-MAIN-100">
+              <div class="stat-title">Brecha</div>
+              <div id="brujula-scenario-gap" class="stat-value text-2xl text-MAIN-content">-</div>
+            </div>
+          </div>
+        </div>
+        <div id="brujula-scenario-msg" class="text-sm text-MAIN-content/70 min-h-[1.25rem]" aria-live="polite"></div>
+        <div class="overflow-x-auto rounded-box border border-MAIN-300">
+          <table class="table table-zebra w-full text-sm">
+            <thead>
+              <tr>
+                <th>Campo</th>
+                <th class="text-right">Actual</th>
+                <th class="text-right">Escenario</th>
+              </tr>
+            </thead>
+            <tbody id="brujula-scenario-inputs"></tbody>
+          </table>
+        </div>
+        <div class="rounded-box border border-MAIN-300 bg-MAIN-100 p-4">
+          <div class="text-sm font-semibold text-MAIN-content/70 mb-2">Recomendacion</div>
+          <div id="brujula-scenario-recommendation" class="text-MAIN-content">Selecciona un indicador y un periodo.</div>
+        </div>
+      </section>
+    </div>
+  </section>

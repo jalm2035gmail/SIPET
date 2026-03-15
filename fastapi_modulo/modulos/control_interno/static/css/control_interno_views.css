@@ -1,0 +1,35 @@
+.ci-view-shell {
+  width: 100%;
+}
+
+.ci-view-shell .titulo {
+  backdrop-filter: blur(6px);
+}
+
+.ci-view-shell .ci-section-card {
+  border-radius: 1rem;
+}
+
+.ci-view-shell .ci-kpi-grid {
+  align-items: stretch;
+}
+
+.ci-view-shell .ci-panel {
+  backdrop-filter: blur(6px);
+}
+
+.ci-view-shell .ci-stat-card {
+  min-height: 100%;
+}
+
+.ci-view-shell .ci-section-heading {
+  min-height: 3.25rem;
+}
+
+.ci-view-shell .ci-toolbar {
+  width: 100%;
+}
+
+.ci-view-shell .ci-toolbar-group {
+  align-items: center;
+}

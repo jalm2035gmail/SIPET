@@ -1,0 +1,107 @@
+<section id="pestel-builder" class="grid gap-4 w-full max-w-6xl">
+    <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+                src="/templates/icon/plan.svg"
+                alt="Icono estrategia y táctica"
+                width="96"
+                height="96"
+                class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+                <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">PESTEL</div>
+                <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Analiza factores externos que impactan la estrategia institucional.</div>
+            </div>
+        </div>
+    </div>
+    <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+        <div class="card-body gap-4">
+            <h2 class="card-title text-MAIN-content">Análisis PESTEL</h2>
+            <p class="text-sm text-MAIN-content/70">Registra factores externos por dimensión: Política, Económica, Social, Tecnológica, Ecológica y Legal.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr_1fr] gap-3">
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Factor</span></div>
+                    <textarea id="pestel-description" class="textarea textarea-bordered campo w-full min-h-24" placeholder="Describe el factor PESTEL"></textarea>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Dimensión</span></div>
+                    <select id="pestel-factor" class="select select-bordered campo w-full">
+                        <option value="political">Política</option>
+                        <option value="economic">Económica</option>
+                        <option value="social">Social</option>
+                        <option value="technological">Tecnológica</option>
+                        <option value="ecological">Ecológica</option>
+                        <option value="legal">Legal</option>
+                    </select>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Impacto</span></div>
+                    <select id="pestel-impact" class="select select-bordered campo w-full">
+                        <option value="high">Alto</option>
+                        <option value="medium">Medio</option>
+                        <option value="low">Bajo</option>
+                    </select>
+                </label>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="pestel-add" class="btn btn-primary btn-sm">Agregar factor</button>
+            </div>
+        </div>
+    </article>
+    <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Política</h3>
+                    <span id="pestel-count-political" class="badge badge-outline">0</span>
+                </header>
+                <ul id="pestel-list-political" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Económica</h3>
+                    <span id="pestel-count-economic" class="badge badge-outline">0</span>
+                </header>
+                <ul id="pestel-list-economic" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Social</h3>
+                    <span id="pestel-count-social" class="badge badge-outline">0</span>
+                </header>
+                <ul id="pestel-list-social" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Tecnológica</h3>
+                    <span id="pestel-count-technological" class="badge badge-outline">0</span>
+                </header>
+                <ul id="pestel-list-technological" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Ecológica</h3>
+                    <span id="pestel-count-ecological" class="badge badge-outline">0</span>
+                </header>
+                <ul id="pestel-list-ecological" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Legal</h3>
+                    <span id="pestel-count-legal" class="badge badge-outline">0</span>
+                </header>
+                <ul id="pestel-list-legal" class="grid gap-2"></ul>
+            </div>
+        </article>
+    </section>
+</section>

@@ -1,0 +1,1068 @@
+<section id="departamentos-module" class="departamentos-page w-full space-y-6">
+  <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/templates/icon/boton/organigrama.svg"
+        alt="Icono módulo"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+      />
+      <div class="w-full grid grid-cols-1 gap-2 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Áreas organizacionales</div>
+        <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Definir claramente las áreas organizacionales es fundamental para el éxito de cualquier empresa</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="view-buttons page-view-buttons">
+    <button id="dep-btn-nuevo" class="view-pill boton_vista boton_vista-eliptico" type="button" data-tooltip="Nuevo" aria-label="Nuevo" title="Nuevo" style="margin-right:60px;">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+      <span class="view-pill-label">Nuevo</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-view="list" data-tooltip="Lista" aria-label="Lista">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Lista</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Kanban</span>
+    </button>
+    <button class="view-pill boton_vista" type="button" data-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Organigrama</span>
+    </button>
+  </div>
+
+  <div id="dep-layout" class="flex flex-col gap-4 lg:flex-row">
+    <aside id="dep-filter-card" class="card bg-MAIN-100 border border-MAIN-300 shadow-sm lg:w-80 lg:shrink-0">
+      <div class="card-body space-y-3">
+        <h2 class="card-title text-[color:var(--sidebar-bottom)]">Departamento</h2>
+        <label class="input input-bordered w-full flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4 opacity-70 fill-current"><path d="M10 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 2a6 6 0 1 0 3.473 10.894l4.816 4.817 1.414-1.414-4.817-4.816A6 6 0 0 0 10 4Z"/></svg>
+          <input id="dep-filter-search" type="text" class="grow" placeholder="Buscar..." />
+        </label>
+        <div id="dep-filter-tree" class="menu bg-MAIN-100 rounded-box w-full max-h-[60vh] overflow-auto"></div>
+      </div>
+    </aside>
+
+    <div id="dep-content-col" class="grid gap-4 w-full min-w-0 lg:flex-1">
+      <div id="dep-form-card" class="hidden card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+        <div class="card-body space-y-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 id="dep-form-modal-title" class="card-title">Datos del área</h2>
+              <p class="text-MAIN-content/70">Ingrese los datos del área</p>
+            </div>
+          </div>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Nombre</legend>
+            <input id="dep-nombre" class="input input-bordered w-full campo" type="text" placeholder="Nombre del área" />
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Código</legend>
+            <input id="dep-codigo" class="input input-bordered w-full campo" type="text" placeholder="Ej: OPE-010" />
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Responsable</legend>
+            <input id="dep-responsable" class="input input-bordered w-full campo" type="text" placeholder="Nombre del responsable" />
+          </fieldset>
+
+          <div class="rounded-box border border-MAIN-300 bg-MAIN-100 p-3">
+            <div class="tabs tabs-boxed w-full flex-wrap" role="tablist" aria-label="Pestañas del área">
+              <button type="button" class="tab gap-2 rounded-t-lg tab-active" data-dep-tab="1" data-tab="empleados">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/usuarios.svg')"></span>
+                Empleados
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="ejes">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/ejes.svg')"></span>
+                Ejes estratégicos asignados
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="kpi">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/kpi.svg')"></span>
+                KPIs
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="indice">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/bateo.svg')"></span>
+                Índice de bateo
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="puestos">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/usuarios.svg')"></span>
+                Puestos laborales
+              </button>
+              <button type="button" class="tab gap-2 rounded-t-lg" data-dep-tab="1" data-tab="funciones">
+                <span class="view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/objetivos.svg')"></span>
+                Funciones
+              </button>
+            </div>
+            <div class="tabs-content grid gap-3">
+              <div data-panel="empleados">
+                <p class="text-xl font-semibold text-[color:var(--sidebar-bottom)]">Empleados asignados: 0</p>
+              </div>
+              <div class="hidden" data-panel="ejes">
+                <p class="text-MAIN-content/70">Sin ejes estratégicos asignados.</p>
+              </div>
+              <div class="hidden" data-panel="kpi">
+                <p class="text-MAIN-content/70">Sin KPI configurados.</p>
+              </div>
+              <div class="hidden" data-panel="indice">
+                <p class="text-MAIN-content/70">Sin datos para índice de bateo.</p>
+              </div>
+              <div class="hidden" data-panel="puestos">
+                <p class="text-MAIN-content/70">Sin puestos laborales vinculados.</p>
+              </div>
+              <div class="hidden" data-panel="funciones">
+                <div class="grid gap-3">
+                  <details class="collapse collapse-arrow border border-MAIN-300 bg-MAIN-100" open>
+                    <summary class="collapse-title text-sm font-semibold text-[color:var(--sidebar-bottom)]">Misionales</summary>
+                    <div class="collapse-content grid gap-2">
+                      <label class="input input-bordered campo flex items-center gap-2">
+                        <input id="dep-funcion-input-misionales" type="text" class="grow" placeholder="Agregar función misional" />
+                        <button id="dep-funcion-add-misionales" type="button" class="btn btn-xs">Agregar</button>
+                      </label>
+                      <div id="dep-funciones-list-misionales" class="grid gap-2"></div>
+                    </div>
+                  </details>
+                  <details class="collapse collapse-arrow border border-MAIN-300 bg-MAIN-100" open>
+                    <summary class="collapse-title text-sm font-semibold text-[color:var(--sidebar-bottom)]">Apoyo</summary>
+                    <div class="collapse-content grid gap-2">
+                      <label class="input input-bordered campo flex items-center gap-2">
+                        <input id="dep-funcion-input-apoyo" type="text" class="grow" placeholder="Agregar función de apoyo" />
+                        <button id="dep-funcion-add-apoyo" type="button" class="btn btn-xs">Agregar</button>
+                      </label>
+                      <div id="dep-funciones-list-apoyo" class="grid gap-2"></div>
+                    </div>
+                  </details>
+                  <details class="collapse collapse-arrow border border-MAIN-300 bg-MAIN-100" open>
+                    <summary class="collapse-title text-sm font-semibold text-[color:var(--sidebar-bottom)]">Proyectos especiales</summary>
+                    <div class="collapse-content grid gap-2">
+                      <label class="input input-bordered campo flex items-center gap-2">
+                        <input id="dep-funcion-input-proyectos_especiales" type="text" class="grow" placeholder="Agregar función de proyecto especial" />
+                        <button id="dep-funcion-add-proyectos_especiales" type="button" class="btn btn-xs">Agregar</button>
+                      </label>
+                      <div id="dep-funciones-list-proyectos_especiales" class="grid gap-2"></div>
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="botones_accion">
+            <button id="dep-btn-editar" class="view-pill boton_vista" type="button" data-tooltip="Editar" aria-label="Editar" title="Editar">
+              <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/editar.svg')"></span>
+              <span class="boton_vista-label">Editar</span>
+            </button>
+            <button id="dep-btn-guardar" class="view-pill boton_vista" type="button" data-tooltip="Guardar" aria-label="Guardar" title="Guardar">
+              <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/guardar.svg')"></span>
+              <span class="boton_vista-label">Guardar</span>
+            </button>
+            <button id="dep-btn-eliminar" class="view-pill boton_vista" type="button" data-tooltip="Eliminar" aria-label="Eliminar" title="Eliminar">
+              <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/eliminar.svg')"></span>
+              <span class="boton_vista-label">Eliminar</span>
+            </button>
+          </div>
+          <p id="dep-msg" class="text-sm text-MAIN-content/70"></p>
+        </div>
+      </div>
+
+      <div id="dep-main-grid" class="grid gap-4 grid-cols-1">
+        <div id="dep-table-card" class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+          <div class="card-body space-y-4">
+            <h2 id="dep-table-title" class="card-title">Estado del módulo</h2>
+            <div id="dep-table-alert" class="alert alert-warning">
+              <span>Se retiró temporalmente toda personalización fuera de DaisyUI.</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="table lista">
+                <colgroup>
+                  <col style="width:50%">
+                  <col style="width:10%">
+                  <col style="width:40%">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Área</th>
+                    <th>Código</th>
+                    <th>Responsable</th>
+                  </tr>
+                </thead>
+                <tbody id="dep-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="dep-vista-extra" class="hidden card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+        <div class="card-body">
+          <h3 id="dep-vista-extra-titulo" class="card-title">Vista</h3>
+          <p id="dep-vista-extra-texto" class="text-MAIN-content/70"></p>
+        </div>
+      </div>
+      <div id="dep-kanban-card" class="hidden card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">Kanban de áreas</h3>
+          <div id="dep-kanban-grid" class="kanban"></div>
+        </div>
+      </div>
+      <div id="dep-org-card" class="hidden card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">Organigrama de áreas</h3>
+          <div id="dep-org-chart" class="org-chart-wrap w-full min-h-[640px] overflow-auto rounded-box border border-MAIN-300 bg-MAIN-200 p-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(function () {
+  var rows = [];
+  var editingCode = "";
+  var readOnlyMode = false;
+  var nombreEl = document.getElementById("dep-nombre");
+  var codigoEl = document.getElementById("dep-codigo");
+  var responsableEl = document.getElementById("dep-responsable");
+  var msgEl = document.getElementById("dep-msg");
+  var funcionesGroups = ["misionales", "apoyo", "proyectos_especiales"];
+  var funcionesInputs = {
+    misionales: document.getElementById("dep-funcion-input-misionales"),
+    apoyo: document.getElementById("dep-funcion-input-apoyo"),
+    proyectos_especiales: document.getElementById("dep-funcion-input-proyectos_especiales")
+  };
+  var funcionesAddBtns = {
+    misionales: document.getElementById("dep-funcion-add-misionales"),
+    apoyo: document.getElementById("dep-funcion-add-apoyo"),
+    proyectos_especiales: document.getElementById("dep-funcion-add-proyectos_especiales")
+  };
+  var funcionesLists = {
+    misionales: document.getElementById("dep-funciones-list-misionales"),
+    apoyo: document.getElementById("dep-funciones-list-apoyo"),
+    proyectos_especiales: document.getElementById("dep-funciones-list-proyectos_especiales")
+  };
+  var tbody = document.getElementById("dep-tbody");
+  var filterSearchEl = document.getElementById("dep-filter-search");
+  var filterTreeEl = document.getElementById("dep-filter-tree");
+  var mainGrid = document.getElementById("dep-main-grid");
+  var tableCard = document.getElementById("dep-table-card");
+  var tableTitle = document.getElementById("dep-table-title");
+  var tableAlert = document.getElementById("dep-table-alert");
+  var extraCard = document.getElementById("dep-vista-extra");
+  var extraTitle = document.getElementById("dep-vista-extra-titulo");
+  var extraText = document.getElementById("dep-vista-extra-texto");
+  var kanbanCard = document.getElementById("dep-kanban-card");
+  var kanbanGrid = document.getElementById("dep-kanban-grid");
+  var orgCard = document.getElementById("dep-org-card");
+  var orgChartEl = document.getElementById("dep-org-chart");
+  var formCardEl = document.getElementById("dep-form-card");
+  var modalTitleEl = document.getElementById("dep-form-modal-title");
+  var filterState = { type: "all", value: "" };
+  var filterQuery = "";
+  var treeOpen = {};
+  var currentView = "list";
+  var orgLibPromise = null;
+  var depOrgChart = null;
+  var orgExpandedNodeId = "";
+  var funcionesDraft = { misionales: [], apoyo: [], proyectos_especiales: [] };
+
+  function normalizeFunciones(raw) {
+    var out = { misionales: [], apoyo: [], proyectos_especiales: [] };
+    if (Array.isArray(raw)) {
+      raw.forEach(function (f) {
+        var txt = String(f || "").trim();
+        if (txt && out.misionales.indexOf(txt) < 0) out.misionales.push(txt);
+      });
+      return out;
+    }
+    if (!raw || typeof raw !== "object") return out;
+    funcionesGroups.forEach(function (group) {
+      var vals = raw[group];
+      if (!Array.isArray(vals)) return;
+      vals.forEach(function (f) {
+        var txt = String(f || "").trim();
+        if (txt && out[group].indexOf(txt) < 0) out[group].push(txt);
+      });
+    });
+    return out;
+  }
+
+  function esc(v) {
+    return String(v || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;");
+  }
+
+  function clampColorChannel(value) {
+    return Math.max(0, Math.min(255, Math.round(Number(value) || 0)));
+  }
+
+  function parseCssColorToRgb(raw) {
+    var value = String(raw || "").trim();
+    if (!value) return null;
+    if (value.charAt(0) === "#") {
+      var hex = value.slice(1).trim();
+      if (hex.length === 3) {
+        hex = hex.split("").map(function (char) { return char + char; }).join("");
+      }
+      if (hex.length !== 6) return null;
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16)
+      };
+    }
+    var rgbMatch = value.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i);
+    if (rgbMatch) {
+      return {
+        r: clampColorChannel(rgbMatch[1]),
+        g: clampColorChannel(rgbMatch[2]),
+        b: clampColorChannel(rgbMatch[3])
+      };
+    }
+    return null;
+  }
+
+  function rgbToHex(rgb) {
+    function toHex(channel) {
+      return clampColorChannel(channel).toString(16).padStart(2, "0");
+    }
+    return "#" + toHex(rgb.r) + toHex(rgb.g) + toHex(rgb.b);
+  }
+
+  function rgbToHsl(rgb) {
+    var r = clampColorChannel(rgb.r) / 255;
+    var g = clampColorChannel(rgb.g) / 255;
+    var b = clampColorChannel(rgb.b) / 255;
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var delta = max - min;
+    var h = 0;
+    var l = (max + min) / 2;
+    var s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+    if (delta !== 0) {
+      if (max === r) h = ((g - b) / delta) % 6;
+      else if (max === g) h = (b - r) / delta + 2;
+      else h = (r - g) / delta + 4;
+      h = Math.round(h * 60);
+      if (h < 0) h += 360;
+    }
+    return { h: h, s: s, l: l };
+  }
+
+  function hslToRgb(hsl) {
+    var h = ((Number(hsl.h) || 0) % 360 + 360) % 360;
+    var s = Math.max(0, Math.min(1, Number(hsl.s) || 0));
+    var l = Math.max(0, Math.min(1, Number(hsl.l) || 0));
+    var c = (1 - Math.abs(2 * l - 1)) * s;
+    var x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    var m = l - c / 2;
+    var rPrime = 0;
+    var gPrime = 0;
+    var bPrime = 0;
+    if (h < 60) { rPrime = c; gPrime = x; }
+    else if (h < 120) { rPrime = x; gPrime = c; }
+    else if (h < 180) { gPrime = c; bPrime = x; }
+    else if (h < 240) { gPrime = x; bPrime = c; }
+    else if (h < 300) { rPrime = x; bPrime = c; }
+    else { rPrime = c; bPrime = x; }
+    return {
+      r: clampColorChannel((rPrime + m) * 255),
+      g: clampColorChannel((gPrime + m) * 255),
+      b: clampColorChannel((bPrime + m) * 255)
+    };
+  }
+
+  function getComplementaryColor(rawColor) {
+    var rgb = parseCssColorToRgb(rawColor);
+    if (!rgb) return "#2563eb";
+    var hsl = rgbToHsl(rgb);
+    return rgbToHex(hslToRgb({ h: hsl.h + 180, s: hsl.s, l: hsl.l }));
+  }
+
+  function getReadableTextColor(rawColor) {
+    var rgb = parseCssColorToRgb(rawColor);
+    if (!rgb) return "#ffffff";
+    var luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+    return luminance > 0.58 ? "#0f172a" : "#ffffff";
+  }
+
+  function getKanbanAccentColor() {
+    try {
+      var rootStyles = window.getComputedStyle(document.documentElement);
+      return getComplementaryColor(rootStyles.getPropertyValue("--sidebar-bottom") || "#0f172a");
+    } catch (_err) {
+      return "#2563eb";
+    }
+  }
+
+  function setMsg(text, tone) {
+    if (!msgEl) return;
+    msgEl.textContent = text || "";
+    msgEl.className = tone === "ok" ? "text-sm text-success" : (tone === "error" ? "text-sm text-error" : "text-sm text-MAIN-content/70");
+  }
+
+  function clearForm() {
+    editingCode = "";
+    if (nombreEl) nombreEl.value = "";
+    if (codigoEl) codigoEl.value = "";
+    if (responsableEl) responsableEl.value = "";
+    funcionesDraft = { misionales: [], apoyo: [], proyectos_especiales: [] };
+    renderFuncionesDraft();
+  }
+
+  function setFormReadOnly(enabled) {
+    readOnlyMode = !!enabled;
+    if (nombreEl) nombreEl.readOnly = readOnlyMode;
+    if (codigoEl) codigoEl.readOnly = readOnlyMode;
+    if (responsableEl) responsableEl.readOnly = readOnlyMode;
+    var saveBtn = document.getElementById("dep-btn-guardar");
+    var delBtn = document.getElementById("dep-btn-eliminar");
+    if (saveBtn) saveBtn.disabled = readOnlyMode;
+    if (delBtn) delBtn.disabled = readOnlyMode;
+    funcionesGroups.forEach(function (group) {
+      if (funcionesInputs[group]) funcionesInputs[group].disabled = readOnlyMode;
+      if (funcionesAddBtns[group]) funcionesAddBtns[group].disabled = readOnlyMode;
+      var listEl = funcionesLists[group];
+      if (listEl) {
+        Array.from(listEl.querySelectorAll('button[data-func-del]')).forEach(function (btn) {
+          btn.disabled = readOnlyMode;
+        });
+      }
+    });
+  }
+
+  function openFormModal(titleText) {
+    if (modalTitleEl) modalTitleEl.textContent = titleText || "Datos del área";
+    currentView = "form";
+    setActiveViewButton("");
+    if (extraCard) extraCard.classList.add("hidden");
+    if (kanbanCard) kanbanCard.classList.add("hidden");
+    if (orgCard) orgCard.classList.add("hidden");
+    if (mainGrid) mainGrid.classList.add("hidden");
+    if (formCardEl) formCardEl.classList.remove("hidden");
+  }
+
+  function closeFormModal() {
+    if (formCardEl) formCardEl.classList.add("hidden");
+    renderView("list");
+  }
+
+  function findByCode(code) {
+    var target = String(code || "").trim().toLowerCase();
+    return rows.find(function (r) { return String(r.code || "").trim().toLowerCase() === target; }) || null;
+  }
+
+  function norm(v) {
+    return String(v || "").trim().toLowerCase();
+  }
+
+  function getChildrenByParentName(name) {
+    var key = norm(name);
+    return rows.filter(function (r) { return norm(r.parent || "") === key; });
+  }
+
+  function collectSubtreeNames(rootName, out, stack) {
+    var key = norm(rootName);
+    if (!key || out.has(key)) return;
+    if (stack.has(key)) return;
+    out.add(key);
+    stack.add(key);
+    getChildrenByParentName(rootName).forEach(function (child) {
+      collectSubtreeNames(child.name, out, stack);
+    });
+    stack.delete(key);
+  }
+
+  function countNodeAndDescendants(nodeName) {
+    var names = new Set();
+    collectSubtreeNames(nodeName, names, new Set());
+    return rows.filter(function (r) { return names.has(norm(r.name)); }).length;
+  }
+
+  function getRootNodes() {
+    var names = new Set(rows.map(function (r) { return norm(r.name); }));
+    return rows.filter(function (r) {
+      var p = norm(r.parent || "");
+      return !p || p === "n/a" || !names.has(p);
+    });
+  }
+
+  function isInSelectedBranch(row) {
+    if (filterState.type !== "node") return true;
+    var selected = norm(filterState.value);
+    if (!selected) return true;
+    var branchNames = new Set();
+    collectSubtreeNames(filterState.value, branchNames, new Set());
+    return branchNames.has(norm(row.name));
+  }
+
+  function matchesQuery(row) {
+    if (!filterQuery) return true;
+    var q = norm(filterQuery);
+    return norm(row.name).indexOf(q) >= 0 || norm(row.code).indexOf(q) >= 0 || norm(row.manager).indexOf(q) >= 0;
+  }
+
+  function getVisibleRows() {
+    return rows.filter(function (r) {
+      return isInSelectedBranch(r) && matchesQuery(r);
+    });
+  }
+
+  function renderFuncionesDraft() {
+    funcionesGroups.forEach(function (group) {
+      var listEl = funcionesLists[group];
+      if (!listEl) return;
+      var groupList = Array.isArray(funcionesDraft[group]) ? funcionesDraft[group] : [];
+      if (!groupList.length) {
+        listEl.innerHTML = '<p class="text-sm text-MAIN-content/60">Sin funciones registradas.</p>';
+        return;
+      }
+      listEl.innerHTML = groupList.map(function (fn, idx) {
+        return '' +
+          '<div class="flex items-center gap-2 rounded-box border border-MAIN-300 px-3 py-2">' +
+            '<span class="flex-1 text-sm">' + esc(fn) + '</span>' +
+            '<button type="button" class="btn btn-xs btn-error btn-outline" data-func-del="' + idx + '" data-func-group="' + group + '">Quitar</button>' +
+          '</div>';
+      }).join('');
+      Array.from(listEl.querySelectorAll('button[data-func-del]')).forEach(function (btn) {
+        btn.disabled = readOnlyMode;
+        btn.addEventListener("click", function () {
+          if (readOnlyMode) return;
+          var idx = parseInt(btn.getAttribute("data-func-del") || "-1", 10);
+          var g = btn.getAttribute("data-func-group") || "";
+          if (idx < 0 || funcionesGroups.indexOf(g) < 0) return;
+          if (!Array.isArray(funcionesDraft[g])) funcionesDraft[g] = [];
+          funcionesDraft[g].splice(idx, 1);
+          renderFuncionesDraft();
+        });
+      });
+    });
+  }
+
+  function addFuncionDraft(group) {
+    if (readOnlyMode) return;
+    if (funcionesGroups.indexOf(group) < 0) return;
+    var inputEl = funcionesInputs[group];
+    if (!inputEl) return;
+    var val = String(inputEl.value || "").trim();
+    if (!val) {
+      inputEl.focus();
+      return;
+    }
+    if (!Array.isArray(funcionesDraft[group])) funcionesDraft[group] = [];
+    if (funcionesDraft[group].indexOf(val) >= 0) {
+      inputEl.value = "";
+      inputEl.focus();
+      return;
+    }
+    funcionesDraft[group].push(val);
+    inputEl.value = "";
+    renderFuncionesDraft();
+    inputEl.focus();
+  }
+
+  function renderFilterTree() {
+    if (!filterTreeEl) return;
+    var total = rows.length;
+    var roots = getRootNodes().sort(function (a, b) {
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+
+    var html = '';
+    html += '<li><button type="button" class="' + (filterState.type === "all" ? 'active' : '') + '" data-filter-type="all" data-filter-value="">Todos <span class="ml-auto opacity-70">' + total + '</span></button></li>';
+
+    roots.forEach(function (root) {
+      var rootKey = norm(root.name);
+      if (typeof treeOpen[rootKey] === "undefined") treeOpen[rootKey] = true;
+      var children = getChildrenByParentName(root.name).sort(function (a, b) {
+        return String(a.name || "").localeCompare(String(b.name || ""));
+      });
+      var rootCount = countNodeAndDescendants(root.name);
+      html += '<li>';
+      html += '<details ' + (treeOpen[rootKey] ? 'open' : '') + ' data-tree="' + esc(rootKey) + '">';
+      html += '<summary class="' + (filterState.type === "node" && norm(filterState.value) === rootKey ? 'active' : '') + '" data-filter-type="node" data-filter-value="' + esc(root.name) + '">';
+      html += esc(root.name) + '<span class="ml-auto opacity-70">' + rootCount + '</span>';
+      html += '</summary>';
+      if (children.length) {
+        html += '<ul>';
+        children.forEach(function (child) {
+          var childCount = countNodeAndDescendants(child.name);
+          html += '<li><button type="button" class="' + (filterState.type === "node" && norm(filterState.value) === norm(child.name) ? 'active' : '') + '" data-filter-type="node" data-filter-value="' + esc(child.name) + '">';
+          html += esc(child.name) + '<span class="ml-auto opacity-70">' + childCount + '</span></button></li>';
+        });
+        html += '</ul>';
+      }
+      html += '</details>';
+      html += '</li>';
+    });
+    filterTreeEl.innerHTML = html;
+
+    Array.from(filterTreeEl.querySelectorAll("[data-filter-type]")).forEach(function (el) {
+      el.addEventListener("click", function (event) {
+        if ((el.tagName || "").toLowerCase() !== "summary") {
+          event.preventDefault();
+        }
+        event.stopPropagation();
+        filterState.type = el.getAttribute("data-filter-type") || "all";
+        filterState.value = el.getAttribute("data-filter-value") || "";
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+      });
+    });
+
+    Array.from(filterTreeEl.querySelectorAll("details[data-tree]")).forEach(function (detail) {
+      detail.addEventListener("toggle", function () {
+        treeOpen[detail.getAttribute("data-tree")] = detail.open;
+      });
+    });
+  }
+
+  function renderTable() {
+    var data = getVisibleRows();
+    if (!tbody) return;
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td>Sin datos</td><td>—</td><td>—</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function (r) {
+      return '<tr data-code="' + esc(r.code) + '" class="cursor-pointer hover">' +
+        '<td>' + esc(r.name) + '</td>' +
+        '<td>' + esc(r.code) + '</td>' +
+        '<td>' + esc(r.manager || "—") + '</td>' +
+      '</tr>';
+    }).join("");
+
+    Array.from(tbody.querySelectorAll("tr[data-code]")).forEach(function (tr) {
+      tr.addEventListener("click", function () {
+        var code = tr.getAttribute("data-code") || "";
+        var item = findByCode(code);
+        if (!item) return;
+        editingCode = item.code || "";
+        if (nombreEl) nombreEl.value = item.name || "";
+        if (codigoEl) codigoEl.value = item.code || "";
+        if (responsableEl) responsableEl.value = item.manager || "";
+        funcionesDraft = normalizeFunciones(item.funciones);
+        renderFuncionesDraft();
+        setFormReadOnly(false);
+        setMsg("Registro cargado para edición", "ok");
+        openFormModal("Editar área");
+        if (nombreEl) nombreEl.focus();
+      });
+    });
+  }
+
+  function renderKanban() {
+    if (!kanbanGrid) return;
+    var data = getVisibleRows();
+    if (!data.length) {
+      kanbanGrid.innerHTML = '<div class="kanban-empty rounded-box border border-MAIN-300 bg-MAIN-100 text-MAIN-content/70">Sin datos para mostrar.</div>';
+      return;
+    }
+    var color = getKanbanAccentColor();
+    var textOnColor = getReadableTextColor(color);
+    kanbanGrid.innerHTML = data.map(function (r) {
+      var initial = esc((r.name || "?").charAt(0).toUpperCase());
+      return '' +
+        '<article class="kanban-item card bg-MAIN-100 border border-MAIN-300 shadow-sm rounded-box">' +
+          '<div class="kanban-color" style="background:' + esc(color) + ';color:' + textOnColor + ';">' + initial + '</div>' +
+          '<div class="kanban-content card-body">' +
+            '<p class="kanban-title text-[color:var(--sidebar-bottom)]">' + esc(r.name || "Área") + '</p>' +
+            '<p class="kanban-meta text-MAIN-content/70"><strong>Responsable:</strong> ' + esc(r.manager || "Sin responsable") + '</p>' +
+            '<p class="kanban-meta text-MAIN-content/70"><strong>Código:</strong> ' + esc(r.code || "—") + '</p>' +
+          '</div>' +
+        '</article>';
+    }).join("");
+  }
+
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) {
+        resolve();
+        return;
+      }
+      var script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.onload = function () { resolve(); };
+      script.onerror = function () { reject(new Error("No se pudo cargar " + src)); };
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureOrgLibrary() {
+    if (window.d3 && window.d3.OrgChart) return true;
+    if (!orgLibPromise) {
+      orgLibPromise = (async function () {
+        await loadScript("/static/vendor/d3.min.js");
+        await loadScript("/static/vendor/d3-flextree.min.js");
+        await loadScript("/static/vendor/d3-org-chart.min.js");
+      })().catch(function () { return false; });
+    }
+    var result = await orgLibPromise;
+    return result !== false && !!(window.d3 && window.d3.OrgChart);
+  }
+
+  async function renderOrganigrama() {
+    if (!orgChartEl) return;
+    var data = getVisibleRows();
+    if (!data.length) {
+      orgChartEl.innerHTML = '<p class="text-sm text-MAIN-content/70">Sin datos para organigrama.</p>';
+      return;
+    }
+    var libOk = await ensureOrgLibrary();
+    if (!libOk) {
+      orgChartEl.innerHTML = '<p class="text-sm text-MAIN-content/70">No se pudo cargar la librería de organigrama.</p>';
+      return;
+    }
+
+    var byName = {};
+    data.forEach(function (row) { byName[norm(row.name)] = row; });
+    var nodes = data.map(function (row) {
+      var parentName = norm(row.parent || "");
+      var hasParent = !!(parentName && parentName !== "n/a" && byName[parentName]);
+      return {
+        id: String(row.code || row.name || Math.random().toString(36).slice(2)),
+        parentId: hasParent ? String(byName[parentName].code || byName[parentName].name) : "",
+        name: String(row.name || "Área"),
+        manager: String(row.manager || "Sin responsable"),
+        code: String(row.code || "—"),
+        color: String(row.color || "#ffffff")
+      };
+    });
+
+    function getPathToRoot(id, mapById) {
+      var path = [];
+      var current = mapById[id];
+      var guard = 0;
+      while (current && guard < 200) {
+        path.push(current.id);
+        if (!current.parentId) break;
+        current = mapById[current.parentId];
+        guard += 1;
+      }
+      return path;
+    }
+
+    var roots = nodes.filter(function (n) { return !n.parentId; });
+    if (roots.length > 1) {
+      nodes.push({
+        id: "__ROOT__",
+        parentId: "",
+        name: "Estructura organizacional",
+        manager: "—",
+        code: "ORG",
+        color: "#0f172a"
+      });
+      nodes = nodes.map(function (n) {
+        if (!n.parentId && n.id !== "__ROOT__") n.parentId = "__ROOT__";
+        return n;
+      });
+    }
+
+    var nodeMap = {};
+    nodes.forEach(function (n) { nodeMap[n.id] = n; });
+    var MAINRootId = nodeMap["__ROOT__"] ? "__ROOT__" : (roots[0] ? roots[0].id : "");
+    if (!orgExpandedNodeId) orgExpandedNodeId = MAINRootId;
+    var expandedPath = new Set(getPathToRoot(orgExpandedNodeId, nodeMap));
+    nodes = nodes.map(function (n) {
+      n._expanded = expandedPath.has(n.id);
+      return n;
+    });
+
+    orgChartEl.innerHTML = "";
+    depOrgChart = new window.d3.OrgChart()
+      .container(orgChartEl)
+      .data(nodes)
+      .nodeWidth(function () { return 320; })
+      .nodeHeight(function () { return 150; })
+      .childrenMargin(function () { return 48; })
+      .compact(true)
+      .initialExpandLevel(0)
+      .setActiveNodeCentered(true)
+      .nodeButtonWidth(function () { return 36; })
+      .nodeButtonHeight(function () { return 36; })
+      .nodeButtonX(function () { return -18; })
+      .nodeButtonY(function () { return -18; })
+      .buttonContent(function (ctx) {
+        var node = ctx && ctx.node ? ctx.node : null;
+        var expanded = !!(node && node.children);
+        var sign = expanded ? "−" : "+";
+        var count = Number(node && node.data ? node.data._directSubordinates || 0 : 0);
+        return '<div style="width:36px;height:36px;border-radius:9999px;background:#0f172a;color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;border:2px solid #fff;box-shadow:0 4px 10px rgba(15,23,42,.22);">' + sign + (count > 0 ? '<span style="font-size:10px;margin-left:2px;">' + count + '</span>' : '') + '</div>';
+      })
+      .nodeContent(function (d) {
+        var item = d && d.data ? d.data : {};
+        return ''
+          + '<div class="org-card-two-col">'
+          +   '<div class="org-card-band">' + esc((item.name || "?").charAt(0).toUpperCase()) + '</div>'
+          +   '<div class="org-card-content">'
+          +     '<div class="org-card-title">' + esc(item.name || "Área") + '</div>'
+          +     '<div class="org-card-meta"><strong>Responsable:</strong> ' + esc(item.manager || "Sin responsable") + '</div>'
+          +     '<div class="org-card-meta"><strong>Código:</strong> ' + esc(item.code || "—") + '</div>'
+          +   '</div>'
+          + '</div>';
+      })
+      .onNodeClick(function (d) {
+        var clickedId = d && d.data ? d.data.id : "";
+        if (!clickedId) return;
+        if (orgExpandedNodeId === clickedId) {
+          orgExpandedNodeId = MAINRootId;
+        } else {
+          orgExpandedNodeId = clickedId;
+        }
+        renderOrganigrama();
+      })
+      .render();
+  }
+
+  function loadRows() {
+    return fetch("/api/inicio/departamentos")
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        rows = Array.isArray(res && res.data) ? res.data : [];
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+      })
+      .catch(function () {
+        setMsg("No se pudo cargar la información", "error");
+      });
+  }
+
+  function setActiveViewButton(view) {
+    var viewButtons = Array.from(document.querySelectorAll('#departamentos-module .view-buttons .view-pill[data-view]'));
+    viewButtons.forEach(function (btn) {
+      btn.classList.toggle("active", (btn.getAttribute("data-view") || "") === view);
+    });
+  }
+
+  function renderView(view) {
+    if (!view) view = "form";
+    currentView = view;
+
+    if (view === "form") {
+      openFormModal(readOnlyMode ? "Detalle del área (solo lectura)" : "Datos del área");
+      return;
+    }
+
+    setActiveViewButton(view);
+    if (formCardEl) formCardEl.classList.add("hidden");
+    if (extraCard) extraCard.classList.add("hidden");
+    if (kanbanCard) kanbanCard.classList.add("hidden");
+    if (orgCard) orgCard.classList.add("hidden");
+    if (mainGrid) mainGrid.classList.remove("hidden");
+
+    if (view === "list") {
+      if (tableCard) tableCard.classList.remove("hidden");
+      if (tableCard) tableCard.classList.add("lg:col-span-2");
+      if (tableTitle) tableTitle.textContent = "Listado de áreas";
+      if (tableAlert) tableAlert.classList.add("hidden");
+      return;
+    }
+
+    if (view === "kanban") {
+      if (mainGrid) mainGrid.classList.add("hidden");
+      if (kanbanCard) kanbanCard.classList.remove("hidden");
+      renderKanban();
+      return;
+    }
+
+    if (view === "organigrama") {
+      if (mainGrid) mainGrid.classList.add("hidden");
+      if (orgCard) orgCard.classList.remove("hidden");
+      renderOrganigrama();
+      return;
+    }
+  }
+
+  function saveRow() {
+    if (readOnlyMode) {
+      setMsg("Vista en modo lectura", "error");
+      return;
+    }
+    var name = (nombreEl && nombreEl.value || "").trim();
+    var code = (codigoEl && codigoEl.value || "").trim();
+    var manager = (responsableEl && responsableEl.value || "").trim();
+    if (!name || !code) {
+      setMsg("Nombre y código son obligatorios", "error");
+      if (!name && nombreEl) nombreEl.focus();
+      else if (codigoEl) codigoEl.focus();
+      return;
+    }
+
+    var payload = {
+      data: [{
+        name: name,
+        code: code,
+        manager: manager,
+        parent: "N/A",
+        color: "#1d4ed8",
+        status: "Activo",
+        funciones: normalizeFunciones(funcionesDraft)
+      }]
+    };
+
+    var runSave = function () {
+      return fetch("/api/inicio/departamentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function (r) { return r.json(); });
+    };
+
+    var maybeRename = Promise.resolve();
+    if (editingCode && editingCode.toLowerCase() !== code.toLowerCase()) {
+      maybeRename = fetch("/api/inicio/departamentos/" + encodeURIComponent(editingCode), { method: "DELETE" });
+    }
+
+    maybeRename
+      .then(runSave)
+      .then(function (res) {
+        rows = Array.isArray(res && res.data) ? res.data : rows;
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+        editingCode = code;
+        setMsg("Departamento guardado correctamente", "ok");
+      })
+      .catch(function () {
+        setMsg("No se pudo guardar el departamento", "error");
+      });
+  }
+
+  function editByCode() {
+    if (readOnlyMode) {
+      setFormReadOnly(false);
+    }
+    var code = (codigoEl && codigoEl.value || "").trim();
+    if (!code) {
+      setMsg("Ingresa un código para editar", "error");
+      if (codigoEl) codigoEl.focus();
+      return;
+    }
+    var item = findByCode(code);
+    if (!item) {
+      setMsg("Código no encontrado", "error");
+      return;
+    }
+    editingCode = item.code || "";
+    if (nombreEl) nombreEl.value = item.name || "";
+    if (codigoEl) codigoEl.value = item.code || "";
+    if (responsableEl) responsableEl.value = item.manager || "";
+      setMsg("Registro cargado para edición", "ok");
+      funcionesDraft = normalizeFunciones(item.funciones);
+      renderFuncionesDraft();
+  }
+
+  function deleteByCode() {
+    if (readOnlyMode) {
+      setMsg("Vista en modo lectura", "error");
+      return;
+    }
+    var code = (codigoEl && codigoEl.value || "").trim();
+    if (!code) {
+      setMsg("Ingresa un código para eliminar", "error");
+      return;
+    }
+    var item = findByCode(code);
+    if (!item) {
+      setMsg("Código no encontrado", "error");
+      return;
+    }
+    if (!window.confirm('¿Eliminar el área "' + (item.name || code) + '"?')) return;
+    fetch("/api/inicio/departamentos/" + encodeURIComponent(item.code), { method: "DELETE" })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        rows = Array.isArray(res && res.data) ? res.data : rows.filter(function (x) { return String(x.code || "").toLowerCase() !== String(code).toLowerCase(); });
+        renderFilterTree();
+        renderTable();
+        renderKanban();
+        if (currentView === "organigrama") renderOrganigrama();
+        clearForm();
+        setMsg("Departamento eliminado", "ok");
+      })
+      .catch(function () {
+        setMsg("No se pudo eliminar", "error");
+      });
+  }
+
+  var btnNuevo = document.getElementById("dep-btn-nuevo");
+  var btnEditar = document.getElementById("dep-btn-editar");
+  var btnGuardar = document.getElementById("dep-btn-guardar");
+  var btnEliminar = document.getElementById("dep-btn-eliminar");
+
+  if (btnNuevo) btnNuevo.addEventListener("click", function () {
+    setFormReadOnly(false);
+    clearForm();
+    openFormModal("Nueva área");
+    setMsg("Formulario limpio", "ok");
+    if (nombreEl) nombreEl.focus();
+  });
+  if (btnEditar) btnEditar.addEventListener("click", editByCode);
+  if (btnGuardar) btnGuardar.addEventListener("click", saveRow);
+  if (btnEliminar) btnEliminar.addEventListener("click", deleteByCode);
+  funcionesGroups.forEach(function (group) {
+    var btn = funcionesAddBtns[group];
+    var inp = funcionesInputs[group];
+    if (btn) {
+      btn.addEventListener("click", function () {
+        addFuncionDraft(group);
+      });
+    }
+    if (inp) {
+      inp.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addFuncionDraft(group);
+        }
+      });
+    }
+  });
+  if (filterSearchEl) {
+    filterSearchEl.addEventListener("input", function () {
+      filterQuery = filterSearchEl.value || "";
+      renderTable();
+      renderKanban();
+      if (currentView === "organigrama") renderOrganigrama();
+    });
+  }
+
+  function setFormTab(tabName) {
+    var target = String(tabName || "empleados");
+    Array.from(document.querySelectorAll("[data-dep-tab][data-tab]")).forEach(function (btn) {
+      var active = (btn.getAttribute("data-tab") || "") === target;
+      btn.classList.toggle("tab-active", active);
+    });
+    Array.from(document.querySelectorAll("[data-panel]")).forEach(function (panel) {
+      var show = (panel.getAttribute("data-panel") || "") === target;
+      panel.classList.toggle("hidden", !show);
+    });
+  }
+
+  Array.from(document.querySelectorAll("[data-dep-tab][data-tab]")).forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setFormTab(btn.getAttribute("data-tab") || "empleados");
+    });
+  });
+  setFormTab("empleados");
+
+  Array.from(document.querySelectorAll('#departamentos-module .view-buttons .view-pill[data-view]')).forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      renderView(btn.getAttribute("data-view") || "form");
+    });
+  });
+
+  loadRows();
+  renderFuncionesDraft();
+  renderView("list");
+})();
+</script>

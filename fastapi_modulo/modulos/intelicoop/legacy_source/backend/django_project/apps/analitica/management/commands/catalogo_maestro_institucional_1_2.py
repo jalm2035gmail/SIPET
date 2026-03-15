@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Count, Sum
 
 from apps.ahorros.models import Cuenta, Transaccion
@@ -11,7 +11,7 @@ from apps.creditos.models import Credito
 from apps.socios.models import Socio
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 1/4 de 1.2: genera catalogo maestro institucional consolidado (verdad unica por socio)."
 
     def add_arguments(self, parser):
@@ -141,7 +141,7 @@ class Command(BaseCommand):
             "",
             "## Estado",
             "- Elemento 1 de 4 completado tecnicamente.",
-            "- Verdad unica institucional base implementada a nivel de catalogo maestro.",
+            "- Verdad unica institucional MAIN implementada a nivel de catalogo maestro.",
             "",
             "## Artefactos",
             f"- Reporte CSV: `{report_csv}`",

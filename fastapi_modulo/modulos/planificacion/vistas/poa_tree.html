@@ -1,0 +1,378 @@
+      <section class="grid gap-4 w-full max-w-6xl">
+        <style>
+          .poa-tree-page-card{
+            background:#ffffff;
+            border:1px solid #d8dee8;
+            border-radius:28px;
+            box-shadow:0 16px 36px rgba(15,23,42,.08);
+            padding:22px 24px;
+          }
+          .poa-tree-page-head{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:16px;
+            margin-bottom:14px;
+          }
+          .poa-tree-page-title{
+            margin:0;
+            font-size:1.55rem;
+            line-height:1.2;
+            font-weight:800;
+            color:#0f172a;
+          }
+          .poa-tree-page-sub{
+            margin:8px 0 0 0;
+            color:#64748b;
+            font-size:.95rem;
+            line-height:1.45;
+          }
+          .poa-tree-page-close{
+            width:44px;
+            height:44px;
+            border:none;
+            border-radius:999px;
+            background:#eff4f2;
+            color:#0f172a;
+            font-size:1.8rem;
+            line-height:1;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            text-decoration:none;
+            box-shadow:0 8px 20px rgba(15,23,42,.08);
+          }
+          .poa-tree-wrap{
+            border:1px solid #d8dee8;
+            border-radius:22px;
+            background:#f8fbfa;
+            box-shadow:0 10px 24px rgba(15,23,42,.06);
+            padding:18px 20px;
+          }
+          .poa-tree-help{
+            margin:0 0 12px 0;
+            color:#64748b;
+            font-size:.92rem;
+          }
+          .poa-tree-grid{
+            display:grid;
+            gap:16px;
+          }
+          .poa-tree-axis{
+            border:1px solid #d8dee8;
+            border-radius:20px;
+            background:#ffffff;
+            box-shadow:0 8px 18px rgba(15,23,42,.05);
+            padding:16px 18px;
+          }
+          .poa-tree-axis-head,
+          .poa-tree-item-head{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+          }
+          .poa-tree-axis h4,
+          .poa-tree-item-title{
+            margin:0;
+            color:#0f172a;
+            font-weight:800;
+          }
+          .poa-tree-objectives,
+          .poa-tree-children{
+            display:grid;
+            gap:12px;
+            margin-top:12px;
+            padding-left:14px;
+            border-left:2px solid #e2e8f0;
+          }
+          .poa-tree-item{
+            position:relative;
+            border:1px solid #d8dee8;
+            border-radius:18px;
+            background:#f8fafc;
+            padding:14px 16px 14px 18px;
+          }
+          .poa-tree-item-meta{
+            margin:6px 0 0 0;
+            color:#64748b;
+            font-size:.88rem;
+          }
+          .poa-tree-click{
+            cursor:pointer;
+          }
+          .poa-tree-click:hover{
+            color:#0f5132;
+          }
+          .poa-tree-toggle{
+            border:1px solid #cbd5e1;
+            background:#ffffff;
+            color:#0f172a;
+            border-radius:999px;
+            padding:.45rem .8rem;
+            font-size:.82rem;
+            font-weight:700;
+            cursor:pointer;
+          }
+          .poa-tree-state{
+            position:absolute;
+            left:0;
+            top:14px;
+            bottom:14px;
+            width:6px;
+            border-radius:999px;
+            background:#cbd5e1;
+          }
+          .poa-tree-state-green{ background:#16a34a; }
+          .poa-tree-state-yellow{ background:#eab308; }
+          .poa-tree-state-orange{ background:#f97316; }
+          .poa-tree-state-red{ background:#dc2626; }
+          #poa-tree-page-msg{
+            min-height:1.5rem;
+            color:#64748b;
+            font-size:.92rem;
+          }
+        </style>
+        <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+          <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+              src="/templates/icon/plan.svg"
+              alt="Icono POA"
+              width="96"
+              height="96"
+              class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+              <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">POA</div>
+              <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Vista separada del árbol de avance para navegar ejes, objetivos, actividades y subactividades.</div>
+            </div>
+          </div>
+        </div>
+        <div class="poa-tree-page-card">
+          <div class="poa-tree-page-head">
+            <div>
+              <h2 class="poa-tree-page-title">Árbol de avance</h2>
+              <p class="poa-tree-page-sub">Vista compactada por defecto. Usa "Mostrar" para abrir solo el bloque siguiente.</p>
+            </div>
+            <a href="/poa" class="poa-tree-page-close" aria-label="Cerrar">×</a>
+          </div>
+          <div id="poa-tree-page-msg" aria-live="polite"></div>
+          <div class="poa-tree-wrap">
+            <div class="poa-tree-grid" id="poa-tree-page-host"></div>
+          </div>
+        </div>
+      </section>
+      <script>
+        (() => {
+          const hostEl = document.getElementById("poa-tree-page-host");
+          const msgEl = document.getElementById("poa-tree-page-msg");
+          const poaTreeVisibility = {};
+          let objectives = [];
+          let activities = [];
+
+          const escapeHtml = (value) => String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+
+          const todayIso = () => {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, "0");
+            const d = String(now.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+          };
+
+          const showMsg = (text, isError = false) => {
+            if (!msgEl) return;
+            msgEl.textContent = text || "";
+            msgEl.style.color = isError ? "#b91c1c" : "#64748b";
+          };
+
+          const treeKey = (kind, id) => `${kind}:${Number(id || 0)}`;
+          const isTreeOpen = (kind, id) => !!poaTreeVisibility[treeKey(kind, id)];
+          const setTreeOpen = (kind, id, value) => {
+            poaTreeVisibility[treeKey(kind, id)] = !!value;
+          };
+
+          const poaStateTone = ({ status, entregaEstado, fechaInicial, fechaFinal, avance }) => {
+            const st = String(status || "").trim().toLowerCase();
+            const de = String(entregaEstado || "").trim().toLowerCase();
+            const start = String(fechaInicial || "").trim();
+            const end = String(fechaFinal || "").trim();
+            const progress = Number(avance || 0);
+            const today = todayIso();
+            if (de === "pendiente" || st.includes("revisión") || st.includes("revision")) return "orange";
+            if (de === "aprobada" || st.includes("terminad") || st.includes("hecho") || progress >= 100) return "green";
+            if (st.includes("atras")) return "red";
+            if (st.includes("no inici")) return "none";
+            if (end && today > end && progress < 100) return "red";
+            if (st.includes("proceso")) return "yellow";
+            if (start && today >= start && progress < 100) return "yellow";
+            return "none";
+          };
+
+          const aggregatePoaStateTone = (tones) => {
+            const list = Array.isArray(tones) ? tones : [];
+            if (!list.length) return "none";
+            if (list.includes("red")) return "red";
+            if (list.includes("orange")) return "orange";
+            if (list.includes("yellow")) return "yellow";
+            if (list.includes("green")) return "green";
+            return "none";
+          };
+
+          const renderTree = () => {
+            if (!hostEl) return;
+            if (!objectives.length) {
+              hostEl.innerHTML = '<div class="poa-tree-axis"><p class="poa-tree-help">Sin datos para mostrar.</p></div>';
+              return;
+            }
+            const grouped = {};
+            objectives.forEach((obj) => {
+              const axisName = String(obj.axis_name || "Sin eje").trim() || "Sin eje";
+              if (!grouped[axisName]) grouped[axisName] = [];
+              grouped[axisName].push(obj);
+            });
+            const axisNames = Object.keys(grouped).sort((a, b) => a.localeCompare(b, "es"));
+            hostEl.innerHTML = axisNames.map((axisName) => {
+              const axisOpen = !!poaTreeVisibility[`axis:${axisName}`];
+              const objectivesHtml = axisOpen ? (grouped[axisName] || []).map((obj) => {
+                const objId = Number(obj.id || 0);
+                const objOpen = isTreeOpen("obj", objId);
+                const objActs = activities.filter((act) => Number(act.objective_id || 0) === objId);
+                const objectiveTone = aggregatePoaStateTone(
+                  objActs.map((act) => poaStateTone({
+                    status: act?.status,
+                    entregaEstado: act?.entrega_estado,
+                    fechaInicial: act?.fecha_inicial,
+                    fechaFinal: act?.fecha_final,
+                    avance: act?.avance,
+                  }))
+                );
+                const actsHtml = objOpen ? objActs.map((act) => {
+                  const actId = Number(act.id || 0);
+                  const actOpen = isTreeOpen("act", actId);
+                  const actTone = poaStateTone({
+                    status: act?.status,
+                    entregaEstado: act?.entrega_estado,
+                    fechaInicial: act?.fecha_inicial,
+                    fechaFinal: act?.fecha_final,
+                    avance: act?.avance,
+                  });
+                  const subList = Array.isArray(act.subactivities) ? act.subactivities : [];
+                  const subsHtml = actOpen ? subList.map((sub) => `
+                    <div class="poa-tree-item">
+                      <div class="poa-tree-state poa-tree-state-${poaStateTone({
+                        status: sub?.status,
+                        entregaEstado: "",
+                        fechaInicial: sub?.fecha_inicial,
+                        fechaFinal: sub?.fecha_final,
+                        avance: sub?.avance,
+                      })}"></div>
+                      <div class="poa-tree-item-head">
+                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-sub="${Number(sub.id || 0)}" data-tree-sub-parent="${actId}">${escapeHtml(sub.nombre || "Subtarea")}</h6>
+                      </div>
+                    </div>
+                  `).join("") : "";
+                  return `
+                    <div class="poa-tree-item">
+                      <div class="poa-tree-state poa-tree-state-${actTone}"></div>
+                      <div class="poa-tree-item-head">
+                        <h6 class="poa-tree-item-title poa-tree-click" data-tree-activity="${actId}" data-tree-objective="${objId}">${escapeHtml(act.nombre || "Actividad")}</h6>
+                        ${subList.length ? `<button type="button" class="poa-tree-toggle" data-tree-toggle="act" data-tree-id="${actId}">${actOpen ? "Ocultar" : "Mostrar"}</button>` : ""}
+                      </div>
+                      ${subList.length ? `<p class="poa-tree-item-meta">Subactividades: ${subList.length}</p>` : ""}
+                      ${subsHtml ? `<div class="poa-tree-children">${subsHtml}</div>` : ""}
+                    </div>
+                  `;
+                }).join("") : "";
+                return `
+                  <div class="poa-tree-item">
+                    <div class="poa-tree-state poa-tree-state-${objectiveTone}"></div>
+                    <div class="poa-tree-item-head">
+                      <h5 class="poa-tree-item-title poa-tree-click" data-tree-objective="${objId}">${escapeHtml(obj.codigo || "xx-yy-zz")} - ${escapeHtml(obj.nombre || "Objetivo")}</h5>
+                      ${objActs.length ? `<button type="button" class="poa-tree-toggle" data-tree-toggle="obj" data-tree-id="${objId}">${objOpen ? "Ocultar" : "Mostrar"}</button>` : ""}
+                    </div>
+                    <p class="poa-tree-item-meta">Actividades: ${objActs.length}</p>
+                    ${actsHtml ? `<div class="poa-tree-children">${actsHtml}</div>` : ""}
+                  </div>
+                `;
+              }).join("") : "";
+              return `
+                <section class="poa-tree-axis">
+                  <div class="poa-tree-axis-head">
+                    <h4>${escapeHtml(axisName)}</h4>
+                    <button type="button" class="poa-tree-toggle" data-tree-toggle="axis" data-tree-axis="${escapeHtml(axisName)}">${axisOpen ? "Ocultar" : "Mostrar"}</button>
+                  </div>
+                  ${objectivesHtml ? `<div class="poa-tree-objectives">${objectivesHtml}</div>` : ""}
+                </section>
+              `;
+            }).join("");
+
+            hostEl.querySelectorAll("[data-tree-toggle='axis']").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const axisName = String(btn.getAttribute("data-tree-axis") || "");
+                poaTreeVisibility[`axis:${axisName}`] = !poaTreeVisibility[`axis:${axisName}`];
+                renderTree();
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-toggle='obj']").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const id = Number(btn.getAttribute("data-tree-id") || 0);
+                setTreeOpen("obj", id, !isTreeOpen("obj", id));
+                renderTree();
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-toggle='act']").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const id = Number(btn.getAttribute("data-tree-id") || 0);
+                setTreeOpen("act", id, !isTreeOpen("act", id));
+                renderTree();
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-objective]").forEach((node) => {
+              node.addEventListener("click", () => {
+                const objectiveId = Number(node.getAttribute("data-tree-objective") || 0);
+                if (objectiveId) window.location.href = `/poa?objective_id=${objectiveId}`;
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-activity]").forEach((node) => {
+              node.addEventListener("click", () => {
+                const objectiveId = Number(node.getAttribute("data-tree-objective") || 0);
+                const activityId = Number(node.getAttribute("data-tree-activity") || 0);
+                if (objectiveId && activityId) window.location.href = `/poa?objective_id=${objectiveId}&activity_id=${activityId}`;
+              });
+            });
+            hostEl.querySelectorAll("[data-tree-sub]").forEach((node) => {
+              node.addEventListener("click", () => {
+                const subId = Number(node.getAttribute("data-tree-sub") || 0);
+                const parentId = Number(node.getAttribute("data-tree-sub-parent") || 0);
+                if (subId && parentId) window.location.href = `/poa?activity_id=${parentId}&subactivity_id=${subId}`;
+              });
+            });
+          };
+
+          const loadBoard = async () => {
+            showMsg("Cargando árbol POA...");
+            try {
+              const response = await fetch("/api/poa/board-data", {
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+              });
+              const payload = await response.json().catch(() => ({}));
+              if (!response.ok || payload?.success === false) throw new Error(payload?.error || "No se pudo cargar árbol POA.");
+              objectives = Array.isArray(payload.objectives) ? payload.objectives : [];
+              activities = Array.isArray(payload.activities) ? payload.activities : [];
+              showMsg("");
+              renderTree();
+            } catch (error) {
+              showMsg(error?.message || "No se pudo cargar árbol POA.", true);
+            }
+          };
+
+          loadBoard();
+        })();
+      </script>

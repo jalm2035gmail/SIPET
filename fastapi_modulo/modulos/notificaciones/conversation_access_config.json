@@ -1,0 +1,30 @@
+{
+  "title": "Conversaciones",
+  "help_badge": "?",
+  "role_label": "Nivel de acceso",
+  "roles": [
+    { "value": "", "label": "Sin acceso" },
+    { "value": "usuario", "label": "Usuario" },
+    { "value": "administrador", "label": "Administrador" }
+  ],
+  "toggles": [
+    {
+      "key": "can_create_groups",
+      "label": "Puede crear grupos",
+      "data_attr": "create-groups",
+      "enabled_when_role": ["usuario", "administrador"]
+    },
+    {
+      "key": "can_send_notifications",
+      "label": "Puede enviar notificaciones",
+      "data_attr": "send-notifications",
+      "enabled_when_role": ["administrador"]
+    }
+  ],
+  "scope_label": "Alcance de notificaciones",
+  "scopes": [
+    { "value": "", "label": "Solo conversación" },
+    { "value": "department", "label": "Mi departamento" },
+    { "value": "company", "label": "Toda la empresa" }
+  ]
+}

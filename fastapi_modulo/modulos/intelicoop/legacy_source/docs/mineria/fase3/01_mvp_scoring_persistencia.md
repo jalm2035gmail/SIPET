@@ -18,4 +18,4 @@ Fecha: 2026-02-18
 
 ## Objetivo cubierto
 - Fase 3.5 Persistencia de resultados.
-- Base para Fase 3.6 Integracion con consumidores.
+- MAIN para Fase 3.6 Integracion con consumidores.

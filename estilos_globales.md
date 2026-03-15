@@ -1,5 +1,7 @@
 # Guía de Estilos Globales — SIPET
 
+> Referencia institucional complementaria: ver `docs/sistema_diseno_sipet.md` para la paleta oficial vigente, la jerarquia cromatica y el sistema unico de diseno.
+
 > **Regla principal:** Todo el CSS de componentes reutilizables debe vivir en  
 > `static/css/global.css`.  
 > Los módulos **no** deben redefinir clases globales ni añadir estilos inline a
@@ -24,7 +26,7 @@ elementos de layout — usar siempre las variables.
 | `--sidebar-hover` | Color de hover en items del sidebar | `#16a34a` |
 | `--page-bg` | Fondo general de la página | `#f4f6fb` |
 | `--content-bg` | Fondo de tarjetas/contenido | `#ffffff` |
-| `--body-text` | Texto base del cuerpo | `#0f172a` |
+| `--body-text` | Texto MAIN del cuerpo | `#0f172a` |
 | `--button-bg` | **Fondo de botones** (configurable en ajustes) | `#0f172a` |
 | `--button-text` | **Texto de botones** (configurable en ajustes) | `#ffffff` |
 | `--field-color` | Fondo de campos de formulario | `#ffffff` |
@@ -279,7 +281,7 @@ color: var(--navbar-text, #1f172a);
 | Clase | Uso |
 |---|---|
 | `.tabla-oficial-wrap` | Overflow horizontal |
-| `.tabla-oficial` | Tabla base con bordes y hover |
+| `.tabla-oficial` | Tabla MAIN con bordes y hover |
 | `.tabla-oficial-input` | Input incrustado en celda editable |
 
 ---

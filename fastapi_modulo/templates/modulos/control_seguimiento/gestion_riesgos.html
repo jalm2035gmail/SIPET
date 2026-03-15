@@ -1,0 +1,199 @@
+<section class="risk-shell">
+  <style>
+    .risk-shell{
+      display:grid;
+      gap:18px;
+      color:var(--sidebar-bottom, #1f2940);
+    }
+    .risk-hero,
+    .risk-card{
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      border:1px solid var(--field-border, #e2eaf4);
+      border-radius:24px;
+      box-shadow:0 10px 24px rgba(31,41,64,.06);
+    }
+    .risk-hero{
+      padding:24px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+    }
+    .risk-hero h1{
+      margin:0;
+      font-size:28px;
+      line-height:1.05;
+      letter-spacing:-.03em;
+    }
+    .risk-hero p{
+      margin:10px 0 0;
+      max-width:860px;
+      font-size:16px;
+      line-height:1.6;
+      color:var(--text-muted, #667792);
+    }
+    .risk-pill{
+      padding:10px 14px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--institutional-accent, #22b8cf) 12%, #ffffff);
+      color:var(--sidebar-bottom, #1f2940);
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .risk-kpis{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+    }
+    .risk-kpi{
+      min-height:132px;
+      padding:18px;
+      border-radius:22px;
+      color:#fff;
+      box-shadow:0 12px 26px rgba(31,41,64,.10);
+    }
+    .risk-kpi.red{background:linear-gradient(135deg,#ff8e8e,#ef6b67);}
+    .risk-kpi.gold{background:linear-gradient(135deg,#ffd56a,#f2b035);}
+    .risk-kpi.blue{background:linear-gradient(135deg,#63a5ff,#3b82f6);}
+    .risk-kpi.green{background:linear-gradient(135deg,#6bcf9b,#25b27f);}
+    .risk-kpi__title{font-size:14px;font-weight:700;opacity:.94;}
+    .risk-kpi__value{margin-top:10px;font-size:28px;font-weight:800;letter-spacing:-.03em;}
+    .risk-kpi__meta{margin-top:8px;font-size:13px;font-weight:600;opacity:.92;}
+    .risk-grid{
+      display:grid;
+      grid-template-columns:1.15fr .95fr;
+      gap:16px;
+    }
+    .risk-card{padding:18px;}
+    .risk-card__title{
+      margin:0 0 14px;
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+    .risk-matrix,
+    .risk-actions{
+      display:grid;
+      gap:12px;
+    }
+    .risk-item{
+      padding:16px;
+      border:1px solid var(--field-border, #e2eaf4);
+      border-radius:20px;
+      background:linear-gradient(180deg,#fbfdff,#f8fbff);
+    }
+    .risk-item__head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .risk-item__title{
+      font-size:15px;
+      font-weight:800;
+    }
+    .risk-item__meta{
+      font-size:13px;
+      color:var(--text-muted, #667792);
+      line-height:1.55;
+    }
+    .risk-badge{
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .risk-badge.red{background:#fff1f1;color:#db5e5e;}
+    .risk-badge.gold{background:#fff6dd;color:#cb9224;}
+    .risk-badge.blue{background:#edf5ff;color:#3b82f6;}
+    .risk-badge.green{background:#ebfbf3;color:#25a36c;}
+    @media (max-width: 1180px){
+      .risk-kpis{grid-template-columns:repeat(2,1fr);}
+      .risk-grid{grid-template-columns:1fr;}
+    }
+    @media (max-width: 640px){
+      .risk-hero{flex-direction:column;}
+      .risk-kpis{grid-template-columns:1fr;}
+    }
+  </style>
+
+  <section class="risk-hero">
+    <div>
+      <h1>Gestión de riesgos</h1>
+      <p>Cascarón para administración integral de riesgos institucionales: identificación, evaluación, priorización, plan de mitigación, seguimiento de responsables y cierre de riesgos.</p>
+    </div>
+    <div class="risk-pill">Administración de riesgos</div>
+  </section>
+
+  <section class="risk-kpis">
+    <article class="risk-kpi red">
+      <div class="risk-kpi__title">Riesgos críticos</div>
+      <div class="risk-kpi__value">7</div>
+      <div class="risk-kpi__meta">Atención inmediata</div>
+    </article>
+    <article class="risk-kpi gold">
+      <div class="risk-kpi__title">Riesgos altos</div>
+      <div class="risk-kpi__value">16</div>
+      <div class="risk-kpi__meta">Seguimiento semanal</div>
+    </article>
+    <article class="risk-kpi blue">
+      <div class="risk-kpi__title">Planes de mitigación</div>
+      <div class="risk-kpi__value">21</div>
+      <div class="risk-kpi__meta">En curso</div>
+    </article>
+    <article class="risk-kpi green">
+      <div class="risk-kpi__title">Riesgos cerrados</div>
+      <div class="risk-kpi__value">34</div>
+      <div class="risk-kpi__meta">Histórico</div>
+    </article>
+  </section>
+
+  <section class="risk-grid">
+    <article class="risk-card">
+      <h3 class="risk-card__title">Mapa MAIN de riesgos</h3>
+      <div class="risk-matrix">
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Riesgo de liquidez</div><span class="risk-badge red">Crítico</span></div>
+          <div class="risk-item__meta">Sensibilidad alta por descalce de plazos y variación en captación.</div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Riesgo operativo</div><span class="risk-badge gold">Alto</span></div>
+          <div class="risk-item__meta">Dependencia de procesos manuales y controles incompletos.</div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Riesgo tecnológico</div><span class="risk-badge blue">Medio</span></div>
+          <div class="risk-item__meta">Capacidad limitada de continuidad y respuesta ante incidentes.</div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Riesgo reputacional</div><span class="risk-badge gold">Alto</span></div>
+          <div class="risk-item__meta">Exposición a reclamos y percepción negativa por tiempos de atención.</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="risk-card">
+      <h3 class="risk-card__title">Próximos componentes</h3>
+      <div class="risk-actions">
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Registro de riesgos</div><span class="risk-badge blue">Pendiente</span></div>
+          <div class="risk-item__meta">Alta, edición y clasificación por tipo, impacto y probabilidad.</div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Planes de mitigación</div><span class="risk-badge blue">Pendiente</span></div>
+          <div class="risk-item__meta">Responsables, fechas compromiso y seguimiento de acciones.</div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Alertas y escalamiento</div><span class="risk-badge blue">Pendiente</span></div>
+          <div class="risk-item__meta">Notificación automática por criticidad y vencimiento.</div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item__head"><div class="risk-item__title">Comité de riesgos</div><span class="risk-badge green">Diseño</span></div>
+          <div class="risk-item__meta">Resumen ejecutivo para análisis, aprobación y cierre.</div>
+        </div>
+      </div>
+    </article>
+  </section>
+</section>

@@ -1,0 +1,30 @@
+        <article class="card ci-section-card ci-panel bg-MAIN-100 border border-MAIN-300 shadow-sm">
+          <div class="card-body p-3">
+            <div class="ci-toolbar flex flex-wrap gap-2 items-center justify-between">
+              <div class="ci-toolbar-group flex flex-wrap gap-2 items-center">
+                <select id="pa-filtro-estado" class="select select-bordered select-sm">
+                  <option value="">Todos los estados</option>
+                  <option>Programado</option>
+                  <option>En proceso</option>
+                  <option>Completado</option>
+                  <option>Diferido</option>
+                  <option>Cancelado</option>
+                </select>
+                <button type="button" id="pa-btn-filtrar" class="btn btn-outline btn-sm">Filtrar</button>
+                <button type="button" id="pa-btn-limpiar-filtro" class="btn btn-ghost btn-sm">Limpiar</button>
+              </div>
+              <div class="ci-toolbar-group flex gap-2">
+                <button type="button" id="pa-btn-editar-programa"
+                        class="btn btn-ghost btn-sm gap-1">✏️ Editar</button>
+                <button type="button" id="pa-btn-nueva-actividad"
+                        class="btn btn-primary btn-sm gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+                       viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  Agregar actividad
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>

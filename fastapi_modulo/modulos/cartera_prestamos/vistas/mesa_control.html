@@ -1,0 +1,360 @@
+<section class="cp-mesa-shell" data-module-page="mesa-control">
+
+  <div class="cp-mesa-app">
+    <main class="cp-mesa-main">
+      <header class="cp-mesa-topbar cp-ui-topbar">
+        <div>
+          <h1>Cartera ejecutiva</h1>
+          <p>Mesa de control institucional para cartera, riesgo, recuperación y cumplimiento.</p>
+        </div>
+
+        <div class="cp-mesa-topbar-actions cp-ui-topbar-actions">
+          <button type="button" class="cp-mesa-btn cp-ui-btn cp-ui-btn-secondary" data-action="refresh">Filtrar</button>
+          <button type="button" class="cp-mesa-btn cp-ui-btn cp-ui-btn-secondary" data-export-url="/api/cartera-prestamos/export/aging-cartera.xls" data-export-filename="aging_cartera.xls">Exportar aging</button>
+          <button type="button" class="cp-mesa-btn-primary cp-ui-btn cp-ui-btn-primary" data-export-url="/api/cartera-prestamos/export/resumen-ejecutivo.pdf" data-export-filename="resumen_ejecutivo.pdf">Exportar resumen PDF</button>
+        </div>
+      </header>
+
+      <section class="cp-mesa-hero-grid">
+        <article class="cp-mesa-hero-card cp-ui-kpi-card">
+          <div class="cp-mesa-hero-label">Riesgo institucional global</div>
+          <div class="cp-mesa-hero-value" data-role="riesgo_global">Medio controlado</div>
+          <div class="cp-mesa-hero-trend" data-role="indice_morosidad">▲ +0.6% vs semana anterior</div>
+          <div class="cp-mesa-progress-wrap">
+            <div class="cp-mesa-progress-track">
+              <div class="cp-mesa-progress-bar" data-role="indice_morosidad_bar" style="width: 64%;"></div>
+            </div>
+            <span data-role="indice_morosidad_score">64/100</span>
+          </div>
+        </article>
+
+        <article class="cp-mesa-stat-card cp-ui-kpi-card">
+          <div class="cp-mesa-stat-title">Alertas activas</div>
+          <div class="cp-mesa-stat-value" data-role="cartera_vencida">18</div>
+          <div class="cp-mesa-stat-foot is-danger" data-role="casos_criticos">5 criticas</div>
+        </article>
+
+        <article class="cp-mesa-stat-card cp-ui-kpi-card">
+          <div class="cp-mesa-stat-title">Creditos en seguimiento</div>
+          <div class="cp-mesa-stat-value" data-role="cartera_total">42</div>
+          <div class="cp-mesa-stat-foot is-warning" data-role="cartera_vigente">12 requieren llamada</div>
+        </article>
+
+        <article class="cp-mesa-stat-card cp-ui-kpi-card">
+          <div class="cp-mesa-stat-title">Cumplimiento operativo</div>
+          <div class="cp-mesa-stat-value" data-role="recuperacion_periodo">91%</div>
+          <div class="cp-mesa-stat-foot is-success" data-role="cobertura">Dentro de parametro</div>
+        </article>
+      </section>
+
+      <section class="cp-mesa-secondary-grid">
+        <article class="cp-mesa-panel cp-ui-panel">
+          <div class="cp-mesa-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Salud por sucursal</h2>
+              <p>Lectura comparativa para priorizar visitas y seguimiento.</p>
+            </div>
+          </div>
+          <div class="cp-mesa-kpi-stack">
+            <div class="cp-mesa-kpi-mini">
+              <div class="cp-mesa-kpi-mini-head">
+                <span class="cp-mesa-kpi-mini-label">Sucursal Centro</span>
+                <span class="cp-mesa-pill is-red">Critico</span>
+              </div>
+              <div class="cp-mesa-kpi-mini-value">5.8%</div>
+              <div class="cp-mesa-kpi-mini-meta">Mora total sobre cartera colocada. Requiere comite esta semana.</div>
+            </div>
+            <div class="cp-mesa-kpi-mini">
+              <div class="cp-mesa-kpi-mini-head">
+                <span class="cp-mesa-kpi-mini-label">Sucursal Norte</span>
+                <span class="cp-mesa-pill is-yellow">Vigilancia</span>
+              </div>
+              <div class="cp-mesa-kpi-mini-value">4.1%</div>
+              <div class="cp-mesa-kpi-mini-meta">Presion moderada en microempresa y consumo. Seguimiento preventivo.</div>
+            </div>
+            <div class="cp-mesa-kpi-mini">
+              <div class="cp-mesa-kpi-mini-head">
+                <span class="cp-mesa-kpi-mini-label">Sucursal Sur</span>
+                <span class="cp-mesa-pill is-blue">Estable</span>
+              </div>
+              <div class="cp-mesa-kpi-mini-value">2.9%</div>
+              <div class="cp-mesa-kpi-mini-meta">Cartera bajo control con recuperacion estable y baja desviacion.</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-mesa-panel cp-ui-panel">
+          <div class="cp-mesa-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Metas mensuales</h2>
+              <p>Avance ejecutivo de recuperacion y contencion.</p>
+            </div>
+          </div>
+          <div class="cp-mesa-progress-list">
+            <div class="cp-mesa-progress-item">
+              <div class="cp-mesa-progress-head">
+                <span class="cp-mesa-progress-label">Recuperacion mensual</span>
+                <span class="cp-mesa-progress-meta">82%</span>
+              </div>
+              <div class="cp-mesa-progress-bar-wrap"><div class="cp-mesa-progress-bar-fill" style="width:82%"></div></div>
+            </div>
+            <div class="cp-mesa-progress-item">
+              <div class="cp-mesa-progress-head">
+                <span class="cp-mesa-progress-label">Promesas cumplidas</span>
+                <span class="cp-mesa-progress-meta">74%</span>
+              </div>
+              <div class="cp-mesa-progress-bar-wrap"><div class="cp-mesa-progress-bar-fill" style="width:74%"></div></div>
+            </div>
+            <div class="cp-mesa-progress-item">
+              <div class="cp-mesa-progress-head">
+                <span class="cp-mesa-progress-label">Expedientes regularizados</span>
+                <span class="cp-mesa-progress-meta">67%</span>
+              </div>
+              <div class="cp-mesa-progress-bar-wrap"><div class="cp-mesa-progress-bar-fill" style="width:67%"></div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-mesa-panel cp-ui-panel">
+          <div class="cp-mesa-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Comite y acuerdos</h2>
+              <p>Casos listos para decision y seguimiento formal.</p>
+            </div>
+          </div>
+          <div class="cp-mesa-committee-list">
+            <div class="cp-mesa-committee-item">
+              <div>
+                <div class="cp-mesa-committee-label">Caso CR-2059</div>
+                <div class="cp-mesa-committee-meta">Definir reestructura o cobranza especializada.</div>
+              </div>
+              <span class="cp-mesa-committee-badge is-critical">Hoy</span>
+            </div>
+            <div class="cp-mesa-committee-item">
+              <div>
+                <div class="cp-mesa-committee-label">Sucursal Centro</div>
+                <div class="cp-mesa-committee-meta">Validar plan semanal con responsables y metas.</div>
+              </div>
+              <span class="cp-mesa-committee-badge is-review">Revision</span>
+            </div>
+            <div class="cp-mesa-committee-item">
+              <div>
+                <div class="cp-mesa-committee-label">Producto microcredito</div>
+                <div class="cp-mesa-committee-meta">Mantener vigilancia y recalibrar score preventivo.</div>
+              </div>
+              <span class="cp-mesa-committee-badge is-stable">Seguimiento</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="cp-mesa-content-grid">
+        <article class="cp-mesa-panel cp-ui-panel is-large">
+          <div class="cp-mesa-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Alertas prioritarias</h2>
+              <p>Eventos que requieren atencion del equipo directivo y operativo.</p>
+            </div>
+            <button type="button" class="cp-mesa-panel-link cp-ui-panel-link">Ver todas</button>
+          </div>
+
+          <div class="cp-mesa-alerts">
+            <div class="cp-mesa-alert is-critical">
+              <div class="cp-mesa-alert-icon">!</div>
+              <div class="cp-mesa-alert-content">
+                <div class="cp-mesa-alert-title">Morosidad superior al 5% en Sucursal Centro</div>
+                <div class="cp-mesa-alert-meta">Cartera vencida · Detectado hace 25 min</div>
+              </div>
+              <span class="cp-mesa-badge is-red">Critica</span>
+            </div>
+
+            <div class="cp-mesa-alert is-high">
+              <div class="cp-mesa-alert-icon">!</div>
+              <div class="cp-mesa-alert-content">
+                <div class="cp-mesa-alert-title">12 creditos empresariales con atraso mayor a 15 dias</div>
+                <div class="cp-mesa-alert-meta">Cobranza · Detectado hace 40 min</div>
+              </div>
+              <span class="cp-mesa-badge is-orange">Alta</span>
+            </div>
+
+            <div class="cp-mesa-alert is-medium">
+              <div class="cp-mesa-alert-icon">!</div>
+              <div class="cp-mesa-alert-content">
+                <div class="cp-mesa-alert-title">Disminucion en captacion del producto Ahorro Joven</div>
+                <div class="cp-mesa-alert-meta">Comercial · Detectado hace 2 horas</div>
+              </div>
+              <span class="cp-mesa-badge is-yellow">Media</span>
+            </div>
+
+            <div class="cp-mesa-alert is-medium">
+              <div class="cp-mesa-alert-icon">!</div>
+              <div class="cp-mesa-alert-content">
+                <div class="cp-mesa-alert-title">Pendiente carga documental en expedientes de credito</div>
+                <div class="cp-mesa-alert-meta">Cumplimiento · Detectado hoy</div>
+              </div>
+              <span class="cp-mesa-badge is-yellow">Media</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-mesa-panel cp-ui-panel">
+          <div class="cp-mesa-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Semaforo institucional</h2>
+              <p>Estado general por dimension.</p>
+            </div>
+          </div>
+
+          <div class="cp-mesa-traffic">
+            <div class="cp-mesa-traffic-item">
+              <div class="cp-mesa-traffic-left">
+                <span class="cp-mesa-light is-green"></span>
+                <span>Liquidez</span>
+              </div>
+              <strong>Optima</strong>
+            </div>
+
+            <div class="cp-mesa-traffic-item">
+              <div class="cp-mesa-traffic-left">
+                <span class="cp-mesa-light is-yellow"></span>
+                <span>Cartera</span>
+              </div>
+              <strong>Vigilancia</strong>
+            </div>
+
+            <div class="cp-mesa-traffic-item">
+              <div class="cp-mesa-traffic-left">
+                <span class="cp-mesa-light is-green"></span>
+                <span>Captacion</span>
+              </div>
+              <strong>Estable</strong>
+            </div>
+
+            <div class="cp-mesa-traffic-item">
+              <div class="cp-mesa-traffic-left">
+                <span class="cp-mesa-light is-yellow"></span>
+                <span>Riesgo operativo</span>
+              </div>
+              <strong>Controlado</strong>
+            </div>
+
+            <div class="cp-mesa-traffic-item">
+              <div class="cp-mesa-traffic-left">
+                <span class="cp-mesa-light is-red"></span>
+                <span>Cumplimiento documental</span>
+              </div>
+              <strong>Atencion</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-mesa-panel cp-ui-panel is-large">
+          <div class="cp-mesa-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Creditos en seguimiento</h2>
+              <p>Casos con observaciones o monitoreo especial.</p>
+            </div>
+            <a href="/cartera-prestamos/gestion" class="cp-mesa-panel-link cp-ui-panel-link">Abrir cartera</a>
+          </div>
+
+          <div class="cp-mesa-table-wrap cp-ui-table-wrap" data-table-search="Casos criticos">
+            <table class="cp-mesa-table cp-ui-table" id="cp-mesa-casos-table">
+              <thead>
+                <tr>
+                  <th>Folio</th>
+                  <th>Cliente</th>
+                  <th>Producto</th>
+                  <th>Saldo</th>
+                  <th>Atraso</th>
+                  <th>Responsable</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="cp-mesa-casos-body">
+                <tr>
+                  <td>CR-2031</td>
+                  <td>Maria Hernandez</td>
+                  <td>Capital de trabajo</td>
+                  <td>$185,000</td>
+                  <td>18 dias</td>
+                  <td>A. Lopez</td>
+                  <td><span class="cp-mesa-pill is-red">Critico</span></td>
+                </tr>
+                <tr>
+                  <td>CR-1988</td>
+                  <td>Jose Ramirez</td>
+                  <td>Microempresa</td>
+                  <td>$72,500</td>
+                  <td>9 dias</td>
+                  <td>L. Garcia</td>
+                  <td><span class="cp-mesa-pill is-yellow">Seguimiento</span></td>
+                </tr>
+                <tr>
+                  <td>CR-2110</td>
+                  <td>Ana Velasco</td>
+                  <td>Refaccionario</td>
+                  <td>$230,000</td>
+                  <td>3 dias</td>
+                  <td>M. Ruiz</td>
+                  <td><span class="cp-mesa-pill is-blue">Preventivo</span></td>
+                </tr>
+                <tr>
+                  <td>CR-2059</td>
+                  <td>Carlos Ortega</td>
+                  <td>Consumo</td>
+                  <td>$38,900</td>
+                  <td>21 dias</td>
+                  <td>R. Perez</td>
+                  <td><span class="cp-mesa-pill is-red">Critico</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="cp-mesa-panel cp-ui-panel">
+          <div class="cp-mesa-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Actividad reciente</h2>
+              <p>Bitacora de eventos relevantes.</p>
+            </div>
+          </div>
+
+          <div class="cp-mesa-timeline">
+            <div class="cp-mesa-timeline-item">
+              <span class="cp-mesa-timeline-dot is-red"></span>
+              <div>
+                <div class="cp-mesa-timeline-title">Se genero alerta por concentracion de mora</div>
+                <div class="cp-mesa-timeline-time">Hace 14 minutos</div>
+              </div>
+            </div>
+
+            <div class="cp-mesa-timeline-item">
+              <span class="cp-mesa-timeline-dot is-yellow"></span>
+              <div>
+                <div class="cp-mesa-timeline-title">Supervisor solicito revision de 4 expedientes</div>
+                <div class="cp-mesa-timeline-time">Hace 39 minutos</div>
+              </div>
+            </div>
+
+            <div class="cp-mesa-timeline-item">
+              <span class="cp-mesa-timeline-dot is-green"></span>
+              <div>
+                <div class="cp-mesa-timeline-title">Se actualizo el tablero de cobranza</div>
+                <div class="cp-mesa-timeline-time">Hace 1 hora</div>
+              </div>
+            </div>
+
+            <div class="cp-mesa-timeline-item">
+              <span class="cp-mesa-timeline-dot is-blue"></span>
+              <div>
+                <div class="cp-mesa-timeline-title">Nuevo comentario del comite de riesgos</div>
+                <div class="cp-mesa-timeline-time">Hoy 09:35</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</section>

@@ -28,7 +28,7 @@ def upgrade():
         sa.Column('id', sa.Integer, primary_key=True, index=True),
         sa.Column('ai_provider', sa.String, nullable=False),
         sa.Column('ai_api_key', sa.String, nullable=False),
-        sa.Column('ai_base_url', sa.String, default=""),
+        sa.Column('ai_MAIN_url', sa.String, default=""),
         sa.Column('ai_model', sa.String, default=""),
         sa.Column('ai_timeout', sa.Integer, default=30),
         sa.Column('updated_at', sa.DateTime, nullable=True),

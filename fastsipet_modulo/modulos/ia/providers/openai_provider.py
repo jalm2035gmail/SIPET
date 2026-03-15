@@ -1,10 +1,10 @@
-from .base import IAProviderBase, IAProviderError
+from .base import IAProviderMAIN, IAProviderError
 
-class OpenAIProvider(IAProviderBase):
+class OpenAIProvider(IAProviderMAIN):
     provider_name = "openai"
 
     def complete(self, prompt, **kwargs):
-        url = self.base_url or "https://api.openai.com/v1/chat/completions"
+        url = self.MAIN_url or "https://api.openai.com/v1/chat/completions"
         if "/v1/" not in url:
             url = url.rstrip("/") + "/v1/chat/completions"
         model = kwargs.get("model") or self.model or "gpt-4o-mini"

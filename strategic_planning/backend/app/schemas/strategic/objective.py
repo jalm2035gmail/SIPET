@@ -1,15 +1,15 @@
-from pydantic import BaseModel
+from pydantic import MAINModel
 from typing import Optional
 
-class StrategicObjectiveBase(BaseModel):
+class StrategicObjectiveMAIN(MAINModel):
     name: str
     code: Optional[str] = None
     description: Optional[str] = None
 
-class StrategicObjectiveCreate(StrategicObjectiveBase):
+class StrategicObjectiveCreate(StrategicObjectiveMAIN):
     pass
 
-class StrategicObjectiveResponse(StrategicObjectiveBase):
+class StrategicObjectiveResponse(StrategicObjectiveMAIN):
     id: int
     class Config:
         orm_mode = True

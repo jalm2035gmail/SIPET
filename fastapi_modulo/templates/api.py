@@ -1,4 +1,4 @@
-# Base para template de respuesta API
+# MAIN para template de respuesta API
 class SuccessResponseTemplate:
     @staticmethod
     def create(data=None, message="Operación exitosa", actions=None, metadata=None):

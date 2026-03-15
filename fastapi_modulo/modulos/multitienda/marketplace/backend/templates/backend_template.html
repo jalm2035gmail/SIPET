@@ -1,0 +1,822 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title or "Template Backend" }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  :root {
+    --sidebar-text-color: #164723;
+    --sidebar-icon-color: #164723;
+    --sidebar-top-bg: #fff5ee;
+    --sidebar-bottom-bg: #ffe8d7;
+  }
+
+  .menu-toggle {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 30;
+  }
+
+  .menu-icon,
+  .menu-icon::before,
+  .menu-icon::after {
+    width: 20px;
+    height: 2px;
+    background: #222;
+    border-radius: 2px;
+    display: block;
+    content: "";
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    position: relative;
+  }
+
+  .menu-icon::before { position: absolute; top: -6px; left: 0; }
+  .menu-icon::after { position: absolute; top: 6px; left: 0; }
+
+  .menu-panel {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 240px;
+    height: calc(100% - 56px);
+    background: linear-gradient(to bottom, var(--sidebar-top-bg) 0%, var(--sidebar-top-bg) 45%, var(--sidebar-bottom-bg) 100%);
+    border-right: 1px solid #ececec;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 25;
+    padding-top: 12px;
+    overflow: auto;
+  }
+
+  .menu-panel.open { transform: translateX(0); }
+
+  .menu-panel.anim-slide-lr.open { animation: sidebar-slide-lr 0.35s ease; }
+  .menu-panel.anim-slide-rl.open { animation: sidebar-slide-rl 0.35s ease; }
+  .menu-panel.anim-slide-td.open { animation: sidebar-slide-td 0.35s ease; }
+  .menu-panel.anim-slide-bu.open { animation: sidebar-slide-bu 0.35s ease; }
+
+  @keyframes sidebar-slide-lr {
+    from { transform: translateX(-100%); opacity: 0.4; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes sidebar-slide-rl {
+    from { transform: translateX(100%); opacity: 0.4; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes sidebar-slide-td {
+    from { transform: translateY(-100%); opacity: 0.4; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes sidebar-slide-bu {
+    from { transform: translateY(100%); opacity: 0.4; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .menu-header {
+    padding: 12px 16px 16px;
+    border-bottom: 1px solid #ececec;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 72px;
+    position: relative;
+  }
+
+  .menu-header img {
+    max-width: 100%;
+    max-height: 60px;
+    object-fit: contain;
+  }
+
+  .sidebar-edit-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #d4d4d8;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .menu-panel:hover .sidebar-edit-btn,
+  .sidebar-edit-btn:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-list { list-style: none; margin: 0; padding: 0; }
+  .menu-list > li { border-bottom: 1px solid #f1f1f1; }
+
+  .menu-list a {
+    display: block;
+    padding: 12px 18px;
+    color: var(--sidebar-text-color);
+    text-decoration: none;
+  }
+
+  .menu-list a:hover { background: #f0f0f0; }
+
+  .menu-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px 6px;
+    color: var(--sidebar-text-color);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .menu-label-icon,
+  .menu-label-icon-config {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    background-color: var(--sidebar-icon-color);
+  }
+
+  .menu-label-icon {
+    -webkit-mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+    mask: url('/static/icons/personalizar.svg') no-repeat center / contain;
+  }
+
+  .menu-label-icon-config {
+    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+  }
+
+  .submenu { list-style: none; margin: 0; padding: 0 0 8px; }
+  .submenu a { padding-left: 34px; }
+
+  .submenu-group > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 34px;
+    color: var(--sidebar-text-color);
+    user-select: none;
+  }
+
+  .submenu-group > summary::-webkit-details-marker { display: none; }
+  .submenu-nested { list-style: none; margin: 0; padding: 0 0 8px; }
+  .submenu-nested a { padding-left: 50px; }
+
+  .sidebar-editor {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(360px, 94vw);
+    height: 100%;
+    background: #ffffff;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    z-index: 35;
+    padding: 20px 16px;
+    overflow: auto;
+  }
+
+  .sidebar-editor.open { transform: translateX(0); }
+
+  .editor-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .editor-head h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #111827;
+  }
+
+  .editor-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .editor-field {
+    margin-bottom: 12px;
+  }
+
+  .editor-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .editor-field input,
+  .editor-field select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .editor-actions button {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .backend-template {
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 0 16px 32px;
+  }
+
+  .backend-template h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    line-height: 1.2;
+    color: #111827;
+  }
+
+  .backend-template p {
+    margin: 0 0 20px;
+    color: #4b5563;
+    font-size: 14px;
+  }
+
+  .backend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .backend-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px;
+    background: #ffffff;
+  }
+
+  .backend-card h2 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: #111827;
+  }
+
+  .backend-card span {
+    display: block;
+    font-size: 13px;
+    color: #6b7280;
+  }
+
+  .config-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .config-side {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .config-side-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 14px;
+    border: 0;
+    border-bottom: 1px solid #e5e7eb;
+    background: transparent;
+    color: #4b5563;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .config-side-item:last-child {
+    border-bottom: 0;
+  }
+
+  .config-side-item.active {
+    color: #1d4ed8;
+    background: #eff6ff;
+    box-shadow: inset 3px 0 0 #2563eb;
+  }
+
+  .config-side-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    background-color: currentColor;
+    -webkit-mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    mask: url('/static/icons/configuracion.svg') no-repeat center / contain;
+    opacity: 0.9;
+  }
+
+  .config-panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .config-title {
+    margin: 0 0 14px;
+    font-size: 44px;
+    line-height: 1.05;
+    color: #111827;
+  }
+
+  .config-form {
+    display: grid;
+    gap: 14px;
+  }
+
+  .config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .config-field {
+    display: grid;
+    gap: 8px;
+  }
+
+  .config-field label {
+    font-size: 18px;
+    font-weight: 700;
+    color: #374151;
+  }
+
+  .config-field input,
+  .config-field select {
+    height: 58px;
+    border: 1px solid #cfd5df;
+    border-radius: 14px;
+    padding: 0 16px;
+    font-size: 42px;
+    color: #1f2937;
+    background: #ffffff;
+  }
+
+  .config-separator {
+    margin: 8px 0;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .config-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .config-day {
+    border: 0;
+    border-radius: 12px;
+    padding: 10px 16px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  @media (max-width: 1100px) {
+    .config-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .config-row {
+      grid-template-columns: 1fr;
+    }
+
+    .config-title {
+      font-size: 34px;
+    }
+
+    .config-field input,
+    .config-field select {
+      font-size: 28px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<button id="menuBtn" class="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="menuPanel">
+  <span class="menu-icon"></span>
+</button>
+
+<nav id="menuPanel" class="menu-panel anim-slide-lr" aria-hidden="true">
+  <div class="menu-header">
+    <img id="sidebarLogo" src="/static/imagenes/tu-negocio.png" alt="Tu Negocio" />
+    <button id="openSidebarEditor" class="sidebar-edit-btn" type="button" aria-label="Editar sidebar" title="Editar sidebar">✎</button>
+  </div>
+  <ul class="menu-list">
+    <li><a href="#">Inicio</a></li>
+    <li><a href="#">Productos</a></li>
+    <li><a href="#">Pedidos</a></li>
+    <li id="configuracionItem">
+      <span class="menu-label">
+        <span class="menu-label-icon-config" aria-hidden="true"></span>
+        Configuración
+      </span>
+      <ul class="submenu">
+        <li><a href="{{ config_path }}">Configuración</a></li>
+      </ul>
+    </li>
+    <li id="personalizarItem">
+      <span class="menu-label">
+        <span class="menu-label-icon" aria-hidden="true"></span>
+        Personalizar
+      </span>
+      <ul class="submenu">
+        <li><a href="{{ blank_path }}">Agregar nueva tienda</a></li>
+        <li><a href="{{ add_user_path }}">Vendedores</a></li>
+        <li>
+          <details class="submenu-group" open>
+            <summary>Template</summary>
+            <ul class="submenu-nested">
+              <li><a href="{{ template_path }}">Backend</a></li>
+              <li><a href="{{ template_frontend_path }}">Frontend</a></li>
+            </ul>
+          </details>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#">Cerrar</a></li>
+  </ul>
+</nav>
+
+<aside id="sidebarEditor" class="sidebar-editor" aria-hidden="true">
+  <div class="editor-head">
+    <h3>Editar Sidebar</h3>
+    <button id="closeSidebarEditor" class="editor-close" type="button" aria-label="Cerrar editor">x</button>
+  </div>
+  <div class="editor-field">
+    <label for="sidebarLogoInput">Logo</label>
+    <input id="sidebarLogoInput" type="file" accept="image/*" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarTextColor">Color de texto</label>
+    <input id="sidebarTextColor" type="color" value="#164723" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarIconColor">Color de icono</label>
+    <input id="sidebarIconColor" type="color" value="#164723" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarTopBg">Color sidebar superior</label>
+    <input id="sidebarTopBg" type="color" value="#fff5ee" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarBottomBg">Color sidebar inferior</label>
+    <input id="sidebarBottomBg" type="color" value="#ffe8d7" />
+  </div>
+  <div class="editor-field">
+    <label for="sidebarAnimation">Animación</label>
+    <select id="sidebarAnimation">
+      <option value="slide-lr">Desplazar izquierda a derecha</option>
+      <option value="slide-rl">Desplazar derecha a izquierda</option>
+      <option value="slide-td">Desplazar arriba a abajo</option>
+      <option value="slide-bu">Desplazar abajo a arriba</option>
+    </select>
+  </div>
+  <div class="editor-actions">
+    <button id="resetSidebarStyle" type="button">Restablecer</button>
+  </div>
+</aside>
+
+<main class="backend-template">
+  {% if is_config_shell %}
+  <section class="config-shell">
+    <aside class="config-side" aria-label="Secciones de configuración">
+      <button class="config-side-item active" type="button"><span class="config-side-icon" aria-hidden="true"></span>Mi Negocio</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Tickets</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Impresora</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Impuestos</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Inventario</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Caja</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Alertas</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Datos Fiscales</button>
+      <button class="config-side-item" type="button"><span class="config-side-icon" aria-hidden="true"></span>Preferencias</button>
+    </aside>
+    <section class="config-panel">
+      <h1 class="config-title">Información del Negocio</h1>
+      <div class="config-form">
+        <div class="config-row">
+          <div class="config-field">
+            <label>Nombre del Negocio *</label>
+            <input type="text" value="Abarrotes Don Pepe" />
+          </div>
+          <div class="config-field">
+            <label>Giro o Tipo de Negocio</label>
+            <select>
+              <option>Abarrotes y Miscelánea</option>
+            </select>
+          </div>
+        </div>
+        <div class="config-field">
+          <label>Dirección</label>
+          <input type="text" value="Av. Juárez #123, Col. Centro, CP 06000" />
+        </div>
+        <div class="config-row">
+          <div class="config-field">
+            <label>Teléfono</label>
+            <input type="text" value="55 1234 5678" />
+          </div>
+          <div class="config-field">
+            <label>Email</label>
+            <input type="text" value="contacto@abarrotesdonpepe.com" />
+          </div>
+        </div>
+        <div class="config-separator"></div>
+        <div class="config-row">
+          <div class="config-field">
+            <label>Hora de Apertura</label>
+            <input type="text" value="07:00" />
+          </div>
+          <div class="config-field">
+            <label>Hora de Cierre</label>
+            <input type="text" value="21:00" />
+          </div>
+        </div>
+        <div class="config-field">
+          <label>Días Laborales</label>
+          <div class="config-days">
+            <button class="config-day" type="button">Lun</button>
+            <button class="config-day" type="button">Mar</button>
+            <button class="config-day" type="button">Mié</button>
+            <button class="config-day" type="button">Jue</button>
+            <button class="config-day" type="button">Vie</button>
+            <button class="config-day" type="button">Sáb</button>
+            <button class="config-day" type="button">Dom</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+  {% else %}
+  <h1>{{ page_heading or "Template Backend" }}</h1>
+  <p>{{ page_subtitle or "Base reutilizable para vistas administrativas." }}</p>
+  <section class="backend-grid">
+    <article class="backend-card">
+      <h2>Encabezado</h2>
+      <span>Zona para título y acciones.</span>
+    </article>
+    <article class="backend-card">
+      <h2>Contenido</h2>
+      <span>Área principal para formularios o tablas.</span>
+    </article>
+    <article class="backend-card">
+      <h2>Sidebar</h2>
+      <span>Panel lateral para filtros o ayuda.</span>
+    </article>
+  </section>
+  {% endif %}
+</main>
+
+<script>
+  (function () {
+    const STORAGE_KEY = "backend_template_sidebar_settings";
+    const DEFAULTS = {
+      logo: "/static/imagenes/tu-negocio.png",
+      textColor: "#164723",
+      iconColor: "#164723",
+      topBg: "#fff5ee",
+      bottomBg: "#ffe8d7",
+      animation: "slide-lr"
+    };
+
+    const btn = document.getElementById("menuBtn");
+    const panel = document.getElementById("menuPanel");
+    const personalizarItem = document.getElementById("personalizarItem");
+    const configuracionItem = document.getElementById("configuracionItem");
+    const sidebarLogo = document.getElementById("sidebarLogo");
+
+    const openEditorBtn = document.getElementById("openSidebarEditor");
+    const closeEditorBtn = document.getElementById("closeSidebarEditor");
+    const editor = document.getElementById("sidebarEditor");
+
+    const logoInput = document.getElementById("sidebarLogoInput");
+    const textColorInput = document.getElementById("sidebarTextColor");
+    const iconColorInput = document.getElementById("sidebarIconColor");
+    const topBgInput = document.getElementById("sidebarTopBg");
+    const bottomBgInput = document.getElementById("sidebarBottomBg");
+    const animationInput = document.getElementById("sidebarAnimation");
+    const resetBtn = document.getElementById("resetSidebarStyle");
+
+    function readStoredToken() {
+      const keys = ["access_token", "token", "auth_token"];
+      for (let i = 0; i < keys.length; i += 1) {
+        const key = keys[i];
+        const localValue = window.localStorage.getItem(key);
+        if (localValue) return localValue;
+        const sessionValue = window.sessionStorage.getItem(key);
+        if (sessionValue) return sessionValue;
+      }
+      return "";
+    }
+
+    function parsePayload(tokenValue) {
+      const token = tokenValue.startsWith("Bearer ") ? tokenValue.slice(7) : tokenValue;
+      const parts = token.split(".");
+      if (parts.length < 2) return null;
+      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+      return JSON.parse(window.atob(padded));
+    }
+
+    function getUserType() {
+      try {
+        const token = readStoredToken();
+        if (!token) return "";
+        const payload = parsePayload(token);
+        return payload && payload.user_type ? String(payload.user_type).toLowerCase() : "";
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function isSuperadmin() {
+      return getUserType() === "superadmin";
+    }
+
+    function isAdminOrSuperadmin() {
+      const userType = getUserType();
+      return userType === "superadmin" || userType === "administrador";
+    }
+
+    if (personalizarItem) {
+      personalizarItem.style.display = isSuperadmin() ? "" : "none";
+    }
+    if (configuracionItem) {
+      configuracionItem.style.display = isAdminOrSuperadmin() ? "" : "none";
+    }
+
+    function setMenuState(open) {
+      panel.classList.toggle("open", open);
+      btn.setAttribute("aria-expanded", String(open));
+      panel.setAttribute("aria-hidden", String(!open));
+    }
+
+    function setEditorState(open) {
+      editor.classList.toggle("open", open);
+      editor.setAttribute("aria-hidden", String(!open));
+    }
+
+    function saveSettings(settings) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { ...DEFAULTS };
+        const parsed = JSON.parse(raw);
+        return { ...DEFAULTS, ...parsed };
+      } catch (error) {
+        return { ...DEFAULTS };
+      }
+    }
+
+    function applyAnimation(animation) {
+      panel.classList.remove("anim-slide-lr", "anim-slide-rl", "anim-slide-td", "anim-slide-bu");
+      panel.classList.add(`anim-${animation}`);
+    }
+
+    function applySettings(settings) {
+      document.documentElement.style.setProperty("--sidebar-text-color", settings.textColor);
+      document.documentElement.style.setProperty("--sidebar-icon-color", settings.iconColor);
+      document.documentElement.style.setProperty("--sidebar-top-bg", settings.topBg);
+      document.documentElement.style.setProperty("--sidebar-bottom-bg", settings.bottomBg);
+      sidebarLogo.src = settings.logo || DEFAULTS.logo;
+      applyAnimation(settings.animation);
+
+      textColorInput.value = settings.textColor;
+      iconColorInput.value = settings.iconColor;
+      topBgInput.value = settings.topBg;
+      bottomBgInput.value = settings.bottomBg;
+      animationInput.value = settings.animation;
+    }
+
+    let currentSettings = loadSettings();
+    applySettings(currentSettings);
+
+    btn.addEventListener("click", function () {
+      setMenuState(!panel.classList.contains("open"));
+    });
+
+    document.addEventListener("click", function (event) {
+      const isInsideMenu = panel.contains(event.target) || btn.contains(event.target);
+      const isInsideEditor = editor.contains(event.target) || openEditorBtn.contains(event.target);
+      if (!isInsideMenu) setMenuState(false);
+      if (!isInsideEditor) setEditorState(false);
+    });
+
+    openEditorBtn.addEventListener("click", function (event) {
+      event.stopPropagation();
+      setEditorState(true);
+      setMenuState(true);
+    });
+
+    closeEditorBtn.addEventListener("click", function () {
+      setEditorState(false);
+    });
+
+    function updateSetting(key, value) {
+      currentSettings = { ...currentSettings, [key]: value };
+      applySettings(currentSettings);
+      saveSettings(currentSettings);
+    }
+
+    textColorInput.addEventListener("input", function () {
+      updateSetting("textColor", textColorInput.value);
+    });
+
+    iconColorInput.addEventListener("input", function () {
+      updateSetting("iconColor", iconColorInput.value);
+    });
+
+    topBgInput.addEventListener("input", function () {
+      updateSetting("topBg", topBgInput.value);
+    });
+
+    bottomBgInput.addEventListener("input", function () {
+      updateSetting("bottomBg", bottomBgInput.value);
+    });
+
+    animationInput.addEventListener("change", function () {
+      updateSetting("animation", animationInput.value);
+      if (panel.classList.contains("open")) {
+        setMenuState(false);
+        setTimeout(function () { setMenuState(true); }, 40);
+      }
+    });
+
+    logoInput.addEventListener("change", function () {
+      const file = logoInput.files && logoInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const result = event.target && event.target.result;
+        if (typeof result === "string") {
+          updateSetting("logo", result);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    resetBtn.addEventListener("click", function () {
+      currentSettings = { ...DEFAULTS };
+      applySettings(currentSettings);
+      saveSettings(currentSettings);
+      logoInput.value = "";
+    });
+  })();
+</script>
+<script src="/static/js/backend-navbar.js"></script>
+{% endblock %}

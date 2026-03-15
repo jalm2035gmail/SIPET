@@ -4,7 +4,7 @@ import enum
 from sqlalchemy import Column, Integer, String, Boolean, Text, JSON, Enum, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
 class NotificationType(str, enum.Enum):
@@ -13,7 +13,7 @@ class NotificationType(str, enum.Enum):
     SYSTEM = "system"
 
 
-class Notification(BaseModel):
+class Notification(MAINModel):
     __tablename__ = "notifications"
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

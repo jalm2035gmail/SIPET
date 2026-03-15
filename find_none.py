@@ -2,19 +2,19 @@ import sys, os, json
 sys.path.insert(0, '.')
 os.environ.setdefault('SQLITE_DB_PATH', 'strategic_planning_development.db')
 
-src = open('fastapi_modulo/modulos/empleados/departamentos.py', encoding='utf-8').read()
+src = open('fastapi_modulo/modulos/empleados/controladores/departamentos.py', encoding='utf-8').read()
 marker_start = '\n    content = """\n'
 marker_end = '\n"""\n    content = content.replace'
 start = src.find(marker_start) + len(marker_start)
 end = src.find(marker_end)
 raw_content = src[start:end]
 
-from fastapi_modulo.modulos.empleados.departamentos import _get_departamentos_catalog
+from fastapi_modulo.modulos.empleados.controladores.departamentos import _get_departamentos_catalog
 areas = _get_departamentos_catalog()
 content = raw_content.replace("__INITIAL_AREAS__", json.dumps(areas, ensure_ascii=False))
 
-base = open('fastapi_modulo/templates/base.html', encoding='utf-8').read()
-full = base.replace('{{ content|safe }}', content)
+MAIN = open('fastapi_modulo/templates/MAIN.html', encoding='utf-8').read()
+full = MAIN.replace('{{ content|safe }}', content)
 
 lines = full.split('\n')
 print("Total lines in rendered page:", len(lines))

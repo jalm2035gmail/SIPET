@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Sum
 from django.utils import timezone as dj_timezone
 
@@ -10,7 +10,7 @@ from apps.analitica.models import ResultadoMoraTemprana
 from apps.creditos.models import Credito, HistorialPago
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 1/4 de 1.3: calcula indicadores de mora y riesgo (IMOR, mora temprana, mora maxima y cobertura)."
 
     def add_arguments(self, parser):
@@ -90,7 +90,7 @@ class Command(BaseCommand):
             "",
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             "",
-            "## Base de calculo",
+            "## MAIN de calculo",
             f"- Cartera total: {cartera_total:.2f}",
             f"- Cartera vencida estimada: {cartera_vencida_estimada:.2f}",
             f"- Pagos ultimos 90 dias: {pagos_90d:.2f}",

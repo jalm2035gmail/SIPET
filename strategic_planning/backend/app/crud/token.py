@@ -4,11 +4,11 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.core.security import TokenUtils
-from app.crud.base import CRUDBase
+from app.crud.MAIN import CRUDMAIN
 from app.models.token import Token, TokenType
 
 
-class CRUDToken(CRUDBase[Token, dict, dict]):
+class CRUDToken(CRUDMAIN[Token, dict, dict]):
     """CRUD operations for Token model."""
 
     def get_by_token(self, db: Session, token: str) -> Optional[Token]:

@@ -3,7 +3,7 @@
 Fecha ejecucion UTC: 2026-02-18T15:48:51.173793+00:00
 Fecha de corte: 2026-02-18
 
-## Base de calculo
+## MAIN de calculo
 - Socios totales: 0
 - Socios segmentados: 0
 - Segmentos activos: 0

@@ -3,7 +3,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count
 from django.utils import timezone as dj_timezone
 
@@ -12,7 +12,7 @@ from apps.creditos.models import Credito
 from apps.socios.models import Socio
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Ejecuta segmentacion mensual de socios, publica historico y genera perfiles descriptivos."
 
     def add_arguments(self, parser):
@@ -67,14 +67,14 @@ class Command(BaseCommand):
             )
             upserts += 1
 
-        base = ResultadoSegmentacionSocio.objects.filter(
+        MAIN = ResultadoSegmentacionSocio.objects.filter(
             fecha_ejecucion=fecha_ejecucion,
             model_version=model_version,
         )
-        total = base.count()
+        total = MAIN.count()
         perfiles = []
         for segmento in (Socio.SEGMENTO_HORMIGA, Socio.SEGMENTO_GRAN_AHORRADOR, Socio.SEGMENTO_INACTIVO):
-            agg = base.filter(segmento=segmento).aggregate(
+            agg = MAIN.filter(segmento=segmento).aggregate(
                 socios=Count("id"),
                 saldo_promedio=Avg("saldo_total"),
                 mov_total_promedio=Avg("total_movimientos"),

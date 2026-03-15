@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union
 
-from pydantic import BaseModel
+from pydantic import MAINModel
 from sqlalchemy.orm import Session
 
 ModelType = TypeVar("ModelType")
-CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
-UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
+CreateSchemaType = TypeVar("CreateSchemaType", bound=MAINModel)
+UpdateSchemaType = TypeVar("UpdateSchemaType", bound=MAINModel)
 
 
-class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    """Base CRUD que expone operaciones básicas sobre modelos SQLAlchemy."""
+class CRUDMAIN(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    """MAIN CRUD que expone operaciones básicas sobre modelos SQLAlchemy."""
 
     def __init__(self, model: Type[ModelType]) -> None:
         self.model = model

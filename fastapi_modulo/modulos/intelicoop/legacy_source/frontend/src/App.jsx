@@ -25,7 +25,7 @@ export default function App() {
     <Suspense fallback={<div className="route-loading">Cargando módulo...</div>}>
       <Routes>
         <Route
-          path="/web"
+          path="/backend"
           element={
             <ProtectedRoute>
               <MainLayout />
@@ -44,7 +44,7 @@ export default function App() {
           <Route path="creditos/:id" element={<CreditoDetail />} />
         </Route>
         <Route
-          path="/web"
+          path="/backend"
           element={
             <PublicRoute>
               <AuthLayout />
@@ -55,8 +55,8 @@ export default function App() {
           <Route path="register" element={<Register />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
         </Route>
-        <Route path="/" element={<Navigate to="/web" replace />} />
-        <Route path="*" element={<Navigate to="/web" replace />} />
+        <Route path="/" element={<Navigate to="/backend" replace />} />
+        <Route path="*" element={<Navigate to="/backend" replace />} />
       </Routes>
     </Suspense>
   )

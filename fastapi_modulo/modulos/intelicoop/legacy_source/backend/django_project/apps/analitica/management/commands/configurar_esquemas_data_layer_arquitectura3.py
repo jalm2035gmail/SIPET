@@ -3,11 +3,11 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db import connections
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = (
         "Arquitectura 3 - Etapa 1/4: crea esquemas raw/clean/analytics en PostgreSQL "
         "y genera reporte de estado."
@@ -22,7 +22,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--db-alias",
             default="default",
-            help="Alias de base de datos en Django settings.",
+            help="Alias de MAIN de datos en Django settings.",
         )
         parser.add_argument(
             "--report-csv",
@@ -113,7 +113,7 @@ class Command(BaseCommand):
 
         manifest_payload = {
             "generated_at": executed_at,
-            "database": {"alias": db_alias, "vendor": vendor},
+            "dataMAIN": {"alias": db_alias, "vendor": vendor},
             "summary": summary,
             "rows": rows,
         }
@@ -156,7 +156,7 @@ class Command(BaseCommand):
                 "",
                 "## Estado",
                 "- Etapa 1 de 4 completada tecnicamente.",
-                "- Base de Data Layer preparada para separar ingestas crudas, limpieza y analitica.",
+                "- MAIN de Data Layer preparada para separar ingestas crudas, limpieza y analitica.",
                 "",
                 "## Artefactos",
                 f"- Reporte CSV: `{report_csv}`",

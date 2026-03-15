@@ -205,7 +205,7 @@ def ejecutar_segmentacion(dry_run: bool = False, engine: str = "auto") -> Counte
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Segmentacion diaria de socios.")
-    parser.add_argument("--dry-run", action="store_true", help="Calcula segmentos sin escribir en base de datos.")
+    parser.add_argument("--dry-run", action="store_true", help="Calcula segmentos sin escribir en MAIN de datos.")
     parser.add_argument(
         "--engine",
         choices=("auto", "orm", "pyspark"),

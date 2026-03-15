@@ -1,15 +1,15 @@
 import json
 from urllib import request as _urllib_request, error as _urllib_error
 
-from .base import IAProviderBase, IAProviderError
+from .base import IAProviderMAIN, IAProviderError
 
 
-class OllamaProvider(IAProviderBase):
+class OllamaProvider(IAProviderMAIN):
     provider_name = "ollama"
 
-    def _base_host(self) -> str:
-        """Devuelve el host base de Ollama (sin path)."""
-        raw = self.base_url or "http://127.0.0.1:11434/api/generate"
+    def _MAIN_host(self) -> str:
+        """Devuelve el host MAIN de Ollama (sin path)."""
+        raw = self.MAIN_url or "http://127.0.0.1:11434/api/generate"
         # Extraer scheme+host: http://host:port
         parts = raw.split("/")
         return "/".join(parts[:3])  # "http://127.0.0.1:11434"
@@ -17,7 +17,7 @@ class OllamaProvider(IAProviderBase):
     def _list_local_models(self) -> list[str]:
         """Consulta /api/tags y devuelve los nombres de modelos disponibles."""
         try:
-            tags_url = f"{self._base_host()}/api/tags"
+            tags_url = f"{self._MAIN_host()}/api/tags"
             req = _urllib_request.Request(tags_url, method="GET")
             with _urllib_request.urlopen(req, timeout=6) as resp:
                 data = json.loads(resp.read().decode("utf-8", errors="ignore"))
@@ -40,7 +40,7 @@ class OllamaProvider(IAProviderBase):
         return self._http_post_json(url=url, payload=data, headers=self._build_headers(include_auth=False), timeout=self.timeout)
 
     def complete(self, prompt, **kwargs):
-        url = self.base_url or "http://127.0.0.1:11434/api/generate"
+        url = self.MAIN_url or "http://127.0.0.1:11434/api/generate"
         model = kwargs.get("model") or self.model or "llama3.1:8b"
         max_tokens = int(kwargs.get("max_tokens", 700) or 700)
         temperature = float(kwargs.get("temperature", 0.7) or 0.7)

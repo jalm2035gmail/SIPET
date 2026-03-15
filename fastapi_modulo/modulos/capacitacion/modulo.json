@@ -1,0 +1,6 @@
+{
+  "label": "Capacitación",
+  "description": "Cursos, presentaciones y evaluaciones.",
+  "route": "/capacitacion",
+  "icon": "fa-solid fa-graduation-cap"
+}

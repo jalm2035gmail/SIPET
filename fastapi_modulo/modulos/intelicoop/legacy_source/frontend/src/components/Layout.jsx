@@ -6,9 +6,9 @@ export default function Layout() {
       <header className="app-navbar">
         <div className="brand">Intellicoop</div>
         <nav>
-          <Link to="/web">Inicio</Link>
-          <Link to="/web/login">Login</Link>
-          <Link to="/web/register">Registro</Link>
+          <Link to="/backend">Inicio</Link>
+          <Link to="/backend/login">Login</Link>
+          <Link to="/backend/register">Registro</Link>
         </nav>
       </header>
 

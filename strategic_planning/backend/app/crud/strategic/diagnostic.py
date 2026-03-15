@@ -2,12 +2,12 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from app.crud.base import CRUDBase
+from app.crud.MAIN import CRUDMAIN
 from app.models.strategic.diagnostic import DiagnosticAnalysis
 from app.schemas.strategic.diagnostic import DiagnosticAnalysisCreate, DiagnosticAnalysisUpdate
 
 
-class CRUDDiagnosticAnalysis(CRUDBase[DiagnosticAnalysis, DiagnosticAnalysisCreate, DiagnosticAnalysisUpdate]):
+class CRUDDiagnosticAnalysis(CRUDMAIN[DiagnosticAnalysis, DiagnosticAnalysisCreate, DiagnosticAnalysisUpdate]):
     """Operaciones CRUD para DiagnosticAnalysis."""
 
     def get_by_plan_id(self, db: Session, plan_id: int) -> Optional[DiagnosticAnalysis]:

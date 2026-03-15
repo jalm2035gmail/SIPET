@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count
 from django.utils import timezone as dj_timezone
 
@@ -22,7 +22,7 @@ def _bucket_plazo(plazo: int | None) -> str:
     return "largo_>24m"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Valida tecnicamente desempeno en produccion, estabilidad temporal y degradacion critica (Fase 6)."
 
     def add_arguments(self, parser):
@@ -49,12 +49,12 @@ class Command(BaseCommand):
             expected_brier = candidate.get("brier")
             expected_auc = candidate.get("auc")
 
-        base = ResultadoScoring.objects.aggregate(
+        MAIN = ResultadoScoring.objects.aggregate(
             total=Count("id"),
             score_promedio=Avg("score"),
         )
-        total = int(base["total"] or 0)
-        score_promedio = float(base["score_promedio"] or 0.0)
+        total = int(MAIN["total"] or 0)
+        score_promedio = float(MAIN["score_promedio"] or 0.0)
 
         cohort_map: dict[str, list[float]] = defaultdict(list)
         for row in ResultadoScoring.objects.values("fecha_creacion", "score"):
@@ -218,7 +218,7 @@ class Command(BaseCommand):
             "",
             "## Estado",
             "- Punto 1 de 8 completado tecnicamente.",
-            "- Validacion tecnica base de modelos en produccion documentada.",
+            "- Validacion tecnica MAIN de modelos en produccion documentada.",
             "",
             "## Artefactos",
             f"- Reporte CSV: `{report_csv}`",

@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["file:///Users/jalm/multitienda/marketplace/frontend/public/styles/globals.css"],"sourcesContent":[":root {\n  font-family: 'Inter', system-ui, sans-serif;\n}\n\nbody {\n  margin: 0;\n  background: #f6f6f6;\n}\n"],"names":[],"mappings":"AAAA;;;;AAIA"}}]
+}

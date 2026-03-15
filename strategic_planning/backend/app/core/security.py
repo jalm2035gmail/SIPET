@@ -136,7 +136,7 @@ class TokenUtils:
         user_id = int(payload["sub"])
         email = payload.get("email")
 
-        # Aquí podrías consultar la base de datos para obtener role/department.
+        # Aquí podrías consultar la MAIN de datos para obtener role/department.
         return TokenUtils.create_tokens_pair(
             user_id=user_id,
             email=email,

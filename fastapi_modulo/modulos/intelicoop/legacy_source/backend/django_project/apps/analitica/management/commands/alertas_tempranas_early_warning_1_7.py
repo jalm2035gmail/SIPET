@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Count, Max, Sum
 from django.utils import timezone as dj_timezone
 
@@ -41,7 +41,7 @@ def _severity(valor: float, umbral: float) -> tuple[str, str]:
     return "info", "Verde"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.7 Early Warning System: detecta alertas tempranas, semaforos y cola de notificaciones internas."
 
     def add_arguments(self, parser):

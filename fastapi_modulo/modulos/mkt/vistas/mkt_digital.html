@@ -1,0 +1,91 @@
+<section class="mkt-shell">
+  <style>
+    .mkt-shell{
+      display:grid;
+      gap:18px;
+      color:var(--sidebar-bottom, #1f2940);
+    }
+    .mkt-hero,
+    .mkt-card{
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      border:1px solid var(--field-border, #e2eaf4);
+      border-radius:24px;
+      box-shadow:0 10px 24px rgba(31,41,64,.06);
+    }
+    .mkt-hero{
+      padding:24px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+    }
+    .mkt-hero h1{margin:0;font-size:28px;line-height:1.05;letter-spacing:-.03em;}
+    .mkt-hero p{margin:10px 0 0;max-width:840px;font-size:16px;line-height:1.6;color:var(--text-muted, #667792);}
+    .mkt-pill{
+      padding:10px 14px;
+      border-radius:999px;
+      background:color-mix(in srgb, var(--institutional-accent, #22b8cf) 12%, #ffffff);
+      color:var(--sidebar-bottom, #1f2940);
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .mkt-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+    .mkt-kpi{min-height:132px;padding:18px;border-radius:22px;color:#fff;box-shadow:0 12px 26px rgba(31,41,64,.10);}
+    .mkt-kpi.blue{background:linear-gradient(135deg,#63a5ff,#3b82f6);}
+    .mkt-kpi.teal{background:linear-gradient(135deg,#63d8cf,#22b8cf);}
+    .mkt-kpi.gold{background:linear-gradient(135deg,#ffd56a,#f2b035);}
+    .mkt-kpi.green{background:linear-gradient(135deg,#6bcf9b,#25b27f);}
+    .mkt-kpi__title{font-size:14px;font-weight:700;opacity:.94;}
+    .mkt-kpi__value{margin-top:10px;font-size:28px;font-weight:800;letter-spacing:-.03em;}
+    .mkt-kpi__meta{margin-top:8px;font-size:13px;font-weight:600;opacity:.92;}
+    .mkt-grid{display:grid;grid-template-columns:1.15fr .95fr;gap:16px;}
+    .mkt-card{padding:18px;}
+    .mkt-card__title{margin:0 0 14px;font-size:18px;font-weight:800;letter-spacing:-.02em;}
+    .mkt-list{display:grid;gap:12px;}
+    .mkt-item{padding:16px;border:1px solid var(--field-border, #e2eaf4);border-radius:20px;background:linear-gradient(180deg,#fbfdff,#f8fbff);}
+    .mkt-item__head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+    .mkt-item__title{font-size:15px;font-weight:800;}
+    .mkt-item__meta{font-size:13px;color:var(--text-muted, #667792);line-height:1.55;}
+    .mkt-badge{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap;}
+    .mkt-badge.blue{background:#edf5ff;color:#3b82f6;}
+    .mkt-badge.gold{background:#fff6dd;color:#cb9224;}
+    .mkt-badge.green{background:#ebfbf3;color:#25a36c;}
+    @media (max-width:1180px){.mkt-kpis{grid-template-columns:repeat(2,1fr)}.mkt-grid{grid-template-columns:1fr}}
+    @media (max-width:640px){.mkt-hero{flex-direction:column}.mkt-kpis{grid-template-columns:1fr}}
+  </style>
+
+  <section class="mkt-hero">
+    <div>
+      <h1>Mkt digital</h1>
+      <p>Sistema para campañas de emailing, segmentación de audiencias, embudos de conversión, automatizaciones y seguimiento de resultados de marketing digital.</p>
+    </div>
+    <div class="mkt-pill">Emailing y automatización</div>
+  </section>
+
+  <section class="mkt-kpis">
+    <article class="mkt-kpi blue"><div class="mkt-kpi__title">Campañas activas</div><div class="mkt-kpi__value">12</div><div class="mkt-kpi__meta">En ejecución</div></article>
+    <article class="mkt-kpi teal"><div class="mkt-kpi__title">Apertura promedio</div><div class="mkt-kpi__value">38%</div><div class="mkt-kpi__meta">Últimos 30 días</div></article>
+    <article class="mkt-kpi gold"><div class="mkt-kpi__title">Leads generados</div><div class="mkt-kpi__value">246</div><div class="mkt-kpi__meta">Embudo comercial</div></article>
+    <article class="mkt-kpi green"><div class="mkt-kpi__title">Conversión</div><div class="mkt-kpi__value">11%</div><div class="mkt-kpi__meta">Meta mensual</div></article>
+  </section>
+
+  <section class="mkt-grid">
+    <article class="mkt-card">
+      <h3 class="mkt-card__title">Bandeja de campañas</h3>
+      <div class="mkt-list">
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Boletín institucional</div><span class="mkt-badge blue">Programada</span></div><div class="mkt-item__meta">Planeación de contenido, MAIN objetivo y programación de envío.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Campaña de captación</div><span class="mkt-badge gold">Optimización</span></div><div class="mkt-item__meta">Segmentación, A/B testing y seguimiento a conversiones.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Automatización de bienvenida</div><span class="mkt-badge green">Activa</span></div><div class="mkt-item__meta">Flujo de correos para nuevos socios y prospectos.</div></div>
+      </div>
+    </article>
+    <article class="mkt-card">
+      <h3 class="mkt-card__title">Próximos componentes</h3>
+      <div class="mkt-list">
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Segmentación avanzada</div><span class="mkt-badge blue">Pendiente</span></div><div class="mkt-item__meta">Listas dinámicas por comportamiento, perfil y territorio.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Calendario de campañas</div><span class="mkt-badge blue">Pendiente</span></div><div class="mkt-item__meta">Vista editorial con responsables, piezas y canales.</div></div>
+        <div class="mkt-item"><div class="mkt-item__head"><div class="mkt-item__title">Panel ROI</div><span class="mkt-badge green">Diseño</span></div><div class="mkt-item__meta">Atribución de resultados y rentabilidad por campaña.</div></div>
+      </div>
+    </article>
+  </section>
+</section>

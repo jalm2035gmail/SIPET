@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
 def _sha256(path: Path) -> str:
@@ -22,7 +22,7 @@ def _pick_latest(directory: Path, pattern: str) -> Path | None:
     return files[-1]
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Registra lineage de carga analitica (origen->transformacion->salida) con versionado."
 
     def add_arguments(self, parser):

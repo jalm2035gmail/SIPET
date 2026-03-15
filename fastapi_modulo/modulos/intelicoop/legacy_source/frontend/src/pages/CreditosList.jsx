@@ -50,7 +50,7 @@ export default function CreditosList() {
           plazo: `${credito.plazo} meses`,
           estado: mapEstado(credito.estado),
           fecha: (credito.fecha_creacion || '').slice(0, 10),
-          acciones: <Link to={`/web/creditos/${credito.id}`}>Ver detalle</Link>
+          acciones: <Link to={`/backend/creditos/${credito.id}`}>Ver detalle</Link>
         }))
         setCreditos(rows)
       })
@@ -65,7 +65,7 @@ export default function CreditosList() {
       <h1>Créditos</h1>
       <p>Solicitudes registradas en el sistema.</p>
       <div className="creditos-page__actions">
-        <Link to="/web/creditos/nuevo">
+        <Link to="/backend/creditos/nuevo">
           <Button variant="primary">Nueva solicitud</Button>
         </Link>
       </div>

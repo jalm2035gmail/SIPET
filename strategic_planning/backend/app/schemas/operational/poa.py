@@ -1,9 +1,9 @@
 from datetime import date
 from typing import List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import MAINModel, Field, ConfigDict
 
 
-class ActivityBase(BaseModel):
+class ActivityMAIN(MAINModel):
     code: Optional[str]
     name: str
     description: Optional[str] = None
@@ -14,11 +14,11 @@ class ActivityBase(BaseModel):
     budget: Optional[float] = 0.0
 
 
-class ActivityCreate(ActivityBase):
+class ActivityCreate(ActivityMAIN):
     pass
 
 
-class ActivityResponse(ActivityBase):
+class ActivityResponse(ActivityMAIN):
     id: int
     status: str
     progress: float
@@ -26,7 +26,7 @@ class ActivityResponse(ActivityBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class POABase(BaseModel):
+class POAMAIN(MAINModel):
     strategic_plan_id: int
     year: int = Field(..., ge=1900, le=2100)
     name: Optional[str] = None
@@ -36,11 +36,11 @@ class POABase(BaseModel):
     end_date: Optional[date] = None
 
 
-class POACreate(POABase):
-    activities: Optional[List[ActivityBase]] = None
+class POACreate(POAMAIN):
+    activities: Optional[List[ActivityMAIN]] = None
 
 
-class POAUpdate(BaseModel):
+class POAUpdate(MAINModel):
     name: Optional[str] = None
     status: Optional[str] = None
     total_budget: Optional[float] = None
@@ -48,7 +48,7 @@ class POAUpdate(BaseModel):
     end_date: Optional[date] = None
 
 
-class POAResponse(POABase):
+class POAResponse(POAMAIN):
     id: int
     activities_count: int
     created_at: date

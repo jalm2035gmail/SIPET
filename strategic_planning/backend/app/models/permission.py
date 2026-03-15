@@ -2,12 +2,12 @@ from sqlalchemy import Boolean, Column, Integer, String, Text, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
 role_permission = Table(
     "role_permission",
-    BaseModel.metadata,
+    MAINModel.metadata,
     Column("role_id", Integer, ForeignKey("roles.id"), primary_key=True),
     Column("permission_id", Integer, ForeignKey("permissions.id"), primary_key=True),
     Column("granted_at", DateTime(timezone=True), server_default=func.now(), nullable=False),
@@ -15,7 +15,7 @@ role_permission = Table(
 )
 
 
-class Permission(BaseModel):
+class Permission(MAINModel):
     __tablename__ = "permissions"
 
     code = Column(String(100), unique=True, index=True, nullable=False)
@@ -32,7 +32,7 @@ class Permission(BaseModel):
         return f"<Permission(id={self.id}, code='{self.code}')>"
 
 
-class Role(BaseModel):
+class Role(MAINModel):
     __tablename__ = "roles"
 
     name = Column(String(50), unique=True, index=True, nullable=False)
@@ -61,7 +61,7 @@ class Role(BaseModel):
         return f"<Role(id={self.id}, name='{self.name}')>"
 
 
-class PermissionAuditLog(BaseModel):
+class PermissionAuditLog(MAINModel):
     __tablename__ = "permission_audit_logs"
 
     permission_id = Column(Integer, ForeignKey("permissions.id"), nullable=False)
@@ -77,7 +77,7 @@ class PermissionAuditLog(BaseModel):
         return f"<PermissionAuditLog(id={self.id}, action='{self.action}', permission_id={self.permission_id})>"
 
 
-class RoleAuditLog(BaseModel):
+class RoleAuditLog(MAINModel):
     __tablename__ = "role_audit_logs"
 
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)

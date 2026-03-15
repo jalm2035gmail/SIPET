@@ -1,0 +1,549 @@
+<section class="w-full space-y-4" id="kpis-app">
+  <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+      <img
+        src="/icon/kpi.svg"
+        alt="Icono KPIs"
+        width="96"
+        height="96"
+        class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+      />
+      <div class="w-full grid gap-3 content-center">
+        <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">KPIs</div>
+        <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Gestión centralizada de KPIs estratégicos definidos en los ejes.</div>
+        <div class="view-buttons page-view-buttons">
+          <button type="button" class="view-pill boton_vista active" data-kpi-view="list">
+            <span class="view-pill-label boton_vista-label">Lista</span>
+          </button>
+          <button type="button" class="view-pill boton_vista" data-kpi-view="kanban">
+            <span class="view-pill-label boton_vista-label">Kanban</span>
+          </button>
+          <button type="button" class="view-pill boton_vista" data-kpi-view="form">
+            <span class="view-pill-label boton_vista-label">Form</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="card rounded-box border border-MAIN-300 bg-MAIN-100 shadow-sm">
+    <div class="card-body gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="card-title">Catálogo de KPIs</h2>
+          <p class="text-MAIN-content/70">Los cambios se guardan actualizando el eje estratégico al que pertenece cada KPI.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="/api/kpis/plantilla.csv" class="btn btn-outline">Descargar plantilla</a>
+          <button type="button" class="btn btn-outline" id="kpis-import-btn">Importar plantilla</button>
+          <input id="kpis-import-file" type="file" accept=".csv,text/csv" class="hidden">
+          <button type="button" class="btn btn-primary" id="kpis-new-btn">Nuevo KPI</button>
+        </div>
+      </div>
+
+      <div id="kpis-msg" class="text-sm text-MAIN-content/70 min-h-[1.25rem]" aria-live="polite"></div>
+
+      <section id="kpis-view-list" class="grid gap-3"></section>
+
+      <section id="kpis-view-kanban" class="hidden">
+        <div id="kpis-kanban-grid" class="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3"></div>
+      </section>
+
+      <section id="kpis-view-form" class="hidden">
+        <div class="rounded-box border border-MAIN-300 bg-MAIN-200 p-4 grid gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-lg font-semibold" id="kpis-form-title">Nuevo KPI</h3>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn btn-ghost btn-sm" id="kpis-form-cancel">Cancelar</button>
+              <button type="button" class="btn btn-error btn-sm" id="kpis-form-delete">Eliminar</button>
+              <button type="button" class="btn btn-primary btn-sm" id="kpis-form-save">Guardar</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Eje estratégico</span></div>
+              <select id="kpis-axis-id" class="select select-bordered w-full"></select>
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Nombre</span></div>
+              <input id="kpis-nombre" class="input input-bordered w-full" type="text" placeholder="Ingresos por venta">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Responsable (Owner)</span></div>
+              <input id="kpis-responsable" class="input input-bordered w-full" type="text" placeholder="Director Comercial">
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Descripción</span></div>
+              <textarea id="kpis-descripcion" class="textarea textarea-bordered w-full" rows="3" placeholder="Mide el total de ingresos brutos generados por ventas."></textarea>
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Objetivo</span></div>
+              <textarea id="kpis-objetivo" class="textarea textarea-bordered w-full" rows="3" placeholder="Aumentar la facturación respecto al año anterior."></textarea>
+            </label>
+            <label class="form-control w-full md:col-span-2 xl:col-span-3">
+              <div class="label"><span class="label-text font-semibold">Fórmula</span></div>
+              <textarea id="kpis-formula" class="textarea textarea-bordered w-full" rows="3" placeholder="Suma del total de facturas emitidas en el mes."></textarea>
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Fuente de datos</span></div>
+              <input id="kpis-fuente" class="input input-bordered w-full" type="text" placeholder="Módulo de Facturación (ERP)">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Unidad</span></div>
+              <input id="kpis-unidad" class="input input-bordered w-full" type="text" placeholder="Euros (€)">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Frecuencia</span></div>
+              <input id="kpis-frecuencia" class="input input-bordered w-full" type="text" placeholder="Mensual">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Línea MAIN</span></div>
+              <input id="kpis-linea-MAIN" class="input input-bordered w-full" type="text" placeholder="Promedio último semestre: 50.000€">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Estándar / Meta</span></div>
+              <input id="kpis-meta" class="input input-bordered w-full" type="text" placeholder="60.000€">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Categoría</span></div>
+              <input id="kpis-categoria" class="input input-bordered w-full" type="text" placeholder="Financiera / Ventas">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Perspectiva</span></div>
+              <input id="kpis-perspectiva" class="input input-bordered w-full" type="text" placeholder="Financiera / Cliente / Procesos / Aprendizaje">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Semáforo (Rojo)</span></div>
+              <input id="kpis-rojo" class="input input-bordered w-full" type="text" placeholder="< 50.000€">
+            </label>
+            <label class="form-control w-full">
+              <div class="label"><span class="label-text font-semibold">Semáforo (Verde)</span></div>
+              <input id="kpis-verde" class="input input-bordered w-full" type="text" placeholder="> 55.000€">
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+</section>
+
+<script>
+(function () {
+  const app = document.getElementById('kpis-app');
+  if (!app) return;
+
+  const msgEl = document.getElementById('kpis-msg');
+  const listViewEl = document.getElementById('kpis-view-list');
+  const kanbanViewEl = document.getElementById('kpis-view-kanban');
+  const kanbanGridEl = document.getElementById('kpis-kanban-grid');
+  const formViewEl = document.getElementById('kpis-view-form');
+  const formTitleEl = document.getElementById('kpis-form-title');
+  const axisIdEl = document.getElementById('kpis-axis-id');
+  const nombreEl = document.getElementById('kpis-nombre');
+  const responsableEl = document.getElementById('kpis-responsable');
+  const descripcionEl = document.getElementById('kpis-descripcion');
+  const objetivoEl = document.getElementById('kpis-objetivo');
+  const formulaEl = document.getElementById('kpis-formula');
+  const fuenteEl = document.getElementById('kpis-fuente');
+  const unidadEl = document.getElementById('kpis-unidad');
+  const frecuenciaEl = document.getElementById('kpis-frecuencia');
+  const lineaMAINEl = document.getElementById('kpis-linea-MAIN');
+  const metaEl = document.getElementById('kpis-meta');
+  const categoriaEl = document.getElementById('kpis-categoria');
+  const perspectivaEl = document.getElementById('kpis-perspectiva');
+  const rojoEl = document.getElementById('kpis-rojo');
+  const verdeEl = document.getElementById('kpis-verde');
+  const saveBtn = document.getElementById('kpis-form-save');
+  const cancelBtn = document.getElementById('kpis-form-cancel');
+  const deleteBtn = document.getElementById('kpis-form-delete');
+  const newBtn = document.getElementById('kpis-new-btn');
+  const importBtn = document.getElementById('kpis-import-btn');
+  const importFileEl = document.getElementById('kpis-import-file');
+  const viewButtons = Array.from(document.querySelectorAll('[data-kpi-view]'));
+
+  let axesCache = [];
+  let currentView = 'list';
+  let editingAxisId = 0;
+  let editingIndex = -1;
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const showMsg = (text, isError = false) => {
+    if (!msgEl) return;
+    msgEl.textContent = text || '';
+    msgEl.style.color = isError ? '#b91c1c' : '#0f3d2e';
+  };
+
+  const normalizeKpi = (item) => ({
+    id: Number(item?.id || 0) || 0,
+    nombre: String(item?.nombre || '').trim(),
+    descripcion: String(item?.descripcion || '').trim(),
+    objetivo: String(item?.objetivo || '').trim(),
+    formula: String(item?.formula || '').trim(),
+    responsable: String(item?.responsable || '').trim(),
+    fuente_datos: String(item?.fuente_datos || '').trim(),
+    unidad: String(item?.unidad || '').trim(),
+    frecuencia: String(item?.frecuencia || '').trim(),
+    linea_MAIN: String(item?.linea_MAIN || '').trim(),
+    estandar_meta: String(item?.estandar_meta || '').trim(),
+    semaforo_rojo: String(item?.semaforo_rojo || '').trim(),
+    semaforo_verde: String(item?.semaforo_verde || '').trim(),
+    categoria: String(item?.categoria || '').trim(),
+    perspectiva: String(item?.perspectiva || '').trim(),
+  });
+
+  const flattenKpis = () => axesCache.flatMap((axis) => {
+    const axisId = Number(axis?.id || 0);
+    const axisName = String(axis?.nombre || 'Sin eje').trim() || 'Sin eje';
+    const axisCode = String(axis?.codigo || '').trim();
+    const list = Array.isArray(axis?.kpis) ? axis.kpis : [];
+    return list.map((item, index) => ({
+      ...normalizeKpi(item),
+      axis_id: axisId,
+      axis_nombre: axisName,
+      axis_codigo: axisCode,
+      index,
+    }));
+  });
+
+  const setView = (view) => {
+    currentView = ['list', 'kanban', 'form'].includes(view) ? view : 'list';
+    listViewEl.classList.toggle('hidden', currentView !== 'list');
+    kanbanViewEl.classList.toggle('hidden', currentView !== 'kanban');
+    formViewEl.classList.toggle('hidden', currentView !== 'form');
+    viewButtons.forEach((btn) => btn.classList.toggle('active', btn.getAttribute('data-kpi-view') === currentView));
+  };
+
+  const renderAxisOptions = (selectedAxisId = 0) => {
+    if (!axisIdEl) return;
+    const options = ['<option value="">Selecciona eje</option>'].concat(
+      axesCache.map((axis) => {
+        const axisId = Number(axis?.id || 0);
+        const selected = axisId === Number(selectedAxisId || 0) ? ' selected' : '';
+        return `<option value="${axisId}"${selected}>${escapeHtml(String(axis?.codigo || ''))} - ${escapeHtml(String(axis?.nombre || 'Sin eje'))}</option>`;
+      })
+    );
+    axisIdEl.innerHTML = options.join('');
+  };
+
+  const clearForm = () => {
+    editingAxisId = 0;
+    editingIndex = -1;
+    renderAxisOptions(0);
+    nombreEl.value = '';
+    responsableEl.value = '';
+    descripcionEl.value = '';
+    objetivoEl.value = '';
+    formulaEl.value = '';
+    fuenteEl.value = '';
+    unidadEl.value = '';
+    frecuenciaEl.value = '';
+    lineaMAINEl.value = '';
+    metaEl.value = '';
+    categoriaEl.value = '';
+    perspectivaEl.value = '';
+    rojoEl.value = '';
+    verdeEl.value = '';
+    formTitleEl.textContent = 'Nuevo KPI';
+    deleteBtn.disabled = true;
+  };
+
+  const fillForm = (item = null) => {
+    if (!item) {
+      clearForm();
+      if (axesCache[0]) renderAxisOptions(Number(axesCache[0].id || 0));
+      setView('form');
+      return;
+    }
+    editingAxisId = Number(item.axis_id || 0);
+    editingIndex = Number(item.index || 0);
+    renderAxisOptions(editingAxisId);
+    nombreEl.value = item.nombre || '';
+    responsableEl.value = item.responsable || '';
+    descripcionEl.value = item.descripcion || '';
+    objetivoEl.value = item.objetivo || '';
+    formulaEl.value = item.formula || '';
+    fuenteEl.value = item.fuente_datos || '';
+    unidadEl.value = item.unidad || '';
+    frecuenciaEl.value = item.frecuencia || '';
+    lineaMAINEl.value = item.linea_MAIN || '';
+    metaEl.value = item.estandar_meta || '';
+    categoriaEl.value = item.categoria || '';
+    perspectivaEl.value = item.perspectiva || '';
+    rojoEl.value = item.semaforo_rojo || '';
+    verdeEl.value = item.semaforo_verde || '';
+    formTitleEl.textContent = `Editar KPI: ${item.nombre || 'Sin nombre'}`;
+    deleteBtn.disabled = false;
+    setView('form');
+  };
+
+  const readForm = () => normalizeKpi({
+    nombre: nombreEl.value,
+    responsable: responsableEl.value,
+    descripcion: descripcionEl.value,
+    objetivo: objetivoEl.value,
+    formula: formulaEl.value,
+    fuente_datos: fuenteEl.value,
+    unidad: unidadEl.value,
+    frecuencia: frecuenciaEl.value,
+    linea_MAIN: lineaMAINEl.value,
+    estandar_meta: metaEl.value,
+    categoria: categoriaEl.value,
+    perspectiva: perspectivaEl.value,
+    semaforo_rojo: rojoEl.value,
+    semaforo_verde: verdeEl.value,
+  });
+
+  const axisPayload = (axis, nextKpis) => ({
+    nombre: String(axis?.nombre || '').trim(),
+    MAIN_code: String(axis?.MAIN_code || '').trim() || String(axis?.codigo || '').split('-', 1)[0],
+    orden: Number(axis?.orden || 1) || 1,
+    lider_departamento: String(axis?.lider_departamento || '').trim(),
+    responsabilidad_directa: String(axis?.responsabilidad_directa || '').trim(),
+    fecha_inicial: String(axis?.fecha_inicial || '').trim(),
+    fecha_final: String(axis?.fecha_final || '').trim(),
+    descripcion: String(axis?.descripcion || '').trim(),
+    kpis: nextKpis.map((item, index) => ({ ...normalizeKpi(item), orden: index + 1 })),
+  });
+
+  const saveAxisKpis = async (axis, nextKpis) => {
+    const response = await fetch(`/api/strategic-axes/${encodeURIComponent(String(axis.id || ''))}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(axisPayload(axis, nextKpis)),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.detail || 'No se pudo guardar el KPI.');
+    }
+    return payload?.data || null;
+  };
+
+  const renderList = () => {
+    const rows = flattenKpis();
+    if (!rows.length) {
+      listViewEl.innerHTML = '<div class="text-MAIN-content/60">Sin KPIs registrados.</div>';
+      return;
+    }
+    listViewEl.innerHTML = rows.map((item) => `
+      <button type="button" class="card border border-MAIN-300 bg-MAIN-100 text-left hover:border-primary/30 hover:bg-MAIN-200 transition" data-kpi-open="${item.axis_id}:${item.index}">
+        <div class="card-body p-4 gap-2">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 class="font-semibold text-MAIN-content">${escapeHtml(item.nombre || 'Sin nombre')}</h3>
+              <div class="text-sm text-MAIN-content/60">${escapeHtml(item.axis_codigo || '')} · ${escapeHtml(item.axis_nombre || 'Sin eje')}</div>
+            </div>
+            <span class="badge badge-outline">${escapeHtml(item.frecuencia || 'Sin frecuencia')}</span>
+          </div>
+          <div class="text-sm text-MAIN-content/70">${escapeHtml(item.categoria || 'Sin categoría')}</div>
+          <div class="text-sm text-MAIN-content/70">Perspectiva: ${escapeHtml(item.perspectiva || 'Sin perspectiva')}</div>
+          <div class="text-sm text-MAIN-content/70">Responsable: ${escapeHtml(item.responsable || 'Sin responsable')}</div>
+          <div class="text-sm text-MAIN-content/70">Meta: ${escapeHtml(item.estandar_meta || 'Sin meta')}</div>
+        </div>
+      </button>
+    `).join('');
+    listViewEl.querySelectorAll('[data-kpi-open]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raw = String(btn.getAttribute('data-kpi-open') || '');
+        const [axisIdRaw, indexRaw] = raw.split(':');
+        const target = flattenKpis().find((item) => Number(item.axis_id) === Number(axisIdRaw) && Number(item.index) === Number(indexRaw));
+        if (target) fillForm(target);
+      });
+    });
+  };
+
+  const renderKanban = () => {
+    if (!kanbanGridEl) return;
+    if (!axesCache.length) {
+      kanbanGridEl.innerHTML = '<div class="text-MAIN-content/60">Sin ejes registrados.</div>';
+      return;
+    }
+    kanbanGridEl.innerHTML = axesCache.map((axis) => {
+      const rows = Array.isArray(axis?.kpis) ? axis.kpis : [];
+      const cards = rows.length
+        ? rows.map((item, index) => `
+            <button type="button" class="rounded-box border border-MAIN-300 bg-MAIN-100 p-3 text-left hover:border-primary/30 hover:bg-MAIN-200 transition" data-kpi-open="${Number(axis?.id || 0)}:${index}">
+              <div class="font-semibold text-MAIN-content">${escapeHtml(String(item?.nombre || 'Sin nombre'))}</div>
+              <div class="text-sm text-MAIN-content/60">${escapeHtml(String(item?.categoria || 'Sin categoría'))}</div>
+              <div class="text-sm text-MAIN-content/60">${escapeHtml(String(item?.perspectiva || 'Sin perspectiva'))}</div>
+              <div class="text-sm text-MAIN-content/60">${escapeHtml(String(item?.responsable || 'Sin responsable'))}</div>
+            </button>
+          `).join('')
+        : '<div class="text-sm text-MAIN-content/60">Sin KPIs.</div>';
+      return `
+        <section class="rounded-box border border-MAIN-300 bg-MAIN-200 p-4 grid gap-3">
+          <header class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-semibold text-MAIN-content">${escapeHtml(String(axis?.codigo || ''))} - ${escapeHtml(String(axis?.nombre || 'Sin eje'))}</h3>
+              <p class="text-sm text-MAIN-content/60">${rows.length} KPI(s)</p>
+            </div>
+          </header>
+          <div class="grid gap-3">${cards}</div>
+        </section>
+      `;
+    }).join('');
+    kanbanGridEl.querySelectorAll('[data-kpi-open]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const raw = String(btn.getAttribute('data-kpi-open') || '');
+        const [axisIdRaw, indexRaw] = raw.split(':');
+        const targetAxis = axesCache.find((item) => Number(item?.id || 0) === Number(axisIdRaw));
+        const target = targetAxis && Array.isArray(targetAxis.kpis)
+          ? { ...normalizeKpi(targetAxis.kpis[Number(indexRaw) || 0]), axis_id: Number(axisIdRaw), axis_nombre: targetAxis.nombre, axis_codigo: targetAxis.codigo, index: Number(indexRaw) || 0 }
+          : null;
+        if (target) fillForm(target);
+      });
+    });
+  };
+
+  const renderAll = () => {
+    renderAxisOptions(editingAxisId);
+    renderList();
+    renderKanban();
+  };
+
+  const loadAxes = async () => {
+    showMsg('Cargando KPIs...');
+    const response = await fetch('/api/strategic-axes', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.detail || 'No se pudo cargar KPIs.');
+    }
+    axesCache = Array.isArray(payload?.data) ? payload.data : [];
+    renderAll();
+    showMsg('');
+  };
+
+  const importKpis = async (file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    showMsg('Importando plantilla de KPIs...');
+    if (importBtn) importBtn.disabled = true;
+    try {
+      const response = await fetch('/api/kpis/importar', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.detail || 'No se pudo importar la plantilla.');
+      }
+      const summary = payload?.summary || {};
+      await loadAxes();
+      showMsg(`Importación completada. Creados: ${Number(summary.created || 0)}. Actualizados: ${Number(summary.updated || 0)}. Omitidos: ${Number(summary.skipped || 0)}.`);
+    } catch (error) {
+      showMsg(error?.message || 'No se pudo importar la plantilla.', true);
+    } finally {
+      if (importBtn) importBtn.disabled = false;
+      if (importFileEl) importFileEl.value = '';
+    }
+  };
+
+  const saveKpi = async () => {
+    const axisId = Number(axisIdEl.value || 0);
+    const data = readForm();
+    if (!axisId) {
+      showMsg('Selecciona un eje estratégico.', true);
+      axisIdEl.focus();
+      return;
+    }
+    if (!data.nombre) {
+      showMsg('El nombre del KPI es obligatorio.', true);
+      nombreEl.focus();
+      return;
+    }
+    const targetAxis = axesCache.find((axis) => Number(axis?.id || 0) === axisId);
+    if (!targetAxis) {
+      showMsg('El eje seleccionado no es válido.', true);
+      return;
+    }
+    saveBtn.disabled = true;
+    deleteBtn.disabled = true;
+    try {
+      if (editingAxisId > 0 && editingIndex >= 0) {
+        const previousAxis = axesCache.find((axis) => Number(axis?.id || 0) === editingAxisId);
+        if (previousAxis) {
+          const previousKpis = Array.isArray(previousAxis.kpis) ? previousAxis.kpis.map((item) => normalizeKpi(item)) : [];
+          previousKpis.splice(editingIndex, 1);
+          previousAxis.kpis = previousKpis;
+          if (editingAxisId !== axisId) {
+            await saveAxisKpis(previousAxis, previousKpis);
+          }
+        }
+      }
+      const nextKpis = Array.isArray(targetAxis.kpis) ? targetAxis.kpis.map((item) => normalizeKpi(item)) : [];
+      if (editingAxisId === axisId && editingIndex >= 0) {
+        nextKpis.splice(editingIndex, 0, data);
+      } else {
+        nextKpis.push(data);
+      }
+      await saveAxisKpis(targetAxis, nextKpis);
+      await loadAxes();
+      clearForm();
+      setView('list');
+      showMsg('KPI guardado.');
+    } catch (error) {
+      showMsg(error?.message || 'No se pudo guardar el KPI.', true);
+    } finally {
+      saveBtn.disabled = false;
+      deleteBtn.disabled = false;
+    }
+  };
+
+  const deleteKpi = async () => {
+    if (!(editingAxisId > 0 && editingIndex >= 0)) return;
+    const axis = axesCache.find((item) => Number(item?.id || 0) === editingAxisId);
+    if (!axis) return;
+    if (!window.confirm('¿Eliminar este KPI?')) return;
+    deleteBtn.disabled = true;
+    try {
+      const nextKpis = Array.isArray(axis.kpis) ? axis.kpis.map((item) => normalizeKpi(item)) : [];
+      nextKpis.splice(editingIndex, 1);
+      await saveAxisKpis(axis, nextKpis);
+      await loadAxes();
+      clearForm();
+      setView('list');
+      showMsg('KPI eliminado.');
+    } catch (error) {
+      showMsg(error?.message || 'No se pudo eliminar el KPI.', true);
+    } finally {
+      deleteBtn.disabled = false;
+    }
+  };
+
+  viewButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setView(btn.getAttribute('data-kpi-view') || 'list'));
+  });
+  newBtn.addEventListener('click', () => fillForm(null));
+  if (importBtn && importFileEl) {
+    importBtn.addEventListener('click', () => importFileEl.click());
+    importFileEl.addEventListener('change', () => {
+      const file = importFileEl.files && importFileEl.files[0];
+      importKpis(file);
+    });
+  }
+  cancelBtn.addEventListener('click', () => {
+    clearForm();
+    setView('list');
+    showMsg('');
+  });
+  saveBtn.addEventListener('click', saveKpi);
+  deleteBtn.addEventListener('click', deleteKpi);
+
+  clearForm();
+  setView('list');
+  loadAxes().catch((error) => showMsg(error?.message || 'No se pudo cargar KPIs.', true));
+})();
+</script>

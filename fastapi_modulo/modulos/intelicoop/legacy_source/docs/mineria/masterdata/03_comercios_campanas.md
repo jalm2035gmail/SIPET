@@ -2,7 +2,7 @@
 
 Fecha ejecucion UTC: 2026-02-18T15:36:14.343011+00:00
 
-## Catalogo base de comercios aliados
+## Catalogo MAIN de comercios aliados
 - Comercios catalogados: 3
 - Campanas vinculadas: 0
 

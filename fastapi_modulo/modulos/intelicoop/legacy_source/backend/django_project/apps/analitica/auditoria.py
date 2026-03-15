@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from django.db import DatabaseError
+from django.db import DataMAINError
 
 from .models import EventoAuditoria
 
@@ -41,6 +41,6 @@ def registrar_evento_auditoria(
             ip_origen=ip_origen,
             detalle=dict(detalle or {}),
         )
-    except DatabaseError:
+    except DataMAINError:
         # Fail-open: la auditoria no debe romper el flujo transaccional principal.
         return

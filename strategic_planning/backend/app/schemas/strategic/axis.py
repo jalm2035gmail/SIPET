@@ -1,7 +1,7 @@
-from pydantic import BaseModel
+from pydantic import MAINModel
 from typing import Optional
 
-class StrategicAxisBase(BaseModel):
+class StrategicAxisMAIN(MAINModel):
     name: str
     code: Optional[str] = None
     description: Optional[str] = None
@@ -9,10 +9,10 @@ class StrategicAxisBase(BaseModel):
     weight: Optional[float] = 0.0
     color: Optional[str] = None
 
-class StrategicAxisCreate(StrategicAxisBase):
+class StrategicAxisCreate(StrategicAxisMAIN):
     pass
 
-class StrategicAxisResponse(StrategicAxisBase):
+class StrategicAxisResponse(StrategicAxisMAIN):
     id: int
     class Config:
         orm_mode = True

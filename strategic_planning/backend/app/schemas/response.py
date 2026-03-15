@@ -1,6 +1,6 @@
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel
+from pydantic import MAINModel
 from pydantic.generics import GenericModel
 
 T = TypeVar("T")
@@ -24,7 +24,7 @@ class PaginatedResponse(GenericModel, Generic[T]):
     metadata: Optional[Dict[str, Any]] = None
 
 
-class ErrorResponse(BaseModel):
+class ErrorResponse(MAINModel):
     """Respuesta en caso de error."""
     success: bool = False
     detail: str

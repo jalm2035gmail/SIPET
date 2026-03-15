@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ app_favicon_url | default('/templates/icon/icon.png') }}">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/vendor/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/static/dist/output.css?v={{ asset_version | default('dev', true) }}">
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <style>
+        :root {
+            {% if colores %}
+            {% for key, value in colores.items() %}
+            --{{ key }}: {{ value }};
+            {% endfor %}
+            {% endif %}
+        }
+        body {
+            display: block !important;
+            padding: 0 !important;
+            background-image: none !important;
+            flex-direction: initial !important;
+            flex: initial !important;
+            gap: initial !important;
+            font-size: inherit !important;
+        }
+
+{% include "modulos/backend/static/css/backend_shell.css" %}
+    </style>
+    <script>
+        window.__sipet_server_colors = {{ colores | default({}, true) | tojson }};
+    </script>
+    <script>
+        (function() {
+            try {
+                var variant = window.localStorage.getItem('sipet_sidebar_style_variant');
+                if (variant !== 'original') {
+                    document.documentElement.classList.add('ui-sidebar-modern');
+                }
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body>
+    <div class="sidebar-mobile-backdrop" id="sidebar-mobile-backdrop" hidden></div>
+    <script>
+        (function() {
+            var colors = window.__sipet_server_colors || {};
+            var rootStyle = document.documentElement.style;
+            for (var key in colors) {
+                if (!Object.prototype.hasOwnProperty.call(colors, key)) continue;
+                rootStyle.setProperty('--' + key, String(colors[key]));
+            }
+        })();
+    </script>
+    {% set hide_floating_actions = hide_floating_actions | default(false) %}
+    {% set current_role = (request.state.user_role | default(request.cookies.get('user_role', ''), true) | lower | trim) %}
+    {% set is_superadmin_effective = current_role in ['superadministrador', 'superadmin'] %}
+    {% include "modulos/backend/vistas/sidebar.html" %}
+    {% include "modulos/backend/vistas/navbar.html" %}
+    <main class="main-content">
+        <div class="content-shell">
+        <section class="content-section">
+            {% if section_label or section_title %}
+            <!-- header de sección eliminado -->
+            {% endif %}
+            <div class="content-section-body">
+                {% block content %}
+                {{ content|safe }}
+                {% endblock %}
+            </div>
+        </section>
+        </div>
+    </main>
+        {% if not hide_floating_actions and floating_actions_html %}
+        <div class="floating-actions-wrapper"
+             aria-label="Acciones rápidas de pantalla"
+             data-default-screen="{{ floating_actions_screen | default('personalization') }}">
+            <aside class="floating-actions">
+                {{ floating_actions_html | safe }}
+            </aside>
+            <button class="floating-toggle" type="button" id="floating-toggle" aria-label="Ocultar barra flotante">−</button>
+        </div>
+        {% endif %}
+    {% include "modulos/backend/vistas/backend_nav_catalog.html" %}
+    {% include "modulos/backend/vistas/backend_shell_script.html" %}
+</body>
+</html>

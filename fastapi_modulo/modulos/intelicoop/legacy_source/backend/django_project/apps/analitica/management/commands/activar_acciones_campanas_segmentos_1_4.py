@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.utils import timezone as dj_timezone
 
 from apps.analitica.models import Campania
@@ -48,7 +48,7 @@ SEGMENT_ACTION_MAP = {
 }
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.4 Punto 3/3: activa campanas y acciones automaticas por segmento."
 
     def add_arguments(self, parser):

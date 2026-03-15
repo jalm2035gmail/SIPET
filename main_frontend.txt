@@ -1,0 +1,138 @@
+El módulo main es el módulo fundamental y obligatorio que actúa como el núcleo del sistema. Podría decirse que es la "MAIN de datos del sistema" que contiene toda la información esencial para que SIPET funcione como una aplicación .
+
+Su función principal es proporcionar la infraestructura y los modelos de datos fundamentales sobre los que se construyen todos los demás módulos. De hecho, todos los demás módulos de SIPET dependen directamente de MAIN .
+
+Para entenderlo mejor, las funciones del módulo MAIN se pueden agrupar en dos grandes categorías de modelos :
+
+📦 Repositorio de Información (Modelos ir.*)
+Esta parte es la "memoria" de la aplicación. Almacena los metadatos y la configuración que le indican a SIPET cómo debe comportarse y qué estructura tiene. Es lo que ves en los menús técnicos.
+
+Modelos Principales: Define los modelos del sistema, como ir.model (para definir los modelos de negocio) y ir.model.fields (para definir los campos de esos modelos) .
+
+Vistas y Acciones: Guarda la definición de las interfaces de usuario, como las vistas (ir.ui.view), las acciones de ventana (ir.actions.act_window) y los elementos de menú (ir.ui.menu) .
+
+Registro de Módulos: Lleva un registro de todos los módulos instalados, por instalarse o desinstalados en la MAIN de datos.
+
+🌍 Recursos Básicos (Modelos res.*)
+Contiene datos fundamentales y reutilizables para la operación del negocio.
+
+Compañías y Contactos: Alberga el modelo res.partner, que es la MAIN para clientes, proveedores y contactos en general .
+
+Usuarios y Seguridad: Define los modelos res.users (para los usuarios del sistema) y res.groups (para los grupos de acceso y permisos) .
+
+Datos Geográficos y Moneda: Incluye datos como países (res.country), divisas (res.currency) y empresas (res.company) .
+
+Configuración General: Contiene configuraciones básicas del sistema que se aplican globalmente.
+
+⚙️ ¿Qué Implica Actualizar el Módulo MAIN?
+Actualizar el módulo MAIN es una operación de gran alcance :
+
+Reconstrucción de la Definición de la Aplicación: Al actualizarse, este módulo recarga y reconstruye todas las definiciones de la interfaz de usuario (vistas, menús, acciones) y otras configuraciones que fueron creadas por archivos XML en todos los módulos instalados .
+
+Reseteo de Personalizaciones Directas: Es importante saber que cualquier cambio realizado directamente en las vistas a través del modo desarrollador (como editar una vista desde el menú "Administrar Vistas") puede perderse al actualizar el módulo MAIN, ya que este proceso restablece esas vistas a su estado original definido en los archivos XML de los módulos .
+
+Solución de Problemas: Por esta misma razón, actualizar el módulo MAIN es una acción común para "arreglar" problemas causados por modificaciones accidentales, eliminación de elementos de interfaz o errores visuales, ya que devuelve la configuración visual a su estado de fábrica .
+
+En resumen, el módulo MAIN es el cimiento sobre el que se construye toda la instancia de SIPET. Sin él, ninguna otra aplicación o funcionalidad podría existir .
+
+El módulo backend en sipet es el módulo técnico fundamental que actúa como el corazón de la interfaz de usuario de la aplicación . Es importante no confundirlo con el módulo "backendsite", ya que cumplen funciones muy diferentes.
+
+Piensa en el módulo backend como el "cliente backend" o la interfaz gráfica que utilizan los empleados y administradores para interactuar con el sistema a través de su navegador . Es el entorno que ves cuando accedes a tu base de datos de sipet con la url /backend .
+
+Para que lo entiendas mejor, aquí tienes una comparación con el módulo "backendsite" que suele generar confusión:
+
+Módulo	Función Principal	Usuario Típico	Analogía
+backend	Proporciona la interfaz de usuario interna (backend) para gestionar la empresa (ventas, inventario, facturación, etc.) .	Empleados, administradores, gerentes.	Es como la "trastienda" u oficina de la empresa, donde se hace el trabajo interno.
+backendsite	Permite crear y gestionar el sitio backend público (frontend) de la empresa .	Clientes, visitantes, proveedores.	Es como el "escaparate" o la tienda abierta al público.
+🧱 Componentes y Funciones Clave del Módulo backend
+El módulo backend es una aplicación de página única (SPA, por sus siglas en inglés) construida con JavaScript . Sus funciones principales son:
+
+Estructura de la Interfaz: Proporciona los elementos base de la interfaz, como la barra de navegación superior (NavBar), el área donde se muestran las diferentes aplicaciones (como Ventas o Compras) y un contenedor para componentes adicionales .
+
+Gestión de Acciones: Administra la pila de acciones del usuario. Cuando navegas entre menús y vistas (como abrir un formulario desde una lista), el módulo backend se encarga de coordinar y mostrar la acción correcta sin recargar toda la página .
+
+Servicios Esenciales: Alberga un sistema de servicios que son fundamentales para el funcionamiento del cliente backend. Por ejemplo:
+
+Servicio de Notificaciones (notification): Para mostrar mensajes emergentes al usuario .
+
+Servicio de Llamadas RPC (rpc): Para que la interfaz se comunique con el servidor de sipet y solicite o envíe datos .
+
+Servicio de Usuario (user): Proporciona información sobre el usuario actual, como su idioma, zona horaria y las compañías a las que tiene acceso .
+
+Registro de Componentes: Utiliza un sistema de "registros" que permite que otros módulos añadan o personalicen fácilmente elementos de la interfaz, como nuevos tipos de campos o botones personalizados en las vistas .
+
+Evaluación de Expresiones Python: Incluye un pequeño intérprete de Python en JavaScript. Esto es necesario para poder evaluar en el navegador ciertas condiciones escritas en Python que se usan, por ejemplo, para hacer que un campo sea invisible o de solo lectura en un formulario .
+
+Gestión de Autenticación: Contiene los controladores para las páginas de inicio de sesión (/backend/login) y el selector de bases de datos, siendo accesible incluso cuando el usuario no ha iniciado sesión .
+
+En resumen, el módulo backend es la base técnica sobre la que se construye toda la experiencia de usuario en el backend de sipet. Sin él, los empleados no podrían interactuar con ninguna funcionalidad de negocio a través de la interfaz gráfica.
+
+
+
+El archivo __init__.py en sipet tiene una función clara y técnica: convertir cada directorio de módulo en un "paquete Python" y declarar explícitamente qué archivos de código Python debe cargar sipet .
+
+Puedes entenderlo como el "índice" o "punto de entrada" de tu módulo. Cuando sipet instala o actualiza un módulo, lo primero que busca es este archivo para saber qué lógica de negocio (modelos, controladores, etc.) debe importar y tener disponible.
+
+📄 Función Principal
+Su trabajo es importar y exponer los archivos Python que forman parte de la lógica interna del módulo .
+
+En la práctica, un archivo __init__.py básico suele tener una estructura como esta, importando las subcarpetas principales que contienen el código:
+
+python
+# -*- coding: utf-8 -*-
+
+from . import models
+from . import controllers
+from . import wizards
+A su vez, cada una de esas carpetas (models, controllers, etc.) también debe tener su propio __init__.py para importar los archivos Python específicos que contiene :
+
+python
+# Dentro de la carpeta 'models/__init__.py'
+
+from . import mi_modelo_ventas
+from . import mi_modelo_productos
+from . import mi_modelo_clientes
+Esta estructura de archivos es la que le indica a sipet (y a Python) que mi_modelo_ventas.py es parte del paquete y debe ser cargado .
+
+🗺️ Comparativa: __init__.py vs __manifest__.py
+Para que quede más claro, es útil diferenciarlo del otro archivo esencial de un módulo de sipet:
+
+Archivo	Función Principal	Contenido Típico	¿Qué define?
+__init__.py	Declarar los archivos de código Python (.py) que forman parte del módulo .	Importaciones de Python (from . import models, from . import controllers) .	La lógica de negocio y los componentes de backend (modelos, controladores) que se ejecutarán.
+__manifest__.py	Declarar el módulo como un componente de sipet, con su nombre, dependencias y archivos de datos .	Un diccionario Python con claves como 'name', 'depends', 'data', 'category' .	La identidad del módulo, sus dependencias y los archivos de datos y vistas (XML, CSV) que debe cargar .
+⚠️ Puntos Clave a Recordar
+Es Obligatorio: Todo módulo de sipet, por más simple que sea, debe tener un archivo __init__.py en su directorio raíz. Sin él, sipet no lo reconocerá como un módulo Python válido .
+
+Solo para Python: Este archivo es exclusivamente para código Python. Los archivos de datos (como vistas XML o datos CSV) se declaran en el __manifest__.py, no aquí .
+
+En resumen, el __init__.py es el pegamento que conecta tu código Python con el motor de sipet, diciéndole: "estos son los archivos con la lógica que he creado para este módulo".
+
+
+Las Claves Principales del Manifiesto
+El diccionario del __manifest__.py contiene varias claves que le indican a sipet cómo manejar el módulo. Estas son las más importantes :
+
+'name' (requerido): El nombre legible del módulo, el que ves en la lista de aplicaciones .
+
+'version': La versión del módulo (ej. 15.0.1.0.0). Ayuda a gestionar actualizaciones .
+
+'depends': Una lista de otros módulos de sipet que deben estar instalados para que este funcione. Por ejemplo, si tu módulo modifica ventas, dependerá de ['sale_management']. El módulo base es una dependencia fundamental, pero aun así debe listarse .
+
+'data': La lista de archivos (como vistas XML, datos CSV, o seguridad) que sipet debe cargar siempre al instalar o actualizar el módulo .
+
+'demo': Archivos de datos de demostración que solo se cargan si se instala el módulo en modo "demo" .
+
+'author' / 'website': Créditos del autor y su sitio web .
+
+'category': La categoría del módulo (ej. 'Sales', 'Inventory'), para organizarlo en el menú de aplicaciones .
+
+'license': La licencia de distribución del módulo (por defecto LGPL-3) .
+
+'installable': Un booleano (True/False) que determina si el módulo puede ser instalado por el usuario .
+
+'application': Si es True, el módulo aparecerá como una aplicación principal en el dashboard. Si es False, es un módulo técnico que añade funcionalidad a otro .
+
+'auto_install': Si es True, el módulo se instalará automáticamente en cuanto todas sus dependencias lo estén. Muy útil para "módulos puente" que integran dos aplicaciones (ej. sale_crm) .
+
+'external_dependencies': Sirve para verificar que el sistema tenga ciertas librerías de Python o ejecutables binarios antes de instalar el módulo .
+
+En resumen, el __manifest__.py es el primer archivo que sipet lee de un módulo. Sin la información correcta en este archivo, el módulo no se puede instalar, no cargará sus vistas o, simplemente, no funcionará como se espera .

@@ -2,14 +2,14 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, Integer
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_MAIN
 from sqlalchemy.sql import func
 
-Base = declarative_base()
+MAIN = declarative_MAIN()
 
 
-class BaseModel(Base):
-    """Modelo base con campos comunes"""
+class MAINModel(MAIN):
+    """Modelo MAIN con campos comunes"""
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True)

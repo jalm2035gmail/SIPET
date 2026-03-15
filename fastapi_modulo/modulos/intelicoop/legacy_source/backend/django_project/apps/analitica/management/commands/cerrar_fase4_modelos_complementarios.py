@@ -2,12 +2,12 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import ReglaAsociacionProducto, ResultadoMoraTemprana, ResultadoSegmentacionSocio
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Genera acta de cierre tecnico de Fase 4 y consolida entregables obligatorios."
 
     def add_arguments(self, parser):

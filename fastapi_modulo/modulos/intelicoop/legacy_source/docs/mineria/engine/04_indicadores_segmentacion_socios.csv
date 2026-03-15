@@ -2,4 +2,4 @@ kpi,valor,formula,estado
 cobertura_segmentacion_pct,0.00,socios_segmentados / socios_totales * 100,En revision
 segmentos_activos,0,conteo_segmentos_con_socios,En revision
 segmento_dominante_pct,0.00,max(socios_segmento) / socios_segmentados * 100,Cumple
-socios_objetivo_pct,0.00,(socios_hormiga + socios_gran_ahorrador) / socios_base * 100,En revision
+socios_objetivo_pct,0.00,(socios_hormiga + socios_gran_ahorrador) / socios_MAIN * 100,En revision

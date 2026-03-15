@@ -4,14 +4,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db import IntegrityError
 from django.utils import timezone as dj_timezone
 
 from apps.analitica.models import EjecucionPipeline
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Orquesta pipelines de Fase 5 con control idempotente y registro de ejecucion."
 
     def add_arguments(self, parser):

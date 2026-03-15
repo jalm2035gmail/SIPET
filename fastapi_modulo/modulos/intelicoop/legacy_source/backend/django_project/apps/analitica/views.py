@@ -198,7 +198,7 @@ class ScoringResumenView(APIView):
         if fecha_hasta:
             queryset = queryset.filter(fecha_creacion__date__lte=fecha_hasta)
 
-        base = queryset.aggregate(
+        MAIN = queryset.aggregate(
             total=Count("id"),
             score_promedio=Avg("score"),
         )
@@ -227,8 +227,8 @@ class ScoringResumenView(APIView):
 
         return Response(
             {
-                "total_inferencias": base["total"] or 0,
-                "score_promedio": float(base["score_promedio"] or 0),
+                "total_inferencias": MAIN["total"] or 0,
+                "score_promedio": float(MAIN["score_promedio"] or 0),
                 "por_riesgo": {
                     "bajo": por_riesgo.get("bajo", 0),
                     "medio": por_riesgo.get("medio", 0),
@@ -315,8 +315,8 @@ class ColocacionPreaprobadosView(APIView):
             ingreso = float(row.ingreso_mensual)
             deuda = float(row.deuda_actual)
             capacidad_mensual = max(0.0, ingreso - deuda)
-            credito_base = float(row.credito.monto) if row.credito_id else (capacidad_mensual * 6.0)
-            monto_sugerido = round(max(0.0, min(credito_base, capacidad_mensual * 8.0)), 2)
+            credito_MAIN = float(row.credito.monto) if row.credito_id else (capacidad_mensual * 6.0)
+            monto_sugerido = round(max(0.0, min(credito_MAIN, capacidad_mensual * 8.0)), 2)
 
             item = {
                 "socio_id": socio.id,
@@ -592,7 +592,7 @@ def _build_simple_pdf(title: str, lines):
         b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n",
         b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n",
         b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n",
-        b"4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n",
+        b"4 0 obj << /Type /Font /Subtype /Type1 /MAINFont /Helvetica >> endobj\n",
         f"5 0 obj << /Length {len(stream)} >> stream\n".encode("ascii") + stream + b"\nendstream endobj\n",
     ]
 
@@ -872,15 +872,15 @@ def _calcular_probabilidades_mora(credito: Credito, fecha_corte):
     ratio_pago_90d = _clamp(pagos_90d_value / max(cuota_estimada * 3.0, 1.0))
     deuda_ingreso_ratio = _clamp(float(credito.deuda_actual) / max(float(credito.ingreso_mensual), 1.0))
     penalizacion_antiguedad = _clamp(1.0 - (float(credito.antiguedad_meses) / 24.0))
-    base = (
+    MAIN = (
         0.10
         + (0.55 * deuda_ingreso_ratio)
         + (0.35 * (1.0 - ratio_pago_90d))
         + (0.15 * penalizacion_antiguedad)
     )
-    prob_60d = _clamp(base)
-    prob_30d = _clamp(base * 0.85)
-    prob_90d = _clamp(base * 1.12)
+    prob_60d = _clamp(MAIN)
+    prob_30d = _clamp(MAIN * 0.85)
+    prob_90d = _clamp(MAIN * 1.12)
     alerta = (
         ResultadoMoraTemprana.ALERTA_BAJA
         if prob_90d < 0.35
@@ -1001,7 +1001,7 @@ class MoraTempranaResumenView(APIView):
         if fuente:
             queryset = queryset.filter(fuente=fuente)
 
-        base = queryset.aggregate(
+        MAIN = queryset.aggregate(
             total=Count("id"),
             prob_30d_promedio=Avg("prob_mora_30d"),
             prob_60d_promedio=Avg("prob_mora_60d"),
@@ -1010,10 +1010,10 @@ class MoraTempranaResumenView(APIView):
         por_alerta = {item["alerta"]: item["total"] for item in queryset.values("alerta").annotate(total=Count("id"))}
         return Response(
             {
-                "total_alertas": base["total"] or 0,
-                "prob_30d_promedio": float(base["prob_30d_promedio"] or 0),
-                "prob_60d_promedio": float(base["prob_60d_promedio"] or 0),
-                "prob_90d_promedio": float(base["prob_90d_promedio"] or 0),
+                "total_alertas": MAIN["total"] or 0,
+                "prob_30d_promedio": float(MAIN["prob_30d_promedio"] or 0),
+                "prob_60d_promedio": float(MAIN["prob_60d_promedio"] or 0),
+                "prob_90d_promedio": float(MAIN["prob_90d_promedio"] or 0),
                 "por_alerta": {
                     "baja": por_alerta.get("baja", 0),
                     "media": por_alerta.get("media", 0),
@@ -1063,8 +1063,8 @@ class SegmentacionSociosPerfilesView(APIView):
             Socio.SEGMENTO_GRAN_AHORRADOR,
             Socio.SEGMENTO_INACTIVO,
         ):
-            base = queryset.filter(segmento=segmento)
-            agg = base.aggregate(
+            MAIN = queryset.filter(segmento=segmento)
+            agg = MAIN.aggregate(
                 socios=Count("id"),
                 saldo_promedio=Avg("saldo_total"),
                 mov_total_promedio=Avg("total_movimientos"),
@@ -1189,7 +1189,7 @@ class ReglasAsociacionResumenView(APIView):
         if vigente in {"true", "false"}:
             queryset = queryset.filter(vigente=(vigente == "true"))
 
-        base = queryset.aggregate(
+        MAIN = queryset.aggregate(
             total=Count("id"),
             soporte_promedio=Avg("soporte"),
             confianza_promedio=Avg("confianza"),
@@ -1207,10 +1207,10 @@ class ReglasAsociacionResumenView(APIView):
         )
         return Response(
             {
-                "total_reglas": base["total"] or 0,
-                "soporte_promedio": float(base["soporte_promedio"] or 0),
-                "confianza_promedio": float(base["confianza_promedio"] or 0),
-                "lift_promedio": float(base["lift_promedio"] or 0),
+                "total_reglas": MAIN["total"] or 0,
+                "soporte_promedio": float(MAIN["soporte_promedio"] or 0),
+                "confianza_promedio": float(MAIN["confianza_promedio"] or 0),
+                "lift_promedio": float(MAIN["lift_promedio"] or 0),
                 "top_reglas": top,
             }
         )
@@ -1479,10 +1479,10 @@ def _build_dashboards_1_8_payload(sucursal_detalle: str = "", include_drilldown:
     recuperacion_por_gestion = 0.0 if gestiones_total == 0 else (pagos_90d / gestiones_total)
 
     # Tendencias historicas (mensual y trimestral).
-    base_month = hoy.replace(day=1)
+    MAIN_month = hoy.replace(day=1)
     month_keys = []
     for i in range(5, -1, -1):
-        month_dt = (base_month - timedelta(days=32 * i)).replace(day=1)
+        month_dt = (MAIN_month - timedelta(days=32 * i)).replace(day=1)
         key = month_dt.strftime("%Y-%m")
         if key not in month_keys:
             month_keys.append(key)
@@ -1800,8 +1800,8 @@ def _fastapi_scoring_url() -> str:
     raw = os.getenv("FASTAPI_API_URL")
     if raw:
         return f"{raw.rstrip('/')}/ml/scoring"
-    base = os.getenv("FASTAPI_BASE_URL", "http://localhost:8001").rstrip("/")
-    return f"{base}/api/ml/scoring"
+    MAIN = os.getenv("FASTAPI_MAIN_URL", "http://localhost:8001").rstrip("/")
+    return f"{MAIN}/api/ml/scoring"
 
 
 def _call_fastapi_scoring(payload: dict) -> dict:

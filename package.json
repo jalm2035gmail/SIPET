@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "sync:fontawesome": "mkdir -p ./static/webfonts && cp ./node_modules/@fortawesome/fontawesome-free/webfonts/*.woff2 ./static/webfonts/",
+    "sync:fontawesome": "mkdir -p ./static/backendfonts && cp ./node_modules/@fortawesome/fontawesome-free/backendfonts/*.woff2 ./static/backendfonts/",
     "prebuild:css": "npm run sync:fontawesome",
     "prewatch:css": "npm run sync:fontawesome",
     "build:css": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --minify",

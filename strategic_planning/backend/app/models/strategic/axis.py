@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
-from app.models.base import Base
+from app.models.MAIN import MAIN
 
 
-class StrategicAxis(Base):
+class StrategicAxis(MAIN):
     __tablename__ = "strategic_axes"
     id = Column(Integer, primary_key=True, index=True)
     strategic_plan_id = Column(Integer, ForeignKey("strategic_plans.id"))

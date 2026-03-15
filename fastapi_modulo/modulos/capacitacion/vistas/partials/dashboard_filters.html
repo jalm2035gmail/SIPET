@@ -1,0 +1,33 @@
+<div class="db-filters">
+  <div class="db-filter-group">
+    <label class="db-filter-label">Curso</label>
+    <select id="db-filter-curso" class="db-select">
+      <option value="">Todos los cursos</option>
+    </select>
+  </div>
+  <div class="db-filter-group">
+    <label class="db-filter-label">Estado</label>
+    <select id="db-filter-estado" class="db-select">
+      <option value="">Todos</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="en_progreso">En progreso</option>
+      <option value="completado">Completado</option>
+      <option value="reprobado">Reprobado</option>
+    </select>
+  </div>
+  <div class="db-filter-group">
+    <label class="db-filter-label">Departamento</label>
+    <input id="db-filter-dept" class="db-input" type="text" placeholder="Filtrar..." />
+  </div>
+  <div class="db-filter-group">
+    <label class="db-filter-label">Desde</label>
+    <input id="db-filter-desde" class="db-input" type="date" />
+  </div>
+  <div class="db-filter-group">
+    <label class="db-filter-label">Hasta</label>
+    <input id="db-filter-hasta" class="db-input" type="date" />
+  </div>
+  <button id="db-btn-filtrar" class="db-btn is-primary">Filtrar</button>
+  <button id="db-btn-limpiar" class="db-btn is-outline">Limpiar</button>
+  <a id="db-btn-csv" href="#" class="db-btn is-success" download>CSV</a>
+</div>

@@ -2,10 +2,10 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management import BaseCommand, call_command
+from django.core.management import MAINCommand, call_command
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "1.8 Programacion: refresca dashboards ejecutivos-operativos y registra ultima actualizacion para ejecucion automatizada (cron)."
 
     def add_arguments(self, parser):

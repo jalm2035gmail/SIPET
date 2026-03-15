@@ -5,16 +5,16 @@ Fecha ejecucion UTC: 2026-02-18T14:50:34.156958+00:00
 ## Alcance
 - Features internas incorporadas: recurrencia y actividad transaccional.
 - Fuente externa integrada: indice sintetico de estres economico.
-- Variantes comparadas contra baseline vigente.
+- Variantes comparadas contra MAINline vigente.
 
 ## Comparativo de variantes
 | Variante | Muestras | Avg score | Approval % | High risk % | Business proxy |
 |---|---:|---:|---:|---:|---:|
-| baseline_vigente | 0 | 0.0000 | 0.00 | 0.00 | 0.00 |
+| MAINline_vigente | 0 | 0.0000 | 0.00 | 0.00 | 0.00 |
 | variante_feature_interna | 0 | 0.0000 | 0.00 | 0.00 | 0.00 |
 | variante_hibrida_fuente_externa | 0 | 0.0000 | 0.00 | 0.00 | 0.00 |
 
-Variante recomendada: `baseline_vigente` (business_proxy=0.00).
+Variante recomendada: `MAINline_vigente` (business_proxy=0.00).
 
 ## Estado
 - Punto 3 de 8 completado tecnicamente.

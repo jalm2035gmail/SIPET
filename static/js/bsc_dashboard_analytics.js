@@ -61,7 +61,7 @@
       this.destroy();
 
       const payload = this.payload || {};
-      const baseOptions = {
+      const MAINOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -106,8 +106,8 @@
             },
           ],
         },
-        options: Object.assign({}, baseOptions, {
-          plugins: Object.assign({}, baseOptions.plugins, {
+        options: Object.assign({}, MAINOptions, {
+          plugins: Object.assign({}, MAINOptions.plugins, {
             annotation: {
               annotations: {
                 metaLine: {
@@ -194,8 +194,8 @@
             },
           ],
         },
-        options: Object.assign({}, baseOptions, {
-          plugins: Object.assign({}, baseOptions.plugins, {
+        options: Object.assign({}, MAINOptions, {
+          plugins: Object.assign({}, MAINOptions.plugins, {
             datalabels: {
               display: true,
               anchor: 'end',

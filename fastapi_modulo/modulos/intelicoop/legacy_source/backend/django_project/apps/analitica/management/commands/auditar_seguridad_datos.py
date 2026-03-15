@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.authentication.models import UserProfile
 
@@ -13,7 +13,7 @@ def _bool_text(value: bool) -> str:
     return "Cumple" if value else "Atencion"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Audita controles basicos de seguridad/cumplimiento y genera reporte."
 
     def add_arguments(self, parser):

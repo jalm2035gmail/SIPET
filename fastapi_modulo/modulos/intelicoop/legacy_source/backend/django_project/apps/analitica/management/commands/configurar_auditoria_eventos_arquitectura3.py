@@ -3,12 +3,12 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import EventoAuditoria
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = (
         "Arquitectura 3 - Etapa 4/4: valida implementacion de auditoria "
         "operativa y genera evidencias."

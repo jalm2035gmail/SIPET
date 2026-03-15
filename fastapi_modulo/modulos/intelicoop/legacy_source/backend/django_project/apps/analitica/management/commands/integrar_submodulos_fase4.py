@@ -2,12 +2,12 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 from apps.analitica.models import ReglaAsociacionProducto, ResultadoMoraTemprana, ResultadoScoring, ResultadoSegmentacionSocio
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Valida integracion entre submodulos de Fase 4 y genera evidencia de consistencia/versionado."
 
     def add_arguments(self, parser):
@@ -82,7 +82,7 @@ class Command(BaseCommand):
             "",
             "## Estado",
             "- Punto 5 de 7 completado tecnicamente.",
-            "- Integracion base entre scoring, mora temprana, segmentacion y reglas de asociacion validada.",
+            "- Integracion MAIN entre scoring, mora temprana, segmentacion y reglas de asociacion validada.",
             "",
             "## Artefactos",
             f"- Reporte CSV: `{report_csv}`",

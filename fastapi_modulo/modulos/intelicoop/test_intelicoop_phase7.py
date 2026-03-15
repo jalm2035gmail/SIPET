@@ -49,9 +49,9 @@ fake_main.is_admin_or_superadmin = _fake_is_admin_or_superadmin
 sys.modules["fastapi_modulo.main"] = fake_main
 
 
-from fastapi_modulo.db import Base, engine
-from fastapi_modulo.modulos.intelicoop.intelicoop import router
-from fastapi_modulo.modulos.intelicoop.intelicoop_db_models import (
+from fastapi_modulo.db import MAIN, engine
+from fastapi_modulo.modulos.intelicoop.controladores.intelicoop import router
+from fastapi_modulo.modulos.intelicoop.modelos.intelicoop_db_models import (
     IntelicoopCampania,
     IntelicoopContactoCampania,
     IntelicoopCredito,
@@ -101,8 +101,8 @@ def _auth_headers(*access: str, role: str = "usuario") -> dict[str, str]:
 
 
 def setup_function() -> None:
-    Base.metadata.drop_all(bind=engine, tables=INTELICOOP_TABLES, checkfirst=True)
-    Base.metadata.create_all(bind=engine, tables=INTELICOOP_TABLES, checkfirst=True)
+    MAIN.metadata.drop_all(bind=engine, tables=INTELICOOP_TABLES, checkfirst=True)
+    MAIN.metadata.create_all(bind=engine, tables=INTELICOOP_TABLES, checkfirst=True)
 
 
 def test_intelicoop_html_requires_access() -> None:

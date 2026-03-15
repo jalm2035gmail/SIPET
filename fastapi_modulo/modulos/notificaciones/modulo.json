@@ -1,0 +1,6 @@
+{
+  "label": "Conversaciones",
+  "description": "Notificaciones internas y mensajeria.",
+  "route": "/notificaciones",
+  "icon": "fa-regular fa-envelope"
+}

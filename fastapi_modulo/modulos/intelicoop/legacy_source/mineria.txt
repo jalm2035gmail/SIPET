@@ -106,7 +106,7 @@ Fase 3. Construcción del MVP
 - 3.2 Construcción del pipeline de entrenamiento:
   - Seleccionar dataset histórico y ventana temporal de entrenamiento.
   - Ejecutar limpieza, balanceo y transformación de variables.
-  - Entrenar modelo base (benchmark) y modelo candidato.
+  - Entrenar modelo MAIN (benchmark) y modelo candidato.
 - 3.3 Evaluación y selección de modelo:
   - Comparar métricas de desempeño (AUC, precision, recall, KS, lift).
   - Verificar estabilidad por segmento de socio y tipo de crédito.
@@ -134,7 +134,7 @@ Fase 3. Construcción del MVP
 - 3.9 Entregables obligatorios de la fase:
   - API de scoring operativa en ambiente productivo.
   - Tabla histórica de resultados de scoring activa.
-  - Documento de validación de modelo y baseline de métricas.
+  - Documento de validación de modelo y MAINline de métricas.
   - Acta de aceptación del MVP por negocio y tecnología.
 - ✅ Arranque técnico Fase 3:
   - ✅ Modelo y migración `ResultadoScoring` creados en Django.
@@ -143,7 +143,7 @@ Fase 3. Construcción del MVP
   - ✅ Integración inicial con frontend en creación de crédito para persistir scoring.
   - ✅ Pruebas API de analítica actualizadas y pasando (`manage.py test apps.analitica.tests`).
   - ✅ Punto 1 de 8 iniciado: diseño funcional/técnico del MVP documentado.
-  - ✅ Punto 2 de 8 completado técnicamente: pipeline de entrenamiento base ejecutado (benchmark vs candidato), artefacto de modelo actualizado y evidencia regenerable con `manage.py entrenar_scoring_mvp`.
+  - ✅ Punto 2 de 8 completado técnicamente: pipeline de entrenamiento MAIN ejecutado (benchmark vs candidato), artefacto de modelo actualizado y evidencia regenerable con `manage.py entrenar_scoring_mvp`.
   - ✅ Punto 3 de 8 completado técnicamente: evaluación global y por segmentos del scoring ejecutada, con decisión documentada de selección de modelo (`mantener_modelo_desplegado`).
   - ✅ Punto 4 de 8 completado técnicamente: servicio de inferencia reforzado con validaciones de negocio, errores controlados (`400/502`), trazabilidad por `request_id` y métrica `latency_ms` en cada respuesta.
   - ✅ Punto 5 de 8 completado técnicamente: persistencia histórica reforzada con trazabilidad por `solicitud_id` y `socio_id`, filtros de consulta y consistencia de `request_id` entre respuesta y registro persistido.
@@ -193,7 +193,7 @@ Fase 4. Modelos Complementarios
   - ✅ Punto 2 de 7 completado técnicamente: submódulo de mora temprana implementado con evaluación 30/60/90, clasificación de alerta (baja/media/alta), persistencia histórica en `ResultadoMoraTemprana`, endpoint API (`POST /api/analitica/ml/mora-temprana/evaluar/`) y publicación batch reproducible (`manage.py generar_alertas_mora_temprana`).
   - ✅ Punto 3 de 7 completado técnicamente: submódulo de segmentación implementado con ejecución mensual reproducible (`manage.py generar_segmentacion_mensual_socios`), tabla histórica `ResultadoSegmentacionSocio` por socio/fecha, perfiles descriptivos por segmento y endpoints de consulta/resumen (`GET /api/analitica/ml/segmentacion-socios/`, `GET /api/analitica/ml/segmentacion-socios/perfiles/`).
   - ✅ Punto 4 de 7 completado técnicamente: submódulo de reglas de asociación implementado con corrida batch tipo Apriori sobre cesta de productos por socio, filtrado por soporte/confianza/lift, publicación histórica en `ReglaAsociacionProducto`, endpoints de consulta/resumen (`GET /api/analitica/ml/reglas-asociacion/`, `GET /api/analitica/ml/reglas-asociacion/resumen/`) y comando reproducible (`manage.py generar_reglas_asociacion_productos`).
-  - ✅ Punto 5 de 7 completado técnicamente: integración base entre submódulos implementada con resumen unificado (`GET /api/analitica/ml/submodulos/resumen/`), estandarización de salida por `model_version/total_registros`, validación de consistencia por socio entre scoring-mora-segmentación y evidencia reproducible (`manage.py integrar_submodulos_fase4`).
+  - ✅ Punto 5 de 7 completado técnicamente: integración MAIN entre submódulos implementada con resumen unificado (`GET /api/analitica/ml/submodulos/resumen/`), estandarización de salida por `model_version/total_registros`, validación de consistencia por socio entre scoring-mora-segmentación y evidencia reproducible (`manage.py integrar_submodulos_fase4`).
   - ✅ Punto 6 de 7 completado técnicamente: validación funcional/técnica implementada con criterios auditables para mora, segmentación y reglas (cobertura, volumen, lift y estado global), acta reproducible (`manage.py validar_submodulos_fase4`) y evidencias en `docs/mineria/fase4/06_validacion_funcional_tecnica.*`.
   - ✅ Punto 7 de 7 completado técnicamente: cierre de entregables obligatorios de fase consolidado (mora, segmentación, reglas e informe de impacto inicial), con acta de cierre técnico y trazabilidad por evidencia (`manage.py cerrar_fase4_modelos_complementarios`).
 
@@ -298,7 +298,7 @@ Fase 7. Operación Continua y Mejora
 - 7.3 Mejora incremental del módulo:
   - Incorporar nuevas features internas (comportamiento digital, recurrencia transaccional).
   - Integrar nuevas fuentes externas de riesgo y contexto económico.
-  - Probar variantes de modelos y comparar con baseline vigente.
+  - Probar variantes de modelos y comparar con MAINline vigente.
 - 7.4 Ciclo de experimentación controlada:
   - Ejecutar pruebas A/B o shadow mode para nuevas versiones.
   - Comparar impacto en métricas antes de promover cambios.
@@ -323,14 +323,14 @@ Fase 7. Operación Continua y Mejora
 - ✅ Arranque técnico Fase 7:
   - ✅ Punto 1 de 8 completado técnicamente: monitoreo continuo del desempeño implementado con KPIs técnicos (disponibilidad/error/duración), KPIs de modelo (drift y composición de riesgo) y KPIs de negocio (mora, recuperación potencial, conversión comercial y aprobación), con evidencia reproducible (`manage.py monitorear_desempeno_continuo_fase7`).
   - ✅ Punto 2 de 8 completado técnicamente: gestión de drift y recalibración implementada con detección de deriva (7d vs 30d), ajuste de umbrales de decisión de scoring y disparo controlado de reentrenamiento (dry-run/ejecución), con evidencia reproducible (`manage.py gestionar_drift_recalibracion_fase7`).
-  - ✅ Punto 3 de 8 completado técnicamente: mejora incremental del módulo implementada con incorporación de features internas (recurrencia/actividad transaccional), integración de contexto externo de riesgo y comparación de variantes contra baseline para recomendación de evolución (`manage.py mejorar_incremental_modulo_fase7`).
-  - ✅ Punto 4 de 8 completado técnicamente: ciclo de experimentación controlada implementado con pruebas A/B y shadow mode, comparación de impacto frente a baseline y decisión operativa de promoción/rollback inmediato según guardrails (`manage.py experimentacion_controlada_fase7`).
+  - ✅ Punto 3 de 8 completado técnicamente: mejora incremental del módulo implementada con incorporación de features internas (recurrencia/actividad transaccional), integración de contexto externo de riesgo y comparación de variantes contra MAINline para recomendación de evolución (`manage.py mejorar_incremental_modulo_fase7`).
+  - ✅ Punto 4 de 8 completado técnicamente: ciclo de experimentación controlada implementado con pruebas A/B y shadow mode, comparación de impacto frente a MAINline y decisión operativa de promoción/rollback inmediato según guardrails (`manage.py experimentacion_controlada_fase7`).
   - ✅ Punto 5 de 8 completado técnicamente: gestión de deuda técnica y mantenimiento implementada con revisión de calidad/pruebas, control de dependencias y actualización documental, incluyendo backlog de mantenimiento priorizado (`manage.py gestionar_deuda_tecnica_mantenimiento_fase7`).
   - ✅ Punto 6 de 8 completado técnicamente: adopción organizacional implementada con plan de entrenamiento por área (riesgo/cobranzas/comercial), rutinas operativas de uso diario y backlog priorizado de retroalimentación por valor (`manage.py adopcion_organizacional_fase7`).
   - ✅ Punto 7 de 8 completado técnicamente: gobierno de roadmap evolutivo implementado con revisión trimestral, priorización por impacto/factibilidad y alineación de iniciativas con objetivos estratégicos de riesgo, recuperación y eficiencia (`manage.py gobierno_roadmap_evolutivo_fase7`).
   - ✅ Punto 8 de 8 completado técnicamente: cierre de entregables obligatorios de la fase consolidado (tablero permanente, plan de mejora continua, evidencia de retraining/recalibración y reporte ejecutivo periódico), con acta técnica reproducible (`manage.py cerrar_fase7_operacion_mejora`).
 
-Elementos Base para Implementación del Módulo de Minería de Datos
+Elementos MAIN para Implementación del Módulo de Minería de Datos
 
 1. Diagnóstico Inicial
 - El módulo debe arrancar con foco en crédito y riesgo.
@@ -375,7 +375,7 @@ Elementos Base para Implementación del Módulo de Minería de Datos
 
 6.1 Datos de Socios
 - id_socio, edad, género, estado civil, nivel educativo, actividad económica, zona geográfica.
-- fecha_alta_socio, antigüedad, canales usados (app/web/oficina).
+- fecha_alta_socio, antigüedad, canales usados (app/backend/oficina).
 
 6.2 Datos de Créditos
 - id_credito, id_socio, fecha_desembolso, monto, plazo, tasa, destino, garantías.
@@ -431,7 +431,7 @@ models.py (line 18)
 serializers.py (line 6)
 SociosList.jsx (line 23)
 AhorrosDashboard.jsx (line 35)
-Seguridad base por rol + 2FA.
+Seguridad MAIN por rol + 2FA.
 permissions.py (line 14)
 serializers.py (line 169)
 views.py (line 96)

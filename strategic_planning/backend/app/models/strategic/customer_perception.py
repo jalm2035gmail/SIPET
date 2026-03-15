@@ -2,10 +2,10 @@ from datetime import datetime
 from typing import Dict, List
 from sqlalchemy import Column, Integer, ForeignKey, JSON, Float, Text, DateTime
 from sqlalchemy.orm import relationship
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
-class CustomerPerception(BaseModel):
+class CustomerPerception(MAINModel):
     __tablename__ = "customer_perceptions"
 
     strategic_plan_id = Column(Integer, ForeignKey("strategic_plans.id"), nullable=False, unique=True)

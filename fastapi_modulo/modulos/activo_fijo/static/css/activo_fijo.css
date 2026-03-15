@@ -1,0 +1,133 @@
+.af-shell { padding: 20px; font-family: 'Inter', system-ui, sans-serif; color: #0f172a; }
+.af-hero { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 18px; margin-bottom: 24px; }
+.af-hero-head { display: flex; align-items: center; gap: 14px; }
+.af-hero-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.af-hero-copy h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+.af-hero-copy p {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  color: #64748b;
+}
+.af-kpi-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+.af-kpi-card { background: #fff; border: 1px solid rgba(15,23,42,.1); border-radius: 14px; padding: 14px 20px; min-width: 140px; text-align: center; }
+.af-kpi-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin-bottom: 6px; }
+.af-kpi-value { font-size: 26px; font-weight: 700; color: #0f172a; }
+.af-kpi-value.is-green { color: #16a34a; }
+.af-kpi-value.is-amber { color: #d97706; }
+.af-kpi-value.is-red { color: #dc2626; }
+.af-kpi-value-sm { font-size: 18px; }
+.af-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
+.af-module-nav {
+  display: grid;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+  position: sticky;
+  top: 20px;
+}
+.af-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid transparent;
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.af-nav-btn i {
+  width: 18px;
+  text-align: center;
+  color: #475569;
+}
+.af-nav-btn:hover {
+  background: #eef2ff;
+  border-color: #cbd5e1;
+  transform: translateX(2px);
+}
+.af-nav-btn.active {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.af-nav-btn.active i { color: #fff; }
+.af-panel { display: none; }
+.af-panel.active { display: block; }
+.af-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.af-panel-title { font-size: 17px; font-weight: 700; }
+.af-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; }
+.af-btn-primary { background: #0f172a; color: #fff; }
+.af-btn-secondary { background: #f1f5f9; color: #334155; border: 1.5px solid #e2e8f0; }
+.af-btn-danger { background: #fee2e2; color: #b91c1c; }
+.af-btn-warning { background: #fef3c7; color: #92400e; }
+.af-btn-sm { padding: 5px 10px; font-size: 12px; }
+.af-btn:hover { opacity: .88; }
+.af-table-wrap { overflow-x: auto; }
+.af-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.af-table th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+.af-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+.af-table tr:hover td { background: #fafafa; }
+.af-badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+.badge-activo { background: #dcfce7; color: #15803d; }
+.badge-asignado { background: #dbeafe; color: #1d4ed8; }
+.badge-en_mantenimiento { background: #fef3c7; color: #92400e; }
+.badge-dado_de_baja { background: #fee2e2; color: #b91c1c; }
+.badge-vigente { background: #dbeafe; color: #1d4ed8; }
+.badge-devuelto { background: #f1f5f9; color: #475569; }
+.badge-pendiente { background: #fef3c7; color: #92400e; }
+.badge-en_proceso { background: #dbeafe; color: #1d4ed8; }
+.badge-completado { background: #dcfce7; color: #15803d; }
+.badge-preventivo { background: #e0e7ff; color: #4338ca; }
+.badge-correctivo { background: #fef3c7; color: #92400e; }
+.badge-reparacion { background: #fee2e2; color: #b91c1c; }
+.af-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.af-form-group { display: grid; gap: 5px; }
+.af-form-group label { font-size: 12px; font-weight: 600; color: #475569; }
+.af-input { width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13.5px; background: #fff; }
+.af-input:focus { outline: none; border-color: #0f172a; }
+.af-form-actions { display: flex; gap: 10px; margin-top: 18px; }
+.af-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 900; display: none; align-items: center; justify-content: center; }
+.af-modal-backdrop.open { display: flex; }
+.af-modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.af-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.af-modal-title { font-size: 16px; font-weight: 700; }
+.af-modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #94a3b8; }
+.af-filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.af-filter-row select, .af-filter-row input { padding: 7px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
+.af-empty { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
+.af-section-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; margin-bottom: 20px; }
+.af-min-w-0 { min-width: 0; }
+.af-min-w-200 { min-width: 200px; }
+.af-col-span-full { grid-column: 1 / -1; }
+.af-input-readonly { background: #f8fafc; }
+.af-nowrap { white-space: nowrap; }
+
+@media (max-width: 960px) {
+  .af-layout { grid-template-columns: 1fr; }
+  .af-module-nav {
+    position: static;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}

@@ -10,6 +10,7 @@ from fastapi import Body
 from fastsipet_modulo.modulos.ia.ia_service import complete_with_fallback
 from fastapi_modulo.db import SessionLocal, IAInteraction, IASuggestionDraft, IAFeatureFlag, IAJob
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from fastapi.templating import Jinja2Templates
 import re
 import unicodedata
@@ -26,10 +27,10 @@ router = APIRouter()
 templates = Jinja2Templates(directory="fastsipet_modulo/modulos/ia")
 _IA_JOB_EXECUTOR = ThreadPoolExecutor(max_workers=max(2, int(os.environ.get("IA_JOB_WORKERS", "4"))))
 _RAG_MESSAGE_RETENTION_DAYS = max(1, int(os.environ.get("RAG_MESSAGE_RETENTION_DAYS", "2") or 2))
-_BASE_IA_EXTRA_BLOCK = "base_ia_extra"
-_BASE_IA_WEEKLY_META_BLOCK = "base_ia_weekly_meta"
-_BASE_IA_WEEKLY_INTERVAL_DAYS = max(1, int(os.environ.get("BASE_IA_WEEKLY_INTERVAL_DAYS", "7") or 7))
-_BASE_IA_CRON_LOCK = threading.Lock()
+_MAIN_IA_EXTRA_BLOCK = "MAIN_ia_extra"
+_MAIN_IA_WEEKLY_META_BLOCK = "MAIN_ia_weekly_meta"
+_MAIN_IA_WEEKLY_INTERVAL_DAYS = max(1, int(os.environ.get("MAIN_IA_WEEKLY_INTERVAL_DAYS", "7") or 7))
+_MAIN_IA_CRON_LOCK = threading.Lock()
 
 _POA_RISK_ALERTS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS ia_poa_risk_alerts (
@@ -208,15 +209,15 @@ def _build_weekly_progress_snapshot(db) -> dict:
     }
 
 
-def _generate_weekly_base_extra_text(db, strategic_chunks: list, progress: dict) -> str:
+def _generate_weekly_MAIN_extra_text(db, strategic_chunks: list, progress: dict) -> str:
     context_lines = []
     for item in (strategic_chunks or [])[:8]:
-        title = _norm_text(item.get("title")) or "Base estratégica"
+        title = _norm_text(item.get("title")) or "MAIN estratégica"
         content = _norm_text(item.get("content"))
         if content:
             context_lines.append(f"{title}: {content[:1200]}")
     prompt = (
-        "Genera un resumen ejecutivo semanal en español para una base de conocimiento IA institucional. "
+        "Genera un resumen ejecutivo semanal en español para una MAIN de conocimiento IA institucional. "
         "Debe ser claro, accionable y útil para responder preguntas de estrategia y táctica. "
         "Formato: 1) Panorama general, 2) Avance y brechas, 3) Prioridades de la semana, 4) Riesgos y mitigación. "
         "Máximo 450 palabras.\n\n"
@@ -244,10 +245,10 @@ def _generate_weekly_base_extra_text(db, strategic_chunks: list, progress: dict)
 
 
 def _refresh_weekly_strategic_extra_if_due(db, force: bool = False) -> dict:
-    with _BASE_IA_CRON_LOCK:
+    with _MAIN_IA_CRON_LOCK:
         _ensure_strategic_identity_table(db)
-        payload_map = _get_identity_payload_map(db, [_BASE_IA_WEEKLY_META_BLOCK])
-        meta = _safe_json_loads(payload_map.get(_BASE_IA_WEEKLY_META_BLOCK, "{}"), {})
+        payload_map = _get_identity_payload_map(db, [_MAIN_IA_WEEKLY_META_BLOCK])
+        meta = _safe_json_loads(payload_map.get(_MAIN_IA_WEEKLY_META_BLOCK, "{}"), {})
         last_refresh_raw = _norm_text(meta.get("last_refresh_at"))
         now = datetime.utcnow()
         last_refresh_dt = None
@@ -256,37 +257,37 @@ def _refresh_weekly_strategic_extra_if_due(db, force: bool = False) -> dict:
                 last_refresh_dt = datetime.fromisoformat(last_refresh_raw)
             except Exception:
                 last_refresh_dt = None
-        due = force or (last_refresh_dt is None) or ((now - last_refresh_dt) >= timedelta(days=_BASE_IA_WEEKLY_INTERVAL_DAYS))
+        due = force or (last_refresh_dt is None) or ((now - last_refresh_dt) >= timedelta(days=_MAIN_IA_WEEKLY_INTERVAL_DAYS))
         if not due:
-            next_at = (last_refresh_dt + timedelta(days=_BASE_IA_WEEKLY_INTERVAL_DAYS)).isoformat() if last_refresh_dt else ""
+            next_at = (last_refresh_dt + timedelta(days=_MAIN_IA_WEEKLY_INTERVAL_DAYS)).isoformat() if last_refresh_dt else ""
             return {
                 "updated": False,
                 "reason": "not_due",
                 "last_refresh_at": last_refresh_raw,
                 "next_refresh_at": next_at,
-                "interval_days": _BASE_IA_WEEKLY_INTERVAL_DAYS,
+                "interval_days": _MAIN_IA_WEEKLY_INTERVAL_DAYS,
             }
         progress = _build_weekly_progress_snapshot(db)
         strategic_chunks = _retrieve_strategic_context(db, "estrategia avance riesgos prioridades", top_k=8, include_extra=False)
-        new_text = _generate_weekly_base_extra_text(db, strategic_chunks, progress)
-        _upsert_identity_payload(db, _BASE_IA_EXTRA_BLOCK, {"texto": new_text})
-        next_at = (now + timedelta(days=_BASE_IA_WEEKLY_INTERVAL_DAYS)).isoformat()
+        new_text = _generate_weekly_MAIN_extra_text(db, strategic_chunks, progress)
+        _upsert_identity_payload(db, _MAIN_IA_EXTRA_BLOCK, {"texto": new_text})
+        next_at = (now + timedelta(days=_MAIN_IA_WEEKLY_INTERVAL_DAYS)).isoformat()
         new_meta = {
             "last_refresh_at": now.isoformat(),
             "next_refresh_at": next_at,
-            "interval_days": _BASE_IA_WEEKLY_INTERVAL_DAYS,
+            "interval_days": _MAIN_IA_WEEKLY_INTERVAL_DAYS,
             "last_status": "ok",
             "last_error": "",
             "generated_chars": len(new_text),
             "progress_snapshot": progress,
         }
-        _upsert_identity_payload(db, _BASE_IA_WEEKLY_META_BLOCK, new_meta)
+        _upsert_identity_payload(db, _MAIN_IA_WEEKLY_META_BLOCK, new_meta)
         db.commit()
         return {
             "updated": True,
             "last_refresh_at": new_meta["last_refresh_at"],
             "next_refresh_at": next_at,
-            "interval_days": _BASE_IA_WEEKLY_INTERVAL_DAYS,
+            "interval_days": _MAIN_IA_WEEKLY_INTERVAL_DAYS,
             "generated_chars": len(new_text),
         }
 
@@ -549,6 +550,47 @@ def _norm_text(value) -> str:
     return str(value or "").strip()
 
 
+def _assistant_daypart_greeting() -> str:
+    try:
+        hour = datetime.now(ZoneInfo("America/Mexico_City")).hour
+    except Exception:
+        hour = datetime.now().hour
+    if 6 <= hour < 12:
+        return "Buenos días"
+    if 12 <= hour < 20:
+        return "Buenas tardes"
+    return "Buenas noches"
+
+
+def _strip_leading_assistant_greeting(text: str) -> str:
+    value = _norm_text(text)
+    if not value:
+        return ""
+    pattern = re.compile(
+        r"^\s*(?:hola|saludos|buenos\s+d[ií]as|buenas\s+tardes|buenas\s+noches|qué\s+tal|que\s+tal)"
+        r"[\s,.:;¡!¿?\-]*",
+        re.IGNORECASE,
+    )
+    previous = None
+    while value and value != previous:
+        previous = value
+        value = pattern.sub("", value, count=1).strip()
+    return value
+
+
+def _format_assistant_answer(text: str) -> str:
+    greeting = _assistant_daypart_greeting()
+    body = _strip_leading_assistant_greeting(text)
+    if not body:
+        return f"{greeting}. ¿Tiene otra pregunta o consulta?"
+    formatted = f"{greeting}. {body}".strip()
+    if not re.search(r"otra\s+(pregunta|consulta)", formatted, re.IGNORECASE):
+        if formatted[-1] not in ".!?":
+            formatted += "."
+        formatted += " ¿Tiene otra pregunta o consulta?"
+    return formatted
+
+
 def _norm_status(value) -> str:
     s = _norm_text(value).lower()
     s = unicodedata.normalize("NFKD", s)
@@ -601,6 +643,172 @@ def _build_rule_recommendation(rule_hits: list) -> str:
     if "no_owner" in rule_hits:
         return "Asignar responsable directo y responsables de apoyo."
     return "Revisar dependencias y ajustar cronograma para evitar escalamiento de riesgo."
+
+
+def _is_effectively_completed(status: str, delivery_status: str, progress: float) -> bool:
+    status_norm = _norm_status(status)
+    delivery_norm = _norm_status(delivery_status)
+    return (
+        "terminad" in status_norm
+        or "hech" in status_norm
+        or "aprobad" in delivery_norm
+        or float(progress or 0) >= 100
+    )
+
+
+def _detect_user_activity_query_mode(question: str) -> str:
+    q = _norm_status(question)
+    activity_markers = {
+        "actividad", "actividades", "tarea", "tareas", "pendiente", "pendientes",
+        "atrasada", "atrasadas", "atrasado", "atrasados", "vence", "vencidas", "vencidos",
+    }
+    self_markers = {
+        "tengo", "mis", "mias", "mios", "mío", "mía", "asignadas", "asignados", "a mi", "para mi",
+    }
+    if not any(marker in q for marker in activity_markers):
+        return ""
+    if not any(marker in q for marker in self_markers) and "que actividades" not in q and "qué actividades" not in question.lower():
+        return ""
+    if any(marker in q for marker in {"atrasad", "vencid", "vencen", "vencidas", "vencidos"}):
+        return "overdue"
+    if any(marker in q for marker in {"pendiente", "pendientes", "por hacer", "sin terminar"}):
+        return "pending"
+    return "all"
+
+
+def _resolve_current_user_aliases(db, username: str) -> list[str]:
+    uname = _norm_text(username).lower()
+    aliases: set[str] = set()
+    if uname:
+        aliases.add(uname)
+    if not uname:
+        return []
+    try:
+        row = db.execute(
+            text(
+                """
+                SELECT username, full_name
+                FROM users
+                WHERE lower(COALESCE(username, '')) = :username
+                LIMIT 1
+                """
+            ),
+            {"username": uname},
+        ).fetchone()
+    except Exception:
+        row = None
+    if row:
+        aliases.add(_norm_text(getattr(row, "username", "")).lower())
+        full_name = _norm_text(getattr(row, "full_name", "")).lower()
+        if full_name:
+            aliases.add(full_name)
+    return sorted(alias for alias in aliases if alias)
+
+
+def _list_user_activities(db, tenant: str, aliases: list[str], mode: str = "all", limit: int = 8) -> list[dict]:
+    alias_list = [str(item or "").strip().lower() for item in (aliases or []) if str(item or "").strip()]
+    if not alias_list:
+        return []
+    params = {"tenant_id": _norm_text(tenant).lower() or "default"}
+    placeholders = []
+    for idx, alias in enumerate(alias_list):
+        key = f"alias_{idx}"
+        params[key] = alias
+        placeholders.append(f":{key}")
+    rows = db.execute(
+        text(
+            f"""
+            SELECT
+                a.id AS activity_id,
+                COALESCE(a.codigo, '') AS activity_code,
+                COALESCE(a.nombre, '') AS activity_name,
+                COALESCE(a.status, '') AS activity_status,
+                COALESCE(a.entrega_estado, '') AS entrega_estado,
+                COALESCE(a.avance, 0) AS progress,
+                COALESCE(a.responsable, '') AS owner,
+                COALESCE(a.fecha_final, '') AS end_date,
+                COALESCE(o.nombre, '') AS objective_name,
+                COALESCE(ax.nombre, '') AS axis_name
+            FROM poa_activities a
+            LEFT JOIN strategic_objectives_config o ON o.id = a.objective_id
+            LEFT JOIN strategic_axes_config ax ON ax.id = o.eje_id
+            WHERE lower(COALESCE(a.tenant_id, 'default')) = :tenant_id
+              AND lower(COALESCE(a.responsable, '')) IN ({", ".join(placeholders)})
+            ORDER BY
+              CASE
+                WHEN COALESCE(a.fecha_final, '') = '' THEN 1
+                ELSE 0
+              END ASC,
+              date(COALESCE(a.fecha_final, '9999-12-31')) ASC,
+              a.id ASC
+            """
+        ),
+        params,
+    ).fetchall()
+    today = datetime.utcnow().date()
+    items: list[dict] = []
+    for row in rows:
+        progress = float(row.progress or 0)
+        status = _norm_text(row.activity_status)
+        delivery_status = _norm_text(row.entrega_estado)
+        end_date = _parse_iso_date(row.end_date)
+        state = _activity_state_label(status, end_date, progress, delivery_status)
+        is_done = _is_effectively_completed(status, delivery_status, progress)
+        is_overdue = bool((end_date and end_date < today and progress < 100) or "atras" in _norm_status(status))
+        if mode == "pending" and is_done:
+            continue
+        if mode == "overdue" and not is_overdue:
+            continue
+        items.append(
+            {
+                "activity_id": int(row.activity_id or 0),
+                "activity_code": _norm_text(row.activity_code),
+                "activity_name": _norm_text(row.activity_name),
+                "status": status,
+                "delivery_status": delivery_status,
+                "progress": round(progress, 2),
+                "state": state,
+                "owner": _norm_text(row.owner),
+                "end_date": _norm_text(row.end_date),
+                "objective_name": _norm_text(row.objective_name),
+                "axis_name": _norm_text(row.axis_name),
+                "is_overdue": is_overdue,
+            }
+        )
+    return items[: max(1, int(limit or 8))]
+
+
+def _build_user_activities_answer(mode: str, activities: list[dict]) -> str:
+    total = len(activities or [])
+    if mode == "overdue":
+        if total == 0:
+            return "No tienes actividades atrasadas registradas."
+        intro = f"Tienes {total} actividad{'es' if total != 1 else ''} atrasada{'s' if total != 1 else ''}."
+    elif mode == "pending":
+        if total == 0:
+            return "No tienes actividades pendientes registradas."
+        intro = f"Tienes {total} actividad{'es' if total != 1 else ''} pendiente{'s' if total != 1 else ''}."
+    else:
+        if total == 0:
+            return "No tienes actividades asignadas registradas."
+        intro = f"Tienes {total} actividad{'es' if total != 1 else ''} asignada{'s' if total != 1 else ''}."
+
+    details = []
+    for idx, item in enumerate(activities[:8], start=1):
+        code = _norm_text(item.get("activity_code"))
+        name = _norm_text(item.get("activity_name")) or "Actividad sin nombre"
+        state = _norm_text(item.get("state")).replace("_", " ")
+        progress = float(item.get("progress") or 0)
+        end_date = _norm_text(item.get("end_date"))
+        suffix = []
+        if state:
+            suffix.append(f"estado {state}")
+        suffix.append(f"avance {int(round(progress))}%")
+        if end_date:
+            suffix.append(f"vence {end_date[:10]}")
+        label = f"{code} · {name}" if code else name
+        details.append(f"{idx}. {label} ({', '.join(suffix)}).")
+    return intro + " " + " ".join(details)
 
 
 def _compute_poa_risk_items(db):
@@ -1229,15 +1437,15 @@ def _load_document_file_text(file_path: str) -> str:
 
 
 def _chunk_text(text_in: str, max_chars: int = 900, overlap: int = 140) -> list:
-    base = _clean_text_for_index(text_in)
-    if not base:
+    MAIN = _clean_text_for_index(text_in)
+    if not MAIN:
         return []
     chunks = []
     start = 0
-    n = len(base)
+    n = len(MAIN)
     while start < n:
         end = min(start + max_chars, n)
-        chunk = base[start:end].strip()
+        chunk = MAIN[start:end].strip()
         if chunk:
             chunks.append(chunk)
         if end >= n:
@@ -1527,9 +1735,9 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
     # ── 1. Leer todos los bloques relevantes de strategic_identity_config ──
     all_blocks = [
         "mision", "vision", "valores", "fundamentacion",
-        "base_ia_extra", "base_ia_weekly_meta",
-        "poa_base_ia_extra", "poa_base_ia_weekly_meta",
-        "presupuesto_base_ia_extra", "presupuesto_base_ia_weekly_meta",
+        "MAIN_ia_extra", "MAIN_ia_weekly_meta",
+        "poa_MAIN_ia_extra", "poa_MAIN_ia_weekly_meta",
+        "presupuesto_MAIN_ia_extra", "presupuesto_MAIN_ia_weekly_meta",
     ]
     try:
         identity_rows = db.execute(
@@ -1565,7 +1773,7 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
             "source_tag": "S-IDENTIDAD",
             "title": "Identidad institucional (misión, visión, valores)",
             "content": "\n".join(parts),
-            "source_type": "strategic_base",
+            "source_type": "strategic_MAIN",
         })
 
     # ── 3. Fundamentación ──
@@ -1577,14 +1785,14 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
         chunks.append({
             "score": 0.8,
             "source_tag": "S-FUNDAMENTACION",
-            "title": "Base estratégica: Fundamentación",
+            "title": "MAIN estratégica: Fundamentación",
             "content": fundamentacion_text[:3000],
-            "source_type": "strategic_base",
+            "source_type": "strategic_MAIN",
         })
 
-    # ── 4. Base IA Estrategia (snapshot semanal generado por IA) ──
+    # ── 4. MAIN IA Estrategia (snapshot semanal generado por IA) ──
     if include_extra:
-        extra_payload = _safe_json_loads(identity_map.get("base_ia_extra", "{}"), {})
+        extra_payload = _safe_json_loads(identity_map.get("MAIN_ia_extra", "{}"), {})
         extra_text = _clean_text_for_index(str((extra_payload if isinstance(extra_payload, dict) else {}).get("texto") or ""))
         if extra_text:
             chunks.append({
@@ -1592,10 +1800,10 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
                 "source_tag": "S-ESTRATEGIA-EXTRA",
                 "title": "Resumen semanal IA · Plan Estratégico",
                 "content": extra_text[:4000],
-                "source_type": "strategic_base",
+                "source_type": "strategic_MAIN",
             })
 
-    weekly_meta = _safe_json_loads(identity_map.get("base_ia_weekly_meta", "{}"), {})
+    weekly_meta = _safe_json_loads(identity_map.get("MAIN_ia_weekly_meta", "{}"), {})
     if isinstance(weekly_meta, dict) and weekly_meta and wants_estrategia:
         progress_json = weekly_meta.get("progress_snapshot", {})
         chunks.append({
@@ -1606,22 +1814,22 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
                 f"Corte: {_norm_text(weekly_meta.get('last_refresh_at')) or 'N/D'}\n"
                 + json.dumps(progress_json if isinstance(progress_json, dict) else {}, ensure_ascii=False)
             )[:3000],
-            "source_type": "strategic_base",
+            "source_type": "strategic_MAIN",
         })
 
     # ── 5. POA: datos de actividades por responsable/departamento/region ──
     if wants_poa and include_extra:
-        poa_extra = _safe_json_loads(identity_map.get("poa_base_ia_extra", "{}"), {})
+        poa_extra = _safe_json_loads(identity_map.get("poa_MAIN_ia_extra", "{}"), {})
         poa_text = _clean_text_for_index(str((poa_extra if isinstance(poa_extra, dict) else {}).get("texto") or ""))
         if poa_text:
             chunks.append({
                 "score": 1.5,
                 "source_tag": "S-POA-DATOS",
-                "title": "Base IA · POA — ejes, objetivos, actividades por responsable",
+                "title": "MAIN IA · POA — ejes, objetivos, actividades por responsable",
                 "content": poa_text[:5000],
-                "source_type": "poa_base",
+                "source_type": "poa_MAIN",
             })
-        poa_meta = _safe_json_loads(identity_map.get("poa_base_ia_weekly_meta", "{}"), {})
+        poa_meta = _safe_json_loads(identity_map.get("poa_MAIN_ia_weekly_meta", "{}"), {})
         if isinstance(poa_meta, dict) and poa_meta:
             chunks.append({
                 "score": 1.3,
@@ -1631,22 +1839,22 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
                     f"Corte: {_norm_text(poa_meta.get('last_refresh_at')) or 'N/D'} · "
                     f"Chars generados: {int(poa_meta.get('generated_chars') or 0)}"
                 )[:500],
-                "source_type": "poa_base",
+                "source_type": "poa_MAIN",
             })
 
     # ── 6. Presupuesto: rubros, control mensual, ejecución ──
     if wants_presupuesto and include_extra:
-        pres_extra = _safe_json_loads(identity_map.get("presupuesto_base_ia_extra", "{}"), {})
+        pres_extra = _safe_json_loads(identity_map.get("presupuesto_MAIN_ia_extra", "{}"), {})
         pres_text = _clean_text_for_index(str((pres_extra if isinstance(pres_extra, dict) else {}).get("texto") or ""))
         if pres_text:
             chunks.append({
                 "score": 1.5,
                 "source_tag": "S-PRESUPUESTO-DATOS",
-                "title": "Base IA · Presupuesto — rubros, ingresos, egresos, control mensual",
+                "title": "MAIN IA · Presupuesto — rubros, ingresos, egresos, control mensual",
                 "content": pres_text[:5000],
-                "source_type": "presupuesto_base",
+                "source_type": "presupuesto_MAIN",
             })
-        pres_meta = _safe_json_loads(identity_map.get("presupuesto_base_ia_weekly_meta", "{}"), {})
+        pres_meta = _safe_json_loads(identity_map.get("presupuesto_MAIN_ia_weekly_meta", "{}"), {})
         if isinstance(pres_meta, dict) and pres_meta:
             last_ok = _norm_text(pres_meta.get("last_refresh_at")) or "N/D"
             next_ok = _norm_text(pres_meta.get("next_refresh_at")) or "N/D"
@@ -1655,7 +1863,7 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
                 "source_tag": "S-PRESUPUESTO-META",
                 "title": "Estado snapshot presupuesto",
                 "content": f"Corte: {last_ok} · Próxima actualización: {next_ok}",
-                "source_type": "presupuesto_base",
+                "source_type": "presupuesto_MAIN",
             })
 
     # ── 7. Ejes y objetivos estratégicos (estructura) ──
@@ -1695,7 +1903,7 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
                 f"Eje {ax.get('axis_code') or aid}: {ax.get('axis_name')}\n"
                 + ("Objetivos: " + " | ".join(obj_lines) if obj_lines else "Sin objetivos registrados")
             )[:3000],
-            "source_type": "strategic_base",
+            "source_type": "strategic_MAIN",
         })
 
     # ── 8. Scoring BM25 sobre los chunks recopilados ──
@@ -1712,7 +1920,7 @@ def _retrieve_strategic_context(db, query_text: str, top_k: int = 4, include_ext
         c_set = set(c_tokens)
         overlap = len(q_set.intersection(c_set))
         bm25 = float(overlap) / math.sqrt(float(len(c_set) or 1)) if overlap > 0 else 0.0
-        # Combinar BM25 con score de intención base del chunk
+        # Combinar BM25 con score de intención MAIN del chunk
         combined = bm25 + float(item.get("score", 0.0))
         scored.append({**item, "score": round(combined, 6)})
     scored.sort(key=lambda x: x["score"], reverse=True)
@@ -2103,7 +2311,7 @@ def v1_suggest_kpi(request: Request, payload: dict = Body(...)):
             "Genera una propuesta de KPI estratégico en español.",
             f"Eje: {eje or 'N/D'}",
             f"Objetivo: {objetivo or 'N/D'}",
-            f"Nombre base: {nombre or 'N/D'}",
+            f"Nombre MAIN: {nombre or 'N/D'}",
             f"Valor actual: {valor_actual or 'N/D'}",
             f"Meta: {meta or 'N/D'}",
             f"Estado: {estado or 'N/D'}",
@@ -2797,6 +3005,62 @@ def v1_rag_chat(request: Request, payload: dict = Body(...)):
         except Exception:
             db.rollback()
         top_k = int(payload.get("top_k", 6) or 6)
+        activity_mode = _detect_user_activity_query_mode(question)
+
+        if activity_mode:
+            aliases = _resolve_current_user_aliases(db, username)
+            user_activities = _list_user_activities(db, tenant, aliases, mode=activity_mode, limit=8)
+            answer = _format_assistant_answer(_build_user_activities_answer(activity_mode, user_activities))
+            now_iso = datetime.utcnow().isoformat()
+            conversation_id = _norm_text(payload.get("conversation_id")) or f"conv-{uuid.uuid4().hex[:12]}"
+            db.execute(
+                text(
+                    """
+                    INSERT INTO ia_rag_messages (
+                        conversation_id, tenant_id, username, role, message_type, message_text, citations_json, created_at
+                    ) VALUES (
+                        :conversation_id, :tenant_id, :username, :role, 'user', :message_text, '[]', :created_at
+                    )
+                    """
+                ),
+                {
+                    "conversation_id": conversation_id,
+                    "tenant_id": tenant,
+                    "username": username,
+                    "role": role,
+                    "message_text": question,
+                    "created_at": now_iso,
+                },
+            )
+            db.execute(
+                text(
+                    """
+                    INSERT INTO ia_rag_messages (
+                        conversation_id, tenant_id, username, role, message_type, message_text, citations_json, created_at
+                    ) VALUES (
+                        :conversation_id, :tenant_id, :username, :role, 'assistant', :message_text, '[]', :created_at
+                    )
+                    """
+                ),
+                {
+                    "conversation_id": conversation_id,
+                    "tenant_id": tenant,
+                    "username": username,
+                    "role": role,
+                    "message_text": answer,
+                    "created_at": now_iso,
+                },
+            )
+            db.commit()
+            return {
+                "success": True,
+                "data": {
+                    "conversation_id": conversation_id,
+                    "answer": answer,
+                    "citations": [],
+                    "retrieved_chunks": 0,
+                },
+            }
 
         # --- Respuesta conversacional directa (saludos, agradecimientos, etc.) ---
         _CONVERSATIONAL = {
@@ -2824,6 +3088,7 @@ def v1_rag_chat(request: Request, payload: dict = Body(...)):
                 _conv_answer = ""
             if not _conv_answer:
                 _conv_answer = "¡Hola! ¿En qué te puedo ayudar?"
+            _conv_answer = _format_assistant_answer(_conv_answer)
             _now = datetime.utcnow().isoformat()
             _conv_id = _norm_text(payload.get("conversation_id")) or f"conv-{uuid.uuid4().hex[:12]}"
             for _role_msg, _text_msg, _cit in [
@@ -2871,6 +3136,7 @@ def v1_rag_chat(request: Request, payload: dict = Body(...)):
                     "Puedo ayudarte de forma general con esta consulta. "
                     "Si deseas una respuesta basada en documentos internos, indexa primero el repositorio RAG."
                 )
+            answer = _format_assistant_answer(answer)
             now_iso = datetime.utcnow().isoformat()
             db.execute(
                 text(
@@ -2943,7 +3209,7 @@ def v1_rag_chat(request: Request, payload: dict = Body(...)):
                 seen_docs.add(source_doc_id)
         for idx, item in enumerate(strategic_chunks, start=1):
             source_tag = f"S{idx}"
-            title = _norm_text(item.get("title")) or "Base estratégica"
+            title = _norm_text(item.get("title")) or "MAIN estratégica"
             content = _norm_text(item.get("content"))
             if not content:
                 continue
@@ -2953,9 +3219,9 @@ def v1_rag_chat(request: Request, payload: dict = Body(...)):
                     "source_tag": source_tag,
                     "doc_id": 0,
                     "title": title,
-                    "estado": "base_estrategica",
-                    "file_path": "db://strategic_base",
-                    "source_type": "strategic_base",
+                    "estado": "MAIN_estrategica",
+                    "file_path": "db://strategic_MAIN",
+                    "source_type": "strategic_MAIN",
                 }
             )
 
@@ -2975,6 +3241,7 @@ def v1_rag_chat(request: Request, payload: dict = Body(...)):
         answer = _extract_text_from_provider_result(complete_with_fallback(prompt)).strip()
         if not answer:
             answer = "No fue posible generar respuesta con la evidencia disponible."
+        answer = _format_assistant_answer(answer)
         now_iso = datetime.utcnow().isoformat()
         db.execute(
             text(

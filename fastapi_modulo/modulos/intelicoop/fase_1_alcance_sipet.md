@@ -29,7 +29,7 @@ El codigo disponible mezcla tres capas:
 
 ### Dominio operativo
 
-- `socios`: catalogo base de personas con segmento simple.
+- `socios`: catalogo MAIN de personas con segmento simple.
 - `creditos`: solicitudes, estados y pagos.
 - `ahorros`: cuentas y transacciones.
 - `campanias`: campanas comerciales y prospectos.
@@ -46,7 +46,7 @@ El codigo disponible mezcla tres capas:
 
 - usuarios, roles y 2FA propios.
 - JWT y endpoints de autenticacion.
-- frontend aislado con rutas `/web`.
+- frontend aislado con rutas `/backend`.
 - servicio FastAPI para scoring.
 
 ## Decision de alcance para SIPET
@@ -74,7 +74,7 @@ El codigo disponible mezcla tres capas:
 - registro publico, login, forgot password y JWT propios
 - layouts y shell de frontend independientes
 - docker y despliegue separado
-- base de datos SQLite local de la app original
+- MAIN de datos SQLite local de la app original
 
 ## Estructura objetivo en SIPET
 
@@ -92,7 +92,7 @@ Si el modulo crece, se puede dividir por archivos internos, pero siempre bajo el
 
 - usar autenticacion y sesion de SIPET
 - usar permisos y roles de SIPET; no conservar `authentication` como subsistema aparte
-- usar layout base y menu de SIPET
+- usar layout MAIN y menu de SIPET
 - evitar mantener React/Vite como frontend independiente salvo que una parte concreta sea imposible de simplificar
 - si el scoring sigue existiendo, exponerlo como servicio interno del modulo o como funcion del backend principal
 
@@ -194,7 +194,7 @@ Para arrancar la migracion:
 
 - el scoring se conserva en `intelicoop` como capacidad propia del modulo
 - no se movera todavia a una capa compartida de SIPET
-- se migrara como servicio interno del backend principal, usando el modelo y la logica ya existentes como base
+- se migrara como servicio interno del backend principal, usando el modelo y la logica ya existentes como MAIN
 
 ### Decision 6: dashboard
 

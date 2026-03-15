@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg
 from django.utils import timezone as dj_timezone
 
@@ -15,7 +15,7 @@ def _estado(valor: float, umbral: float, mayor_mejor: bool = True) -> str:
     return "Cumple" if valor <= umbral else "En revision"
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Monitorea continuamente KPIs tecnicos, de modelo y de negocio para Fase 7."
 
     def add_arguments(self, parser):

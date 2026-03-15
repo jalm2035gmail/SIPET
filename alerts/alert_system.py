@@ -8,7 +8,7 @@ import hashlib
 import smtplib
 import asyncio
 import aiohttp
-import websockets
+import backendsockets
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
@@ -71,14 +71,14 @@ class AlertSource(Enum):
 class NotificationChannel(Enum):
     """Canales de notificación"""
     EMAIL = "email"
-    WEB = "web"
+    backend = "backend"
     MOBILE = "mobile"
     SMS = "sms"
     SLACK = "slack"
     TEAMS = "teams"
     WHATSAPP = "whatsapp"
     PUSH = "push"
-    WEBHOOK = "webhook"
+    backendHOOK = "backendhook"
 
 class EscalationLevel(Enum):
     """Niveles de escalamiento"""
@@ -586,11 +586,11 @@ class AlertEngine:
                 'from_email': 'alerts@empresa.com'
             }
         )
-        self.channels[NotificationChannel.WEB] = ChannelConfig(
-            channel=NotificationChannel.WEB,
+        self.channels[NotificationChannel.backend] = ChannelConfig(
+            channel=NotificationChannel.backend,
             priority=2,
             config={
-                'websocket_url': 'ws://localhost:8080/ws'
+                'backendsocket_url': 'ws://localhost:8080/ws'
             }
         )
         self.channels[NotificationChannel.MOBILE] = ChannelConfig(

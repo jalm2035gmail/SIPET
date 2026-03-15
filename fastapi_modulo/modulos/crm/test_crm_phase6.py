@@ -47,9 +47,9 @@ sys.modules["fastapi_modulo.main"] = fake_main
 
 # ── Imports del módulo bajo prueba ────────────────────────────────────────────
 
-from fastapi_modulo.db import Base, engine  # noqa: E402
-from fastapi_modulo.modulos.crm.crm import router  # noqa: E402
-from fastapi_modulo.modulos.crm.crm_db_models import (  # noqa: E402
+from fastapi_modulo.db import MAIN, engine  # noqa: E402
+from fastapi_modulo.modulos.crm.controladores.crm import router  # noqa: E402
+from fastapi_modulo.modulos.crm.modelos.crm_db_models import (  # noqa: E402
     CrmActividad,
     CrmCampania,
     CrmContacto,
@@ -92,8 +92,8 @@ def _auth(role: str = "usuario", *access: str) -> dict[str, str]:
 
 
 def setup_function() -> None:
-    Base.metadata.drop_all(bind=engine, tables=CRM_TABLES, checkfirst=True)
-    Base.metadata.create_all(bind=engine, tables=CRM_TABLES, checkfirst=True)
+    MAIN.metadata.drop_all(bind=engine, tables=CRM_TABLES, checkfirst=True)
+    MAIN.metadata.create_all(bind=engine, tables=CRM_TABLES, checkfirst=True)
 
 
 # ── Permisos y acceso ─────────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ def test_create_and_list_contacto() -> None:
         "empresa": "Acme",
         "puesto": "Gerente",
         "tipo": "prospecto",
-        "fuente": "web",
+        "fuente": "backend",
     })
     assert r.status_code == 201
     data = r.json()

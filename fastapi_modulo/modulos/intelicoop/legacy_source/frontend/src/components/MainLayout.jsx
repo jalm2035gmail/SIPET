@@ -11,18 +11,18 @@ export default function MainLayout() {
   const navigate = useNavigate()
   const { logout } = useAuth()
   const menuItems = [
-    { label: 'Dashboard', icon: dashboardIcon, to: '/web' },
-    { label: 'Dashboards 1.8', icon: dashboardIcon, to: '/web/dashboards' },
-    { label: 'Socios', icon: sociosIcon, to: '/web/socios' },
-    { label: 'Créditos', icon: creditosIcon, to: '/web/creditos' },
-    { label: 'Ahorros', icon: ahorrosIcon, to: '/web/ahorros' },
-    { label: 'Analítica', icon: analiticaIcon, to: '/web/campanas' },
-    { label: 'Configuración', icon: configuracionIcon, to: '/web' }
+    { label: 'Dashboard', icon: dashboardIcon, to: '/backend' },
+    { label: 'Dashboards 1.8', icon: dashboardIcon, to: '/backend/dashboards' },
+    { label: 'Socios', icon: sociosIcon, to: '/backend/socios' },
+    { label: 'Créditos', icon: creditosIcon, to: '/backend/creditos' },
+    { label: 'Ahorros', icon: ahorrosIcon, to: '/backend/ahorros' },
+    { label: 'Analítica', icon: analiticaIcon, to: '/backend/campanas' },
+    { label: 'Configuración', icon: configuracionIcon, to: '/backend' }
   ]
 
   const handleLogout = () => {
     logout()
-    navigate('/web/login')
+    navigate('/backend/login')
   }
 
   return (
@@ -34,7 +34,7 @@ export default function MainLayout() {
             <NavLink
               key={item.label}
               to={item.to}
-              end={item.to === '/web'}
+              end={item.to === '/backend'}
               className={({ isActive }) => `main-sidebar__link${isActive ? ' is-active' : ''}`}
             >
               <img src={item.icon} alt="" aria-hidden="true" />

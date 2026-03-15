@@ -1,0 +1,315 @@
+<section class="cp-gestion-shell" data-module-page="gestion">
+
+  <div class="cp-gestion-app">
+    <aside class="cp-gestion-rail cp-ui-rail" aria-label="Navegacion de gestion de cartera">
+      <div class="cp-gestion-brand cp-ui-brand">
+        <div class="cp-gestion-brand-logo cp-ui-brand-logo">S</div>
+        <div>
+          <div class="cp-gestion-brand-name">SIPET Cartera</div>
+          <div class="cp-gestion-brand-sub">Gestion de prestamos</div>
+        </div>
+      </div>
+
+      <nav class="cp-gestion-nav cp-ui-nav">
+        <a href="/cartera-prestamos/dashboard-general" class="cp-gestion-nav-item cp-ui-nav-item">Dashboard general</a>
+        <a href="/cartera-prestamos/listado-creditos" class="cp-gestion-nav-item cp-ui-nav-item">Listado de creditos</a>
+        <a href="/cartera-prestamos/alertas-riesgos" class="cp-gestion-nav-item cp-ui-nav-item">Alertas y riesgo</a>
+        <a href="/cartera-prestamos/gestion" class="cp-gestion-nav-item cp-ui-nav-item is-active">Cartera operativa</a>
+        <a href="/cartera-prestamos/castigos" class="cp-gestion-nav-item cp-ui-nav-item">Castigos</a>
+        <a href="/cartera-prestamos/reestructuracion" class="cp-gestion-nav-item cp-ui-nav-item">Reestructuracion</a>
+        <a href="/cartera-prestamos/indicadores" class="cp-gestion-nav-item cp-ui-nav-item">Indicadores</a>
+        <a href="/cartera-prestamos/reportes" class="cp-gestion-nav-item cp-ui-nav-item">Reportes</a>
+      </nav>
+
+      <div class="cp-gestion-rail-footer">
+        <div class="cp-gestion-mini-card">
+          <span class="cp-gestion-mini-dot" aria-hidden="true"></span>
+          Recuperacion dentro de meta
+        </div>
+      </div>
+    </aside>
+
+    <main class="cp-gestion-main">
+      <header class="cp-gestion-topbar cp-ui-topbar">
+        <div>
+          <h1>Cartera operativa</h1>
+          <p>Seguimiento operativo de colocación, riesgo, renovaciones, reestructuras y control de expedientes.</p>
+        </div>
+
+        <div class="cp-gestion-topbar-actions cp-ui-topbar-actions">
+          <button type="button" class="cp-gestion-btn cp-ui-btn cp-ui-btn-secondary" data-action="refresh">Filtrar periodo</button>
+          <button type="button" class="cp-gestion-btn cp-ui-btn cp-ui-btn-secondary" data-export-target="#cp-gestion-segmentos-table" data-export-filename="seguimiento_operativo.csv">Exportar comité</button>
+          <button type="button" class="cp-gestion-btn-primary cp-ui-btn cp-ui-btn-primary" data-export-url="/api/cartera-prestamos/export/seguimiento-gestor.xls" data-export-filename="seguimiento_gestor.xls">Exportar seguimiento gestor</button>
+        </div>
+      </header>
+
+      <section class="cp-gestion-hero-grid">
+        <article class="cp-gestion-hero-card cp-ui-kpi-card">
+          <div class="cp-gestion-hero-label">Recuperacion mensual acumulada</div>
+          <div class="cp-gestion-hero-value" data-role="desembolsos_monto">$9.84 M</div>
+          <div class="cp-gestion-hero-trend" data-role="score_promedio">▲ +8.4% respecto al mes anterior</div>
+          <div class="cp-gestion-progress-wrap">
+            <div class="cp-gestion-progress-track">
+              <div class="cp-gestion-progress-bar is-success" data-role="pipeline_progress" style="width: 82%;"></div>
+            </div>
+            <span data-role="pipeline_label">82% de meta</span>
+          </div>
+        </article>
+
+        <article class="cp-gestion-stat-card cp-ui-kpi-card">
+          <div class="cp-gestion-stat-title">Promesas de pago</div>
+          <div class="cp-gestion-stat-value" data-role="renovaciones">128</div>
+          <div class="cp-gestion-stat-foot is-warning" data-role="doc_incompleta">37 por confirmar</div>
+        </article>
+
+        <article class="cp-gestion-stat-card cp-ui-kpi-card">
+          <div class="cp-gestion-stat-title">Visitas programadas</div>
+          <div class="cp-gestion-stat-value" data-role="desembolsos_cantidad">54</div>
+          <div class="cp-gestion-stat-foot is-success" data-role="reestructuras_periodo">Agenda activa</div>
+        </article>
+
+        <article class="cp-gestion-stat-card cp-ui-kpi-card">
+          <div class="cp-gestion-stat-title">Proyeccion de mora</div>
+          <div class="cp-gestion-stat-value" data-role="riesgo_promedio">3.48%</div>
+          <div class="cp-gestion-stat-foot is-danger" data-role="riesgo_distribucion">Riesgo de incremento</div>
+        </article>
+      </section>
+
+      <section class="cp-gestion-content-grid">
+        <article class="cp-gestion-panel cp-ui-panel is-large">
+          <div class="cp-gestion-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Metas de cobranza</h2>
+              <p>Avance operativo por frente de recuperacion.</p>
+            </div>
+            <button type="button" class="cp-gestion-panel-link cp-ui-panel-link">Ver detalle</button>
+          </div>
+
+          <div class="cp-gestion-goals">
+            <div class="cp-gestion-goal">
+              <div class="cp-gestion-goal-top">
+                <span class="cp-gestion-goal-name">Cobranza preventiva</span>
+                <span class="cp-gestion-goal-meta">$2.1 M / $2.5 M</span>
+              </div>
+              <div class="cp-gestion-bar-track">
+                <div class="cp-gestion-bar-fill is-blue" style="width:84%;"></div>
+              </div>
+            </div>
+
+            <div class="cp-gestion-goal">
+              <div class="cp-gestion-goal-top">
+                <span class="cp-gestion-goal-name">Cobranza administrativa</span>
+                <span class="cp-gestion-goal-meta">$3.4 M / $4.0 M</span>
+              </div>
+              <div class="cp-gestion-bar-track">
+                <div class="cp-gestion-bar-fill is-violet" style="width:85%;"></div>
+              </div>
+            </div>
+
+            <div class="cp-gestion-goal">
+              <div class="cp-gestion-goal-top">
+                <span class="cp-gestion-goal-name">Cobranza extrajudicial</span>
+                <span class="cp-gestion-goal-meta">$1.6 M / $2.8 M</span>
+              </div>
+              <div class="cp-gestion-bar-track">
+                <div class="cp-gestion-bar-fill is-orange" style="width:57%;"></div>
+              </div>
+            </div>
+
+            <div class="cp-gestion-goal">
+              <div class="cp-gestion-goal-top">
+                <span class="cp-gestion-goal-name">Recuperacion de cartera vencida</span>
+                <span class="cp-gestion-goal-meta">$2.74 M / $3.2 M</span>
+              </div>
+              <div class="cp-gestion-bar-track">
+                <div class="cp-gestion-bar-fill is-green" style="width:86%;"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-gestion-panel cp-ui-panel">
+          <div class="cp-gestion-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Semaforo de cartera</h2>
+              <p>Lectura ejecutiva por antiguedad.</p>
+            </div>
+          </div>
+
+          <div class="cp-gestion-traffic">
+            <div class="cp-gestion-traffic-item">
+              <div class="cp-gestion-traffic-left">
+                <span class="cp-gestion-light is-green"></span>
+                <span>0 a 8 dias</span>
+              </div>
+              <strong>$6.2 M</strong>
+            </div>
+
+            <div class="cp-gestion-traffic-item">
+              <div class="cp-gestion-traffic-left">
+                <span class="cp-gestion-light is-yellow"></span>
+                <span>9 a 30 dias</span>
+              </div>
+              <strong>$4.8 M</strong>
+            </div>
+
+            <div class="cp-gestion-traffic-item">
+              <div class="cp-gestion-traffic-left">
+                <span class="cp-gestion-light is-orange"></span>
+                <span>31 a 60 dias</span>
+              </div>
+              <strong>$2.1 M</strong>
+            </div>
+
+            <div class="cp-gestion-traffic-item">
+              <div class="cp-gestion-traffic-left">
+                <span class="cp-gestion-light is-red"></span>
+                <span>Mas de 60 dias</span>
+              </div>
+              <strong>$1.15 M</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-gestion-panel cp-ui-panel is-large">
+          <div class="cp-gestion-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Proyeccion de cartera</h2>
+              <p>Estimacion de comportamiento para las proximas semanas.</p>
+            </div>
+            <button type="button" class="cp-gestion-panel-link cp-ui-panel-link">Simular escenario</button>
+          </div>
+
+          <div class="cp-gestion-forecast-grid">
+            <div class="cp-gestion-forecast-card">
+              <div class="cp-gestion-forecast-label">Escenario MAIN</div>
+              <div class="cp-gestion-forecast-value">Morosidad 3.48%</div>
+              <p>Si continua el comportamiento actual, la mora tendria una ligera presion al cierre.</p>
+            </div>
+
+            <div class="cp-gestion-forecast-card">
+              <div class="cp-gestion-forecast-label">Escenario controlado</div>
+              <div class="cp-gestion-forecast-value">Morosidad 3.05%</div>
+              <p>Con seguimiento intensivo a 42 casos prioritarios, la cartera vuelve a rango objetivo.</p>
+            </div>
+
+            <div class="cp-gestion-forecast-card">
+              <div class="cp-gestion-forecast-label">Escenario adverso</div>
+              <div class="cp-gestion-forecast-value">Morosidad 4.10%</div>
+              <p>Sin intervencion operativa, la sucursal centro y el segmento micro pueden deteriorarse.</p>
+            </div>
+          </div>
+
+          <div class="cp-gestion-decision-banner">
+            <div>
+              <strong>Decision sugerida:</strong>
+              activar campana de recuperacion temprana + seguimiento diario a cartera de 9 a 30 dias.
+            </div>
+            <button type="button" class="cp-gestion-btn-small cp-ui-btn-small">Generar plan</button>
+          </div>
+        </article>
+
+        <article class="cp-gestion-panel cp-ui-panel">
+          <div class="cp-gestion-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Acciones prioritarias</h2>
+              <p>Tareas ejecutivas recomendadas.</p>
+            </div>
+          </div>
+
+          <div class="cp-gestion-actions">
+            <div class="cp-gestion-action-item">
+              <div class="cp-gestion-action-icon is-blue">01</div>
+              <div>
+                <div class="cp-gestion-action-title">Revisar oficiales con mora superior al promedio</div>
+                <div class="cp-gestion-action-meta">4 responsables en observacion</div>
+              </div>
+            </div>
+
+            <div class="cp-gestion-action-item">
+              <div class="cp-gestion-action-icon is-orange">02</div>
+              <div>
+                <div class="cp-gestion-action-title">Intensificar llamadas a cartera de 9 a 30 dias</div>
+                <div class="cp-gestion-action-meta">128 promesas de pago en proceso</div>
+              </div>
+            </div>
+
+            <div class="cp-gestion-action-item">
+              <div class="cp-gestion-action-icon is-red">03</div>
+              <div>
+                <div class="cp-gestion-action-title">Presentar casos criticos al comite</div>
+                <div class="cp-gestion-action-meta">11 creditos con atraso mayor a 60 dias</div>
+              </div>
+            </div>
+
+            <div class="cp-gestion-action-item">
+              <div class="cp-gestion-action-icon is-green">04</div>
+              <div>
+                <div class="cp-gestion-action-title">Actualizar scoring de cobranza</div>
+                <div class="cp-gestion-action-meta">Ultima recalibracion hace 45 dias</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="cp-gestion-panel cp-ui-panel is-large">
+          <div class="cp-gestion-panel-head cp-ui-panel-head">
+            <div>
+              <h2>Resumen ejecutivo por segmento</h2>
+              <p>Comparativo de recuperacion y riesgo.</p>
+            </div>
+          </div>
+
+          <div class="cp-gestion-table-wrap cp-ui-table-wrap" data-table-search="Expedientes">
+            <table class="cp-gestion-table cp-ui-table" id="cp-gestion-segmentos-table">
+              <thead>
+                <tr>
+                  <th>Segmento</th>
+                  <th>Saldo</th>
+                  <th>Mora actual</th>
+                  <th>Recuperacion</th>
+                  <th>Proyeccion</th>
+                  <th>Prioridad</th>
+                </tr>
+              </thead>
+              <tbody id="cp-gestion-expedientes-body">
+                <tr>
+                  <td>Microcredito rural</td>
+                  <td>$145,000,000</td>
+                  <td>3.82%</td>
+                  <td>76%</td>
+                  <td><span class="cp-gestion-pill is-yellow">Presion moderada</span></td>
+                  <td><span class="cp-gestion-pill is-orange">Alta</span></td>
+                </tr>
+                <tr>
+                  <td>Consumo</td>
+                  <td>$88,500,000</td>
+                  <td>2.94%</td>
+                  <td>84%</td>
+                  <td><span class="cp-gestion-pill is-green">Estable</span></td>
+                  <td><span class="cp-gestion-pill is-blue">Media</span></td>
+                </tr>
+                <tr>
+                  <td>Capital de trabajo</td>
+                  <td>$121,300,000</td>
+                  <td>3.57%</td>
+                  <td>81%</td>
+                  <td><span class="cp-gestion-pill is-yellow">Vigilancia</span></td>
+                  <td><span class="cp-gestion-pill is-orange">Alta</span></td>
+                </tr>
+                <tr>
+                  <td>Empresarial</td>
+                  <td>$57,900,000</td>
+                  <td>4.21%</td>
+                  <td>68%</td>
+                  <td><span class="cp-gestion-pill is-red">Riesgo alto</span></td>
+                  <td><span class="cp-gestion-pill is-red">Critica</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</section>

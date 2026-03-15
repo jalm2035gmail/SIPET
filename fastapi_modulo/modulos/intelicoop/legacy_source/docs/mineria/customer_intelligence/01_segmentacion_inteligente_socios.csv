@@ -1,2 +1,2 @@
 socio_id,segmento,cluster_id,ahorro_total,total_creditos,score_promedio,prob_mora_90d,pagos_180d,transacciones_180d,monto_promedio_transaccion,variabilidad_ahorro,metodo,thresholds_version
-1,Base general,-1,400.00,1,0.0000,0.3883,150.00,1,120.00,0.0000,reglas,segmentacion_1_4_v1
+1,MAIN general,-1,400.00,1,0.0000,0.3883,150.00,1,120.00,0.0000,reglas,segmentacion_1_4_v1

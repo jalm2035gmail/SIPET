@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Count, Q
 
 from apps.ahorros.models import Cuenta, Transaccion
@@ -125,7 +125,7 @@ def _profile_tables() -> Iterable[TableProfile]:
         )
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Perfila calidad de datos para tablas clave y genera reporte CSV/JSON."
 
     def add_arguments(self, parser):

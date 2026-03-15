@@ -29,7 +29,7 @@
             font-size: inherit !important;
         }
 
-{% include "modulos/backend/backend_shell.css" %}
+{% include "modulos/backend/static/css/backend_shell.css" %}
     </style>
     <script>
         window.__sipet_server_colors = {{ colores | default({}, true) | tojson }};
@@ -60,8 +60,8 @@
     {% set hide_floating_actions = hide_floating_actions | default(false) %}
     {% set current_role = (request.state.user_role | default(request.cookies.get('user_role', ''), true) | lower | trim) %}
     {% set is_superadmin_effective = current_role in ['superadministrador', 'superadmin'] %}
-    {% include "modulos/backend/sidebar.html" %}
-    {% include "modulos/backend/navbar.html" %}
+    {% include "modulos/backend/vistas/sidebar.html" %}
+    {% include "modulos/backend/vistas/navbar.html" %}
     <main class="main-content">
         <div class="content-shell">
         <section class="content-section">
@@ -84,7 +84,7 @@
             <button class="floating-toggle" type="button" id="floating-toggle" aria-label="Ocultar barra flotante">−</button>
         </div>
         {% endif %}
-    {% include "modulos/backend/backend_nav_catalog.html" %}
-    {% include "modulos/backend/backend_shell_script.html" %}
+    {% include "modulos/backend/vistas/backend_nav_catalog.html" %}
+    {% include "modulos/backend/vistas/backend_shell_script.html" %}
 </body>
 </html>

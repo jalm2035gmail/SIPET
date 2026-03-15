@@ -1,0 +1,97 @@
+<section id="porter-builder" class="grid gap-4 w-full max-w-6xl">
+    <div class="titulo bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+        <div class="w-full flex flex-col md:flex-row items-center gap-10">
+            <img
+                src="/templates/icon/plan.svg"
+                alt="Icono estrategia y táctica"
+                width="96"
+                height="96"
+                class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+            />
+            <div class="w-full grid gap-2 content-center">
+                <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">PORTER</div>
+                <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Evalúa las cinco fuerzas competitivas para priorizar decisiones estratégicas.</div>
+            </div>
+        </div>
+    </div>
+    <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+        <div class="card-body gap-4">
+            <h2 class="card-title text-MAIN-content">5 Fuerzas de Porter</h2>
+            <p class="text-sm text-MAIN-content/70">Analiza la intensidad competitiva del entorno y su impacto en la estrategia.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr_1fr] gap-3">
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Factor</span></div>
+                    <textarea id="porter-description" class="textarea textarea-bordered campo w-full min-h-24" placeholder="Describe el factor de la fuerza"></textarea>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Fuerza</span></div>
+                    <select id="porter-force" class="select select-bordered campo w-full">
+                        <option value="competitors">Rivalidad entre competidores</option>
+                        <option value="entrants">Amenaza de nuevos entrantes</option>
+                        <option value="suppliers">Poder de negociación de proveedores</option>
+                        <option value="buyers">Poder de negociación de compradores</option>
+                        <option value="substitutes">Amenaza de productos sustitutos</option>
+                    </select>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text font-semibold">Impacto</span></div>
+                    <select id="porter-impact" class="select select-bordered campo w-full">
+                        <option value="high">Alto</option>
+                        <option value="medium">Medio</option>
+                        <option value="low">Bajo</option>
+                    </select>
+                </label>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="porter-add" class="btn btn-primary btn-sm">Agregar factor</button>
+            </div>
+        </div>
+    </article>
+    <section class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Competidores</h3>
+                    <span id="porter-count-competitors" class="badge badge-outline">0</span>
+                </header>
+                <ul id="porter-list-competitors" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Nuevos entrantes</h3>
+                    <span id="porter-count-entrants" class="badge badge-outline">0</span>
+                </header>
+                <ul id="porter-list-entrants" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Proveedores</h3>
+                    <span id="porter-count-suppliers" class="badge badge-outline">0</span>
+                </header>
+                <ul id="porter-list-suppliers" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Compradores</h3>
+                    <span id="porter-count-buyers" class="badge badge-outline">0</span>
+                </header>
+                <ul id="porter-list-buyers" class="grid gap-2"></ul>
+            </div>
+        </article>
+        <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm">
+            <div class="card-body gap-3">
+                <header class="flex items-center justify-between">
+                    <h3 class="font-semibold text-MAIN-content">Sustitutos</h3>
+                    <span id="porter-count-substitutes" class="badge badge-outline">0</span>
+                </header>
+                <ul id="porter-list-substitutes" class="grid gap-2"></ul>
+            </div>
+        </article>
+    </section>
+</section>

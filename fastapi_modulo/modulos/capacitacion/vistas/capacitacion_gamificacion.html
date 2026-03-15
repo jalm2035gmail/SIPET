@@ -1,0 +1,183 @@
+<style>
+  .gam-shell {
+    --gam-ink: #10233b;
+    --gam-muted: #60758f;
+    --gam-line: rgba(16, 35, 59, .08);
+    --gam-accent: #f97316;
+    --gam-accent-2: #0f766e;
+    padding: 24px;
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--gam-ink);
+    background:
+      radial-gradient(circle at top right, rgba(249,115,22,.12), transparent 32%),
+      linear-gradient(180deg, #fffaf4 0%, #f8fbff 100%);
+    box-sizing: border-box;
+  }
+  .gam-header { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+  .gam-title { margin:0; font-size:28px; }
+  .gam-subtitle { margin:6px 0 0; color:var(--gam-muted); font-size:14px; }
+  .gam-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; border-radius:10px; border:1px solid #d5dee8; background:#fff; color:var(--gam-ink); padding:10px 14px; font-size:13px; font-weight:700; text-decoration:none; cursor:pointer; }
+  .gam-btn.is-primary { border-color:#c2410c; background:#c2410c; color:#fff; }
+  .gam-grid-top { display:grid; grid-template-columns:1.25fr .75fr; gap:18px; margin-bottom:18px; }
+  .gam-grid-main { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+  .gam-grid-bottom { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .gam-card { background:rgba(255,255,255,.9); border:1px solid var(--gam-line); border-radius:22px; padding:20px; box-shadow:0 14px 40px rgba(15,23,42,.06); }
+  .gam-card-title { margin:0 0 14px; font-size:15px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:#29415c; }
+  .gam-profile-card { background:linear-gradient(135deg, #10233b 0%, #143b5d 55%, #c2410c 100%); color:#fff; position:relative; overflow:hidden; }
+  .gam-profile-card::after { content:""; position:absolute; inset:auto -44px -44px auto; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,.08); }
+  .gam-profile-layout { display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center; }
+  .gam-level-badge { width:78px; height:78px; border-radius:22px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.12); font-size:38px; }
+  .gam-profile-name { font-size:24px; font-weight:700; }
+  .gam-level-name { margin-top:4px; font-size:14px; opacity:.88; }
+  .gam-pts { margin-top:10px; font-size:34px; font-weight:700; }
+  .gam-lvl-bar-bg { margin-top:12px; height:10px; border-radius:999px; background:rgba(255,255,255,.18); overflow:hidden; }
+  .gam-lvl-bar-fill { height:100%; border-radius:999px; background:#fff7ed; transition:width .5s ease; }
+  .gam-lvl-info { margin-top:8px; font-size:12px; opacity:.86; }
+  .gam-profile-kpis { display:grid; gap:10px; min-width:170px; }
+  .gam-kpi { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:12px 14px; }
+  .gam-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.06em; opacity:.8; }
+  .gam-kpi-value { margin-top:6px; font-size:24px; font-weight:700; }
+  .gam-badges-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px; }
+  .gam-badge-item { display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; border:1px solid #edf2f7; border-radius:16px; padding:12px 8px; background:#fff; min-height:112px; }
+  .gam-badge-item.earned { border-color:var(--badge-color, #0f766e); background:linear-gradient(180deg, color-mix(in srgb, var(--badge-color, #0f766e) 10%, #fff) 0%, #fff 100%); }
+  .gam-badge-item.locked { opacity:.45; filter:grayscale(1); }
+  .gam-badge-emoji { font-size:28px; line-height:1; }
+  .gam-badge-name { font-size:11px; font-weight:700; line-height:1.2; }
+  .gam-badge-date { font-size:10px; color:#6b7f95; }
+  .gam-rank-toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .gam-input, .gam-select { width:100%; border:1px solid #d8e1ea; border-radius:10px; padding:10px 12px; font-size:13px; background:#fff; color:var(--gam-ink); }
+  .gam-rank-list, .gam-activity-list, .gam-goals-list, .gam-challenge-list { list-style:none; padding:0; margin:0; }
+  .gam-rank-item, .gam-activity-item, .gam-goal-item, .gam-challenge-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #eff4f8; }
+  .gam-rank-item:last-child, .gam-activity-item:last-child, .gam-goal-item:last-child, .gam-challenge-item:last-child { border-bottom:none; }
+  .gam-rank-pos { min-width:36px; font-weight:700; text-align:center; color:#889bb0; }
+  .gam-rank-name { flex:1; font-weight:700; }
+  .gam-rank-meta, .gam-activity-fecha, .gam-goal-meta { font-size:12px; color:var(--gam-muted); }
+  .gam-rank-pts { min-width:72px; text-align:right; font-weight:700; color:#c2410c; }
+  .gam-rank-me { background:#fff4e8; border-radius:14px; padding-left:10px; padding-right:10px; }
+  .gam-activity-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#fff4e8; }
+  .gam-activity-motivo { flex:1; }
+  .gam-activity-pts { font-weight:700; min-width:72px; text-align:right; }
+  .gam-progress { width:100%; height:10px; border-radius:999px; background:#edf2f7; overflow:hidden; margin-top:8px; }
+  .gam-progress > span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg, #f97316 0%, #0f766e 100%); }
+  .gam-goal-body, .gam-challenge-body { flex:1; }
+  .gam-goal-title, .gam-challenge-title { font-weight:700; }
+  .gam-status { color:var(--gam-muted); font-size:14px; padding:16px 0; }
+  .gam-admin-grid { display:grid; grid-template-columns:minmax(260px, .8fr) 1.2fr; gap:18px; }
+  .gam-form { display:grid; gap:10px; }
+  .gam-form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .gam-badge-admin-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #eff4f8; }
+  .gam-badge-admin-item:last-child { border-bottom:none; }
+  .gam-badge-admin-main { flex:1; }
+  .gam-badge-admin-title { font-weight:700; }
+  .gam-badge-admin-copy { color:var(--gam-muted); font-size:12px; margin-top:4px; }
+  @media (max-width: 980px) {
+    .gam-grid-top, .gam-grid-main, .gam-grid-bottom, .gam-admin-grid { grid-template-columns:1fr; }
+    .gam-profile-layout { grid-template-columns:1fr; }
+  }
+</style>
+
+<div id="gam-root" class="gam-shell" data-js-url="/capacitacion/assets/js/capacitacion_gamificacion.js?v=20260314">
+  <div class="gam-header">
+    <div>
+      <h2 class="gam-title">Gamificacion</h2>
+      <p class="gam-subtitle">Rachas, retos mensuales, ranking y catalogo de insignias.</p>
+    </div>
+    <a href="/capacitacion" class="gam-btn">Catalogo</a>
+  </div>
+
+  <div class="gam-grid-top">
+    <div id="gam-profile" class="gam-card gam-profile-card">
+      <div class="gam-status">Cargando perfil...</div>
+    </div>
+    <div class="gam-card">
+      <p class="gam-card-title">Retos mensuales</p>
+      <ul id="gam-challenges" class="gam-challenge-list">
+        <li class="gam-status">Cargando...</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="gam-grid-main">
+    <div class="gam-card">
+      <p class="gam-card-title">Mis insignias</p>
+      <div id="gam-badges" class="gam-badges-grid">
+        <div class="gam-status" style="grid-column:1/-1;">Cargando...</div>
+      </div>
+    </div>
+    <div class="gam-card">
+      <p class="gam-card-title">Ranking</p>
+      <div class="gam-rank-toolbar">
+        <select id="gam-rank-scope" class="gam-select">
+          <option value="empresa">Empresa</option>
+          <option value="departamento">Departamento</option>
+          <option value="area">Area</option>
+          <option value="sucursal">Sucursal</option>
+        </select>
+        <input id="gam-rank-value" class="gam-input" placeholder="Filtro opcional" />
+      </div>
+      <ul id="gam-ranking" class="gam-rank-list">
+        <li class="gam-status">Cargando...</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="gam-grid-bottom">
+    <div class="gam-card">
+      <p class="gam-card-title">Actividad reciente</p>
+      <ul id="gam-activity" class="gam-activity-list">
+        <li class="gam-status">Cargando...</li>
+      </ul>
+    </div>
+    <div class="gam-card">
+      <p class="gam-card-title">Metas por departamento</p>
+      <ul id="gam-goals" class="gam-goals-list">
+        <li class="gam-status">Cargando...</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="gam-admin" class="gam-card" style="margin-top:18px; display:none;">
+    <p class="gam-card-title">Catalogo administrable de insignias</p>
+    <div class="gam-admin-grid">
+      <form id="gam-badge-form" class="gam-form">
+        <input id="gam-badge-id" type="hidden" />
+        <input id="gam-badge-name" class="gam-input" placeholder="Nombre" required />
+        <textarea id="gam-badge-desc" class="gam-input" placeholder="Descripcion"></textarea>
+        <div class="gam-form-row">
+          <input id="gam-badge-emoji" class="gam-input" placeholder="Emoji" value="🏅" />
+          <input id="gam-badge-color" class="gam-input" placeholder="#2563eb" value="#2563eb" />
+        </div>
+        <div class="gam-form-row">
+          <select id="gam-badge-condition" class="gam-select">
+            <option value="lecciones_completadas">Lecciones completadas</option>
+            <option value="cursos_completados">Cursos completados</option>
+            <option value="certificados_obtenidos">Certificados obtenidos</option>
+            <option value="puntaje_perfecto">Puntaje perfecto</option>
+            <option value="racha_dias">Racha de dias</option>
+            <option value="primer_intento_aprobado">Primer intento aprobado</option>
+          </select>
+          <input id="gam-badge-target" class="gam-input" type="number" min="1" value="1" />
+        </div>
+        <div class="gam-form-row">
+          <input id="gam-badge-order" class="gam-input" type="number" min="0" value="0" />
+          <button class="gam-btn is-primary" type="submit">Guardar insignia</button>
+        </div>
+      </form>
+      <div id="gam-badge-admin-list">
+        <div class="gam-status">Cargando...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var root = document.getElementById('gam-root');
+  var jsUrl = root && root.getAttribute('data-js-url');
+  if (jsUrl) {
+    var s = document.createElement('script');
+    s.src = jsUrl;
+    document.body.appendChild(s);
+  }
+})();
+</script>

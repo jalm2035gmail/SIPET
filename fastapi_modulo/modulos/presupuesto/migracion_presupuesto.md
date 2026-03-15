@@ -3,7 +3,7 @@
 
 
 ## Objetivo
-Documentar el proceso y las mejores prácticas para migrar módulos grandes desde main.py/base.html a una estructura modular y desacoplada, reutilizable para otros módulos.
+Documentar el proceso y las mejores prácticas para migrar módulos grandes desde main.py/MAIN.html a una estructura modular y desacoplada, reutilizable para otros módulos.
 ## Etapas de migración
 1. **Planeación y documentación**
 - Registrar dependencias, rutas, funciones y archivos involucrados.
@@ -18,7 +18,7 @@ Documentar el proceso y las mejores prácticas para migrar módulos grandes desd
 - Mover JS específico a la plantilla o a un archivo .js.
 - Asegurar funcionamiento de eventos y lógica.
 5. **Integración y pruebas**
-- Actualizar main.py/base.html para consumir el nuevo módulo.
+- Actualizar main.py/MAIN.html para consumir el nuevo módulo.
 - Probar toda la funcionalidad migrada.
 6. **Limpieza y documentación**
 - Eliminar código duplicado o migrado.
@@ -45,12 +45,12 @@ Documentar el proceso y las mejores prácticas para migrar módulos grandes desd
 - **Solución:** Se modularizó la arquitectura siguiendo el protocolo de migración, asegurando que cada módulo importe solo lo necesario desde archivos independientes.
 # Fases detalladas para la migración del módulo Departamentos
 Planeación y análisis:
-Identificar todas las funciones, endpoints y rutas de departamentos en main.py y base.html.
+Identificar todas las funciones, endpoints y rutas de departamentos en main.py y MAIN.html.
 Listar dependencias, variables globales y archivos involucrados.
 Confirmar la estructura destino: modulos/empleados/departamentos.html, .py, .css.
 Documentar el flujo actual y puntos de integración.
 Extracción de vistas y estilos:
-Revisar el HTML y CSS de departamentos en base.html y áreas relacionadas.
+Revisar el HTML y CSS de departamentos en MAIN.html y áreas relacionadas.
 Unificar todas las vistas (formulario, listado, kanban, organigrama) en departamentos.html.
 Eliminar archivos vacíos o redundantes.
 Adaptar clases y estilos para evitar conflictos con el CSS global.
@@ -58,11 +58,11 @@ Modularización backend:
 Revisar funciones y endpoints en main.py para departamentos.
 Adaptar imports y dependencias antes de moverlos.
 Refactorización JS:
-Identificar JS específico de departamentos en base.html o main.js.
+Identificar JS específico de departamentos en MAIN.html o main.js.
 Revisar eventos y lógica para que funcionen en el nuevo contexto.
 Integración y pruebas:
 Registrar el nuevo router en main.py.
-Actualizar base.html para enlazar la nueva plantilla y estilos.
+Actualizar MAIN.html para enlazar la nueva plantilla y estilos.
 Probar la funcionalidad migrada.
 Limpieza y documentación:
 Eliminar archivos vacíos o migrados (departamentos_list.html, departamentos_kanban.html, departamentos_organigrama.html).
@@ -84,7 +84,7 @@ Documentar la nueva arquitectura y dependencias.
 
 ## Desarrollo
 - Se creó `reportes.py` como punto de entrada para futuras funciones de generación y exportación de reportes.
-- Se creó `reportes.html` como plantilla base para mostrar los reportes generados.
+- Se creó `reportes.html` como plantilla MAIN para mostrar los reportes generados.
 - Ambas estructuras están listas para ser integradas con FastAPI y Jinja2.
 
 ## Integración con FastAPI

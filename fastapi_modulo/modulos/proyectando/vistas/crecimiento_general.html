@@ -1,0 +1,261 @@
+<link rel="stylesheet" href="/modulos/proyectando/proyectando.css">
+<section class="p-4 cg-scope proy-shell">
+  <style>
+    .cg-scope{
+      --cg-accent: var(--sidebar-bottom, #0f172a);
+      --cg-st-width: 44px;
+      --cg-concept-width: 120px;
+      --cg-gap-width: 24px;
+    }
+    .cg-col-year{
+      width:88px;
+      min-width:88px;
+    }
+    .cg-col-amount{
+      width:148px;
+      min-width:148px;
+    }
+    .cg-pct-col{
+      width: 70px;
+      min-width: 70px;
+    }
+    .cg-fin-table tbody td.cg-fin-sticky{
+      position:sticky;
+      left:var(--cg-st-width);
+      z-index:2;
+      width:var(--cg-concept-width) !important;
+      min-width:var(--cg-concept-width) !important;
+      max-width:var(--cg-concept-width) !important;
+      background:var(--cg-sticky-bg, #f8fafc);
+      box-shadow:12px 0 18px -16px rgba(15,23,42,.35);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      box-sizing:border-box;
+    }
+    .cg-fin-table tbody td.cg-fin-sticky-st{
+      position:sticky;
+      left:0;
+      z-index:2;
+      width:var(--cg-st-width) !important;
+      min-width:var(--cg-st-width) !important;
+      max-width:var(--cg-st-width) !important;
+      background:var(--cg-sticky-bg, #f8fafc);
+      box-shadow:12px 0 18px -16px rgba(15,23,42,.28);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      box-sizing:border-box;
+    }
+    .cg-fin-sticky{
+      width:var(--cg-concept-width) !important;
+    }
+    .cg-fin-sticky-st{
+      width:var(--cg-st-width) !important;
+    }
+    .cg-fin-gap{
+      width:var(--cg-gap-width) !important;
+      min-width:var(--cg-gap-width) !important;
+      max-width:var(--cg-gap-width) !important;
+      padding:0 !important;
+      background:var(--cg-sticky-bg, #f8fafc) !important;
+      border:none !important;
+      box-shadow:none !important;
+    }
+    .cg-fin-table thead th.cg-fin-gap,
+    .cg-fin-table tbody td.cg-fin-gap{
+      position:sticky;
+      left:calc(var(--cg-st-width) + var(--cg-concept-width));
+      z-index:2;
+    }
+    .cg-fin-table thead th.cg-fin-gap{
+      z-index:3;
+      background:var(--fallback-b2, oklch(var(--b2)/1)) !important;
+    }
+    .cg-fin-table tbody td.cg-fin-sticky-st{
+      padding-left:8px;
+      padding-right:8px;
+    }
+    .cg-fin-table tbody td.cg-fin-sticky{
+      padding-left:12px;
+      padding-right:12px;
+    }
+    .cg-pc-table tbody td.cg-pc-sticky{
+      position:sticky;
+      left:0;
+      z-index:2;
+      width:180px !important;
+      min-width:180px !important;
+      max-width:180px !important;
+      background:var(--cg-sticky-bg, #f8fafc);
+      box-shadow:12px 0 18px -16px rgba(15,23,42,.35);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      box-sizing:border-box;
+      vertical-align:middle;
+      font-weight:800;
+      color:var(--cg-accent);
+    }
+    #cg-activo-total-tbody td.text-right,
+    #cg-pasivo-total-tbody td.text-right,
+    #cg-patrimonio-tbody td.text-right,
+    #cg-financiamiento-activo-tbody td.text-right,
+    #cg-activo-total-tbody input.text-right{
+      text-align: right !important;
+    }
+  </style>
+  <div class="titulo proy-title-card mb-4">
+    <div class="proy-title-layout">
+      <img
+        src="/icon/proyectando.svg"
+        alt="Icono datos financieros"
+        width="96"
+        height="96"
+        class="proy-title-icon"
+      />
+      <div class="proy-title-copy">
+        <div class="proy-title-heading">Crecimiento general</div>
+        <div class="proy-title-description">Análisis de evolución proyectada en activos, pasivos y patrimonio.</div>
+      </div>
+    </div>
+  </div>
+  <div class="tabs tabs-lifted proy-tabs flex-wrap" role="tablist" aria-label="Crecimiento general">
+    <button type="button" class="tab tab-active rounded-t-lg" data-tab="activo-total">Activo total</button>
+    <button type="button" class="tab rounded-t-lg" data-tab="pasivo-total">Financiamiento del activo</button>
+    <button type="button" class="tab rounded-t-lg" data-tab="patrimonio">Pasivo &amp; capital</button>
+  </div>
+
+  <div class="proy-notebook-body notebook-content">
+    <section class="tab-panel" data-panel="activo-total">
+      <div class="cg-toolbar">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="cg-activo-save-btn" class="btn btn-primary">Guardar</button>
+          <span id="cg-activo-msg" class="text-sm text-MAIN-content/70"></span>
+        </div>
+        <button
+          type="button"
+          id="cg-chart-toggle"
+          class="cg-chart-toggle"
+          aria-label="Mostrar gráfica de crecimiento"
+          title="Mostrar gráfica de crecimiento"
+          aria-expanded="false"
+        >
+          <i class="fa-solid fa-chart-line cg-chart-fa" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div id="cg-chart-panel" class="cg-chart-panel">
+        <div class="cg-chart-card">
+          <div class="cg-chart-head">
+            <div>
+              <h3 class="cg-chart-title">Crecimiento del activo total</h3>
+              <p class="cg-chart-subtitle">Evolución histórica y proyectada con énfasis en el salto de crecimiento.</p>
+            </div>
+            <span class="cg-chart-badge">Activo total</span>
+          </div>
+          <canvas id="cg-chart-svg" class="cg-chart-canvas" aria-label="Gráfica de crecimiento del activo total"></canvas>
+        </div>
+      </div>
+      <div class="overflow-x-auto cg-table-wrap">
+        <table class="table table-zebra cg-table">
+          <thead>
+            <tr>
+              <th class="cg-col-year">Año</th>
+              <th class="text-right cg-col-amount">Saldo</th>
+              <th class="text-right cg-col-amount">Crecimiento</th>
+              <th class="text-right cg-pct-col">%</th>
+            </tr>
+          </thead>
+          <tbody id="cg-activo-total-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tab-panel" data-panel="pasivo-total" hidden>
+      <div class="cg-toolbar">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="cg-pasivo-save-btn" class="btn btn-primary">Guardar</button>
+          <span id="cg-pasivo-msg" class="text-sm text-MAIN-content/70"></span>
+        </div>
+        <button
+          type="button"
+          id="cg-fin-toggle"
+          class="cg-chart-toggle"
+          aria-label="Mostrar analítica de financiamiento"
+          title="Mostrar analítica de financiamiento"
+          aria-expanded="false"
+        >
+          <i class="fa-solid fa-chart-line cg-chart-fa" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div id="cg-fin-panel" class="cg-mini-panel">
+        <div class="cg-chart-card">
+          <div class="cg-chart-head">
+            <div>
+              <h3 class="cg-chart-title">Analítica de financiamiento</h3>
+              <p id="cg-fin-panel-subtitle" class="cg-chart-subtitle">Comparativo de porcentajes y brechas respecto al estándar.</p>
+            </div>
+            <span id="cg-fin-panel-badge" class="cg-chart-badge">% crecimiento</span>
+          </div>
+          <div class="cg-mini-tabs">
+            <button type="button" class="cg-mini-tab active" data-cg-fin-view="pct">% crecimiento</button>
+            <button type="button" class="cg-mini-tab" data-cg-fin-view="gap">GAP</button>
+          </div>
+          <div class="cg-insight-grid">
+            <div class="cg-chart-card !p-4">
+              <canvas id="cg-fin-svg" class="cg-chart-canvas" aria-label="Gráfica de financiamiento"></canvas>
+            </div>
+            <div class="cg-insight-table-wrap">
+              <table class="cg-insight-table">
+                <thead id="cg-fin-table-head"></thead>
+                <tbody id="cg-fin-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cg-fin-wrap">
+        <table class="table table-zebra cg-table cg-fin-table">
+          <colgroup id="cg-financiamiento-activo-colgroup"></colgroup>
+          <thead id="cg-financiamiento-activo-thead"></thead>
+          <tbody id="cg-financiamiento-activo-tbody"></tbody>
+        </table>
+        <div class="cg-pc-section">
+          <div class="cg-pc-section-title">Crecimiento</div>
+          <table class="table table-zebra cg-table cg-pc-table">
+            <colgroup id="cg-crecimiento-colgroup"></colgroup>
+            <thead id="cg-crecimiento-thead"></thead>
+            <tbody id="cg-crecimiento-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel" data-panel="patrimonio" hidden>
+      <div class="cg-toolbar">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="cg-patrimonio-save-btn" class="btn btn-primary">Guardar</button>
+          <span id="cg-patrimonio-msg" class="text-sm text-MAIN-content/70"></span>
+        </div>
+      </div>
+      <div class="cg-fin-wrap">
+        <div class="cg-pc-section">
+          <div class="cg-pc-section-title">Pasivo</div>
+          <table class="table table-zebra cg-table cg-pc-table">
+            <colgroup id="cg-pc-colgroup"></colgroup>
+            <thead id="cg-pc-thead"></thead>
+            <tbody id="cg-pc-tbody"></tbody>
+          </table>
+        </div>
+        <div class="cg-pc-section">
+          <div class="cg-pc-section-title">Capital</div>
+          <table class="table table-zebra cg-table cg-pc-table">
+            <colgroup id="cg-capital-colgroup"></colgroup>
+            <thead id="cg-capital-thead"></thead>
+            <tbody id="cg-capital-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<script src="/static/vendor/chart.umd.min.js"></script>
+<script src="/modulos/proyectando/crecimiento_general.js"></script>

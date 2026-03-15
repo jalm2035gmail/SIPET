@@ -1,17 +1,17 @@
 from pathlib import Path
 import sys
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Ejecuta la segmentación de socios y actualiza el campo segmento."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Calcula segmentos sin persistir cambios en base de datos.",
+            help="Calcula segmentos sin persistir cambios en MAIN de datos.",
         )
         parser.add_argument(
             "--engine",

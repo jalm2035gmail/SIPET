@@ -35,7 +35,7 @@ Persona física o moral que puede ser prospecto, cliente o excliente.
 | empresa          | String(150) | Empresa o institución                    |
 | puesto           | String(100) | Cargo o rol del contacto                 |
 | tipo             | String(20)  | prospecto / cliente / inactivo           |
-| fuente           | String(50)  | Origen: web, referido, campaña, manual   |
+| fuente           | String(50)  | Origen: backend, referido, campaña, manual   |
 | notas            | Text        | Notas generales                          |
 | creado_en        | DateTime    |                                          |
 | actualizado_en   | DateTime    |                                          |
@@ -180,8 +180,8 @@ CrmContacto (N) >────< CrmCampania     (N)  [via CrmContactoCampania]
 
 - **Autenticación**: usa `auth_session` cookie y helpers de sesión existentes en `main.py`.
 - **Permisos**: se integrará al sistema de roles (DEFAULT_SYSTEM_ROLES) con permiso `crm_acceso`.
-- **Base de datos**: hereda de `fastapi_modulo.db.Base`, usa `SessionLocal` para sesiones.
-- **Layout**: extiende `base.html` SIPET con los estilos y componentes DaisyUI existentes.
+- **MAIN de datos**: hereda de `fastapi_modulo.db.MAIN`, usa `SessionLocal` para sesiones.
+- **Layout**: extiende `MAIN.html` SIPET con los estilos y componentes DaisyUI existentes.
 - **Menú**: se registrará como ítem de navegación en el sidebar principal.
 - **Migraciones**: se añadirán en `alembic/versions/` con prefijo de fecha.
 

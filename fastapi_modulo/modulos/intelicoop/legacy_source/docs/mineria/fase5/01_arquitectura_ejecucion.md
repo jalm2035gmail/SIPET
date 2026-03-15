@@ -12,7 +12,7 @@ Fecha ejecucion UTC: 2026-02-18T13:22:24.486033+00:00
 
 ## Estado
 - Punto 1 de 8 completado tecnicamente.
-- Arquitectura base de ejecucion definida para orquestacion en Fase 5.
+- Arquitectura MAIN de ejecucion definida para orquestacion en Fase 5.
 
 ## Artefactos
 - Reporte CSV: `/Users/jalm/Dropbox/Apps/intelicoop/docs/mineria/fase5/01_arquitectura_ejecucion.csv`

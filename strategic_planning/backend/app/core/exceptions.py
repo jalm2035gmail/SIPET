@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 
 
 class AuthException(HTTPException):
-    """Excepción base para errores de autenticación."""
+    """Excepción MAIN para errores de autenticación."""
 
     def __init__(
         self,

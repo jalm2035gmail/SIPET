@@ -2,9 +2,9 @@ from typing import List, Dict
 from datetime import datetime
 from sqlalchemy import Column, Integer, JSON, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
-class PESTELAnalysis(BaseModel):
+class PESTELAnalysis(MAINModel):
     __tablename__ = "pestel_analysis"
 
     strategic_plan_id = Column(Integer, ForeignKey("strategic_plans.id"), nullable=False, unique=True)

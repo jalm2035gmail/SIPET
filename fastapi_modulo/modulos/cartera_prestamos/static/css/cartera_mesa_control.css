@@ -1,0 +1,627 @@
+.cp-mesa-shell {
+  --cp-bg: #ffffff;
+  --cp-bg-soft: color-mix(in srgb, var(--page-bg, #f4f6fb) 72%, #ffffff 28%);
+  --cp-panel: color-mix(in srgb, var(--content-bg, #ffffff) 88%, var(--page-bg, #f4f6fb) 12%);
+  --cp-panel-2: color-mix(in srgb, var(--field-color, #ffffff) 86%, var(--page-bg, #f4f6fb) 14%);
+  --cp-line: color-mix(in srgb, var(--button-bg, #0f172a) 12%, #ffffff 88%);
+  --cp-line-strong: color-mix(in srgb, var(--button-bg, #0f172a) 18%, #ffffff 82%);
+  --cp-text: var(--body-text, #0f172a);
+  --cp-muted: color-mix(in srgb, var(--body-text, #0f172a) 62%, #ffffff 38%);
+  --cp-muted-2: color-mix(in srgb, var(--body-text, #0f172a) 48%, #ffffff 52%);
+  --cp-primary: color-mix(in srgb, var(--institutional-accent-contrast, #2a220f) 18%, var(--button-bg, #0f172a) 82%);
+  --cp-primary-soft: color-mix(in srgb, var(--institutional-accent-contrast, #2a220f) 22%, transparent);
+  --cp-success: #34d399;
+  --cp-warning: #fbbf24;
+  --cp-danger: #fb7185;
+  --cp-orange: #f97316;
+  --cp-blue: #60a5fa;
+  --cp-shadow: 0 18px 42px rgba(15, 23, 42, 0.10);
+  --cp-radius-xl: 24px;
+  --cp-radius-lg: 18px;
+  --cp-radius-md: 14px;
+  width: 100%;
+  padding: 0;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--cp-primary) 8%, transparent) 0%, transparent 24%),
+    radial-gradient(circle at bottom left, color-mix(in srgb, var(--cp-success) 6%, transparent) 0%, transparent 20%),
+    linear-gradient(180deg, var(--cp-bg) 0%, var(--cp-bg-soft) 100%);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-line);
+  border-radius: 28px;
+  overflow: auto;
+  box-shadow: var(--cp-shadow);
+  max-height: calc(100vh - 140px);
+}
+
+.cp-mesa-shell * {
+  box-sizing: border-box;
+}
+
+.cp-mesa-shell a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.cp-mesa-shell button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.cp-mesa-shell::-backendkit-scrollbar,
+.cp-mesa-main::-backendkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.cp-mesa-shell::-backendkit-scrollbar-thumb,
+.cp-mesa-main::-backendkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 18%, #ffffff 82%);
+  border-radius: 999px;
+}
+
+.cp-mesa-shell::-backendkit-scrollbar-track,
+.cp-mesa-main::-backendkit-scrollbar-track {
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 5%, #ffffff 95%);
+  border-radius: 999px;
+}
+
+.cp-mesa-app {
+  display: block;
+  min-height: 860px;
+}
+
+.cp-mesa-main {
+  padding: 28px;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.cp-mesa-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.cp-mesa-topbar h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 2.4vw, 2.2rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--cp-text);
+}
+
+.cp-mesa-topbar p {
+  margin: 8px 0 0;
+  color: var(--cp-muted);
+  font-size: 0.98rem;
+  max-width: 760px;
+}
+
+.cp-mesa-topbar-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cp-mesa-btn,
+.cp-mesa-btn-primary {
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.cp-mesa-btn {
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 4%, #ffffff 96%);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-line);
+}
+
+.cp-mesa-btn-primary {
+  background: linear-gradient(135deg, var(--button-bg, #0f172a), var(--cp-primary));
+  color: var(--button-text, #ffffff);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--cp-primary) 24%, transparent);
+}
+
+.cp-mesa-hero-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.cp-mesa-hero-card,
+.cp-mesa-stat-card,
+.cp-mesa-panel {
+  background: linear-gradient(180deg, var(--cp-panel) 0%, var(--cp-panel-2) 100%);
+  border: 1px solid var(--cp-line);
+  border-radius: var(--cp-radius-xl);
+  box-shadow: var(--cp-shadow);
+}
+
+.cp-mesa-hero-card {
+  padding: 24px;
+}
+
+.cp-mesa-hero-label {
+  color: var(--cp-muted);
+  font-size: 0.92rem;
+  margin-bottom: 10px;
+}
+
+.cp-mesa-hero-value {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+}
+
+.cp-mesa-hero-trend {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: var(--cp-warning);
+}
+
+.cp-mesa-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--cp-muted);
+}
+
+.cp-mesa-progress-track {
+  flex: 1;
+  height: 12px;
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 7%, #ffffff 93%);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 8%, #ffffff 92%);
+}
+
+.cp-mesa-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cp-orange), var(--cp-warning));
+}
+
+.cp-mesa-stat-card {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cp-mesa-stat-title {
+  color: var(--cp-muted);
+  font-size: 0.92rem;
+  margin-bottom: 8px;
+}
+
+.cp-mesa-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.cp-mesa-stat-foot {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cp-mesa-stat-foot.is-success { color: var(--cp-success); }
+.cp-mesa-stat-foot.is-warning { color: var(--cp-warning); }
+.cp-mesa-stat-foot.is-danger { color: var(--cp-danger); }
+
+.cp-mesa-content-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 18px;
+}
+
+.cp-mesa-panel {
+  padding: 22px;
+}
+
+.cp-mesa-panel.is-large {
+  min-height: 340px;
+}
+
+.cp-mesa-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.cp-mesa-panel-head h2 {
+  margin: 0;
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+  color: var(--cp-text);
+}
+
+.cp-mesa-panel-head p {
+  margin: 6px 0 0;
+  color: var(--cp-muted);
+  font-size: 0.92rem;
+}
+
+.cp-mesa-panel-link {
+  color: var(--cp-primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: transparent;
+  padding: 0;
+}
+
+.cp-mesa-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cp-mesa-alert {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px;
+  border-radius: 18px;
+  border: 1px solid var(--cp-line);
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 2.5%, #ffffff 97.5%);
+}
+
+.cp-mesa-alert.is-critical {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cp-danger) 12%, #ffffff 88%), color-mix(in srgb, var(--button-bg, #0f172a) 2%, #ffffff 98%));
+}
+
+.cp-mesa-alert.is-high {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cp-orange) 12%, #ffffff 88%), color-mix(in srgb, var(--button-bg, #0f172a) 2%, #ffffff 98%));
+}
+
+.cp-mesa-alert.is-medium {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cp-warning) 10%, #ffffff 90%), color-mix(in srgb, var(--button-bg, #0f172a) 2%, #ffffff 98%));
+}
+
+.cp-mesa-alert-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 6%, #ffffff 94%);
+  border: 1px solid var(--cp-line);
+}
+
+.cp-mesa-alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.cp-mesa-alert-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--cp-text);
+}
+
+.cp-mesa-alert-meta {
+  color: var(--cp-muted);
+  font-size: 0.88rem;
+}
+
+.cp-mesa-badge,
+.cp-mesa-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cp-mesa-badge.is-red,
+.cp-mesa-pill.is-red {
+  color: #ffd8df;
+  background: color-mix(in srgb, var(--cp-danger) 16%, transparent);
+  border-color: color-mix(in srgb, var(--cp-danger) 24%, transparent);
+}
+
+.cp-mesa-badge.is-orange {
+  color: #ffe0ca;
+  background: color-mix(in srgb, var(--cp-orange) 14%, transparent);
+  border-color: color-mix(in srgb, var(--cp-orange) 22%, transparent);
+}
+
+.cp-mesa-badge.is-yellow,
+.cp-mesa-pill.is-yellow {
+  color: #fff2bf;
+  background: color-mix(in srgb, var(--cp-warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cp-warning) 20%, transparent);
+}
+
+.cp-mesa-pill.is-blue {
+  color: #d9ebff;
+  background: color-mix(in srgb, var(--cp-blue) 14%, transparent);
+  border-color: color-mix(in srgb, var(--cp-blue) 20%, transparent);
+}
+
+.cp-mesa-traffic {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cp-mesa-traffic-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 2.5%, #ffffff 97.5%);
+  border: 1px solid var(--cp-line);
+}
+
+.cp-mesa-traffic-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--cp-text);
+}
+
+.cp-mesa-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.cp-mesa-light.is-green {
+  background: var(--cp-success);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--cp-success) 14%, transparent);
+}
+
+.cp-mesa-light.is-yellow {
+  background: var(--cp-warning);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--cp-warning) 14%, transparent);
+}
+
+.cp-mesa-light.is-red {
+  background: var(--cp-danger);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--cp-danger) 14%, transparent);
+}
+
+.cp-mesa-table-wrap {
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid var(--cp-line);
+}
+
+.cp-mesa-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 2%, #ffffff 98%);
+}
+
+.cp-mesa-table thead {
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 3.5%, #ffffff 96.5%);
+}
+
+.cp-mesa-table th,
+.cp-mesa-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--cp-line);
+  font-size: 0.92rem;
+}
+
+.cp-mesa-table th {
+  color: color-mix(in srgb, var(--button-bg, #0f172a) 72%, #ffffff 28%);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cp-mesa-table td {
+  color: var(--cp-text);
+}
+
+.cp-mesa-table tbody tr:hover {
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 3%, #ffffff 97%);
+}
+
+.cp-mesa-secondary-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr 0.85fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.cp-mesa-kpi-stack,
+.cp-mesa-progress-list,
+.cp-mesa-committee-list {
+  display: grid;
+  gap: 12px;
+}
+
+.cp-mesa-kpi-mini,
+.cp-mesa-progress-item,
+.cp-mesa-committee-item {
+  border: 1px solid color-mix(in srgb, var(--button-bg, #0f172a) 8%, #ffffff 92%);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 2.5%, #ffffff 97.5%);
+  padding: 16px;
+}
+
+.cp-mesa-kpi-mini-head,
+.cp-mesa-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.cp-mesa-kpi-mini-label,
+.cp-mesa-progress-label,
+.cp-mesa-committee-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--cp-text);
+}
+
+.cp-mesa-kpi-mini-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--cp-text);
+}
+
+.cp-mesa-kpi-mini-meta,
+.cp-mesa-progress-meta,
+.cp-mesa-committee-meta {
+  font-size: 0.85rem;
+  color: var(--cp-muted);
+  line-height: 1.5;
+}
+
+.cp-mesa-progress-bar-wrap {
+  margin-top: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--button-bg, #0f172a) 7%, #ffffff 93%);
+  overflow: hidden;
+}
+
+.cp-mesa-progress-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--cp-primary), var(--cp-blue));
+}
+
+.cp-mesa-committee-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.cp-mesa-committee-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.cp-mesa-committee-badge.is-critical {
+  background: color-mix(in srgb, var(--cp-danger) 12%, #ffffff 88%);
+  color: #b91c1c;
+  border-color: color-mix(in srgb, var(--cp-danger) 18%, #ffffff 82%);
+}
+
+.cp-mesa-committee-badge.is-review {
+  background: color-mix(in srgb, var(--cp-warning) 12%, #ffffff 88%);
+  color: #a16207;
+  border-color: color-mix(in srgb, var(--cp-warning) 18%, #ffffff 82%);
+}
+
+.cp-mesa-committee-badge.is-stable {
+  background: color-mix(in srgb, var(--cp-success) 12%, #ffffff 88%);
+  color: #15803d;
+  border-color: color-mix(in srgb, var(--cp-success) 18%, #ffffff 82%);
+}
+
+.cp-mesa-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cp-mesa-timeline-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 2px 0;
+}
+
+.cp-mesa-timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex: 0 0 12px;
+}
+
+.cp-mesa-timeline-dot.is-red { background: var(--cp-danger); }
+.cp-mesa-timeline-dot.is-yellow { background: var(--cp-warning); }
+.cp-mesa-timeline-dot.is-green { background: var(--cp-success); }
+.cp-mesa-timeline-dot.is-blue { background: var(--cp-blue); }
+
+.cp-mesa-timeline-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--cp-text);
+}
+
+.cp-mesa-timeline-time {
+  color: var(--cp-muted);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 1250px) {
+  .cp-mesa-hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cp-mesa-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-mesa-secondary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 980px) {
+  .cp-mesa-topbar {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .cp-mesa-main {
+    padding: 18px;
+  }
+
+  .cp-mesa-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-mesa-topbar h1 {
+    font-size: 1.5rem;
+  }
+
+  .cp-mesa-topbar-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .cp-mesa-btn,
+  .cp-mesa-btn-primary {
+    width: 100%;
+  }
+}

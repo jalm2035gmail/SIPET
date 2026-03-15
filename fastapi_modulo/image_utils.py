@@ -1,7 +1,7 @@
 """
 image_utils.py — Optimización de imágenes subidas al servidor.
 
-Redimensiona y convierte a WebP con calidad mínima suficiente.
+Redimensiona y convierte a backendP con calidad mínima suficiente.
 Los SVG se pasan sin cambios. Los archivos originales nunca se escriben
 a disco; sólo se guarda el resultado optimizado.
 
@@ -17,7 +17,7 @@ import io
 from typing import Dict, Optional, Tuple
 
 # ── Perfiles de optimización por tipo de uso ─────────────────────────────────
-# (max_width, max_height, webp_quality)
+# (max_width, max_height, backendp_quality)
 _PROFILES: Dict[str, Tuple[int, int, int]] = {
     "avatar":      (300,  300,  82),
     "favicon":     (256,  256,  85),
@@ -48,7 +48,7 @@ def optimize_image(
     (bytes_optimizados, nueva_extension).
 
     - SVG → devuelve sin modificar con ext ".svg"
-    - El resto → WebP optimizado redimensionado según el perfil
+    - El resto → backendP optimizado redimensionado según el perfil
     - Si Pillow no está disponible → devuelve los bytes originales sin cambio
     """
     ext = (original_ext or "").lower().strip()
@@ -77,8 +77,8 @@ def optimize_image(
                 img.thumbnail((max_w, max_h), Image.LANCZOS)
 
             out = io.BytesIO()
-            img.save(out, format="WEBP", quality=quality, method=4)
-            return out.getvalue(), ".webp"
+            img.save(out, format="backendP", quality=quality, method=4)
+            return out.getvalue(), ".backendp"
 
     except Exception:
         return data, ext
@@ -90,10 +90,10 @@ def generate_thumbnails(
     profile: str = "default",
 ) -> Dict[str, bytes]:
     """
-    Genera múltiples variantes WebP desde un único upload, todas en una sola
+    Genera múltiples variantes backendP desde un único upload, todas en una sola
     apertura de imagen — más eficiente que llamar optimize_image N veces.
 
-    Devuelve ``{nombre: bytes_webp}``. Los nombres son las claves del set
+    Devuelve ``{nombre: bytes_backendp}``. Los nombres son las claves del set
     de tamaños del perfil (p.ej. ``"sm"``, ``"lg"`` para "avatar").
 
     Si la imagen es SVG o Pillow no está disponible devuelve
@@ -125,7 +125,7 @@ def generate_thumbnails(
                 thumb = src.copy()
                 thumb.thumbnail((max_w, max_h), Image.LANCZOS)
                 buf = io.BytesIO()
-                thumb.save(buf, format="WEBP", quality=quality, method=4)
+                thumb.save(buf, format="backendP", quality=quality, method=4)
                 result[name] = buf.getvalue()
             return result
 
@@ -142,7 +142,7 @@ def add_watermark(
     font_size_ratio: float = 0.04,
 ) -> bytes:
     """
-    Superpone texto semitransparente sobre la imagen y devuelve WebP.
+    Superpone texto semitransparente sobre la imagen y devuelve backendP.
 
     Args:
         data:            Bytes de la imagen fuente.
@@ -188,7 +188,7 @@ def add_watermark(
             if font is None:
                 font = ImageFont.load_default()
 
-            # Capa RGBA transparente para no alterar la imagen base
+            # Capa RGBA transparente para no alterar la imagen MAIN
             overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
             draw = ImageDraw.Draw(overlay)
 
@@ -211,7 +211,7 @@ def add_watermark(
 
             composite = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
             buf = io.BytesIO()
-            composite.save(buf, format="WEBP", quality=85, method=4)
+            composite.save(buf, format="backendP", quality=85, method=4)
             return buf.getvalue()
 
     except Exception:

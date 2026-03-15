@@ -1,0 +1,41 @@
+  <article class="card ci-section-card ci-panel bg-MAIN-100 border border-MAIN-300 shadow-sm">
+    <div class="card-body p-4">
+      <div class="ci-toolbar flex flex-wrap gap-3 items-end">
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Tipo</span></div>
+          <select id="ev-filtro-tipo" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Documento</option>
+            <option>Fotografía</option>
+            <option>Correo electrónico</option>
+            <option>Acta</option>
+            <option>Captura de pantalla</option>
+            <option>Otro</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Resultado</span></div>
+          <select id="ev-filtro-resultado" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+            <option>Cumple</option>
+            <option>Cumple parcialmente</option>
+            <option>No cumple</option>
+            <option>Por evaluar</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Control</span></div>
+          <select id="ev-filtro-control" class="select select-bordered select-sm w-full">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label class="form-control w-full max-w-xs">
+          <div class="label py-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Búsqueda</span></div>
+          <input type="text" id="ev-busqueda" placeholder="Título, descripción…"
+                 class="input input-bordered input-sm w-full">
+        </label>
+        <button type="button" id="ev-btn-filtrar" class="btn btn-outline btn-sm self-end">Filtrar</button>
+        <button type="button" id="ev-btn-limpiar" class="btn btn-ghost btn-sm self-end">Limpiar</button>
+      </div>
+    </div>
+  </article>

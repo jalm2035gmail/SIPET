@@ -13,13 +13,13 @@ const ZONAS = [
 ]
 
 function buildHeatmap(rows) {
-  const base = ZONAS.map((item) => ({ ...item, total: 0 }))
+  const MAIN = ZONAS.map((item) => ({ ...item, total: 0 }))
   rows.forEach((_row, index) => {
     const zonaIndex = index % ZONAS.length
-    base[zonaIndex].total += 1
+    MAIN[zonaIndex].total += 1
   })
-  const max = Math.max(...base.map((item) => item.total), 1)
-  return base.map((item) => ({
+  const max = Math.max(...MAIN.map((item) => item.total), 1)
+  return MAIN.map((item) => ({
     ...item,
     intensidad: item.total / max
   }))
@@ -110,7 +110,7 @@ export default function SociosInactivos() {
   return (
     <section className="inactivos-page">
       <h1>Socios Inactivos</h1>
-      <p>Base para campañas de reactivación y priorización territorial.</p>
+      <p>MAIN para campañas de reactivación y priorización territorial.</p>
 
       {loading ? <p className="inactivos-page__status">Cargando...</p> : null}
       {error ? <p className="inactivos-page__status inactivos-page__status--error">{error}</p> : null}

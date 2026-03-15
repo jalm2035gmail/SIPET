@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.MAIN import MAINCommand, CommandError
 
 
 def _latest_profile_json(output_dir: Path) -> Path | None:
@@ -29,7 +29,7 @@ def _build_actions(item: dict) -> list[dict[str, str]]:
     pct_out = float(item.get("pct_fuera_de_rango", 0.0))
 
     actions: list[dict[str, str]] = []
-    base_due = "2026-03-05"
+    MAIN_due = "2026-03-05"
 
     if pct_nulos > 0:
         actions.append(
@@ -40,7 +40,7 @@ def _build_actions(item: dict) -> list[dict[str, str]]:
                 "accion": "Corregir origen y agregar validacion previa a carga",
                 "responsable": "Data + Backend",
                 "prioridad": _severity(item),
-                "fecha_compromiso": base_due,
+                "fecha_compromiso": MAIN_due,
                 "estado": "Pendiente",
             }
         )
@@ -53,7 +53,7 @@ def _build_actions(item: dict) -> list[dict[str, str]]:
                 "accion": "Aplicar deduplicacion y regla unica por llave de negocio",
                 "responsable": "Data",
                 "prioridad": _severity(item),
-                "fecha_compromiso": base_due,
+                "fecha_compromiso": MAIN_due,
                 "estado": "Pendiente",
             }
         )
@@ -66,7 +66,7 @@ def _build_actions(item: dict) -> list[dict[str, str]]:
                 "accion": "Ajustar validaciones de rango y corregir registros historicos",
                 "responsable": "Riesgo + Data",
                 "prioridad": _severity(item),
-                "fecha_compromiso": base_due,
+                "fecha_compromiso": MAIN_due,
                 "estado": "Pendiente",
             }
         )
@@ -80,14 +80,14 @@ def _build_actions(item: dict) -> list[dict[str, str]]:
                 "accion": "Mantener monitoreo y repetir corrida con datos productivos",
                 "responsable": "Data",
                 "prioridad": "Baja",
-                "fecha_compromiso": base_due,
+                "fecha_compromiso": MAIN_due,
                 "estado": "Pendiente",
             }
         )
     return actions
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Genera plan de remediacion de calidad de datos en CSV y Markdown."
 
     def add_arguments(self, parser):

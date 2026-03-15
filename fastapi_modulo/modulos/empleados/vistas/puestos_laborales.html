@@ -1,0 +1,232 @@
+<link rel="stylesheet" href="/modulos/empleados/puestos_laborales.css">
+
+<div class="titulo pl-page-title bg-MAIN-200 rounded-box border border-MAIN-300 p-4 sm:p-6">
+    <div class="w-full flex flex-col md:flex-row items-center gap-10">
+        <img
+            src="/templates/icon/inicio.svg"
+            alt="Icono organización"
+            width="96"
+            height="96"
+            class="shrink-0 rounded-box border border-MAIN-300 bg-MAIN-100 p-3 object-contain"
+        />
+        <div class="w-full grid gap-2 content-center">
+            <div class="block w-full text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-[color:var(--sidebar-bottom)]">Puestos Laborales</div>
+            <div class="block w-full text-MAIN sm:text-lg text-MAIN-content/70">Primero debe agregar los puestos laborales para postriormente asignarlos al colaborador</div>
+        </div>
+    </div>
+</div>
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pl-toolbar">
+    <button class="view-pill boton_vista" id="pl-btn-new-short" type="button" data-tooltip="Nuevo" aria-label="Nuevo">
+      <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/nuevo.svg')"></span>
+      <span class="view-pill-label boton_vista-label">Nuevo</span>
+    </button>
+    <div class="view-buttons page-view-buttons" id="pl-view-switch">
+        <button class="view-pill boton_vista" type="button" data-pl-view="form" data-tooltip="Formulario" aria-label="Formulario">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/formulario.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Form</span>
+        </button>
+        <button class="view-pill boton_vista active" type="button" data-pl-view="list" data-tooltip="Lista" aria-label="Lista">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/grid.svg')"></span>
+          <span class="view-pill-label boton_vista-label">List</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-pl-view="kanban" data-tooltip="Kanban" aria-label="Kanban">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/kanban.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Kanban</span>
+        </button>
+        <button class="view-pill boton_vista" type="button" data-pl-view="organigrama" data-tooltip="Organigrama" aria-label="Organigrama">
+          <span class="boton_vista-icono view-pill-icon-mask" aria-hidden="true" style="--view-pill-icon-url:url('/icon/boton/organigrama.svg')"></span>
+          <span class="view-pill-label boton_vista-label">Organigrama</span>
+        </button>
+    </div>
+</div>
+<div class="rounded-box border border-MAIN-300 bg-MAIN-100 p-4 pl-form-shell" id="pl-form-shell">
+    <input type="hidden" id="pl-edit-id" value="">
+    <div class="pl-grid">
+        <div class="pl-field">
+            <label class="pl-label" for="pl-nombre">Nombre del puesto <span class="pl-required">*</span></label>
+            <input class="pl-input input input-bordered campo" id="pl-nombre" type="text" placeholder="Ej. Gerente de Marketing" autocomplete="off">
+        </div>
+        <div class="pl-field">
+            <label class="pl-label" for="pl-area">Área a la que pertenece <span class="pl-required">*</span></label>
+            <select class="pl-select select select-bordered campo" id="pl-area">
+                <option value="">— Sin área asignada —</option>
+            </select>
+        </div>
+        <div class="pl-field">
+            <label class="pl-label" for="pl-nivel">Nivel organizacional</label>
+            <select class="pl-select select select-bordered campo" id="pl-nivel">
+                <option value="">— Seleccionar —</option>
+                <option value="Directivo">Directivo</option>
+                <option value="Gerencial">Gerencial</option>
+                <option value="Jefatura">Jefatura</option>
+                <option value="Coordinación">Coordinación</option>
+                <option value="Supervisor">Supervisor</option>
+                <option value="Técnico / Especialista">Técnico / Especialista</option>
+                <option value="Operativo">Operativo</option>
+                <option value="Auxiliar / Asistente">Auxiliar / Asistente</option>
+                <option value="Pasante / Prácticas">Pasante / Prácticas</option>
+            </select>
+        </div>
+        <div class="pl-field full">
+            <label class="pl-label" for="pl-desc">Descripción</label>
+            <textarea class="pl-textarea textarea textarea-bordered campo" id="pl-desc" placeholder="Describe las responsabilidades principales del puesto..."></textarea>
+        </div>
+    </div>
+</div>
+<div class="tabs tabs-lifted w-full flex-wrap" id="pl-page-tabs" role="tablist" aria-label="Puestos">
+    <button class="tab rounded-t-lg tab-active active" data-pl-page-tab="1" data-ptab="puestos">Puestos laborales</button>
+    <button class="tab rounded-t-lg" data-pl-page-tab="1" data-ptab="kpis">KPIs</button>
+</div>
+<div id="pl-view-puestos">
+<div class="pl-wrap">
+        <div class="grid grid-cols-1 gap-4">
+        <div class="grid gap-4">
+            <!-- Form -->
+            <div class="pl-card" id="pl-card-form">
+                <p class="pl-card-title" id="pl-form-title">Nuevo puesto laboral</p>
+                <div class="pl-grid">
+                    <div class="pl-field full">
+                <details class="collapse collapse-arrow border border-MAIN-300 bg-MAIN-100" open>
+                    <summary class="collapse-title text-MAIN font-semibold">Habilidades requeridas</summary>
+                    <div class="collapse-content grid gap-3">
+                        <details class="collapse collapse-arrow border border-MAIN-300 bg-MAIN-100" open>
+                            <summary class="collapse-title text-sm font-semibold">Habilidades blandas</summary>
+                            <div class="collapse-content grid gap-2">
+                                <div id="pl-hab-blandas-list" class="grid gap-2"></div>
+                            </div>
+                        </details>
+                        <details class="collapse collapse-arrow border border-MAIN-300 bg-MAIN-100" open>
+                            <summary class="collapse-title text-sm font-semibold">Habilidades duras</summary>
+                            <div class="collapse-content grid gap-2">
+                                <div id="pl-hab-duras-list" class="grid gap-2"></div>
+                            </div>
+                        </details>
+                    </div>
+                </details>
+                    </div>
+                </div>
+                <div class="pl-form-actions">
+                    <button class="pl-btn-save" id="pl-btn-save">Guardar puesto</button>
+                    <button class="pl-btn-cancel" id="pl-btn-cancel">Cancelar</button>
+                    <span class="pl-msg" id="pl-msg">&#10003; Guardado</span>
+                    <span class="pl-msg pl-msg-error" id="pl-msg-error"></span>
+                </div>
+            </div>
+            <!-- List -->
+            <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm pl-hidden-card" id="pl-card-list">
+                <div class="card-body gap-3">
+                    <p class="pl-card-title">Listado de puestos <span class="pl-count" id="pl-count"></span></p>
+                    <div class="overflow-x-auto rounded-box border border-MAIN-300">
+                        <table class="table table-zebra table-sm md:table-md">
+                            <thead>
+                                <tr>
+                                    <th>Nombre del puesto</th>
+                                    <th>Área</th>
+                                    <th>Nivel</th>
+                                    <th>Descripción</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pl-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </article>
+            <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm pl-hidden-card" id="pl-card-kanban">
+                <div class="card-body gap-3">
+                    <p class="pl-card-title">Vista Kanban</p>
+                    <div id="pl-kanban-host" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div>
+                </div>
+            </article>
+            <article class="card bg-MAIN-100 border border-MAIN-300 shadow-sm pl-hidden-card" id="pl-card-organigrama">
+                <div class="card-body gap-3">
+                    <p class="pl-card-title">Vista Organigrama</p>
+                    <div id="pl-organigrama-host" class="w-full min-h-[640px] overflow-auto rounded-box border border-MAIN-300 bg-MAIN-200 p-3"></div>
+                </div>
+            </article>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="pl-view-kpis" id="pl-view-kpis">
+  <div class="pl-card">
+    <p class="pl-card-title">KPIs por puesto laboral</p>
+    <div class="pl-field pl-select-filter">
+      <label class="pl-label">Seleccionar puesto</label>
+      <select class="pl-select select select-bordered campo" id="pl-kpi-sel"><option value="">&mdash; Seleccionar &mdash;</option></select>
+    </div>
+    <div class="pl-content-hidden" id="pl-kpi-content">
+      <h3 class="pl-section-heading" id="pl-kpi-titulo"></h3>
+      <div id="pl-kpi-panel"></div>
+      <div class="pl-section-actions">
+        <button class="pl-btn-save" id="pl-kpi-btn-save">Guardar KPIs</button>
+        <span class="pl-saved-inline" id="pl-kpi-saved">&#10003; Guardado</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="pl-view-notebook">
+  <div class="pl-card">
+    <p class="pl-card-title">Notebook de puestos</p>
+    <div class="pl-field pl-select-filter">
+      <label class="pl-label">Seleccionar puesto</label>
+      <select class="pl-select select select-bordered campo" id="pl-nbp-sel"><option value="">\u2014 Seleccionar \u2014</option></select>
+    </div>
+    <div class="pl-content-hidden" id="pl-nbp-content">
+      <h3 class="pl-section-heading" id="pl-nbp-titulo"></h3>
+      <div class="pl-grid pl-grid-gap">
+        <div class="pl-field">
+          <label class="pl-label">Área a la que pertenece</label>
+          <input class="pl-input input input-bordered campo" id="pl-nbp-area" type="text" readonly>
+        </div>
+        <div class="pl-field">
+          <label class="pl-label">Nivel organizacional</label>
+          <input class="pl-input input input-bordered campo" id="pl-nbp-nivel" type="text" readonly>
+        </div>
+        <div class="pl-field full">
+          <label class="pl-label">Descripción del puesto</label>
+          <textarea class="pl-textarea textarea textarea-bordered campo" id="pl-nbp-desc" readonly></textarea>
+        </div>
+      </div>
+      <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Notebook de puestos">
+        <button class="tab rounded-t-lg tab-active active" data-pl-nbp-tab="1" data-nbptab="hab">Habilidades requeridas</button>
+        <button class="tab rounded-t-lg" data-pl-nbp-tab="1" data-nbptab="kpi">KPIs</button>
+      </div>
+      <div class="pl-nbp-panel active" id="pl-nbp-panel-hab"></div>
+      <div class="pl-nbp-panel" id="pl-nbp-panel-kpi"></div>
+      <div class="pl-section-actions">
+        <button class="pl-btn-save" id="pl-nbp-btn-save">Guardar</button>
+        <span class="pl-saved-inline" id="pl-nbp-saved">&#10003; Guardado</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notebook overlay + drawer -->
+<div class="pl-nb-overlay" id="pl-nb-overlay"></div>
+<div class="pl-nb-drawer" id="pl-nb-drawer">
+    <div class="pl-nb-head">
+        <div class="pl-flex-fill">
+            <div class="pl-nb-titulo" id="pl-nb-titulo">—</div>
+            <div class="pl-nb-head-sub">Notebook del puesto</div>
+        </div>
+        <button class="pl-nb-close" id="pl-nb-close-btn" title="Cerrar">&times;</button>
+    </div>
+    <div class="tabs tabs-lifted w-full flex-wrap" role="tablist" aria-label="Notebook del puesto">
+        <button class="tab rounded-t-lg tab-active active" data-pl-nb-tab="1" data-tab="hab">Habilidades requeridas para el puesto</button>
+        <button class="tab rounded-t-lg" data-pl-nb-tab="1" data-tab="col">Colaborador@s asignad@s</button>
+    </div>
+    <div class="pl-nb-body">
+        <div class="pl-nb-panel active" id="pl-nb-panel-hab"><p class="pl-nb-loading">Cargando...</p></div>
+        <div class="pl-nb-panel" id="pl-nb-panel-col"><p class="pl-nb-loading">Cargando...</p></div>
+    </div>
+    <div class="pl-nb-save-bar">
+        <button class="pl-nb-btn-save" id="pl-nb-btn-save">Guardar</button>
+        <span class="pl-nb-saved" id="pl-nb-saved">&#10003; Guardado</span>
+    </div>
+</div>
+
+<script>window.__PUESTOS_INIT__ = { areas: __INITIAL_AREAS__ };</script>
+<script src="/modulos/empleados/puestos_laborales.js"></script>

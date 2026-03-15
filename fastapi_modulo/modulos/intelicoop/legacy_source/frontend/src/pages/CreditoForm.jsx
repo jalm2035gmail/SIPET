@@ -124,7 +124,7 @@ export default function CreditoForm() {
             // No bloquea la operación principal de crédito.
           })
           .finally(() => {
-            navigate('/web/creditos')
+            navigate('/backend/creditos')
           })
       })
       .catch((apiError) => {
@@ -254,7 +254,7 @@ export default function CreditoForm() {
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? 'Guardando...' : 'Guardar solicitud'}
             </Button>
-            <Link to="/web/creditos">Cancelar</Link>
+            <Link to="/backend/creditos">Cancelar</Link>
           </div>
         </form>
       </Card>

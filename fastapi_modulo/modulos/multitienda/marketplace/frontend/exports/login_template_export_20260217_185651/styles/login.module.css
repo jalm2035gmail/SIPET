@@ -1,0 +1,300 @@
+.page {
+  min-height: 100vh;
+  background: #e8e8ea;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  font-family: "Nunito Sans", "Trebuchet MS", sans-serif;
+}
+
+.panel {
+  width: min(1600px, 100%);
+  min-height: 760px;
+  display: grid;
+  grid-template-columns: 1.05fr 1.45fr;
+  gap: 18px;
+}
+
+.formSide {
+  background: #f3f3f5;
+  border-radius: 30px;
+  padding: 42px 42px 32px;
+  display: grid;
+  align-content: start;
+}
+
+.loginCard {
+  width: min(500px, 100%);
+  margin: 0 auto;
+}
+
+.logoWrap {
+  display: grid;
+  place-items: center;
+}
+
+.logoWrap img {
+  width: 188px;
+  height: 188px;
+  object-fit: contain;
+}
+
+.separator {
+  height: 1px;
+  background: #cfcfd4;
+  margin: 12px 0 42px;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.fieldGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fieldHeader label {
+  font-size: 2.75rem;
+  color: #1f2328;
+}
+
+.inlineLink {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #a8680f;
+  font-size: 1.9rem;
+  cursor: pointer;
+}
+
+.form input {
+  height: 92px;
+  border-radius: 24px;
+  border: 2px solid #b6c3d8;
+  background: #c9d3e3;
+  padding: 0 22px;
+  font-size: 2.6rem;
+  color: #111827;
+  outline: none;
+}
+
+.form input:focus {
+  border-color: #798eb3;
+}
+
+.submitBtn {
+  margin-top: 10px;
+  height: 94px;
+  border: 0;
+  border-radius: 24px;
+  background: #5c5fe0;
+  color: #fff;
+  font-size: 4rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.errorText,
+.successText {
+  margin: 4px 0 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.errorText {
+  color: #ac2020;
+}
+
+.successText {
+  color: #1f7b2e;
+}
+
+.signupText {
+  margin: 18px 0 0;
+  text-align: center;
+  color: #a8680f;
+  font-size: 2rem;
+}
+
+.heroSide {
+  border-radius: 30px;
+  overflow: hidden;
+  position: relative;
+}
+
+.heroImage {
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 16, 20, 0.25);
+}
+
+.heroCopy {
+  position: relative;
+  z-index: 1;
+  padding: 0 56px 54px;
+  color: #fff;
+}
+
+.heroCopy h2 {
+  margin: 0;
+  font-size: 5.7rem;
+  line-height: 1.05;
+  font-weight: 700;
+}
+
+.heroCopy p {
+  margin: 12px 0 0;
+  font-size: 2.65rem;
+  line-height: 1.3;
+}
+
+@media (max-width: 1320px) {
+  .page {
+    padding: 14px;
+  }
+
+  .panel {
+    gap: 14px;
+    min-height: 680px;
+  }
+
+  .formSide {
+    border-radius: 22px;
+    padding: 28px 26px;
+  }
+
+  .logoWrap img {
+    width: 128px;
+    height: 128px;
+  }
+
+  .separator {
+    margin-bottom: 26px;
+  }
+
+  .fieldHeader label {
+    font-size: 1.95rem;
+  }
+
+  .inlineLink {
+    font-size: 1.35rem;
+  }
+
+  .form input {
+    height: 64px;
+    border-radius: 16px;
+    font-size: 1.6rem;
+  }
+
+  .submitBtn {
+    height: 68px;
+    border-radius: 16px;
+    font-size: 2.2rem;
+  }
+
+  .errorText,
+  .successText {
+    font-size: 1.05rem;
+  }
+
+  .signupText {
+    font-size: 1.2rem;
+  }
+
+  .heroSide {
+    border-radius: 22px;
+  }
+
+  .heroCopy {
+    padding: 0 30px 28px;
+  }
+
+  .heroCopy h2 {
+    font-size: 3.2rem;
+  }
+
+  .heroCopy p {
+    font-size: 1.35rem;
+  }
+}
+
+@media (max-width: 980px) {
+  .panel {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .formSide {
+    order: 2;
+  }
+
+  .heroSide {
+    order: 1;
+    min-height: 340px;
+  }
+
+  .heroCopy h2 {
+    font-size: 2.5rem;
+  }
+
+  .heroCopy p {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 0;
+  }
+
+  .panel {
+    width: 100%;
+    gap: 0;
+  }
+
+  .formSide,
+  .heroSide {
+    border-radius: 0;
+  }
+
+  .heroSide {
+    min-height: 250px;
+  }
+
+  .heroCopy {
+    padding: 0 16px 16px;
+  }
+
+  .heroCopy h2 {
+    font-size: 2rem;
+  }
+
+  .heroCopy p {
+    font-size: 0.95rem;
+  }
+}

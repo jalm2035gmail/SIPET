@@ -23,22 +23,22 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-DJANGO_BASE_URL = os.getenv("DJANGO_BASE_URL", "http://localhost:8010").rstrip("/")
-FASTAPI_BASE_URL = os.getenv("FASTAPI_BASE_URL", "http://localhost:8001").rstrip("/")
-FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3010").rstrip("/")
+DJANGO_MAIN_URL = os.getenv("DJANGO_MAIN_URL", "http://localhost:8010").rstrip("/")
+FASTAPI_MAIN_URL = os.getenv("FASTAPI_MAIN_URL", "http://localhost:8001").rstrip("/")
+FRONTEND_MAIN_URL = os.getenv("FRONTEND_MAIN_URL", "http://localhost:3010").rstrip("/")
 
 
 def template_nav_context(is_config_shell: bool = False) -> dict[str, object]:
-    template_path = f"{FASTAPI_BASE_URL}/admin/template-backend"
+    template_path = f"{FASTAPI_MAIN_URL}/admin/template-backend"
     return {
         "title": "Template Backend",
         "page_heading": "Intellicoop Admin",
         "page_subtitle": "Template backend importado y enlazado con backend/frontend.",
-        "blank_path": f"{DJANGO_BASE_URL}/admin/",
-        "add_user_path": f"{DJANGO_BASE_URL}/admin/auth/user/",
+        "blank_path": f"{DJANGO_MAIN_URL}/admin/",
+        "add_user_path": f"{DJANGO_MAIN_URL}/admin/auth/user/",
         "config_path": f"{template_path}/config",
         "template_path": template_path,
-        "template_frontend_path": f"{FRONTEND_BASE_URL}/web",
+        "template_frontend_path": f"{FRONTEND_MAIN_URL}/backend",
         "is_config_shell": is_config_shell,
     }
 

@@ -4,7 +4,7 @@ import enum
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from app.models.base import BaseModel
+from app.models.MAIN import MAINModel
 
 
 class UserRole(str, enum.Enum):
@@ -27,7 +27,7 @@ class UserStatus(str, enum.Enum):
     LOCKED = "locked"
 
 
-class User(BaseModel):
+class User(MAINModel):
     """Modelo de usuario con autenticación y auditoría."""
     __tablename__ = "users"
 

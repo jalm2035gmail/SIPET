@@ -2,7 +2,7 @@ import csv
 from datetime import datetime, timezone
 from pathlib import Path
 
-from django.core.management.base import BaseCommand
+from django.core.management.MAIN import MAINCommand
 from django.db.models import Avg, Count, Sum
 from django.utils import timezone as dj_timezone
 
@@ -12,7 +12,7 @@ from apps.creditos.models import Credito
 from apps.socios.models import Socio
 
 
-class Command(BaseCommand):
+class Command(MAINCommand):
     help = "Elemento 4/4 de 1.3: segmentacion de socios y dataset listo para decisiones."
 
     def add_arguments(self, parser):
@@ -31,24 +31,24 @@ class Command(BaseCommand):
 
         fecha_corte = dj_timezone.localdate()
 
-        segmentos_base = (
+        segmentos_MAIN = (
             ResultadoSegmentacionSocio.objects.filter(fecha_ejecucion=fecha_corte)
             .values("segmento")
             .annotate(total=Count("id"))
         )
-        total_segmentados = sum(int(row["total"]) for row in segmentos_base)
+        total_segmentados = sum(int(row["total"]) for row in segmentos_MAIN)
         if total_segmentados == 0:
-            segmentos_base = Socio.objects.values("segmento").annotate(total=Count("id"))
-            total_segmentados = sum(int(row["total"]) for row in segmentos_base)
+            segmentos_MAIN = Socio.objects.values("segmento").annotate(total=Count("id"))
+            total_segmentados = sum(int(row["total"]) for row in segmentos_MAIN)
 
         cobertura_segmentacion_pct = (
             0.0 if Socio.objects.count() == 0 else float((total_segmentados / Socio.objects.count()) * 100.0)
         )
-        segmentos_activos = sum(1 for row in segmentos_base if int(row["total"]) > 0)
+        segmentos_activos = sum(1 for row in segmentos_MAIN if int(row["total"]) > 0)
         segmento_dominante_pct = (
             0.0
             if total_segmentados == 0
-            else float((max(int(row["total"]) for row in segmentos_base) / total_segmentados) * 100.0)
+            else float((max(int(row["total"]) for row in segmentos_MAIN) / total_segmentados) * 100.0)
         )
         socio_objetivo = (
             ResultadoSegmentacionSocio.objects.filter(fecha_ejecucion=fecha_corte, segmento=Socio.SEGMENTO_HORMIGA).count()
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             {
                 "kpi": "socios_objetivo_pct",
                 "valor": f"{socios_objetivo_pct:.2f}",
-                "formula": "(socios_hormiga + socios_gran_ahorrador) / socios_base * 100",
+                "formula": "(socios_hormiga + socios_gran_ahorrador) / socios_MAIN * 100",
                 "estado": "Cumple" if socios_objetivo_pct >= 40.0 else "En revision",
             },
         ]
@@ -180,7 +180,7 @@ class Command(BaseCommand):
             f"Fecha ejecucion UTC: {datetime.now(timezone.utc).isoformat()}",
             f"Fecha de corte: {fecha_corte.isoformat()}",
             "",
-            "## Base de calculo",
+            "## MAIN de calculo",
             f"- Socios totales: {Socio.objects.count()}",
             f"- Socios segmentados: {total_segmentados}",
             f"- Segmentos activos: {segmentos_activos}",

@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, Text, Float, ForeignKey, JSON, Date, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.models.base import Base
+from app.models.MAIN import MAIN
 
-class KPI(Base):
+class KPI(MAIN):
     __tablename__ = "kpis"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -30,7 +30,7 @@ class KPI(Base):
     responsible = relationship("User", back_populates="responsible_kpis")
     measurements = relationship("KPIMeasurement", back_populates="kpi", cascade="all, delete-orphan")
 
-class Report(Base):
+class Report(MAIN):
     __tablename__ = "reports"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -41,7 +41,7 @@ class Report(Base):
     recipients = Column(JSON)  # Lista de usuarios/departamentos
     generated_reports = relationship("GeneratedReport", back_populates="report")
 
-class GeneratedReport(Base):
+class GeneratedReport(MAIN):
     __tablename__ = "generated_reports"
     
     id = Column(Integer, primary_key=True, index=True)
